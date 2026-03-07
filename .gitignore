@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.so
+.DS_Store
+.venv/
+venv/
+
+# Only track compressed datasets (.jsonl.gz); uncompressed are derived
+src/pii_anon_datasets/benchmarks/data/*.jsonl
+src/pii_anon_datasets/eval_framework/data/*.jsonl

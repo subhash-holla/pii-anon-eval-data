@@ -1,0 +1,95 @@
+{
+  "dataset": "llm_pipeline_core",
+  "datatype_group_distribution": {
+    "alias_context_loss": 1530,
+    "api_key_like_negative": 269,
+    "crypto_wallet": 248,
+    "device_id": 468,
+    "general_pii": 2907,
+    "national_health_id": 334,
+    "passport_intl": 580,
+    "tax_id_intl": 3864
+  },
+  "difficulty_level_distribution": {
+    "challenging": 401,
+    "easy": 6321,
+    "hard": 2290,
+    "moderate": 1188
+  },
+  "entity_type_distribution": {
+    "ADDRESS": 7226,
+    "BANK_ACCOUNT": 1200,
+    "CREDIT_CARD": 1033,
+    "CREDIT_CARD_FRAGMENT": 167,
+    "DATE_OF_BIRTH": 2316,
+    "DRIVERS_LICENSE": 418,
+    "EMAIL_ADDRESS": 10949,
+    "EMPLOYEE_ID": 1583,
+    "IBAN": 333,
+    "IP_ADDRESS": 449,
+    "LICENSE_PLATE": 83,
+    "LOCATION": 166,
+    "MAC_ADDRESS": 751,
+    "MEDICAL_RECORD_NUMBER": 1118,
+    "NATIONAL_ID": 574,
+    "ORGANIZATION": 5242,
+    "PASSPORT": 784,
+    "PERSON_NAME": 23138,
+    "PHONE_NUMBER": 8678,
+    "ROUTING_NUMBER": 333,
+    "USERNAME": 616,
+    "US_SSN": 6510
+  },
+  "language_distribution": {
+    "ar": 400,
+    "de": 550,
+    "en": 5000,
+    "es": 1300,
+    "fr": 900,
+    "hi": 400,
+    "it": 350,
+    "ja": 150,
+    "ko": 350,
+    "nl": 150,
+    "pt": 250,
+    "zh": 400
+  },
+  "licenses": {
+    "curated_public": "CC-BY-4.0",
+    "synthetic": "CC0-1.0"
+  },
+  "record_count": 10200,
+  "scenario_distribution": {
+    "baseline": 8160,
+    "context_loss": 2040
+  },
+  "schema": [
+    "id",
+    "text",
+    "language",
+    "labels",
+    "source_type",
+    "source_id",
+    "license",
+    "scenario_id",
+    "entity_cluster_id",
+    "mention_variant",
+    "context_group",
+    "size_tier",
+    "datatype_group",
+    "difficulty_level"
+  ],
+  "seed": 42,
+  "size_tier_distribution": {
+    "context_loss": 2040,
+    "large": 1250,
+    "medium": 5660,
+    "small": 1000,
+    "very_large": 250
+  },
+  "source_distribution": {
+    "curated_public": 3060,
+    "synthetic": 7140
+  },
+  "version": "v1.0.0"
+}
