@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Merge the migrated v2 canonical dataset with newly generated records,
+Merge the migrated canonical dataset with newly generated records,
 then rebuild the compressed canonical file and metadata.
 
 Usage:
@@ -15,11 +15,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "src" / "pii_anon_datasets" / "data"
-CANONICAL_GZ = DATA_DIR / "pii_anon_v2.jsonl.gz"
-GENERATED = DATA_DIR / "pii_anon_v2_generated.jsonl"
-OUTPUT_JSONL = DATA_DIR / "pii_anon_v2.jsonl"
-OUTPUT_GZ = DATA_DIR / "pii_anon_v2.jsonl.gz"
-METADATA = DATA_DIR / "pii_anon_v2.metadata.json"
+CANONICAL_GZ = DATA_DIR / "pii_anon.jsonl.gz"
+GENERATED = DATA_DIR / "pii_anon_generated.jsonl"
+COVERAGE_FILL = DATA_DIR / "pii_anon_coverage.jsonl"
+OUTPUT_JSONL = DATA_DIR / "pii_anon.jsonl"
+OUTPUT_GZ = DATA_DIR / "pii_anon.jsonl.gz"
+METADATA = DATA_DIR / "pii_anon.metadata.json"
 
 
 def content_hash(record: dict) -> str:
@@ -33,26 +34,43 @@ def content_hash(record: dict) -> str:
 
 
 def main():
-    # 1. Load existing canonical records — only keep v1 migrated records
-    print("Loading existing canonical dataset (v1 migrated only)...")
+    # 1. Load existing canonical records
+    # When GENERATED file is present, only keep v1 migrated records from
+    # the canonical file (to replace stale generated records with fresh ones).
+    # Coverage fill is additive — it supplements whatever is already in canonical.
+    strip_generated = GENERATED.exists()
+    if strip_generated:
+        print("Loading existing canonical dataset (v1 migrated only)...")
+    else:
+        print("Loading existing canonical dataset (all records)...")
     existing = []
     skipped_gen = 0
     with gzip.open(CANONICAL_GZ, "rt", encoding="utf-8") as f:
         for line in f:
             rec = json.loads(line)
-            if rec.get("provenance", {}).get("v1_record_id"):
-                existing.append(rec)
-            else:
+            if strip_generated and not rec.get("provenance", {}).get("v1_record_id"):
                 skipped_gen += 1
-    print(f"  Loaded {len(existing)} v1 migrated records (skipped {skipped_gen} previously generated)")
+            else:
+                existing.append(rec)
+    if strip_generated:
+        print(f"  Loaded {len(existing)} v1 migrated records (skipped {skipped_gen} previously generated)")
+    else:
+        print(f"  Loaded {len(existing)} records")
 
-    # 2. Load generated records
-    print("Loading generated records...")
+    # 2. Load generated records from all sources
     generated = []
-    with open(GENERATED, "r", encoding="utf-8") as f:
-        for line in f:
-            generated.append(json.loads(line))
-    print(f"  Loaded {len(generated)} generated records")
+    for src_path in [GENERATED, COVERAGE_FILL]:
+        if src_path.exists():
+            print(f"Loading {src_path.name}...")
+            count = 0
+            with open(src_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    generated.append(json.loads(line))
+                    count += 1
+            print(f"  Loaded {count} records from {src_path.name}")
+        else:
+            print(f"  Skipping {src_path.name} (not found)")
+    print(f"  Total generated: {len(generated)} records")
 
     # 3. Deduplicate by content hash
     print("Deduplicating...")
@@ -96,7 +114,7 @@ def main():
     data_type_counts = Counter(r.get("data_type", "unknown") for r in merged)
 
     metadata = {
-        "version": "2.0.0",
+        "version": "1.1.0",
         "total_records": len(merged),
         "total_annotations": total_annotations,
         "entity_types": len(entity_type_counts),
@@ -140,9 +158,11 @@ def main():
     for t, c in entity_type_counts.most_common(15):
         print(f"  {t:30s} {c:>8,}")
 
-    # Clean up generated file
-    print(f"\nCleaning up {GENERATED}...")
-    GENERATED.unlink()
+    # Clean up generated files
+    for src_path in [GENERATED, COVERAGE_FILL]:
+        if src_path.exists():
+            print(f"Cleaning up {src_path.name}...")
+            src_path.unlink()
 
     # Clean up uncompressed JSONL (gitignored)
     if OUTPUT_JSONL.exists():

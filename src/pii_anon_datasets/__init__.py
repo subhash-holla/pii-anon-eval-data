@@ -1,7 +1,7 @@
-"""PII-Anon Evaluation Dataset v2.0.0
+"""PII-Anon Evaluation Dataset v1.1.0
 
 Comprehensive multilingual benchmark for PII detection and de-identification
-evaluation. 68K+ records across 52 languages, 50 entity types, and 7
+evaluation. 117K+ records across 60 languages, 57 entity types, and 7
 evaluation dimensions.
 
 Usage:
@@ -25,7 +25,7 @@ import gzip
 import json
 from pathlib import Path
 
-__version__ = "2.0.0"
+__version__ = "1.1.0"
 __all__ = ["load_dataset", "get_data_path"]
 
 _PACKAGE_DIR = Path(__file__).parent
@@ -44,7 +44,7 @@ def load_dataset(
     language: str | None = None,
     dimension: str | None = None,
 ) -> list[dict]:
-    """Load records from the PII-Anon v2 dataset.
+    """Load records from the PII-Anon dataset.
 
     Args:
         subset: Load a dimension subset (e.g., "entity_tracking", "multilingual").
@@ -63,7 +63,7 @@ def load_dataset(
     elif subset:
         path = _PACKAGE_DIR / "subsets" / "by_dimension" / f"{subset}.jsonl.gz"
     else:
-        path = _PACKAGE_DIR / "data" / "pii_anon_v2.jsonl.gz"
+        path = _PACKAGE_DIR / "data" / "pii_anon.jsonl.gz"
 
     if not path.exists():
         # Try uncompressed

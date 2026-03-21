@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Generate subset files from the canonical PII-Anon v2 dataset.
+Generate subset files from the canonical PII-Anon dataset.
 
 Creates filtered views by dimension, domain, difficulty, and dev/test splits.
-All subsets are derived from the single canonical pii_anon_v2.jsonl file.
+All subsets are derived from the single canonical pii_anon.jsonl file.
 
 Usage:
-    python scripts/generate_subsets.py [--input src/pii_anon_datasets/data/pii_anon_v2.jsonl]
+    PYTHONPATH=. python scripts/generate_subsets.py
 """
 
 import argparse
@@ -18,7 +18,7 @@ from collections import Counter
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon_v2.jsonl.gz"
+DEFAULT_INPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon.jsonl.gz"
 DEFAULT_OUTPUT_ROOT = REPO_ROOT / "src" / "pii_anon_datasets"
 
 DIMENSIONS = ["entity_tracking", "multilingual", "context_preservation", "diverse_pii_types", "edge_cases", "format_variations", "temporal_consistency"]
@@ -37,7 +37,7 @@ def write_jsonl_gz(records: list[dict], output_path: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate PII-Anon v2 subsets")
+    parser = argparse.ArgumentParser(description="Generate PII-Anon subsets")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     parser.add_argument("--dev-ratio", type=float, default=0.1, help="Dev set ratio (default 10%%)")

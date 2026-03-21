@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Migrate PII-Anon Evaluation Dataset from v1 to v2.
+Migrate PII-Anon Evaluation Dataset from v1.0.0 to v1.1.0.
 
 Reads all v1 JSONL files, filters to clean records (no template placeholders),
 deduplicates by text content hash, canonicalizes entity types, applies unified
-v2 schema, assigns primary_dimension, and writes a single canonical v2 JSONL file.
+v1.1.0 schema, assigns primary_dimension, and writes a single canonical JSONL file.
 
 Usage:
     python scripts/migrate_v1_to_v2.py [--output-dir src/pii_anon_datasets/data]
@@ -283,7 +283,7 @@ SENSITIVITY_MAP: dict[str, str] = {
 
 # ─── Dimension Assignment ────────────────────────────────────────────────────
 
-# Map scenario_id/evaluation_dimension to v2 primary_dimension
+# Map scenario_id/evaluation_dimension to primary_dimension
 DIMENSION_MAP: dict[str, str] = {
     # From benchmark evaluation_dimension field
     "multilingual": "multilingual",
@@ -342,7 +342,7 @@ LANGUAGE_FAMILY_MAP: dict[str, str] = {
     "fi": "Uralic", "hu": "Uralic", "et": "Uralic",
     "lt": "Baltic", "lv": "Baltic",
     "ka": "Kartvelian", "hy": "Armenian", "el": "Hellenic",
-    "sq": "Albanian",
+    "sq": "Albanian", "cy": "Celtic",
     "sw": "Niger-Congo", "yo": "Niger-Congo", "zu": "Niger-Congo",
     "am": "Semitic",
     "si": "Indo-Aryan", "ne": "Indo-Aryan",
@@ -355,7 +355,7 @@ SCRIPT_MAP: dict[str, str] = {
     "no": "Latn", "da": "Latn", "fi": "Latn", "cs": "Latn", "ro": "Latn",
     "hu": "Latn", "sk": "Latn", "hr": "Latn", "lt": "Latn", "et": "Latn",
     "is": "Latn", "af": "Latn", "vi": "Latn", "mt": "Latn", "ca": "Latn",
-    "sq": "Latn", "lv": "Latn", "sw": "Latn", "id": "Latn", "ms": "Latn",
+    "sq": "Latn", "lv": "Latn", "cy": "Latn", "sw": "Latn", "id": "Latn", "ms": "Latn",
     "tl": "Latn", "az": "Latn", "yo": "Latn", "zu": "Latn",
     "ru": "Cyrl", "uk": "Cyrl", "sr": "Cyrl", "bg": "Cyrl",
     "mk": "Cyrl", "be": "Cyrl", "mn": "Cyrl", "kk": "Cyrl",
@@ -380,7 +380,7 @@ RESOURCE_LEVEL_MAP: dict[str, str] = {
 
 
 def canonicalize_entity_type(raw_type: str) -> str:
-    """Map a v1 entity type name to canonical v2 name."""
+    """Map a v1 entity type name to canonical name."""
     canonical = ENTITY_TYPE_MAP.get(raw_type)
     if canonical is None:
         print(f"  WARNING: Unknown entity type '{raw_type}', keeping as-is", file=sys.stderr)
@@ -555,7 +555,7 @@ def infer_context_length_tier(token_count: int) -> str:
 
 
 def convert_record(rec: dict[str, Any], record_id: str) -> dict[str, Any]:
-    """Convert a v1 record to v2 schema."""
+    """Convert a v1 record to v1.1.0 schema."""
     text = rec["text"]
     lang = rec.get("language", "en")
 
@@ -639,7 +639,7 @@ def convert_record(rec: dict[str, Any], record_id: str) -> dict[str, Any]:
     v2_record = {
         "record_id": record_id,
         "text": text,
-        "version": "2.0.0",
+        "version": "1.1.0",
         "annotations": annotations,
         "language": lang,
         "script": rec.get("script") or SCRIPT_MAP.get(lang, "Latn"),
@@ -682,13 +682,13 @@ def convert_record(rec: dict[str, Any], record_id: str) -> dict[str, Any]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Migrate PII-Anon v1 to v2")
+    parser = argparse.ArgumentParser(description="Migrate PII-Anon v1.0.0 to v1.1.0")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--dry-run", action="store_true", help="Print stats without writing")
     args = parser.parse_args()
 
     print("=" * 70)
-    print("PII-Anon Dataset Migration: v1 -> v2")
+    print("PII-Anon Dataset Migration: v1.0.0 -> v1.1.0")
     print("=" * 70)
 
     # Phase 1: Read and deduplicate
@@ -769,9 +769,9 @@ def main():
         return
 
     # Phase 2: Convert and write
-    print(f"\nConverting to v2 schema...")
+    print(f"\nConverting to v1.1.0 schema...")
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    output_file = args.output_dir / "pii_anon_v2.jsonl"
+    output_file = args.output_dir / "pii_anon.jsonl"
 
     dim_counts = Counter()
     domain_counts = Counter()
@@ -802,8 +802,8 @@ def main():
 
     # Phase 3: Generate metadata
     metadata = {
-        "dataset": "pii_anon_v2",
-        "version": "2.0.0",
+        "dataset": "pii_anon",
+        "version": "1.1.0",
         "total_records": len(clean_records),
         "total_annotations": total_annotations,
         "unique_entity_types": len(entity_type_counts),
@@ -821,14 +821,14 @@ def main():
         },
     }
 
-    metadata_file = args.output_dir / "pii_anon_v2.metadata.json"
+    metadata_file = args.output_dir / "pii_anon.metadata.json"
     with open(metadata_file, "w") as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
     print(f"Wrote metadata to {metadata_file}")
 
     # Phase 4: Compress
     print("Compressing...")
-    gz_file = args.output_dir / "pii_anon_v2.jsonl.gz"
+    gz_file = args.output_dir / "pii_anon.jsonl.gz"
     with open(output_file, "rb") as f_in, gzip.open(gz_file, "wb", compresslevel=6) as f_out:
         while chunk := f_in.read(1024 * 1024):
             f_out.write(chunk)
@@ -839,7 +839,7 @@ def main():
     print("\n" + "=" * 70)
     print("MIGRATION SUMMARY")
     print("=" * 70)
-    print(f"Total v2 records: {len(clean_records)}")
+    print(f"Total v1.1.0 records: {len(clean_records)}")
     print(f"Total annotations: {total_annotations}")
     print(f"Unique entity types: {len(entity_type_counts)}")
     print(f"Unique languages: {len(lang_counts)}")

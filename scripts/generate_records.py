@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate new PII-Anon v2 records using template expansion + synthetic PII injection.
+Generate new PII-Anon records using template expansion + synthetic PII injection.
 
 This script generates records for all content expansion categories:
 - Entity tracking (coreference across multi-turn contexts)
@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_OUTPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon_v2_generated.jsonl"
+DEFAULT_OUTPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon_generated.jsonl"
 
 SEED = 42
 
@@ -84,6 +84,138 @@ FIRST_NAMES_AR = ["محمد", "فاطمة", "أحمد", "عائشة", "علي", 
 
 LAST_NAMES_AR = ["الأحمد", "المحمد", "العلي", "الحسن", "الخالد", "السعيد",
     "الشريف", "القاسم", "الرشيد", "المنصور", "الفهد", "النجار"]
+
+FIRST_NAMES_RU = ["Александр", "Мария", "Дмитрий", "Анна", "Сергей", "Елена", "Андрей", "Ольга",
+    "Иван", "Наталья", "Михаил", "Татьяна", "Алексей", "Светлана", "Николай", "Ирина"]
+LAST_NAMES_RU = ["Иванов", "Петров", "Сидоров", "Смирнов", "Кузнецов", "Попов", "Соколов",
+    "Лебедев", "Козлов", "Новиков", "Морозов", "Волков", "Алексеев", "Федоров"]
+
+FIRST_NAMES_KO = ["민준", "서연", "지훈", "지은", "현우", "수빈", "준서", "예진",
+    "도윤", "하은", "시우", "윤서", "건우", "채원", "우진", "소율"]
+LAST_NAMES_KO = ["김", "이", "박", "최", "정", "강", "조", "윤",
+    "장", "임", "한", "오", "서", "신", "권", "황"]
+
+FIRST_NAMES_IT = ["Marco", "Giulia", "Alessandro", "Francesca", "Luca", "Chiara", "Andrea", "Sara",
+    "Matteo", "Elena", "Giuseppe", "Anna", "Davide", "Maria", "Lorenzo", "Laura"]
+LAST_NAMES_IT = ["Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Colombo",
+    "Ricci", "Marino", "Greco", "Bruno", "Gallo", "Conti", "Costa", "Giordano"]
+
+FIRST_NAMES_PT = ["João", "Ana", "Pedro", "Maria", "Lucas", "Beatriz", "Miguel", "Mariana",
+    "Gabriel", "Sofia", "Rafael", "Inês", "Tiago", "Carolina", "Diogo", "Catarina"]
+LAST_NAMES_PT = ["Silva", "Santos", "Oliveira", "Souza", "Rodrigues", "Ferreira", "Alves",
+    "Pereira", "Lima", "Gomes", "Costa", "Ribeiro", "Martins", "Carvalho"]
+
+FIRST_NAMES_HI = ["Rahul", "Priya", "Amit", "Sunita", "Vikram", "Neha", "Raj", "Anjali",
+    "Suresh", "Pooja", "Arun", "Kavita", "Deepak", "Meera", "Sanjay", "Ritu"]
+LAST_NAMES_HI = ["Sharma", "Patel", "Singh", "Kumar", "Gupta", "Joshi", "Verma",
+    "Rao", "Mishra", "Agarwal", "Chauhan", "Mehta", "Reddy", "Nair"]
+
+FIRST_NAMES_TR = ["Mehmet", "Ayşe", "Mustafa", "Fatma", "Ali", "Emine", "Ahmet", "Zeynep",
+    "Hasan", "Elif", "Hüseyin", "Merve", "İbrahim", "Hatice", "Yusuf", "Esra"]
+LAST_NAMES_TR = ["Yılmaz", "Kaya", "Demir", "Çelik", "Şahin", "Yıldız", "Öztürk",
+    "Aydın", "Özdemir", "Arslan", "Doğan", "Kılıç", "Aslan", "Koç"]
+
+FIRST_NAMES_PL = ["Jan", "Anna", "Andrzej", "Maria", "Krzysztof", "Katarzyna", "Piotr", "Małgorzata",
+    "Tomasz", "Agnieszka", "Marcin", "Barbara", "Paweł", "Ewa", "Marek", "Dorota"]
+LAST_NAMES_PL = ["Nowak", "Kowalski", "Wiśniewski", "Wójcik", "Kowalczyk", "Kamiński", "Lewandowski",
+    "Dąbrowski", "Zieliński", "Szymański", "Woźniak", "Kozłowski", "Jankowski"]
+
+FIRST_NAMES_NL = ["Jan", "Maria", "Pieter", "Anna", "Willem", "Elisabeth", "Hendrik", "Johanna",
+    "Cornelis", "Margaretha", "Johannes", "Catharina", "Gerrit", "Adriana", "Dirk", "Petronella"]
+LAST_NAMES_NL = ["de Jong", "Jansen", "de Vries", "van den Berg", "van Dijk", "Bakker", "Janssen",
+    "Visser", "Smit", "Meijer", "de Boer", "Mulder", "de Groot", "Bos"]
+
+FIRST_NAMES_SV = ["Erik", "Maria", "Lars", "Anna", "Anders", "Karin", "Johan", "Eva",
+    "Karl", "Margareta", "Per", "Birgitta", "Nils", "Kristina", "Olof", "Elisabet"]
+LAST_NAMES_SV = ["Andersson", "Johansson", "Karlsson", "Nilsson", "Eriksson", "Larsson", "Olsson",
+    "Persson", "Svensson", "Gustafsson", "Pettersson", "Jonsson", "Lindberg"]
+
+FIRST_NAMES_TH = ["Somchai", "Suda", "Prasit", "Wanida", "Prayut", "Nattaya", "Thaksin", "Kwanchai",
+    "Anon", "Supattra", "Wiroj", "Kanya", "Pichit", "Ratana", "Somsak", "Malai"]
+LAST_NAMES_TH = ["Srisai", "Wongsawat", "Channarong", "Thongdee", "Kaewkla", "Panyarachun",
+    "Shinawatra", "Bunnak", "Charoenpol", "Siripong", "Rattanakorn", "Jirayu"]
+
+FIRST_NAMES_VI = ["Minh", "Linh", "Hùng", "Hạnh", "Tuấn", "Lan", "Đức", "Mai",
+    "Quang", "Ngọc", "Thành", "Hoa", "Phong", "Thảo", "Bình", "Yến"]
+LAST_NAMES_VI = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ",
+    "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý"]
+
+FIRST_NAMES_ID = ["Budi", "Siti", "Agus", "Sri", "Dedi", "Dewi", "Eko", "Rina",
+    "Hadi", "Yuli", "Bambang", "Ani", "Joko", "Mega", "Rudi", "Nani"]
+LAST_NAMES_ID = ["Sutanto", "Wijaya", "Kusuma", "Hartono", "Suharto", "Saputra", "Wibowo",
+    "Santoso", "Gunawan", "Hidayat", "Cahyono", "Prasetyo", "Setiawan"]
+
+# New languages (52 → 60)
+FIRST_NAMES_SI = ["Kamal", "Nirmala", "Chaminda", "Dilani", "Ruwan", "Sanduni", "Ashan", "Iresha",
+    "Nuwan", "Kumari", "Pradeep", "Samanthi", "Lasith", "Gayani", "Dinesh", "Ruwanthi"]
+LAST_NAMES_SI = ["Perera", "Fernando", "Silva", "Jayawardena", "Bandara", "Rathnayake",
+    "Dissanayake", "Wickramasinghe", "Gunawardena", "Kumarasinghe"]
+
+FIRST_NAMES_NE = ["Ram", "Sita", "Krishna", "Gita", "Hari", "Laxmi", "Shyam", "Sarita",
+    "Gopal", "Kamala", "Mohan", "Durga", "Narayan", "Uma", "Bishnu", "Parvati"]
+LAST_NAMES_NE = ["Sharma", "Thapa", "Adhikari", "Shrestha", "Basnet", "Rai", "Gurung",
+    "Tamang", "Magar", "Bhandari", "Khadka", "Poudel", "Rijal"]
+
+FIRST_NAMES_AZ = ["Elçin", "Leyla", "Murad", "Günel", "Farid", "Aynur", "Kamran", "Nigar",
+    "Tural", "Sevda", "Rəşad", "Könül", "Orxan", "Nərmin", "Cavid", "Türkan"]
+LAST_NAMES_AZ = ["Əliyev", "Həsənov", "Hüseynov", "Məmmədov", "Babayev", "Quliyev",
+    "Rəhimov", "Nəsirov", "Əhmədov", "İsmayılov", "Sultanov", "Yusifov"]
+
+FIRST_NAMES_CA = ["Joan", "Maria", "Pere", "Montserrat", "Josep", "Núria", "Jordi", "Carme",
+    "Marc", "Anna", "Albert", "Rosa", "Francesc", "Teresa", "Xavier", "Marta"]
+LAST_NAMES_CA = ["Garcia", "Martínez", "López", "Sánchez", "Fernández", "González", "Rodríguez",
+    "Serra", "Font", "Vila", "Puig", "Ferrer", "Torres", "Soler", "Roca"]
+
+FIRST_NAMES_SQ = ["Agim", "Flutura", "Besnik", "Mimoza", "Dritan", "Lindita", "Ilir", "Besa",
+    "Arben", "Drita", "Shkelqim", "Valbona", "Fatmir", "Teuta", "Gëzim", "Afërdita"]
+LAST_NAMES_SQ = ["Hoxha", "Shehu", "Basha", "Gashi", "Krasniqi", "Berisha", "Leka",
+    "Xhafa", "Dervishi", "Topalli", "Rama", "Meta", "Çela"]
+
+FIRST_NAMES_ZU = ["Sipho", "Nomvula", "Thabo", "Lindiwe", "Mandla", "Nozipho", "Sibusiso", "Zanele",
+    "Bhekisisa", "Thandeka", "Mthunzi", "Nompumelelo", "Sifiso", "Nokuthula", "Dumisani", "Nonhlanhla"]
+LAST_NAMES_ZU = ["Nkosi", "Mthembu", "Zulu", "Dlamini", "Ndlovu", "Ngcobo", "Khumalo",
+    "Cele", "Zwane", "Mkhize", "Shabalala", "Buthelezi", "Sithole"]
+
+FIRST_NAMES_CY = ["Gareth", "Carys", "Dylan", "Sian", "Rhys", "Megan", "Iwan", "Elin",
+    "Owain", "Ffion", "Huw", "Cerys", "Dafydd", "Angharad", "Emyr", "Lowri"]
+LAST_NAMES_CY = ["Jones", "Williams", "Davies", "Evans", "Thomas", "Roberts", "Lewis",
+    "Morgan", "Griffiths", "Hughes", "Edwards", "Owen", "Price"]
+
+FIRST_NAMES_LV = ["Jānis", "Anna", "Andris", "Ieva", "Mārtiņš", "Kristīne", "Kārlis", "Līga",
+    "Artūrs", "Ilze", "Edgars", "Dace", "Raivis", "Inese", "Valdis", "Sandra"]
+LAST_NAMES_LV = ["Bērziņš", "Kalniņš", "Ozoliņš", "Jansons", "Liepiņš", "Ozols", "Krūmiņš",
+    "Balodis", "Eglītis", "Zariņš", "Vītols", "Celmiņš", "Grants"]
+
+# Consolidated name database lookup
+NAME_DB = {
+    "en": (FIRST_NAMES_EN, LAST_NAMES_EN),
+    "de": (FIRST_NAMES_DE, LAST_NAMES_DE),
+    "fr": (FIRST_NAMES_FR, LAST_NAMES_FR),
+    "es": (FIRST_NAMES_ES, LAST_NAMES_ES),
+    "ja": (FIRST_NAMES_JA, LAST_NAMES_JA),
+    "zh": (FIRST_NAMES_ZH, LAST_NAMES_ZH),
+    "ar": (FIRST_NAMES_AR, LAST_NAMES_AR),
+    "ru": (FIRST_NAMES_RU, LAST_NAMES_RU),
+    "ko": (FIRST_NAMES_KO, LAST_NAMES_KO),
+    "it": (FIRST_NAMES_IT, LAST_NAMES_IT),
+    "pt": (FIRST_NAMES_PT, LAST_NAMES_PT),
+    "hi": (FIRST_NAMES_HI, LAST_NAMES_HI),
+    "tr": (FIRST_NAMES_TR, LAST_NAMES_TR),
+    "pl": (FIRST_NAMES_PL, LAST_NAMES_PL),
+    "nl": (FIRST_NAMES_NL, LAST_NAMES_NL),
+    "sv": (FIRST_NAMES_SV, LAST_NAMES_SV),
+    "th": (FIRST_NAMES_TH, LAST_NAMES_TH),
+    "vi": (FIRST_NAMES_VI, LAST_NAMES_VI),
+    "id": (FIRST_NAMES_ID, LAST_NAMES_ID),
+    "si": (FIRST_NAMES_SI, LAST_NAMES_SI),
+    "ne": (FIRST_NAMES_NE, LAST_NAMES_NE),
+    "az": (FIRST_NAMES_AZ, LAST_NAMES_AZ),
+    "ca": (FIRST_NAMES_CA, LAST_NAMES_CA),
+    "sq": (FIRST_NAMES_SQ, LAST_NAMES_SQ),
+    "zu": (FIRST_NAMES_ZU, LAST_NAMES_ZU),
+    "cy": (FIRST_NAMES_CY, LAST_NAMES_CY),
+    "lv": (FIRST_NAMES_LV, LAST_NAMES_LV),
+}
 
 ORGS = ["Acme Corp", "Globex Industries", "Initech Solutions", "Umbrella Corp",
     "Cyberdyne Systems", "Wayne Enterprises", "Stark Industries", "LexCorp",
@@ -156,22 +288,25 @@ class PIIFactory:
     def _pick(self, lst: list) -> Any:
         return self.rng.choice(lst)
 
-    def person_name(self, cluster_id: str | None = None, variant: str = "full_name") -> PIIValue:
-        if self.language == "de":
-            first, last = self._pick(FIRST_NAMES_DE), self._pick(LAST_NAMES_DE)
-        elif self.language == "fr":
-            first, last = self._pick(FIRST_NAMES_FR), self._pick(LAST_NAMES_FR)
-        elif self.language == "es":
-            first, last = self._pick(FIRST_NAMES_ES), self._pick(LAST_NAMES_ES)
-        elif self.language == "ja":
-            first, last = self._pick(FIRST_NAMES_JA), self._pick(LAST_NAMES_JA)
-        elif self.language == "zh":
-            first, last = self._pick(FIRST_NAMES_ZH), self._pick(LAST_NAMES_ZH)
-        elif self.language == "ar":
-            first, last = self._pick(FIRST_NAMES_AR), self._pick(LAST_NAMES_AR)
-        else:
-            first, last = self._pick(FIRST_NAMES_EN), self._pick(LAST_NAMES_EN)
+    def _name_parts(self, forced_first: str | None = None) -> tuple[str, str]:
+        """Get (first, last) name parts for the current language."""
+        firsts, lasts = NAME_DB.get(self.language, NAME_DB["en"])
+        first = forced_first if forced_first else self._pick(firsts)
+        last = self._pick(lasts)
+        return first, last
 
+    def person_name(self, cluster_id: str | None = None, variant: str = "full_name") -> PIIValue:
+        first, last = self._name_parts()
+        return self._build_person_name(first, last, cluster_id, variant)
+
+    def person_name_with_first(self, forced_first: str, cluster_id: str | None = None,
+                                variant: str = "full_name") -> PIIValue:
+        """Generate a person name with a specific first name (for ambiguous tracking)."""
+        first, last = self._name_parts(forced_first=forced_first)
+        return self._build_person_name(first, last, cluster_id, variant)
+
+    def _build_person_name(self, first: str, last: str, cluster_id: str | None,
+                            variant: str) -> PIIValue:
         if variant == "first_name":
             name = first
         elif variant == "last_name":
@@ -372,6 +507,24 @@ class PIIFactory:
         sid = "".join(self.rng.choices(string.hexdigits.lower(), k=32))
         return PIIValue("SESSION_ID", sid, "digital_online", "direct_identifier")
 
+    def cookie_id(self) -> PIIValue:
+        parts = [str(self.rng.randint(1, 9)), str(self.rng.randint(1, 9)),
+                 str(self.rng.randint(100000, 999999)), str(self.rng.randint(100000, 999999))]
+        return PIIValue("COOKIE_ID", f"_ga={'.'.join(parts)}", "digital_online", "direct_identifier")
+
+    def medical_procedure_code(self) -> PIIValue:
+        letter = self._pick(string.ascii_uppercase)
+        num = f"{self.rng.randint(0, 99):02d}.{self.rng.randint(0, 9)}"
+        return PIIValue("MEDICAL_PROCEDURE_CODE", f"{letter}{num}",
+                        "medical_biological", "sensitive_attribute")
+
+    def professional_license(self) -> PIIValue:
+        prefix = self._pick(["RN", "MD", "CPA", "PE", "JD", "LPC", "LCSW"])
+        num = self.rng.randint(100000, 999999)
+        state = self._pick(STATES)
+        return PIIValue("PROFESSIONAL_LICENSE", f"{prefix}-{state}-{num}",
+                        "employment", "direct_identifier")
+
 
 # ─── Record Builder ──────────────────────────────────────────────────────────
 
@@ -399,7 +552,7 @@ def build_record(
     adversarial_difficulty: str = "clean",
     adversarial_techniques: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Build a v2 record from a template string and PII value slots.
+    """Build a record from a template string and PII value slots.
 
     The template uses {slot_name} placeholders. Each slot maps to a PIIValue.
     Offsets are computed after all replacements.
@@ -506,7 +659,7 @@ def build_record(
     return {
         "record_id": record_id,
         "text": result_text,
-        "version": "2.0.0",
+        "version": "1.1.0",
         "annotations": annotations,
         "language": language,
         "script": SCRIPT_MAP.get(language, "Latn"),
@@ -943,7 +1096,7 @@ def generate_temporal(rng: random.Random, count: int) -> list[dict]:
         rec = {
             "record_id": str(uuid.uuid4()),
             "text": full_text,
-            "version": "2.0.0",
+            "version": "1.1.0",
             "annotations": annotations,
             "language": lang,
             "script": SCRIPT_MAP.get(lang, "Latn"),
@@ -1043,10 +1196,141 @@ def generate_edge_cases(rng: random.Random, count: int) -> list[dict]:
     return records
 
 
+def generate_ambiguous_tracking(rng: random.Random, count: int) -> list[dict]:
+    """Generate entity tracking records where two people share a first name.
+
+    Tests whether a pipeline can correctly distinguish and track people who
+    share name components (e.g., "Jack Davis" and "Jack Marshall").
+    """
+    records = []
+
+    templates_shared_first = [
+        "{name1} and {name2} both work at {org}. {name1} handles accounts (email: {email1}) while {name2} manages operations (email: {email2}). Contact {name1_last} at {phone1} or {name2_last} at {phone2}.",
+        "Meeting attendees: {name1}, {name2}, {name3}. {name1_last} presented Q1 results. {name2} disagreed with the projections. {name1} (email: {email1}) will follow up with {name2} (email: {email2}).",
+        "Employees {name1} and {name2} reported to {org}. {name1} (badge: {emp_id1}) arrived first. {name2} (badge: {emp_id2}) arrived later. {name1_last}'s SSN: {ssn1}. {name2_last}'s SSN: {ssn2}.",
+        "{name1} (ID: {emp_id1}) and {name2} (ID: {emp_id2}) are both {job_title}s at {org}. {name1_last} joined in 2020, while {name2_last} joined in 2023. Email {name1} at {email1} or {name2} at {email2}.",
+    ]
+
+    templates_shared_last = [
+        "Patient {name1} (MRN: {mrn1}) and {name2} (MRN: {mrn2}) are registered at {org}. {name1_first}'s diagnosis is {diagnosis1} while {name2_first}'s is {diagnosis2}. Contact the family at {phone1}.",
+        "{name1} and {name2} filed a joint tax return. {name1_first}'s SSN: {ssn1}. {name2_first}'s SSN: {ssn2}. Combined income: {salary}. Address: {address}. Employer: {org}.",
+        "Mr. {name1_last_only} and Mrs. {name2_last_only} (same surname: {name1}) appeared in case {case_no}. {name1_first} testified on Monday. {name2_first} testified on Tuesday. Contact: {phone1}.",
+    ]
+
+    languages = ["en"] * 6 + ["de", "fr", "es", "ja", "zh", "ar"]
+
+    for i in range(count):
+        lang = rng.choice(languages)
+        factory = PIIFactory(rng, lang)
+        firsts_list, lasts_list = NAME_DB.get(lang, NAME_DB["en"])
+
+        use_shared_last = rng.random() < 0.3
+        if use_shared_last:
+            template = rng.choice(templates_shared_last)
+            shared_last = rng.choice(lasts_list)
+            cluster1 = f"ambig_{i}_p1"
+            cluster2 = f"ambig_{i}_p2"
+            first1 = rng.choice(firsts_list)
+            first2 = rng.choice([f for f in firsts_list if f != first1]) if len(firsts_list) > 1 else first1
+
+            name1_full = f"{first1} {shared_last}"
+            name2_full = f"{first2} {shared_last}"
+
+            slots: dict[str, PIIValue] = {
+                "name1": PIIValue("PERSON_NAME", name1_full, "identity_demographics", "direct_identifier",
+                                  cluster_id=cluster1, mention_variant="full_name"),
+                "name2": PIIValue("PERSON_NAME", name2_full, "identity_demographics", "direct_identifier",
+                                  cluster_id=cluster2, mention_variant="full_name"),
+            }
+            if "{name1_first}" in template:
+                slots["name1_first"] = PIIValue("PERSON_NAME", first1, "identity_demographics",
+                                                 "direct_identifier", cluster_id=cluster1, mention_variant="first_name")
+            if "{name2_first}" in template:
+                slots["name2_first"] = PIIValue("PERSON_NAME", first2, "identity_demographics",
+                                                 "direct_identifier", cluster_id=cluster2, mention_variant="first_name")
+            if "{name1_last_only}" in template:
+                slots["name1_last_only"] = PIIValue("PERSON_NAME", shared_last, "identity_demographics",
+                                                     "direct_identifier", cluster_id=cluster1, mention_variant="last_name")
+            if "{name2_last_only}" in template:
+                slots["name2_last_only"] = PIIValue("PERSON_NAME", shared_last, "identity_demographics",
+                                                     "direct_identifier", cluster_id=cluster2, mention_variant="last_name")
+        else:
+            template = rng.choice(templates_shared_first)
+            shared_first = rng.choice(firsts_list)
+            cluster1 = f"ambig_{i}_p1"
+            cluster2 = f"ambig_{i}_p2"
+            last1 = rng.choice(lasts_list)
+            last2 = rng.choice([l for l in lasts_list if l != last1]) if len(lasts_list) > 1 else last1
+
+            name1_full = f"{shared_first} {last1}"
+            name2_full = f"{shared_first} {last2}"
+
+            slots = {
+                "name1": PIIValue("PERSON_NAME", name1_full, "identity_demographics", "direct_identifier",
+                                  cluster_id=cluster1, mention_variant="full_name"),
+                "name2": PIIValue("PERSON_NAME", name2_full, "identity_demographics", "direct_identifier",
+                                  cluster_id=cluster2, mention_variant="full_name"),
+            }
+            if "{name1_last}" in template:
+                slots["name1_last"] = PIIValue("PERSON_NAME", last1, "identity_demographics",
+                                                "direct_identifier", cluster_id=cluster1, mention_variant="last_name")
+            if "{name2_last}" in template:
+                slots["name2_last"] = PIIValue("PERSON_NAME", last2, "identity_demographics",
+                                                "direct_identifier", cluster_id=cluster2, mention_variant="last_name")
+
+        # Third person (if needed)
+        if "{name3}" in template:
+            slots["name3"] = factory.person_name(cluster_id=f"ambig_{i}_p3")
+
+        # Fill remaining slots
+        if "{org}" in template: slots["org"] = factory.org()
+        if "{email1}" in template: slots["email1"] = factory.email(name1_full)
+        if "{email2}" in template: slots["email2"] = factory.email(name2_full)
+        if "{phone1}" in template: slots["phone1"] = factory.phone()
+        if "{phone2}" in template: slots["phone2"] = factory.phone()
+        if "{emp_id1}" in template: slots["emp_id1"] = factory.employee_id()
+        if "{emp_id2}" in template: slots["emp_id2"] = factory.employee_id()
+        if "{ssn1}" in template: slots["ssn1"] = factory.ssn()
+        if "{ssn2}" in template: slots["ssn2"] = factory.ssn()
+        if "{mrn1}" in template: slots["mrn1"] = factory.mrn()
+        if "{mrn2}" in template: slots["mrn2"] = factory.mrn()
+        if "{diagnosis1}" in template: slots["diagnosis1"] = factory.diagnosis()
+        if "{diagnosis2}" in template: slots["diagnosis2"] = factory.diagnosis()
+        if "{salary}" in template: slots["salary"] = factory.salary()
+        if "{address}" in template: slots["address"] = factory.address()
+        if "{case_no}" in template: slots["case_no"] = factory.court_case_number()
+        if "{job_title}" in template: slots["job_title"] = factory.job_title()
+
+        rec = build_record(template, slots, language=lang,
+                           primary_dimension="entity_tracking", domain="general",
+                           difficulty=rng.choice(["hard", "challenging"]),
+                           adversarial_type="name_collision",
+                           adversarial_difficulty="hard",
+                           adversarial_techniques=["shared_name_component"])
+
+        # Build entity tracking metadata
+        chains: dict[str, list[str]] = {}
+        for a in rec["annotations"]:
+            cid = a.get("cluster_id")
+            if cid:
+                chains.setdefault(cid, []).append(a["entity_id"])
+        coref_chains = [ids for ids in chains.values() if len(ids) > 1]
+        rec["entity_tracking"] = {
+            "num_repeated_entities": len(coref_chains),
+            "coreference_chains": coref_chains,
+            "tracking_difficulty": "ambiguous",
+            "num_distinct_persons": len(chains),
+        }
+        records.append(rec)
+
+    return records
+
+
 # ─── Main ────────────────────────────────────────────────────────────────────
 
 GENERATORS = {
     "entity_tracking": (generate_entity_tracking, 10000),
+    "ambiguous_tracking": (generate_ambiguous_tracking, 3000),
     "clinical": (generate_clinical, 5000),
     "financial": (generate_financial, 5000),
     "legal": (generate_legal, 3000),
@@ -1058,7 +1342,7 @@ GENERATORS = {
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate new PII-Anon v2 records")
+    parser = argparse.ArgumentParser(description="Generate new PII-Anon records")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--category", type=str, choices=list(GENERATORS.keys()),
                         help="Generate only this category")

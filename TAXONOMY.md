@@ -1,4 +1,4 @@
-# PII Entity Type Taxonomy v2.0.0
+# PII Entity Type Taxonomy v1.1.0
 
 This document defines the 57 entity types used in the PII-Anon Evaluation Dataset, organized into 9 categories. Each entry includes a definition, sensitivity classification, and regulatory relevance.
 
