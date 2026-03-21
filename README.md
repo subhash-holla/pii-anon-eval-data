@@ -73,6 +73,8 @@ src/pii_anon_datasets/
 | **Writing Scripts** | 23 |
 | **Evaluation Dimensions** | 7 |
 | **Domain Subsets** | 4 (clinical, financial, legal, technology) |
+| **Query-Aware Records** | 5,000 |
+| **Adversarial Records** | 11,110 |
 | **Data Source** | 100% Synthetic (CC0/CC-BY-4.0) |
 | **Real PII** | None |
 | **License** | Apache 2.0 |
@@ -107,9 +109,26 @@ Each record follows a unified schema:
   "difficulty_level": "moderate",
   "context_length_tier": "medium",
   "token_count": 42,
-  "entity_tracking": { ... },
-  "adversarial": { ... },
-  "privacy_risk": { ... },
+  "entity_tracking": {
+    "num_repeated_entities": 3,
+    "coreference_chains": [["e0","e3","e5"]],
+    "tracking_difficulty": "complex",
+    "num_distinct_persons": 2
+  },
+  "adversarial": {
+    "type": "leetspeak",
+    "difficulty": "moderate",
+    "techniques": ["character_substitution"]
+  },
+  "privacy_risk": {
+    "quasi_identifiers": ["AGE", "POSTAL_CODE"],
+    "reidentification_risk": "moderate",
+    "k_anonymity_estimate": 20
+  },
+  "query_context": {
+    "query": "What is the patient's name?",
+    "relevant_entity_ids": ["e0", "e3"]
+  },
   "regulatory_domains": ["gdpr", "ccpa"],
   "provenance": { "source_type": "synthetic", "license": "CC0-1.0" }
 }
@@ -143,7 +162,7 @@ Each record follows a unified schema:
 
 ## Language Coverage
 
-52 languages across 17 writing systems:
+52 languages across 23 writing systems:
 
 | Writing System | Count | Languages |
 |---|---|---|
@@ -163,6 +182,26 @@ Each record follows a unified schema:
 | **Technology** | 5,666 | API_KEY, IP_ADDRESS, MAC_ADDRESS, PASSWORD |
 | **Legal** | 3,000 | COURT_CASE_NUMBER, NATIONAL_ID_NUMBER, PASSPORT_NUMBER |
 
+## Advanced Features
+
+### Query-Aware PII Detection
+5,000 records include `query_context` with a natural language query and the entity IDs relevant to that query. This enables evaluation of context-aware PII masking for RAG systems.
+
+### Adversarial Taxonomy
+11,110 records include structured `adversarial` metadata classifying the obfuscation technique (leetspeak, partial redaction, format noise, dense PII, abbreviation, etc.) and difficulty level.
+
+### Re-identification Risk Scoring
+Every record includes `privacy_risk` with a list of quasi-identifiers, a re-identification risk level, and a k-anonymity estimate based on the quasi-identifier combination.
+
+### Regulatory Domain Tagging
+Every record is tagged with applicable regulatory frameworks (`gdpr`, `hipaa`, `ccpa`, `pci_dss`) based on the entity types present in its annotations.
+
+## Documentation
+
+- **[TAXONOMY.md](TAXONOMY.md)** — Complete entity type taxonomy with definitions, sensitivity classes, and regulatory mapping
+- **[COMPARISON.md](COMPARISON.md)** — Head-to-head comparison with 7 competing PII benchmarks
+- **[CHANGELOG.md](CHANGELOG.md)** — Version history and detailed change log
+
 ## Scripts
 
 The `scripts/` directory contains the full data pipeline:
@@ -176,6 +215,9 @@ PYTHONPATH=. python scripts/generate_records.py --all
 
 # Merge migrated + generated records into canonical file
 python scripts/merge_and_rebuild.py
+
+# Enrich with query_context, adversarial taxonomy, k-anonymity
+python scripts/enrich_pr3.py
 
 # Validate the v2 dataset
 python scripts/validate_v2.py

@@ -7,6 +7,9 @@
   "languages": 52,
   "writing_scripts": 23,
   "evaluation_dimensions": 7,
+  "query_aware_records": 5000,
+  "adversarial_typed_records": 11110,
+  "k_anonymity_estimated_records": 79094,
   "distributions": {
     "by_dimension": {
       "diverse_pii_types": 30974,
