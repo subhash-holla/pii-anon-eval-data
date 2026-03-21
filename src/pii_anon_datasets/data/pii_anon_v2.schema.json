@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/subhash-holla/pii-anon-eval-data/pii_anon_v2.schema.json",
+  "title": "PII-Anon Evaluation Dataset v2.0.0 Record",
+  "description": "Schema for a single record in the PII-Anon Evaluation Dataset v2.0.0",
+  "type": "object",
+  "required": ["record_id", "text", "version", "annotations", "language", "script", "primary_dimension", "dimensions", "data_type", "domain", "difficulty_level", "provenance"],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "Globally unique record identifier (UUID v5)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "text": {
+      "type": "string",
+      "description": "Source text containing PII entities",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "const": "2.0.0"
+    },
+    "annotations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["entity_id", "entity_type", "start", "end", "text", "category", "sensitivity_class"],
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "description": "Record-local annotation identifier",
+            "pattern": "^e\\d+$"
+          },
+          "entity_type": {
+            "type": "string",
+            "description": "Canonical PII entity type",
+            "enum": [
+              "PERSON_NAME", "ORGANIZATION_NAME", "LOCATION_NAME", "NATIONALITY", "GENDER", "AGE", "ETHNICITY", "DISABILITY_STATUS",
+              "EMAIL_ADDRESS", "PHONE_NUMBER", "FAX_NUMBER", "PHONE_COUNTRY_CODE", "PHONE_AREA_CODE", "PHONE_EXTENSION", "MOBILE_DEVICE_ID",
+              "CREDIT_CARD_NUMBER", "CREDIT_CARD_FRAGMENT", "BANK_ACCOUNT_NUMBER", "BANK_ROUTING_NUMBER", "IBAN", "SWIFT_BIC_CODE", "CRYPTOCURRENCY_ADDRESS", "TRANSACTION_ID", "TAX_ID",
+              "USERNAME", "PASSWORD", "API_KEY", "AUTHENTICATION_TOKEN", "SOCIAL_MEDIA_HANDLE", "URL", "IP_ADDRESS", "IPV6_ADDRESS", "MAC_ADDRESS", "DEVICE_IDENTIFIER", "BIOMETRIC_ID",
+              "PASSPORT_NUMBER", "DRIVER_LICENSE_NUMBER", "SOCIAL_SECURITY_NUMBER", "NATIONAL_ID_NUMBER", "VISA_NUMBER", "LICENSE_PLATE", "VEHICLE_IDENTIFICATION_NUMBER",
+              "MEDICAL_RECORD_NUMBER", "HEALTH_CONDITION", "HEALTH_INSURANCE_ID", "INSURANCE_CLAIM_NUMBER", "MEDICATION_NAME", "PROCEDURE_NAME", "GENETIC_MARKER", "PRESCRIPTION_NUMBER",
+              "STREET_ADDRESS", "POSTAL_CODE", "LATITUDE_LONGITUDE", "BUILDING_NAME", "TIMESTAMP", "DATE_OF_BIRTH", "EVENT_DATE",
+              "JOB_TITLE", "SALARY", "EMPLOYEE_ID", "EDUCATION_LEVEL",
+              "POLITICAL_OPINION", "RELIGIOUS_BELIEF", "MARITAL_STATUS", "HOUSEHOLD_SIZE", "VEHICLE_MODEL",
+              "VEHICLE_REGISTRATION", "INSURANCE_POLICY_NUMBER", "MEDICAL_PROCEDURE_CODE", "PROFESSIONAL_LICENSE", "COURT_CASE_NUMBER", "SESSION_ID", "COOKIE_ID", "INVOICE_NUMBER",
+              "SEXUAL_ORIENTATION", "UNION_MEMBERSHIP", "CRIMINAL_RECORD", "BIOMETRIC_TEMPLATE"
+            ]
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Start character offset (inclusive)"
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "End character offset (exclusive)"
+          },
+          "text": {
+            "type": "string",
+            "description": "Extracted span text — must equal record.text[start:end]",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": ["identity_demographics", "contact", "financial", "digital_online", "government_legal", "medical_biological", "location_temporal", "employment", "special_category"]
+          },
+          "sensitivity_class": {
+            "type": "string",
+            "enum": ["direct_identifier", "quasi_identifier", "sensitive_attribute"]
+          },
+          "cluster_id": {
+            "type": ["string", "null"],
+            "description": "Coreference cluster ID for entity tracking"
+          },
+          "mention_variant": {
+            "type": ["string", "null"],
+            "description": "Mention variant (full_name, first_name, abbreviation, pronoun, etc.)"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "language": {
+      "type": "string",
+      "description": "BCP 47 language tag",
+      "minLength": 2
+    },
+    "script": {
+      "type": "string",
+      "description": "ISO 15924 script code"
+    },
+    "language_family": {
+      "type": "string"
+    },
+    "resource_level": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "primary_dimension": {
+      "type": "string",
+      "enum": ["entity_tracking", "multilingual", "context_preservation", "diverse_pii_types", "edge_cases", "format_variations", "temporal_consistency"]
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["entity_tracking", "multilingual", "context_preservation", "diverse_pii_types", "edge_cases", "format_variations", "temporal_consistency"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "data_type": {
+      "type": "string",
+      "enum": ["unstructured_text", "structured", "semi_structured", "code", "logs", "form", "table", "mixed"]
+    },
+    "document_type": {
+      "type": ["string", "null"]
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["general", "clinical", "financial", "legal", "technology", "government", "education", "mixed"]
+    },
+    "difficulty_level": {
+      "type": "string",
+      "enum": ["easy", "moderate", "hard", "challenging"]
+    },
+    "context_length_tier": {
+      "type": "string",
+      "enum": ["short", "medium", "long", "very_long"]
+    },
+    "token_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "entity_tracking": {
+      "type": "object",
+      "properties": {
+        "num_repeated_entities": { "type": "integer", "minimum": 0 },
+        "coreference_chains": { "type": "array" },
+        "tracking_difficulty": { "type": "string" },
+        "num_distinct_persons": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["num_repeated_entities", "coreference_chains", "tracking_difficulty", "num_distinct_persons"]
+    },
+    "adversarial": {
+      "type": "object",
+      "properties": {
+        "type": { "type": ["string", "null"] },
+        "difficulty": { "type": "string", "enum": ["clean", "mild", "moderate", "severe"] },
+        "techniques": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["type", "difficulty", "techniques"]
+    },
+    "privacy_risk": {
+      "type": "object",
+      "properties": {
+        "quasi_identifiers": { "type": "array", "items": { "type": "string" } },
+        "reidentification_risk": { "type": "string", "enum": ["low", "moderate", "high", "critical"] },
+        "k_anonymity_estimate": { "type": ["integer", "null"] }
+      },
+      "required": ["quasi_identifiers", "reidentification_risk"]
+    },
+    "regulatory_domains": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "query_context": {
+      "type": ["object", "null"],
+      "properties": {
+        "query": { "type": "string" },
+        "relevant_entity_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["source_type", "license"],
+      "properties": {
+        "source_type": { "type": "string", "enum": ["synthetic", "curated_public"] },
+        "license": { "type": "string" },
+        "generation_seed": { "type": ["integer", "null"] },
+        "v1_record_id": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "additionalProperties": false
+}
