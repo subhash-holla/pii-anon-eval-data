@@ -26,6 +26,7 @@ DEFAULT_OUTPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon_co
 
 SEED = 4242  # Different seed from generate_records.py
 
+from _version import DATASET_VERSION
 from scripts.generate_records import (
     PIIFactory, PIIValue, NAME_DB, build_record,
     ORGS, DIAGNOSES, MEDICATIONS, PROCEDURES,
@@ -287,7 +288,7 @@ def gen_temporal_consistency(factory: PIIFactory, lang: str, rng: random.Random)
     return {
         "record_id": str(uuid.uuid4()),
         "text": text,
-        "version": "1.1.0",
+        "version": DATASET_VERSION,
         "annotations": annotations,
         "language": lang,
         "script": SCRIPT_MAP.get(lang, "Latn"),

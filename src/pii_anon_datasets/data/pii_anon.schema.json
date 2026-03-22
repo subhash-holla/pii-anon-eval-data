@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/subhash-holla/pii-anon-eval-data/pii_anon.schema.json",
-  "title": "PII-Anon Evaluation Dataset v1.1.0 Record",
-  "description": "Schema for a single record in the PII-Anon Evaluation Dataset v1.1.0",
+  "title": "PII-Anon Evaluation Dataset Record",
+  "description": "Schema for a single record in the PII-Anon Evaluation Dataset",
   "type": "object",
   "required": ["record_id", "text", "version", "annotations", "language", "script", "primary_dimension", "dimensions", "data_type", "domain", "difficulty_level", "provenance"],
   "properties": {
@@ -18,7 +18,8 @@
     },
     "version": {
       "type": "string",
-      "const": "1.1.0"
+      "description": "Dataset version (semver)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
     },
     "annotations": {
       "type": "array",

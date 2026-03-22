@@ -10,8 +10,12 @@ Usage:
 import gzip
 import json
 import random
+import sys
 from collections import Counter
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _version import DATASET_VERSION
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "src" / "pii_anon_datasets" / "data"
@@ -312,7 +316,7 @@ def main():
     data_type_counts = Counter(r.get("data_type", "unknown") for r in records)
 
     metadata = {
-        "version": "1.1.0",
+        "version": DATASET_VERSION,
         "total_records": len(records),
         "total_annotations": total_annotations,
         "entity_types": len(entity_type_counts),

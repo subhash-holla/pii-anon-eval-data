@@ -29,6 +29,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from _version import DATASET_VERSION
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon_generated.jsonl"
 
@@ -659,7 +661,7 @@ def build_record(
     return {
         "record_id": record_id,
         "text": result_text,
-        "version": "1.1.0",
+        "version": DATASET_VERSION,
         "annotations": annotations,
         "language": language,
         "script": SCRIPT_MAP.get(language, "Latn"),
@@ -1096,7 +1098,7 @@ def generate_temporal(rng: random.Random, count: int) -> list[dict]:
         rec = {
             "record_id": str(uuid.uuid4()),
             "text": full_text,
-            "version": "1.1.0",
+            "version": DATASET_VERSION,
             "annotations": annotations,
             "language": lang,
             "script": SCRIPT_MAP.get(lang, "Latn"),

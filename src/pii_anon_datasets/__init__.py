@@ -1,4 +1,4 @@
-"""PII-Anon Evaluation Dataset v1.1.0
+"""PII-Anon Evaluation Dataset
 
 Comprehensive multilingual benchmark for PII detection and de-identification
 evaluation. 117K+ records across 60 languages, 57 entity types, and 7
@@ -25,7 +25,18 @@ import gzip
 import json
 from pathlib import Path
 
-__version__ = "1.1.0"
+def _get_version() -> str:
+    """Read version from pyproject.toml (single source of truth)."""
+    pyproject = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
+    if pyproject.exists():
+        for line in pyproject.read_text().splitlines():
+            if line.startswith("version"):
+                return line.split("=")[1].strip().strip('"')
+    # Fallback for installed packages where pyproject.toml isn't alongside source
+    from importlib.metadata import version
+    return version(__name__)
+
+__version__ = _get_version()
 __all__ = ["load_dataset", "get_data_path"]
 
 _PACKAGE_DIR = Path(__file__).parent

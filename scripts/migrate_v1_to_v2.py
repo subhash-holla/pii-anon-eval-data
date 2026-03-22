@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Migrate PII-Anon Evaluation Dataset from v1.0.0 to v1.1.0.
+Migrate PII-Anon Evaluation Dataset from v1.0.0 to the current version.
 
 Reads all v1 JSONL files, filters to clean records (no template placeholders),
-deduplicates by text content hash, canonicalizes entity types, applies unified
-v1.1.0 schema, assigns primary_dimension, and writes a single canonical JSONL file.
+deduplicates by text content hash, canonicalizes entity types, applies the unified
+schema, assigns primary_dimension, and writes a single canonical JSONL file.
 
 Usage:
     python scripts/migrate_v1_to_v2.py [--output-dir src/pii_anon_datasets/data]
@@ -21,6 +21,10 @@ import uuid
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _version import DATASET_VERSION
 
 # ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -555,7 +559,7 @@ def infer_context_length_tier(token_count: int) -> str:
 
 
 def convert_record(rec: dict[str, Any], record_id: str) -> dict[str, Any]:
-    """Convert a v1 record to v1.1.0 schema."""
+    """Convert a v1 record to the current schema."""
     text = rec["text"]
     lang = rec.get("language", "en")
 
@@ -639,7 +643,7 @@ def convert_record(rec: dict[str, Any], record_id: str) -> dict[str, Any]:
     v2_record = {
         "record_id": record_id,
         "text": text,
-        "version": "1.1.0",
+        "version": DATASET_VERSION,
         "annotations": annotations,
         "language": lang,
         "script": rec.get("script") or SCRIPT_MAP.get(lang, "Latn"),
@@ -682,13 +686,13 @@ def convert_record(rec: dict[str, Any], record_id: str) -> dict[str, Any]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Migrate PII-Anon v1.0.0 to v1.1.0")
+    parser = argparse.ArgumentParser(description="Migrate PII-Anon v1.0.0 to current version")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--dry-run", action="store_true", help="Print stats without writing")
     args = parser.parse_args()
 
     print("=" * 70)
-    print("PII-Anon Dataset Migration: v1.0.0 -> v1.1.0")
+    print(f"PII-Anon Dataset Migration: v1.0.0 -> v{DATASET_VERSION}")
     print("=" * 70)
 
     # Phase 1: Read and deduplicate
@@ -769,7 +773,7 @@ def main():
         return
 
     # Phase 2: Convert and write
-    print(f"\nConverting to v1.1.0 schema...")
+    print(f"\nConverting to v{DATASET_VERSION} schema...")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     output_file = args.output_dir / "pii_anon.jsonl"
 
@@ -803,7 +807,7 @@ def main():
     # Phase 3: Generate metadata
     metadata = {
         "dataset": "pii_anon",
-        "version": "1.1.0",
+        "version": DATASET_VERSION,
         "total_records": len(clean_records),
         "total_annotations": total_annotations,
         "unique_entity_types": len(entity_type_counts),
@@ -839,7 +843,7 @@ def main():
     print("\n" + "=" * 70)
     print("MIGRATION SUMMARY")
     print("=" * 70)
-    print(f"Total v1.1.0 records: {len(clean_records)}")
+    print(f"Total records: {len(clean_records)}")
     print(f"Total annotations: {total_annotations}")
     print(f"Unique entity types: {len(entity_type_counts)}")
     print(f"Unique languages: {len(lang_counts)}")

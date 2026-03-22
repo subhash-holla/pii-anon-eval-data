@@ -24,6 +24,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _version import DATASET_VERSION
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_INPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon.jsonl.gz"
 
@@ -76,8 +79,8 @@ def validate_record(rec: dict, line_num: int, seen_ids: set) -> list[str]:
     seen_ids.add(rid)
 
     # Version check
-    if rec.get("version") != "1.1.0":
-        errors.append(f"[{rid}] Invalid version: {rec.get('version')}")
+    if rec.get("version") != DATASET_VERSION:
+        errors.append(f"[{rid}] Invalid version: {rec.get('version')} (expected {DATASET_VERSION})")
 
     # Annotations
     annotations = rec.get("annotations", [])
