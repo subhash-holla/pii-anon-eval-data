@@ -47,7 +47,8 @@
               "JOB_TITLE", "SALARY", "EMPLOYEE_ID", "EDUCATION_LEVEL",
               "POLITICAL_OPINION", "RELIGIOUS_BELIEF", "MARITAL_STATUS", "HOUSEHOLD_SIZE", "VEHICLE_MODEL",
               "VEHICLE_REGISTRATION", "INSURANCE_POLICY_NUMBER", "MEDICAL_PROCEDURE_CODE", "PROFESSIONAL_LICENSE", "COURT_CASE_NUMBER", "SESSION_ID", "COOKIE_ID", "INVOICE_NUMBER",
-              "SEXUAL_ORIENTATION", "UNION_MEMBERSHIP", "CRIMINAL_RECORD", "BIOMETRIC_TEMPLATE"
+              "SEXUAL_ORIENTATION", "UNION_MEMBERSHIP", "CRIMINAL_RECORD", "BIOMETRIC_TEMPLATE",
+              "NPI_NUMBER", "DEA_NUMBER", "MEDICAL_DEVICE_UDI", "BAR_NUMBER", "DOCKET_NUMBER", "CVV", "PIN", "USER_AGENT_STRING"
             ]
           },
           "start": {
@@ -80,6 +81,35 @@
           "mention_variant": {
             "type": ["string", "null"],
             "description": "Mention variant (full_name, first_name, abbreviation, pronoun, etc.)"
+          },
+          "information_anchor_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "How critical this entity is to document meaning (0=incidental, 1=essential)"
+          },
+          "anonymization_strategy": {
+            "type": "string",
+            "enum": ["mask", "pseudonymize", "generalize", "suppress"],
+            "description": "Recommended anonymization approach for this entity"
+          },
+          "context_dependency": {
+            "type": "string",
+            "enum": ["none", "low", "moderate", "high"],
+            "description": "How much entity classification depends on surrounding context"
+          },
+          "nested_entities": {
+            "type": ["array", "null"],
+            "description": "Entities nested within this span (e.g., LOCATION inside ORGANIZATION)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity_type": { "type": "string" },
+                "text": { "type": "string" },
+                "start_offset": { "type": "integer", "description": "Offset relative to parent span start" },
+                "end_offset": { "type": "integer", "description": "Offset relative to parent span start" }
+              }
+            }
           }
         },
         "additionalProperties": false
@@ -174,6 +204,26 @@
       "properties": {
         "query": { "type": "string" },
         "relevant_entity_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "context_preservation": {
+      "type": ["object", "null"],
+      "description": "Anonymized text variants and utility metrics for evaluating anonymization quality",
+      "properties": {
+        "anonymized_masked": { "type": "string", "description": "PII replaced with [ENTITY_TYPE] labels" },
+        "anonymized_pseudonymized": { "type": "string", "description": "PII replaced with consistent fake values" },
+        "anonymized_generalized": { "type": "string", "description": "PII replaced with less specific values" },
+        "utility_metrics": {
+          "type": "object",
+          "properties": {
+            "pii_density": { "type": "number", "description": "Fraction of text characters that are PII" },
+            "semantic_similarity_masked": { "type": "number", "description": "Token-level Jaccard similarity (original vs masked)" },
+            "semantic_similarity_pseudonymized": { "type": "number", "description": "Token-level Jaccard similarity (original vs pseudonymized)" },
+            "information_loss_ratio": { "type": "number", "description": "Weighted fraction of document meaning carried by PII" },
+            "coherence_preserved_pseudonymized": { "type": "boolean" },
+            "coherence_preserved_generalized": { "type": "boolean" }
+          }
+        }
       }
     },
     "provenance": {

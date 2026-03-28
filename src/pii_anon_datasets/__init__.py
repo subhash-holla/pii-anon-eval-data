@@ -1,8 +1,8 @@
 """PII-Anon Evaluation Dataset
 
 Comprehensive multilingual benchmark for PII detection and de-identification
-evaluation. 117K+ records across 60 languages, 57 entity types, and 7
-evaluation dimensions.
+evaluation. 150K+ records across 60 languages, 65 entity types, 20+ document
+formats, and 7 evaluation dimensions.
 
 Usage:
     from pii_anon_datasets import load_dataset, get_data_path
@@ -16,9 +16,13 @@ Usage:
     # Load a domain subset
     records = load_dataset(domain="clinical")
 
-    # Load dev/test splits
+    # Load train/dev/test splits
+    train = load_dataset(split="train")
     dev = load_dataset(split="dev")
     test = load_dataset(split="test")
+
+    # Load adversarial test set
+    adv = load_dataset(split="test_adversarial")
 """
 
 import gzip
@@ -60,7 +64,7 @@ def load_dataset(
     Args:
         subset: Load a dimension subset (e.g., "entity_tracking", "multilingual").
         domain: Load a domain subset (e.g., "clinical", "financial").
-        split: Load a dev/test split ("dev" or "test").
+        split: Load a split ("train", "dev", "test", "test_adversarial", or cross-domain like "test_clinical").
         language: Filter to a specific BCP 47 language code.
         dimension: Filter by primary_dimension value.
 

@@ -1,28 +1,28 @@
 # Benchmark Dataset Comparison
 
-Head-to-head comparison of PII-Anon Evaluation Dataset v1.1.0 against major competing benchmarks for PII detection and de-identification evaluation.
+Head-to-head comparison of PII-Anon Evaluation Dataset v1.2.0 against major competing benchmarks for PII detection and de-identification evaluation.
 
 ## Feature Comparison Matrix
 
-| Feature | PII-Anon v1.1 | Nemotron-PII | AI4Privacy | PII-Bench | TAB | PIILO | SPY | BigCode PII |
-|---------|:-----------:|:------------:|:----------:|:---------:|:---:|:-----:|:---:|:-----------:|
-| **Records** | **117K** | 100K | 220K+ | 2.8K | 1.3K | 22K | 6.6K | 12K |
-| **Languages** | **60** | 1 | 6 | 1 | 1 | 1 | 1 | 1 |
-| **Writing scripts** | **32** | 1 | 3 | 1 | 1 | 1 | 1 | 1 |
-| **Entity types** | **57** | 55+ | 27-47 | 55 | Semantic | 14 | 11 | 6 |
-| **Entity categories** | **9** | - | - | - | 2 | - | - | - |
-| **Eval dimensions** | **7** | - | - | 2 | - | - | - | - |
-| **Coreference** | **25K records** | No | No | No | Yes (small) | No | No | No |
-| **Query-aware** | **8K records** | No | No | 2.8K | No | No | No | No |
-| **Sensitivity class** | **All records** | No | No | No | Yes | No | No | No |
-| **Domain subsets** | **4 domains** | 50+ industries | 3-4 | Multi | Legal | Education | General | Code |
-| **Structured docs** | **Forms, invoices, tables** | Forms, invoices | No | No | No | No | No | Code |
-| **Adversarial** | **Taxonomy + 15K records** | No | No | No | No | No | No | No |
-| **Risk scoring** | **Per-record k-anonymity** | No | No | No | No | No | No | No |
-| **Regulatory tags** | **GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA** | No | No | No | No | No | No | No |
-| **Dev/test splits** | **Stratified 10/90** | Train/test | Yes | Yes | No | No | Yes | Yes |
-| **Data source** | Synthetic | Synthetic | Mixed | Mixed | Real (courts) | Real (essays) | Real (notes) | Real (code) |
-| **License** | Apache 2.0 / CC0 | CC BY 4.0 | Partial open | Open | Open | Kaggle | Restricted | Open |
+| Feature | PII-Anon v1.2 | Nemotron-PII | AI4Privacy | Gretel Finance | PII-Bench | TAB | PIILO | SPY | BigCode PII |
+|---------|:-----------:|:------------:|:----------:|:-----------:|:---------:|:---:|:-----:|:---:|:-----------:|
+| **Records** | **151K** | 200K | 580K | 56K | 2.8K | 1.3K | 22K | 8.7K | 12K |
+| **Languages** | **60** | 1 | 8 | 7 | 1 | 1 | 1 | 1 | 1 |
+| **Writing scripts** | **32** | 1 | 3 | 1 | 1 | 1 | 1 | 1 | 1 |
+| **Entity types** | **65** | 55+ | 20-54 | 18 | 55 | Semantic | 14 | 7 | 6 |
+| **Document types** | **23+** | 50+ | ~5 | 100+ | ~5 | 1 | 1 | 2 | Code |
+| **Eval dimensions** | **7** | - | - | - | 2 | - | - | - | - |
+| **Coreference** | **25K records** | No | No | No | No | Yes (small) | No | No | No |
+| **Query-aware** | **13K records** | No | No | No | 2.8K | No | No | No | No |
+| **Sensitivity class** | **All records** | No | No | No | No | Yes | No | No | No |
+| **Domain subsets** | **4 domains** | 50+ industries | 3-4 | Finance | Multi | Legal | Education | Medical/Legal | Code |
+| **Adversarial** | **23K records, 13+ attack types** | No | No | No | No | No | No | No | No |
+| **Risk scoring** | **Per-record k-anonymity** | No | No | Quality scores | No | No | No | No | No |
+| **Regulatory tags** | **GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA** | No | No | No | No | No | No | No | No |
+| **Train/dev/test** | **70/10/20 stratified** | 50/50 | 80/20 | 90/10 | Yes | 80/10/10 | Competition | No | No |
+| **Baselines** | **Regex, Presidio, CoNLL export** | GLiNER-PII | DistilBERT | GLiNER | LLM baselines | Custom eval | Fine-tuned GPT | Presidio | StarPII |
+| **Data source** | Synthetic | Synthetic | Synthetic | Synthetic | Synthetic | Real (courts) | Real (essays) | Synthetic | Real (code) |
+| **License** | Apache 2.0 / CC0 | CC BY 4.0 | CC BY 4.0 | Apache 2.0 | Open | MIT | CC BY 4.0 | CC BY 4.0 | Gated |
 
 ## Detailed Competitor Analysis
 
@@ -63,27 +63,29 @@ Head-to-head comparison of PII-Anon Evaluation Dataset v1.1.0 against major comp
 
 ## Unique Differentiators
 
-Features available **only** in PII-Anon v1.1.0:
+Features available **only** in PII-Anon v1.2.0:
 
-1. **Multilingual + query-aware PII**: The only dataset combining query-aware PII detection with multilingual support (60 languages)
-2. **7 evaluation dimensions**: Systematic coverage of entity tracking, multilingual, context preservation, diverse PII types, edge cases, format variations, and temporal consistency
-3. **Adversarial taxonomy**: Structured classification of adversarial techniques (leetspeak, partial redaction, format noise, etc.) with 15K labeled records
-4. **Regulatory domain tagging**: Per-record tagging with 7 applicable frameworks (GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA)
-5. **Re-identification risk scoring**: Per-record quasi-identifier analysis with k-anonymity estimates
-6. **Sensitivity classification at scale**: Every annotation across 117K records tagged as direct_identifier, quasi_identifier, or sensitive_attribute
-7. **Domain x Language matrix**: Clinical, financial, legal, and technology subsets available across multiple languages
-8. **Ambiguous entity tracking**: 3K records with shared name components testing disambiguation
+1. **Multi-domain realistic document formats**: 23+ document types spanning clinical (SOAP notes, nursing notes, radiology/pathology reports, transcripts), legal (depositions, witness statements, memos, court opinions), and financial (complaint emails, chat logs, SARs, KYC notes)
+2. **Advanced adversarial test set**: 13 attack categories including Unicode homoglyphs, zero-width chars, BiDi attacks, Base64 encoding, OCR artifacts, negated PII, and context-dependent ambiguity — failure modes where production systems drop from 94% to 14% F1
+3. **Multilingual + query-aware PII**: The only dataset combining query-aware PII detection (13K records) with multilingual support (60 languages)
+4. **7 evaluation dimensions**: Systematic coverage of entity tracking, multilingual, context preservation, diverse PII types, edge cases, format variations, and temporal consistency
+5. **Regulatory domain tagging**: Per-record tagging with 7 applicable frameworks (GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA)
+6. **Evaluation infrastructure**: 70/10/20 train/dev/test splits, cross-domain test sets, baseline scripts (regex, Presidio), CoNLL BIO export, Parquet export
+7. **Re-identification risk scoring**: Per-record quasi-identifier analysis with k-anonymity estimates
+8. **Sensitivity classification at scale**: Every annotation across 150K records tagged as direct_identifier, quasi_identifier, or sensitive_attribute
+9. **Domain x Language matrix**: Clinical, financial, legal, and technology subsets available across multiple languages
+10. **Ambiguous entity tracking**: 3K records with shared name components testing disambiguation
 
 ## Scale Comparison
 
 ```
-AI4Privacy      ████████████████████████████████████████████ 220K
-PII-Anon v1.1     ██████████████████████ 117K
-Nemotron-PII    ███████████████████ 100K
+AI4Privacy 500K ████████████████████████████████████████████████████████████ 580K
+Nemotron-PII    ████████████████████ 200K
+PII-Anon v1.2   ███████████████ 151K
+Gretel Finance  █████████████ 56K
 PIILO           ████ 22K
 BigCode PII     ██ 12K
-Entity Tracking █████ 25K (PII-Anon subset alone)
-SPY             █ 6.6K
+SPY             █ 8.7K
 PII-Bench       ▌ 2.8K
 TAB             ▎ 1.3K
 ```
@@ -91,8 +93,8 @@ TAB             ▎ 1.3K
 ## Language Coverage Comparison
 
 ```
-PII-Anon v1.1     ████████████████████████████████████████████████████████████ 60
-AI4Privacy      ██████ 6
-PIILO           █ 1
+PII-Anon v1.2   ████████████████████████████████████████████████████████████ 60
+AI4Privacy      ████████ 8
+Gretel Finance  ███████ 7
 All others      █ 1
 ```

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pii-anon-datasets"
-version = "1.1.0"
+version = "1.2.0"
 description = "Comprehensive multilingual benchmark dataset for PII detection and de-identification evaluation"
 readme = "README.md"
 requires-python = ">=3.10"

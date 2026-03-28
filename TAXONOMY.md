@@ -1,6 +1,6 @@
-# PII Entity Type Taxonomy v1.1.0
+# PII Entity Type Taxonomy v1.2.0
 
-This document defines the 57 entity types used in the PII-Anon Evaluation Dataset, organized into 9 categories. Each entry includes a definition, sensitivity classification, and regulatory relevance.
+This document defines the 65 entity types used in the PII-Anon Evaluation Dataset, organized into 9 categories. Each entry includes a definition, sensitivity classification, and regulatory relevance.
 
 ## Sensitivity Classes
 
@@ -35,7 +35,7 @@ This document defines the 57 entity types used in the PII-Anon Evaluation Datase
 | `PHONE_EXTENSION` | quasi | Internal extension number | "x4521" |
 | `MOBILE_DEVICE_ID` | direct | Mobile device identifier (IMEI, MEID) | "354837091234567" |
 
-## Category 3: Financial (11 types)
+## Category 3: Financial (13 types)
 
 | Entity Type | Sensitivity | Definition | Example |
 |-------------|------------|------------|---------|
@@ -50,8 +50,10 @@ This document defines the 57 entity types used in the PII-Anon Evaluation Datase
 | `TAX_ID` | direct | Tax identification number (EIN, TIN) | "12-3456789" |
 | `INVOICE_NUMBER` | direct | Commercial invoice identifier | "INV-123456" |
 | `INSURANCE_POLICY_NUMBER` | direct | Insurance policy identifier | "POL-7654321" |
+| `CVV` | direct | Card verification value (3-4 digits) | "123" |
+| `PIN` | direct | Personal identification number | "4521" |
 
-## Category 4: Digital & Online (13 types)
+## Category 4: Digital & Online (14 types)
 
 | Entity Type | Sensitivity | Definition | Example |
 |-------------|------------|------------|---------|
@@ -68,8 +70,9 @@ This document defines the 57 entity types used in the PII-Anon Evaluation Datase
 | `BIOMETRIC_ID` | direct | Biometric identifier reference | "BIO-FP-001234" |
 | `SESSION_ID` | direct | Web session identifier | "sess_abc123def456" |
 | `COOKIE_ID` | direct | Tracking cookie identifier | "ga_1.2.345678.901234" |
+| `USER_AGENT_STRING` | quasi | Browser user agent string | "Mozilla/5.0 (Windows NT 10.0...)" |
 
-## Category 5: Government & Legal (9 types)
+## Category 5: Government & Legal (11 types)
 
 | Entity Type | Sensitivity | Definition | Example |
 |-------------|------------|------------|---------|
@@ -82,8 +85,10 @@ This document defines the 57 entity types used in the PII-Anon Evaluation Datase
 | `VEHICLE_IDENTIFICATION_NUMBER` | direct | Vehicle VIN | "1HGBH41JXMN109186" |
 | `COURT_CASE_NUMBER` | direct | Court case file number | "2024-CV-1234" |
 | `VEHICLE_REGISTRATION` | direct | Vehicle registration document ID | "REG 123" |
+| `BAR_NUMBER` | direct | Bar association number | "CA-123456" |
+| `DOCKET_NUMBER` | direct | Court docket number (PACER format) | "1:24-cv-01234-ABC" |
 
-## Category 6: Medical & Biological (8 types)
+## Category 6: Medical & Biological (11 types)
 
 | Entity Type | Sensitivity | Definition | Example |
 |-------------|------------|------------|---------|
@@ -95,6 +100,9 @@ This document defines the 57 entity types used in the PII-Anon Evaluation Datase
 | `PROCEDURE_NAME` | sensitive | Medical procedure | "Colonoscopy" |
 | `GENETIC_MARKER` | sensitive | Genetic test result or marker | "BRCA1 positive" |
 | `PRESCRIPTION_NUMBER` | direct | Pharmacy prescription ID | "RX-7654321" |
+| `NPI_NUMBER` | direct | National Provider Identifier (10-digit) | "1234567890" |
+| `DEA_NUMBER` | direct | DEA registration number (prescriber ID) | "AB1234563" |
+| `MEDICAL_DEVICE_UDI` | direct | Unique Device Identifier (GS1 format) | "(01)00884838000025" |
 
 ## Category 7: Location & Temporal (7 types)
 

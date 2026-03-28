@@ -1,22 +1,27 @@
-# PII Anonymization Evaluation Dataset v1.1.0
+# PII Anonymization Evaluation Dataset v1.2.0
 
-A comprehensive, multilingual benchmark dataset for evaluating PII detection and de-identification systems. Provides unified evaluation across 60 languages, 57 entity types, and 7 evaluation dimensions with 117,000+ high-quality synthetic records.
+A comprehensive, multilingual benchmark dataset for evaluating PII detection, anonymization quality, and context preservation. Provides unified evaluation across 60 languages, 65 entity types, 31 document formats, and 7 evaluation dimensions with 151,000+ high-quality synthetic records.
+
+**What makes this dataset unique**: It is the only PII benchmark that evaluates both **detection** and **anonymization quality** -- every record includes three anonymized text variants (masked, pseudonymized, generalized) with utility metrics, information anchor scores, and anonymization strategy recommendations.
 
 ## Overview
 
-The **PII-Anon Evaluation Dataset v1.1.0** is a major restructuring and quality improvement over v1.0.0. Key changes:
-
-- **Unified schema**: Single canonical dataset with consistent field names across all records
-- **Clean data only**: All records with template placeholders or broken annotations excluded
-- **117K+ records**: Scaled from 68K to 117K with new domain-specific, entity tracking, and coverage fill records
-- **Dimension-based organization**: Subset files organized by evaluation dimension, domain, and difficulty
-- **4 domain subsets**: Clinical, financial, legal, and technology verticals
-- **Sensitivity classification**: Every annotation tagged as `direct_identifier`, `quasi_identifier`, or `sensitive_attribute`
-- **60 languages**: Expanded from 52 to 60 languages with ≥30 records per language per dimension
-- **Regulatory domain tagging**: Records tagged with applicable regulatory frameworks (GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA)
-- **Coreference tracking**: 25K+ entity tracking records with coreference chains, including 3K ambiguous-name records
-- **Statistical coverage**: Every language × dimension cell has ≥30 records for statistically meaningful evaluation
-- **Dev/test splits**: Stratified 10/90 split by dimension, language, and difficulty
+| Property | Value |
+|----------|-------|
+| **Total Records** | 151,752 |
+| **Total Annotations** | ~1.22M |
+| **Entity Types** | 65 (9 categories) |
+| **Languages** | 60 (32 writing systems) |
+| **Document Types** | 31 (clinical, legal, financial, technology) |
+| **Evaluation Dimensions** | 7 |
+| **Adversarial Attack Categories** | 13+ |
+| **AI-Era Test Cases** | 1,000 (prompt injection, RAG, multi-agent, system prompt leakage) |
+| **Context Preservation** | 100% of records (anonymized variants + utility metrics) |
+| **Nested Entity Annotations** | 136,000+ |
+| **Train/Dev/Test Split** | 70/10/20 (template-level stratified) |
+| **Regulatory Frameworks** | 7 (GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA) |
+| **Data Source** | 100% Synthetic (CC0/CC-BY-4.0) |
+| **License** | Apache 2.0 (code) / CC0 (data) |
 
 ## Installation
 
@@ -38,61 +43,109 @@ entity_tracking = load_dataset(subset="entity_tracking")
 # Load a domain subset
 clinical = load_dataset(domain="clinical")
 
-# Load dev/test splits
-dev = load_dataset(split="dev")
-test = load_dataset(split="test")
+# Load train/dev/test splits
+train = load_dataset(split="train")   # 70%
+dev = load_dataset(split="dev")       # 10%
+test = load_dataset(split="test")     # 20%
+
+# Load adversarial test set (subset of test, no train contamination)
+adversarial = load_dataset(split="test_adversarial")
+
+# Load cross-domain test sets
+test_clinical = load_dataset(split="test_clinical")
 
 # Filter by language
 german = load_dataset(language="de")
 ```
 
-## Dataset Structure
+## Key Differentiators
 
+### 1. Context Preservation (Unique Selling Proposition)
+
+Every record includes three anonymized text variants and utility metrics:
+
+```python
+record["context_preservation"] = {
+    "anonymized_masked": "Patient [PERSON_NAME] (MRN: [MEDICAL_RECORD_NUMBER])...",
+    "anonymized_pseudonymized": "Patient Alex Anderson (MRN: MRN-5678901)...",
+    "anonymized_generalized": "Patient [Person] (MRN: [Medical Record Number])...",
+    "utility_metrics": {
+        "pii_density": 0.35,
+        "semantic_similarity_masked": 0.62,
+        "semantic_similarity_pseudonymized": 0.58,
+        "information_loss_ratio": 0.28,
+        "coherence_preserved_pseudonymized": true,
+        "coherence_preserved_generalized": true
+    }
+}
 ```
-src/pii_anon_datasets/
-  data/
-    pii_anon.jsonl.gz          # Canonical dataset (117K records)
-    pii_anon.metadata.json     # Distribution statistics
-    pii_anon.schema.json       # JSON Schema for validation
-  subsets/
-    by_dimension/                 # 7 evaluation dimension subsets
-    by_domain/                    # Domain-specific subsets (clinical, financial, legal, technology)
-    by_difficulty/                # 4 difficulty levels
-  splits/
-    dev.jsonl.gz                  # 10% stratified dev set
-    test.jsonl.gz                 # 90% stratified test set
+
+Each annotation includes per-entity context metadata:
+
+```python
+annotation["information_anchor_score"] = 0.85  # How critical to document meaning (0-1)
+annotation["anonymization_strategy"] = "pseudonymize"  # mask/pseudonymize/generalize/suppress
+annotation["context_dependency"] = "low"  # none/low/moderate/high
 ```
 
-## Dataset Summary
+### 2. AI-Era Test Cases (1,000 records)
 
-| Property | Value |
-|----------|-------|
-| **Total Records** | 117,752 |
-| **Total Annotations** | 913,983 |
-| **Entity Types** | 57 |
-| **Entity Categories** | 9 |
-| **Languages** | 60 |
-| **Writing Scripts** | 32 |
-| **Evaluation Dimensions** | 7 |
-| **Domain Subsets** | 4 (clinical, financial, legal, technology) |
-| **Query-Aware Records** | 8,168 |
-| **Adversarial Records** | 15,565 |
-| **Ambiguous Entity Tracking** | 3,000 |
-| **Coverage Guarantee** | ≥30 records per language × dimension |
-| **Regulatory Frameworks** | 7 (GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA) |
-| **Data Source** | 100% Synthetic (CC0/CC-BY-4.0) |
-| **Real PII** | None |
-| **License** | Apache 2.0 |
+Purpose-built evaluation scenarios for LLM and agentic systems:
+
+- **Prompt injection PII** (250): Instruction overrides attempting to extract PII from system prompts
+- **RAG context PII** (250): Retrieved documents with PII where only query-relevant info should be shared
+- **Multi-agent PII sharing** (250): Cross-agent PII propagation audit scenarios
+- **System prompt leakage** (250): Credentials and admin PII embedded in system configurations
+
+### 3. Advanced Adversarial Patterns (13+ categories)
+
+Attack patterns where production systems drop from 94% to 14% F1:
+
+| Category | Technique | Records |
+|----------|-----------|---------|
+| Unicode homoglyphs | Cyrillic/Greek lookalike substitution | 1,000 |
+| Zero-width characters | ZWJ/ZWSP/ZWNJ insertion | 800 |
+| BiDi text attacks | RTL override characters | 500 |
+| Base64/URL encoding | Encoded PII in structured context | 1,100 |
+| OCR artifacts | 0/O, 1/l/I, rn/m confusions | 800 |
+| Negated PII | "NOT John Smith" -- still PII | 600 |
+| Context-dependent | "Washington" as name vs location | 600 |
+| Code/URL embedded | PII in JSON, SQL, URL parameters | 1,000 |
+| Mixed-script/Multi-token | Cross-language PII, compound names | 1,100 |
+
+### 4. 31 Realistic Document Formats
+
+**Healthcare (8)**: Progress notes (SOAP), nursing notes, radiology reports, pathology reports, doctor-patient transcripts, referral letters, prescriptions, insurance claims
+
+**Legal (5)**: Deposition transcripts (Q&A), witness statements, legal memos, court opinions, discovery letters
+
+**Financial (7)**: Customer complaint emails, support chat logs, analyst notes, loan narratives, SAR narratives, insurance claims, KYC onboarding notes
+
+**Technology (4)**: Prompt injection scenarios, RAG contexts, multi-agent workflows, system prompt configurations
+
+**General (7)**: Discharge summaries, wire transfers, court filings, forms, invoices, employee rosters, audit logs
+
+### 5. Nested Entity Support
+
+136,000+ annotations include `nested_entities` for overlapping spans:
+
+```python
+{
+    "entity_type": "ORGANIZATION_NAME",
+    "text": "Boston Children's Hospital",
+    "nested_entities": [
+        {"entity_type": "LOCATION_NAME", "text": "Boston", "start_offset": 0, "end_offset": 6}
+    ]
+}
+```
 
 ## Record Schema
-
-Each record follows a unified schema:
 
 ```json
 {
   "record_id": "uuid-v5",
   "text": "Source text with PII entities",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "annotations": [{
     "entity_id": "e0",
     "entity_type": "PERSON_NAME",
@@ -101,40 +154,31 @@ Each record follows a unified schema:
     "category": "identity_demographics",
     "sensitivity_class": "direct_identifier",
     "cluster_id": null,
-    "mention_variant": null
+    "mention_variant": null,
+    "information_anchor_score": 0.85,
+    "anonymization_strategy": "pseudonymize",
+    "context_dependency": "low",
+    "nested_entities": null
   }],
   "language": "en",
   "script": "Latn",
-  "language_family": "Germanic",
-  "resource_level": "high",
   "primary_dimension": "diverse_pii_types",
   "dimensions": ["diverse_pii_types", "context_preservation"],
   "data_type": "unstructured_text",
-  "domain": "general",
+  "document_type": "progress_note",
+  "domain": "clinical",
   "difficulty_level": "moderate",
-  "context_length_tier": "medium",
-  "token_count": 42,
-  "entity_tracking": {
-    "num_repeated_entities": 3,
-    "coreference_chains": [["e0","e3","e5"]],
-    "tracking_difficulty": "complex",
-    "num_distinct_persons": 2
+  "entity_tracking": { "coreference_chains": [["e0","e3"]], "tracking_difficulty": "complex" },
+  "adversarial": { "type": null, "difficulty": "clean", "techniques": [] },
+  "privacy_risk": { "quasi_identifiers": ["AGE"], "reidentification_risk": "low", "k_anonymity_estimate": 100 },
+  "query_context": { "query": "What is the patient's name?", "relevant_entity_ids": ["e0"] },
+  "context_preservation": {
+    "anonymized_masked": "...",
+    "anonymized_pseudonymized": "...",
+    "anonymized_generalized": "...",
+    "utility_metrics": { "pii_density": 0.35, "semantic_similarity_masked": 0.62 }
   },
-  "adversarial": {
-    "type": "leetspeak",
-    "difficulty": "moderate",
-    "techniques": ["character_substitution"]
-  },
-  "privacy_risk": {
-    "quasi_identifiers": ["AGE", "POSTAL_CODE"],
-    "reidentification_risk": "moderate",
-    "k_anonymity_estimate": 20
-  },
-  "query_context": {
-    "query": "What is the patient's name?",
-    "relevant_entity_ids": ["e0", "e3"]
-  },
-  "regulatory_domains": ["gdpr", "ccpa"],
+  "regulatory_domains": ["gdpr", "hipaa"],
   "provenance": { "source_type": "synthetic", "license": "CC0-1.0" }
 }
 ```
@@ -143,130 +187,118 @@ Each record follows a unified schema:
 
 | Dimension | Records | % | Description |
 |-----------|---------|---|-------------|
-| **Diverse PII Types** | 32,414 | 27.5% | Coverage of all 57 entity types |
-| **Entity Tracking** | 25,207 | 21.4% | Coreference across multi-turn contexts (incl. 3K ambiguous) |
-| **Multilingual & Dialect** | 22,716 | 19.3% | 60 languages across 32 writing systems |
-| **Edge Cases** | 12,377 | 10.5% | Misspellings, abbreviations, obfuscation |
-| **Context Preservation** | 10,538 | 8.9% | Semantic integrity during anonymization |
-| **Temporal Consistency** | 7,350 | 6.2% | Time-series entity evolution |
-| **Format Variations** | 7,150 | 6.1% | JSON, XML, CSV, tables, forms |
+| **Diverse PII Types** | 57,414 | 37.8% | Coverage across all 65 entity types |
+| **Entity Tracking** | 25,207 | 16.6% | Coreference across multi-turn contexts (incl. 3K ambiguous) |
+| **Multilingual & Dialect** | 22,716 | 15.0% | 60 languages across 32 writing systems |
+| **Edge Cases** | 20,377 | 13.4% | Adversarial patterns, obfuscation, AI-era test cases |
+| **Context Preservation** | 10,538 | 6.9% | Query-aware PII for RAG systems |
+| **Temporal Consistency** | 7,350 | 4.8% | Time-series entity evolution |
+| **Format Variations** | 7,150 | 4.7% | JSON, XML, CSV, tables, forms |
 
-## Entity Categories (9 categories, 57 types)
+## Entity Categories (9 categories, 65 types)
 
-| Category | Count | Examples |
+| Category | Types | Examples |
 |----------|-------|---------|
-| **Identity & Demographics** | 8 | PERSON_NAME, ORGANIZATION_NAME, NATIONALITY, GENDER |
-| **Contact** | 7 | EMAIL_ADDRESS, PHONE_NUMBER, FAX_NUMBER |
-| **Financial** | 11 | CREDIT_CARD_NUMBER, IBAN, SWIFT_BIC_CODE, TAX_ID, INVOICE_NUMBER, INSURANCE_POLICY_NUMBER |
-| **Digital & Online** | 13 | USERNAME, API_KEY, IP_ADDRESS, MAC_ADDRESS, SESSION_ID, PASSWORD |
-| **Government & Legal** | 9 | PASSPORT_NUMBER, SOCIAL_SECURITY_NUMBER, LICENSE_PLATE, COURT_CASE_NUMBER, VEHICLE_REGISTRATION |
-| **Medical & Biological** | 8 | MEDICAL_RECORD_NUMBER, HEALTH_CONDITION, MEDICATION_NAME, PROCEDURE_NAME |
+| **Identity & Demographics** | 8 | PERSON_NAME, ORGANIZATION_NAME, NATIONALITY, GENDER, AGE, ETHNICITY |
+| **Contact** | 7 | EMAIL_ADDRESS, PHONE_NUMBER, FAX_NUMBER, MOBILE_DEVICE_ID |
+| **Financial** | 13 | CREDIT_CARD_NUMBER, IBAN, BANK_ACCOUNT_NUMBER, CVV, PIN, TAX_ID |
+| **Digital & Online** | 14 | USERNAME, API_KEY, IP_ADDRESS, MAC_ADDRESS, PASSWORD, USER_AGENT_STRING |
+| **Government & Legal** | 11 | PASSPORT_NUMBER, SSN, COURT_CASE_NUMBER, BAR_NUMBER, DOCKET_NUMBER |
+| **Medical & Biological** | 11 | MEDICAL_RECORD_NUMBER, NPI_NUMBER, DEA_NUMBER, HEALTH_CONDITION, MEDICATION_NAME |
 | **Location & Temporal** | 7 | STREET_ADDRESS, POSTAL_CODE, DATE_OF_BIRTH, TIMESTAMP |
 | **Employment** | 4 | JOB_TITLE, SALARY, EMPLOYEE_ID, EDUCATION_LEVEL |
 | **Special Category** | 5 | POLITICAL_OPINION, RELIGIOUS_BELIEF, MARITAL_STATUS |
 
-## Language Coverage
-
-60 languages across 32 writing systems:
-
-| Writing System | Count | Languages |
-|---|---|---|
-| **Latin** | 32 | English, Spanish, French, German, Italian, Portuguese, Dutch, Polish, Turkish, Swedish, Norwegian, Danish, Finnish, Czech, Romanian, Hungarian, Slovak, Croatian, Lithuanian, Estonian, Icelandic, Afrikaans, Vietnamese, Maltese, Catalan, Albanian, Welsh, Latvian, Azerbaijani, Zulu, Indonesian + more |
-| **Cyrillic** | 8 | Russian, Ukrainian, Serbian, Bulgarian, Macedonian, Belarusian, Mongolian, Kazakh |
-| **Arabic** | 6 | Arabic, Persian, Urdu, Pashto, Kurdish, Uyghur |
-| **CJK** | 4 | Simplified Chinese, Traditional Chinese, Japanese, Korean |
-| **Indic** | 4 | Hindi, Bengali, Sinhala, Nepali |
-| **Other** | 6 | Greek, Thai, Hebrew, Georgian, Armenian, Lao, Khmer + more |
-
 ## Domain Coverage
 
-| Domain | Records | Key Entity Types |
-|--------|---------|-----------------|
-| **General** | 81,142 | All types |
-| **Financial** | 14,596 | CREDIT_CARD_NUMBER, IBAN, BANK_ACCOUNT_NUMBER, INVOICE_NUMBER |
-| **Clinical** | 11,698 | MEDICAL_RECORD_NUMBER, HEALTH_CONDITION, MEDICATION_NAME |
-| **Technology** | 7,316 | API_KEY, IP_ADDRESS, MAC_ADDRESS, PASSWORD |
-| **Legal** | 3,000 | COURT_CASE_NUMBER, NATIONAL_ID_NUMBER, PASSPORT_NUMBER |
+| Domain | Records | Key Document Types |
+|--------|---------|-------------------|
+| **General** | 89,142 | Discharge summaries, forms, employee rosters, audit logs |
+| **Financial** | 23,346 | Complaint emails, support chats, SARs, KYC notes, loan narratives |
+| **Clinical** | 21,698 | Progress notes, nursing notes, radiology/pathology reports, prescriptions |
+| **Legal** | 9,250 | Depositions, witness statements, legal memos, court opinions |
+| **Technology** | 7,316 | API logs, code, prompt injection, RAG contexts, multi-agent workflows |
 
-## Advanced Features
+## Evaluation Baselines
 
-### Query-Aware PII Detection
-8,168 records include `query_context` with a natural language query and the entity IDs relevant to that query. This enables evaluation of context-aware PII masking for RAG systems.
+| Baseline | Script | Description |
+|----------|--------|-------------|
+| Regex patterns | `baselines/regex_baseline.py` | Pattern-matching lower bound |
+| Microsoft Presidio | `baselines/presidio_baseline.py` | Industry-standard framework |
+| LLM (GPT-4o, Claude, Llama) | `baselines/llm_baseline.py` | Zero-shot LLM detection |
+| Shared evaluation harness | `baselines/evaluate.py` | Strict F1, partial F1, F2 (beta=2), per-type/domain |
 
-### Ambiguous Entity Tracking
-3,000 records include two or more people who share a first name (e.g., "Jack Davis" and "Jack Marshall") or last name, testing whether a pipeline can correctly disambiguate and independently track each person. These records have `tracking_difficulty: "ambiguous"` and `adversarial.type: "name_collision"`.
+## Tool Integrations
 
-### Adversarial Taxonomy
-15,565 records include structured `adversarial` metadata classifying the obfuscation technique (leetspeak, partial redaction, format noise, dense PII, abbreviation, name collision, etc.) and difficulty level.
-
-### Re-identification Risk Scoring
-Every record includes `privacy_risk` with a list of quasi-identifiers, a re-identification risk level, and a k-anonymity estimate based on the quasi-identifier combination.
-
-### Regulatory Domain Tagging
-Every record is tagged with applicable regulatory frameworks (`gdpr`, `hipaa`, `ccpa`, `pci_dss`, `sox`, `lgpd`, `pipa`) based on the entity types, domain, and language.
-
-### Statistical Coverage Guarantee
-Every language × dimension cell in the 60×7 matrix has ≥30 records, ensuring statistically meaningful evaluation per language per dimension.
-
-## Documentation
-
-- **[TAXONOMY.md](TAXONOMY.md)** — Complete entity type taxonomy with definitions, sensitivity classes, and regulatory mapping
-- **[COMPARISON.md](COMPARISON.md)** — Head-to-head comparison with 7 competing PII benchmarks
-- **[DATASHEET.md](DATASHEET.md)** — Gebru et al. (2021) datasheet for transparency and accountability
-- **[MIGRATION.md](MIGRATION.md)** — v1.0.0 → v1.1.0 migration guide with schema changes and entity type mapping
-- **[CHANGELOG.md](CHANGELOG.md)** — Version history and detailed change log
+| Integration | Script | Description |
+|-------------|--------|-------------|
+| CoNLL BIO/BILOU | `integrations/conll_format.py` | Standard NER format for spaCy, Flair, HuggingFace |
+| Parquet export | `scripts/export_parquet.py` | HuggingFace Hub distribution format |
 
 ## Scripts
 
-The `scripts/` directory contains the full data pipeline:
-
 ```bash
-# Migrate from v1.0.0 (reads v1 files, outputs canonical format)
-python scripts/migrate_v1_to_v2.py
+# Generate v1.2.0 expansion records (document formats + adversarial)
+PYTHONPATH=. python scripts/generate_v120_records.py --all
 
-# Generate new synthetic records (entity tracking, clinical, financial, etc.)
-PYTHONPATH=. python scripts/generate_records.py --all
-
-# Merge migrated + generated records into canonical file
+# Merge all records into canonical file
 python scripts/merge_and_rebuild.py
 
-# Enrich with query_context, adversarial taxonomy, k-anonymity, regulatory tags
+# Enrich with query_context, k-anonymity, regulatory tags
 python scripts/enrich.py
 
-# Fill coverage matrix (every language×dimension ≥ 30 records)
-PYTHONPATH=. python scripts/generate_coverage_fill.py
+# Enrich with context preservation (anonymized variants + utility metrics)
+python scripts/enrich_context_preservation.py
 
-# Validate the dataset
+# Add nested entities and AI-era test cases
+PYTHONPATH=. python scripts/enrich_nested_and_ai_era.py
+
+# Validate the dataset (expect 0 errors)
 PYTHONPATH=. python scripts/validate.py
 
-# Generate subset files from canonical dataset
+# Generate subsets and 70/10/20 splits
 PYTHONPATH=. python scripts/generate_subsets.py
+
+# Run regex baseline
+PYTHONPATH=. python baselines/regex_baseline.py
+
+# Export to CoNLL format
+PYTHONPATH=. python integrations/conll_format.py --split train
 ```
+
+## Documentation
+
+- **[TAXONOMY.md](TAXONOMY.md)** -- 65 entity types with sensitivity classes and regulatory mapping
+- **[COMPARISON.md](COMPARISON.md)** -- Pugh chart comparison with 10 competing benchmarks
+- **[docs/PUGH_CHART_ANALYSIS.md](docs/PUGH_CHART_ANALYSIS.md)** -- Detailed competitive analysis with 8 weighted criteria
+- **[DATASHEET.md](DATASHEET.md)** -- Gebru et al. (2021) datasheet for transparency
+- **[MIGRATION.md](MIGRATION.md)** -- v1.0.0 to v1.1.0 migration guide
+- **[CHANGELOG.md](CHANGELOG.md)** -- Complete version history
 
 ## Citation
 
 ```bibtex
 @dataset{holla2026pii_anon_eval,
-  title={PII Anonymization Evaluation Dataset v1.1.0},
+  title={PII Anonymization Evaluation Dataset v1.2.0},
   author={Holla, Subhash},
   year={2026},
   publisher={GitHub},
   howpublished={\url{https://github.com/subhash-holla/pii-anon-eval-data}},
-  note={Comprehensive multilingual benchmark with 117K records across 60 languages and 57 entity types}
+  note={151K records, 65 entity types, 60 languages, context preservation evaluation}
 }
 ```
 
 ## License
 
-**Apache License 2.0**
-
-- Record content: CC0 (Public Domain) / CC-BY-4.0 (requires attribution)
-- Schema and code: Apache 2.0
+- **Code and scripts**: Apache License 2.0
+- **Record content**: CC0 (Public Domain) / CC-BY-4.0 (requires attribution)
+- **All data is 100% synthetic** -- no real personal information
 
 ## Version History
 
-- **v1.1.0** (2026-03-21) — Major restructuring: unified schema, 117K records, 60 languages, statistical coverage guarantee, ambiguous entity tracking, 7 regulatory frameworks, dev/test splits
-- **v1.0.0** (2026-02-23) — Initial release with `llm_pipeline_core`, `llm_long_context_tracking`, and `eval_framework_v1`
+- **v1.2.0** (2026-03-27) -- Context preservation USP, 31 document formats, 13+ adversarial categories, AI-era test cases, nested entities, LLM baselines, 70/10/20 splits
+- **v1.1.0** (2026-03-21) -- Unified schema, 117K records, 60 languages, statistical coverage guarantee, ambiguous entity tracking, regulatory tagging
+- **v1.0.0** (2026-02-23) -- Initial release
 
 ## Acknowledgements
 

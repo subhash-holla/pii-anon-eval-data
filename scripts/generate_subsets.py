@@ -40,7 +40,8 @@ def main():
     parser = argparse.ArgumentParser(description="Generate PII-Anon subsets")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
-    parser.add_argument("--dev-ratio", type=float, default=0.1, help="Dev set ratio (default 10%%)")
+    parser.add_argument("--train-ratio", type=float, default=0.70, help="Train set ratio (default 70%%)")
+    parser.add_argument("--dev-ratio", type=float, default=0.10, help="Dev set ratio (default 10%%)")
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
@@ -78,8 +79,8 @@ def main():
         if subset:
             write_jsonl_gz(subset, diff_dir / f"{diff}.jsonl.gz")
 
-    # ─── Dev/Test Splits ─────────────────────────────────────────────────
-    print("\nGenerating stratified dev/test splits...")
+    # ─── Train/Dev/Test Splits (70/10/20) ─────────────────────────────────
+    print("\nGenerating stratified train/dev/test splits...")
     splits_dir = args.output_root / "splits"
 
     # Stratify by primary_dimension + language + difficulty
@@ -88,37 +89,78 @@ def main():
         key = f"{r.get('primary_dimension', 'unknown')}|{r.get('language', 'unknown')}|{r.get('difficulty_level', 'unknown')}"
         strata.setdefault(key, []).append(r)
 
+    train_records = []
     dev_records = []
     test_records = []
     for key, records in strata.items():
         random.shuffle(records)
-        split_idx = max(1, int(len(records) * args.dev_ratio))
-        dev_records.extend(records[:split_idx])
-        test_records.extend(records[split_idx:])
+        n = len(records)
+        if n == 1:
+            # Single record goes to train
+            train_records.extend(records)
+        elif n == 2:
+            # 1 train, 1 test (no dev for tiny strata)
+            train_records.append(records[0])
+            test_records.append(records[1])
+        else:
+            # Standard ratio split
+            train_end = max(1, int(n * args.train_ratio))
+            dev_end = train_end + max(1, int(n * args.dev_ratio))
+            # Ensure test gets at least 1 record
+            if dev_end >= n:
+                dev_end = n - 1
+            train_records.extend(records[:train_end])
+            dev_records.extend(records[train_end:dev_end])
+            test_records.extend(records[dev_end:])
 
     # Shuffle final sets
+    random.shuffle(train_records)
     random.shuffle(dev_records)
     random.shuffle(test_records)
 
+    write_jsonl_gz(train_records, splits_dir / "train.jsonl.gz")
     write_jsonl_gz(dev_records, splits_dir / "dev.jsonl.gz")
     write_jsonl_gz(test_records, splits_dir / "test.jsonl.gz")
 
     # Verify no overlap
+    train_ids = {r["record_id"] for r in train_records}
     dev_ids = {r["record_id"] for r in dev_records}
     test_ids = {r["record_id"] for r in test_records}
-    overlap = dev_ids & test_ids
-    if overlap:
-        print(f"  WARNING: {len(overlap)} records in both dev and test!")
-    else:
-        print(f"  No overlap between dev ({len(dev_records)}) and test ({len(test_records)})")
+    assert not (train_ids & dev_ids), "Overlap between train and dev!"
+    assert not (train_ids & test_ids), "Overlap between train and test!"
+    assert not (dev_ids & test_ids), "Overlap between dev and test!"
+    print(f"  No overlap: train ({len(train_records)}), dev ({len(dev_records)}), test ({len(test_records)})")
+
+    # ─── Cross-Domain Test Sets ────────────────────────────────────────
+    print("\nGenerating cross-domain test sets...")
+    for domain in DOMAINS:
+        domain_recs = [r for r in test_records if r.get("domain") == domain]
+        if domain_recs:
+            write_jsonl_gz(domain_recs, splits_dir / f"test_{domain}.jsonl.gz")
+
+    # ─── Adversarial Test Set ──────────────────────────────────────────
+    print("\nGenerating adversarial test set...")
+    adv_types_advanced = {
+        "unicode_homoglyph", "zero_width_char", "bidi_attack", "base64_encoding",
+        "url_encoding", "ocr_artifact", "negated_pii", "context_ambiguous",
+        "partial_redaction_advanced", "code_embedded", "url_embedded",
+        "mixed_script", "multi_token",
+    }
+    adversarial_records = [r for r in test_records
+                           if r.get("adversarial", {}).get("type") in adv_types_advanced]
+    if adversarial_records:
+        write_jsonl_gz(adversarial_records, splits_dir / "test_adversarial.jsonl.gz")
 
     # ─── Print Summary ───────────────────────────────────────────────────
     print(f"\n{'=' * 60}")
     print("SUBSET GENERATION SUMMARY")
     print(f"{'=' * 60}")
     print(f"Canonical records: {len(all_records)}")
+    print(f"Train set: {len(train_records)} ({len(train_records)/len(all_records)*100:.1f}%)")
     print(f"Dev set: {len(dev_records)} ({len(dev_records)/len(all_records)*100:.1f}%)")
     print(f"Test set: {len(test_records)} ({len(test_records)/len(all_records)*100:.1f}%)")
+    if adversarial_records:
+        print(f"Adversarial test set: {len(adversarial_records)}")
 
     dim_counts = Counter(r.get("primary_dimension") for r in all_records)
     print(f"\nDimension subsets:")

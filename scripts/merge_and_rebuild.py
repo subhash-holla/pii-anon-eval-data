@@ -22,6 +22,7 @@ DATA_DIR = REPO_ROOT / "src" / "pii_anon_datasets" / "data"
 CANONICAL_GZ = DATA_DIR / "pii_anon.jsonl.gz"
 GENERATED = DATA_DIR / "pii_anon_generated.jsonl"
 COVERAGE_FILL = DATA_DIR / "pii_anon_coverage.jsonl"
+V120_GENERATED = DATA_DIR / "pii_anon_v120_generated.jsonl"
 OUTPUT_JSONL = DATA_DIR / "pii_anon.jsonl"
 OUTPUT_GZ = DATA_DIR / "pii_anon.jsonl.gz"
 METADATA = DATA_DIR / "pii_anon.metadata.json"
@@ -63,7 +64,7 @@ def main():
 
     # 2. Load generated records from all sources
     generated = []
-    for src_path in [GENERATED, COVERAGE_FILL]:
+    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED]:
         if src_path.exists():
             print(f"Loading {src_path.name}...")
             count = 0
@@ -86,6 +87,10 @@ def main():
             seen_hashes.add(h)
             merged.append(rec)
     print(f"  Merged: {len(merged)} unique records (removed {len(existing) + len(generated) - len(merged)} duplicates)")
+
+    # 3b. Stamp all records with current version
+    for rec in merged:
+        rec["version"] = DATASET_VERSION
 
     # 4. Write uncompressed JSONL
     print("Writing uncompressed JSONL...")
@@ -163,7 +168,7 @@ def main():
         print(f"  {t:30s} {c:>8,}")
 
     # Clean up generated files
-    for src_path in [GENERATED, COVERAGE_FILL]:
+    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED]:
         if src_path.exists():
             print(f"Cleaning up {src_path.name}...")
             src_path.unlink()

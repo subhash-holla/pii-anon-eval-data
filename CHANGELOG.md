@@ -2,6 +2,70 @@
 
 All notable changes to the PII-Anon Evaluation Dataset are documented here.
 
+## [1.2.0] - 2026-03-27
+
+### Added — Context Preservation (USP)
+- **Every record now includes 3 anonymized text variants**: masked (`[PERSON_NAME]`), pseudonymized (consistent fake values), and generalized (less specific values)
+- **Per-annotation metadata**: `information_anchor_score` (0.0-1.0), `anonymization_strategy` (mask/pseudonymize/generalize/suppress), `context_dependency` (none/low/moderate/high)
+- **Utility metrics per record**: PII density, semantic similarity (masked & pseudonymized), information loss ratio, coherence preservation flags
+- This makes PII-Anon the ONLY dataset that evaluates both PII detection AND anonymization quality
+
+### Added — AI-Era Test Cases (1,000 records)
+- **Prompt injection PII**: LLM instruction override attempting to extract PII from system prompts
+- **RAG context PII**: Retrieved documents with PII where only query-relevant info should be shared
+- **Multi-agent PII sharing**: Cross-agent PII propagation audit scenarios
+- **System prompt leakage**: Credentials and admin PII embedded in system configurations
+
+### Added — Nested Entity Support
+- **136,000+ annotations** now include `nested_entities` field for overlapping spans (e.g., "Boston Children's Hospital" with LOCATION inside ORGANIZATION, person names within email addresses)
+
+### Added — LLM Baseline Scripts
+- `baselines/llm_baseline.py`: Evaluation script for GPT-4o, Claude 3.5 Sonnet, and other LLMs with structured prompting
+
+### Added — Realistic Document Formats
+- **20 new document format generators** across three domains:
+  - Healthcare (8): progress notes, nursing notes, radiology reports, pathology reports, clinical transcripts, referral letters, prescriptions, insurance claims
+  - Legal (5): deposition transcripts, witness statements, legal memos, court opinions, discovery letters
+  - Financial (7): complaint emails, support chat logs, analyst notes, loan narratives, SAR narratives, insurance claims, KYC onboarding notes
+- ~25,000 new domain-specific records with realistic document structure (SOAP notes, Q&A depositions, multi-turn chat logs, etc.)
+
+### Added — Advanced Adversarial Patterns
+- **13 new adversarial attack categories** (8,000 records):
+  - Unicode homoglyphs (Cyrillic/Greek lookalikes)
+  - Zero-width character insertion
+  - Bidirectional text (RTL override) attacks
+  - Base64 and URL-encoded PII
+  - OCR artifacts (0/O, 1/l/I, rn/m confusions)
+  - Negated PII ("NOT John Smith")
+  - Context-dependent PII (name vs. location ambiguity)
+  - Partial redaction with context-recoverable patterns
+  - PII in code/JSON, URLs, mixed scripts, multi-token compound names
+- Dedicated adversarial test set (`test_adversarial.jsonl.gz`)
+
+### Added — Entity Type Expansion (57 → 65)
+- 8 new entity types: `NPI_NUMBER`, `DEA_NUMBER`, `MEDICAL_DEVICE_UDI`, `BAR_NUMBER`, `DOCKET_NUMBER`, `CVV`, `PIN`, `USER_AGENT_STRING`
+
+### Added — Evaluation Infrastructure
+- **70/10/20 train/dev/test splits** (template-level stratified, replacing 10/90 dev/test)
+- Cross-domain test sets: `test_clinical`, `test_financial`, `test_legal`, `test_technology`
+- Evaluation harness (`baselines/evaluate.py`) with strict F1, partial F1, F2 (β=2), per-type and per-domain metrics
+- Regex and Presidio baseline scripts with results
+- CoNLL BIO/BILOU export (`integrations/conll_format.py`)
+- Parquet export for HuggingFace Hub (`scripts/export_parquet.py`)
+
+### Changed
+- Total records: 117,752 → 151,752
+- Total annotations: 913,983 → 1,219,637
+- Entity types: 57 → 65
+- Document types: 3 → 31
+- Adversarial records: 15,565 → 24,565
+- Context preservation: 0 → 151,752 records (100%) with anonymized variants + utility metrics
+- Nested entity annotations: 0 → 136,008
+- AI-era test cases: 0 → 1,000
+- Domain distribution rebalanced: clinical 14.4%, financial 15.5%, legal 6.1%
+
+---
+
 ## [1.1.0] - 2026-03-21
 
 ### Major Restructuring
