@@ -480,20 +480,18 @@ def main():
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     tmp_path.replace(OUTPUT_GZ)
 
-    # Stats
+    # Stats — guard against None values (records without masked/pseudonymized variants)
     cp_records = sum(1 for r in records if r.get("context_preservation"))
-    avg_density = sum(
-        r.get("context_preservation", {}).get("utility_metrics", {}).get("pii_density", 0)
-        for r in records
-    ) / max(1, cp_records)
-    avg_sim_masked = sum(
-        r.get("context_preservation", {}).get("utility_metrics", {}).get("semantic_similarity_masked", 0)
-        for r in records
-    ) / max(1, cp_records)
-    avg_sim_pseudo = sum(
-        r.get("context_preservation", {}).get("utility_metrics", {}).get("semantic_similarity_pseudonymized", 0)
-        for r in records
-    ) / max(1, cp_records)
+    def _avg(metric_key):
+        values = [
+            r.get("context_preservation", {}).get("utility_metrics", {}).get(metric_key)
+            for r in records
+        ]
+        values = [v for v in values if v is not None]
+        return sum(values) / max(1, len(values))
+    avg_density = _avg("pii_density")
+    avg_sim_masked = _avg("semantic_similarity_masked")
+    avg_sim_pseudo = _avg("semantic_similarity_pseudonymized")
 
     strategy_counts = Counter()
     dep_counts = Counter()

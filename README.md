@@ -1,22 +1,30 @@
-# PII Anonymization Evaluation Dataset v1.2.0
+# PII Anonymization Evaluation Dataset v1.3.0
 
-A comprehensive, multilingual benchmark dataset for evaluating PII detection, anonymization quality, and context preservation. Provides unified evaluation across 60 languages, 65 entity types, 31 document formats, and 7 evaluation dimensions with 151,000+ high-quality synthetic records.
+A comprehensive, multilingual benchmark dataset for evaluating PII detection, anonymization quality, context preservation, and **resistance to LLM-based semantic re-identification** (Tier 3). Provides unified evaluation across 60 languages, 65 entity types, 40 document formats, and 7 evaluation dimensions with 159,000+ high-quality synthetic records.
 
-**What makes this dataset unique**: It is the only PII benchmark that evaluates both **detection** and **anonymization quality** -- every record includes three anonymized text variants (masked, pseudonymized, generalized) with utility metrics, information anchor scores, and anonymization strategy recommendations.
+**What makes this dataset unique**: PII-Anon is the only benchmark that evaluates **all three tiers** of PII protection:
+- **Tier 1**: Entity-level PII detection (precision, recall, F1, F2)
+- **Tier 2**: Anonymization quality with 4 anonymized text variants (masked, pseudonymized, generalized, LLM-sanitized) plus utility metrics
+- **Tier 3**: Resistance to LLM-based re-identification attacks (Lermen et al. 2026) via behavioral signal annotations, RRS scoring, and paired profile records
 
 ## Overview
 
 | Property | Value |
 |----------|-------|
-| **Total Records** | 151,752 |
-| **Total Annotations** | ~1.22M |
+| **Total Records** | 159,891 |
+| **Total Annotations** | ~1.24M |
 | **Entity Types** | 65 (9 categories) |
 | **Languages** | 60 (32 writing systems) |
-| **Document Types** | 31 (clinical, legal, financial, technology) |
+| **Document Types** | 40 (clinical, legal, financial, technology, Tier 3 evaluation) |
 | **Evaluation Dimensions** | 7 |
-| **Adversarial Attack Categories** | 13+ |
+| **Adversarial Attack Categories** | 17+ |
 | **AI-Era Test Cases** | 1,000 (prompt injection, RAG, multi-agent, system prompt leakage) |
-| **Context Preservation** | 100% of records (anonymized variants + utility metrics) |
+| **Anonymized Variants per Record** | 4 (masked, pseudonymized, generalized, **LLM-sanitized**) |
+| **Behavioral Signal Annotations** | **159,891 (100%)** |
+| **Tier 3 Evaluation Records** | **7,003** (paired profiles + ESRC + stylometric) |
+| **Paired Personas** | **2,500** (5,000 records: pseudonymous + real-identity) |
+| **Per-record RRS Score** | **159,891 (100%)** |
+| **Avg Re-identification Resistance Score** | **0.78** |
 | **Nested Entity Annotations** | 136,000+ |
 | **Train/Dev/Test Split** | 70/10/20 (template-level stratified) |
 | **Regulatory Frameworks** | 7 (GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA) |
@@ -62,23 +70,70 @@ german = load_dataset(language="de")
 
 ### 1. Context Preservation (Unique Selling Proposition)
 
-Every record includes three anonymized text variants and utility metrics:
+Every record includes **four** anonymized text variants and utility metrics:
 
 ```python
 record["context_preservation"] = {
     "anonymized_masked": "Patient [PERSON_NAME] (MRN: [MEDICAL_RECORD_NUMBER])...",
     "anonymized_pseudonymized": "Patient Alex Anderson (MRN: MRN-5678901)...",
     "anonymized_generalized": "Patient [Person] (MRN: [Medical Record Number])...",
+    "anonymized_llm_sanitized": "Patient [...] - clinical assessment unremarkable.",  # NEW v1.3.0: removes PII AND behavioral signals
     "utility_metrics": {
         "pii_density": 0.35,
         "semantic_similarity_masked": 0.62,
         "semantic_similarity_pseudonymized": 0.58,
+        "semantic_similarity_llm_sanitized": 0.42,            # NEW v1.3.0
         "information_loss_ratio": 0.28,
+        "behavioral_signal_residual": 0.18,                    # NEW v1.3.0: how much identity info leaks through
         "coherence_preserved_pseudonymized": true,
-        "coherence_preserved_generalized": true
+        "coherence_preserved_generalized": true,
+        "coherence_preserved_llm_sanitized": true              # NEW v1.3.0
     }
 }
 ```
+
+### 2. Tier 3: Re-identification Resistance (NEW in v1.3.0)
+
+Addresses the Lermen et al. (2026) finding that LLMs can re-identify users at **67% recall / 90% precision** even after all direct PII is removed. Every record includes:
+
+```python
+record["behavioral_signals"] = {
+    "writing_style": {"present": True, "uniqueness": "moderate", "indicators": ["short_sentence_style", "first_person_voice"]},
+    "professional_domain": {"present": True, "uniqueness": "high", "indicators": ["industry_jargon:medical:4"]},
+    "interest_topics": {"present": False, "uniqueness": "none", "indicators": []},
+    "temporal_patterns": {"present": True, "uniqueness": "low", "indicators": ["explicit_timezone"]},
+    "location_signals": {"present": True, "uniqueness": "very_high", "indicators": ["local_reference:boston:the_T"]},
+    "personal_anecdote": {"present": False, "uniqueness": "none", "indicators": []},
+    "behavioral_signal_density": 0.42,                     # 0.0=none, 1.0=highly identifying
+    "reidentification_contribution": "high"                # low/moderate/high/critical
+}
+
+record["privacy_risk"]["re_identification_resistance_score"] = 0.62   # RRS: 0.0=easy reid, 1.0=resistant
+record["privacy_risk"]["estimated_reid_recall"] = 0.38                # estimated ESRC attack recall
+record["privacy_risk"]["tier3_risk_level"] = "moderate"               # low/moderate/high/critical
+```
+
+**Paired Profile Records (5,000 records, 2,500 personas):**
+Each persona has both a pseudonymous forum profile (no direct PII, full behavioral signals) and a real-identity LinkedIn-style profile. Same `persona_id` enables ESRC-attack matching evaluation — directly mirroring the Hacker News ↔ LinkedIn experiment in Lermen et al.
+
+```python
+record["tier3_evaluation"] = {
+    "is_paired_profile": True,
+    "persona_id": "persona_00042",
+    "profile_type": "pseudonymous_forum",
+    "linked_profile_id": "persona_00042_real",
+    "esrc_attack_target": True,
+    "expected_reidentification_difficulty": "moderate",
+    "behavioral_signal_removal_attempted": False
+}
+```
+
+**ESRC-Attack Evaluation Records (2,003 records):**
+- 791: entity-level de-id succeeded but behavioral signals intact (should be re-identifiable)
+- 812: behavioral signals also removed via LLM sanitization (should resist re-identification)
+- 400: adversarial fake-signal injection (confuses matching)
+
+**Stylometric Adversarial (1,136 records):** stylometric_obfuscation, interest_diversification, temporal_pattern_disruption, paraphrased_content
 
 Each annotation includes per-entity context metadata:
 
@@ -88,7 +143,7 @@ annotation["anonymization_strategy"] = "pseudonymize"  # mask/pseudonymize/gener
 annotation["context_dependency"] = "low"  # none/low/moderate/high
 ```
 
-### 2. AI-Era Test Cases (1,000 records)
+### 3. AI-Era Test Cases (1,000 records)
 
 Purpose-built evaluation scenarios for LLM and agentic systems:
 
@@ -97,7 +152,7 @@ Purpose-built evaluation scenarios for LLM and agentic systems:
 - **Multi-agent PII sharing** (250): Cross-agent PII propagation audit scenarios
 - **System prompt leakage** (250): Credentials and admin PII embedded in system configurations
 
-### 3. Advanced Adversarial Patterns (13+ categories)
+### 4. Advanced Adversarial Patterns (17+ categories)
 
 Attack patterns where production systems drop from 94% to 14% F1:
 
@@ -113,7 +168,7 @@ Attack patterns where production systems drop from 94% to 14% F1:
 | Code/URL embedded | PII in JSON, SQL, URL parameters | 1,000 |
 | Mixed-script/Multi-token | Cross-language PII, compound names | 1,100 |
 
-### 4. 31 Realistic Document Formats
+### 5. 40 Realistic Document Formats
 
 **Healthcare (8)**: Progress notes (SOAP), nursing notes, radiology reports, pathology reports, doctor-patient transcripts, referral letters, prescriptions, insurance claims
 
@@ -125,7 +180,9 @@ Attack patterns where production systems drop from 94% to 14% F1:
 
 **General (7)**: Discharge summaries, wire transfers, court filings, forms, invoices, employee rosters, audit logs
 
-### 5. Nested Entity Support
+**Tier 3 Evaluation (9, NEW in v1.3.0)**: paired_profile_pseudonymous, paired_profile_real, esrc_target_signals_intact, esrc_target_signals_removed, esrc_signal_injection, stylometric_obfuscation, interest_diversification, temporal_pattern_disruption, paraphrased_content
+
+### 6. Nested Entity Support
 
 136,000+ annotations include `nested_entities` for overlapping spans:
 
@@ -241,17 +298,26 @@ Attack patterns where production systems drop from 94% to 14% F1:
 # Generate v1.2.0 expansion records (document formats + adversarial)
 PYTHONPATH=. python scripts/generate_v120_records.py --all
 
+# Generate v1.3.0 Tier 3 records (paired profiles + ESRC attack + stylometric)
+PYTHONPATH=. python scripts/generate_v130_records.py --all
+
 # Merge all records into canonical file
 python scripts/merge_and_rebuild.py
 
 # Enrich with query_context, k-anonymity, regulatory tags
 python scripts/enrich.py
 
-# Enrich with context preservation (anonymized variants + utility metrics)
+# Enrich with context preservation (3 anonymized variants + utility metrics)
 python scripts/enrich_context_preservation.py
 
 # Add nested entities and AI-era test cases
 PYTHONPATH=. python scripts/enrich_nested_and_ai_era.py
+
+# v1.3.0: Add behavioral signal annotations + RRS scoring (Tier 3)
+python scripts/enrich_behavioral_signals.py
+
+# v1.3.0: Add 4th anonymized variant (LLM-sanitized) + behavioral_signal_residual
+python scripts/enrich_llm_sanitized.py
 
 # Validate the dataset (expect 0 errors)
 PYTHONPATH=. python scripts/validate.py
@@ -279,12 +345,13 @@ PYTHONPATH=. python integrations/conll_format.py --split train
 
 ```bibtex
 @dataset{holla2026pii_anon_eval,
-  title={PII Anonymization Evaluation Dataset v1.2.0},
+  title={PII Anonymization Evaluation Dataset v1.3.0: Three-Tier Benchmark with Behavioral Signal Annotations},
   author={Holla, Subhash},
   year={2026},
   publisher={GitHub},
   howpublished={\url{https://github.com/subhash-holla/pii-anon-eval-data}},
-  note={151K records, 65 entity types, 60 languages, context preservation evaluation}
+  note={159K records, 65 entity types, 60 languages, 4 anonymized variants per record,
+        behavioral signal annotations for Tier 3 LLM re-identification resistance evaluation}
 }
 ```
 
@@ -296,6 +363,7 @@ PYTHONPATH=. python integrations/conll_format.py --split train
 
 ## Version History
 
+- **v1.3.0** (2026-04-15) -- **Tier 3 evaluation infrastructure**: behavioral signal annotations on all records (6 categories), Re-identification Resistance Score (RRS), 4th anonymized variant (LLM-sanitized), 5K paired profile records (2.5K personas), 2K ESRC-attack records, 4 stylometric adversarial categories. Directly enables PII-Rate-Elo paper Tier 3 framework (addresses Lermen et al. 2026)
 - **v1.2.0** (2026-03-27) -- Context preservation USP, 31 document formats, 13+ adversarial categories, AI-era test cases, nested entities, LLM baselines, 70/10/20 splits
 - **v1.1.0** (2026-03-21) -- Unified schema, 117K records, 60 languages, statistical coverage guarantee, ambiguous entity tracking, regulatory tagging
 - **v1.0.0** (2026-02-23) -- Initial release

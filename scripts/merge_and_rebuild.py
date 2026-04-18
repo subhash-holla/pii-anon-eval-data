@@ -23,6 +23,7 @@ CANONICAL_GZ = DATA_DIR / "pii_anon.jsonl.gz"
 GENERATED = DATA_DIR / "pii_anon_generated.jsonl"
 COVERAGE_FILL = DATA_DIR / "pii_anon_coverage.jsonl"
 V120_GENERATED = DATA_DIR / "pii_anon_v120_generated.jsonl"
+V130_GENERATED = DATA_DIR / "pii_anon_v130_generated.jsonl"
 OUTPUT_JSONL = DATA_DIR / "pii_anon.jsonl"
 OUTPUT_GZ = DATA_DIR / "pii_anon.jsonl.gz"
 METADATA = DATA_DIR / "pii_anon.metadata.json"
@@ -64,7 +65,7 @@ def main():
 
     # 2. Load generated records from all sources
     generated = []
-    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED]:
+    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED, V130_GENERATED]:
         if src_path.exists():
             print(f"Loading {src_path.name}...")
             count = 0
@@ -122,6 +123,22 @@ def main():
     script_counts = Counter(r.get("script", "unknown") for r in merged)
     data_type_counts = Counter(r.get("data_type", "unknown") for r in merged)
 
+    # v1.3.0 Tier 3 aggregate stats
+    behavioral_records = sum(1 for r in merged if r.get("behavioral_signals"))
+    tier3_records = sum(1 for r in merged if r.get("tier3_evaluation"))
+    paired_personas = sum(1 for r in merged if r.get("tier3_evaluation", {}).get("is_paired_profile")) // 2
+    esrc_targets = sum(1 for r in merged if r.get("tier3_evaluation", {}).get("esrc_attack_target"))
+    llm_sanitized = sum(1 for r in merged
+                        if r.get("context_preservation", {}).get("anonymized_llm_sanitized") is not None)
+    rrs_records = sum(1 for r in merged
+                      if r.get("privacy_risk", {}).get("re_identification_resistance_score") is not None)
+    rrs_values = [r["privacy_risk"]["re_identification_resistance_score"] for r in merged
+                  if r.get("privacy_risk", {}).get("re_identification_resistance_score") is not None]
+    avg_rrs = round(sum(rrs_values) / max(1, len(rrs_values)), 4)
+    density_values = [r["behavioral_signals"]["behavioral_signal_density"] for r in merged
+                      if r.get("behavioral_signals")]
+    avg_density = round(sum(density_values) / max(1, len(density_values)), 4)
+
     metadata = {
         "version": DATASET_VERSION,
         "total_records": len(merged),
@@ -131,6 +148,16 @@ def main():
         "languages": len(lang_counts),
         "writing_scripts": len(script_counts),
         "evaluation_dimensions": len(dim_counts),
+        "tier3_evaluation": {
+            "behavioral_signal_records": behavioral_records,
+            "llm_sanitized_records": llm_sanitized,
+            "rrs_scored_records": rrs_records,
+            "tier3_evaluation_records": tier3_records,
+            "paired_personas": paired_personas,
+            "esrc_attack_records": esrc_targets,
+            "avg_re_identification_resistance_score": avg_rrs,
+            "avg_behavioral_signal_density": avg_density,
+        },
         "distributions": {
             "by_dimension": dict(dim_counts.most_common()),
             "by_language": dict(lang_counts.most_common()),
@@ -168,7 +195,7 @@ def main():
         print(f"  {t:30s} {c:>8,}")
 
     # Clean up generated files
-    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED]:
+    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED, V130_GENERATED]:
         if src_path.exists():
             print(f"Cleaning up {src_path.name}...")
             src_path.unlink()

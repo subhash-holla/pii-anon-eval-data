@@ -3,6 +3,25 @@
   "$id": "https://github.com/subhash-holla/pii-anon-eval-data/pii_anon.schema.json",
   "title": "PII-Anon Evaluation Dataset Record",
   "description": "Schema for a single record in the PII-Anon Evaluation Dataset",
+  "$defs": {
+    "behavioralSignal": {
+      "type": "object",
+      "description": "A category of behavioral / quasi-identifier signal that may enable LLM-based re-identification",
+      "properties": {
+        "present": { "type": "boolean" },
+        "uniqueness": {
+          "type": "string",
+          "enum": ["none", "low", "moderate", "high", "very_high"]
+        },
+        "indicators": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Specific indicators detected (e.g. 'industry_jargon:medical', 'local_reference:the_T_Boston')"
+        }
+      },
+      "required": ["present", "uniqueness", "indicators"]
+    }
+  },
   "type": "object",
   "required": ["record_id", "text", "version", "annotations", "language", "script", "primary_dimension", "dimensions", "data_type", "domain", "difficulty_level", "provenance"],
   "properties": {
@@ -23,7 +42,7 @@
     },
     "annotations": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 0,
       "items": {
         "type": "object",
         "required": ["entity_id", "entity_type", "start", "end", "text", "category", "sensitivity_class"],
@@ -191,9 +210,68 @@
       "properties": {
         "quasi_identifiers": { "type": "array", "items": { "type": "string" } },
         "reidentification_risk": { "type": "string", "enum": ["low", "moderate", "high", "critical"] },
-        "k_anonymity_estimate": { "type": ["integer", "null"] }
+        "k_anonymity_estimate": { "type": ["integer", "null"] },
+        "re_identification_resistance_score": {
+          "type": ["number", "null"],
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "RRS: 0.0=easy LLM-based reid, 1.0=resistant. Tier 3 metric per Lermen et al. 2026"
+        },
+        "estimated_reid_recall": {
+          "type": ["number", "null"],
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Estimated recall of an ESRC-style re-identification attack"
+        },
+        "tier3_risk_level": {
+          "type": ["string", "null"],
+          "enum": ["low", "moderate", "high", "critical", null],
+          "description": "Categorical Tier 3 (LLM re-id) risk level"
+        }
       },
       "required": ["quasi_identifiers", "reidentification_risk"]
+    },
+    "behavioral_signals": {
+      "type": ["object", "null"],
+      "description": "Quasi-identifier signals enabling LLM-based re-identification (Lermen et al. 2026, Tier 3)",
+      "properties": {
+        "writing_style": { "$ref": "#/$defs/behavioralSignal" },
+        "professional_domain": { "$ref": "#/$defs/behavioralSignal" },
+        "interest_topics": { "$ref": "#/$defs/behavioralSignal" },
+        "temporal_patterns": { "$ref": "#/$defs/behavioralSignal" },
+        "location_signals": { "$ref": "#/$defs/behavioralSignal" },
+        "personal_anecdote": { "$ref": "#/$defs/behavioralSignal" },
+        "behavioral_signal_density": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Aggregate density of behavioral signals (analogue of pii_density for quasi-identifiers)"
+        },
+        "reidentification_contribution": {
+          "type": "string",
+          "enum": ["low", "moderate", "high", "critical"],
+          "description": "Categorical assessment of overall reidentification contribution"
+        }
+      }
+    },
+    "tier3_evaluation": {
+      "type": ["object", "null"],
+      "description": "Metadata for records purpose-built for Tier 3 (LLM re-identification) evaluation",
+      "properties": {
+        "is_paired_profile": { "type": "boolean" },
+        "persona_id": { "type": ["string", "null"] },
+        "profile_type": {
+          "type": ["string", "null"],
+          "enum": ["pseudonymous_forum", "real_identity", "cross_platform_github", "cross_platform_stackoverflow", "cross_platform_twitter", "cross_platform_linkedin", null]
+        },
+        "linked_profile_id": { "type": ["string", "null"] },
+        "esrc_attack_target": { "type": "boolean" },
+        "expected_reidentification_difficulty": {
+          "type": ["string", "null"],
+          "enum": ["easy", "moderate", "hard", "very_hard", null]
+        },
+        "behavioral_signal_removal_attempted": { "type": "boolean" }
+      }
     },
     "regulatory_domains": {
       "type": "array",
@@ -213,15 +291,30 @@
         "anonymized_masked": { "type": "string", "description": "PII replaced with [ENTITY_TYPE] labels" },
         "anonymized_pseudonymized": { "type": "string", "description": "PII replaced with consistent fake values" },
         "anonymized_generalized": { "type": "string", "description": "PII replaced with less specific values" },
+        "anonymized_llm_sanitized": {
+          "type": ["string", "null"],
+          "description": "Text with both PII AND behavioral signals removed (Tier 3 defense, v1.3.0)"
+        },
         "utility_metrics": {
           "type": "object",
           "properties": {
             "pii_density": { "type": "number", "description": "Fraction of text characters that are PII" },
             "semantic_similarity_masked": { "type": "number", "description": "Token-level Jaccard similarity (original vs masked)" },
             "semantic_similarity_pseudonymized": { "type": "number", "description": "Token-level Jaccard similarity (original vs pseudonymized)" },
+            "semantic_similarity_llm_sanitized": {
+              "type": ["number", "null"],
+              "description": "Jaccard similarity (original vs llm_sanitized) — typically lower since behavioral signals also removed"
+            },
             "information_loss_ratio": { "type": "number", "description": "Weighted fraction of document meaning carried by PII" },
+            "behavioral_signal_residual": {
+              "type": ["number", "null"],
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Estimated fraction of behavioral signals leaking through llm_sanitized variant"
+            },
             "coherence_preserved_pseudonymized": { "type": "boolean" },
-            "coherence_preserved_generalized": { "type": "boolean" }
+            "coherence_preserved_generalized": { "type": "boolean" },
+            "coherence_preserved_llm_sanitized": { "type": ["boolean", "null"] }
           }
         }
       }

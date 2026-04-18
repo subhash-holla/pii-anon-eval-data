@@ -1,26 +1,41 @@
 # Benchmark Dataset Comparison
 
-Head-to-head comparison of PII-Anon Evaluation Dataset v1.2.0 against major competing benchmarks for PII detection and de-identification evaluation.
+Head-to-head comparison of PII-Anon Evaluation Dataset v1.3.0 against major competing benchmarks for PII detection, anonymization, and re-identification resistance evaluation.
+
+## Three-Tier Evaluation Coverage
+
+PII-Anon is the only dataset providing comprehensive coverage across all three tiers of PII protection:
+
+| Tier | What It Evaluates | PII-Anon v1.3 | Nemotron | AI4Privacy | Gretel | PII-Bench | TAB | PIILO | SPY | BigCode |
+|------|-------------------|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| **Tier 1**: Entity-level detection | Precision, recall, F1, F2 | YES | YES | YES | YES | YES | YES | YES | YES | YES |
+| **Tier 2**: Anonymization quality | Utility metrics + multiple variants | **YES (4 variants)** | No | No | Quality scores | No | Privacy/utility split | No | No | No |
+| **Tier 3**: LLM re-identification resistance | Behavioral signals + RRS + paired profiles | **YES (NEW)** | No | No | No | No | No | No | No | No |
 
 ## Feature Comparison Matrix
 
-| Feature | PII-Anon v1.2 | Nemotron-PII | AI4Privacy | Gretel Finance | PII-Bench | TAB | PIILO | SPY | BigCode PII |
+| Feature | PII-Anon v1.3 | Nemotron-PII | AI4Privacy | Gretel Finance | PII-Bench | TAB | PIILO | SPY | BigCode PII |
 |---------|:-----------:|:------------:|:----------:|:-----------:|:---------:|:---:|:-----:|:---:|:-----------:|
-| **Records** | **151K** | 200K | 580K | 56K | 2.8K | 1.3K | 22K | 8.7K | 12K |
+| **Records** | **160K** | 200K | 580K | 56K | 2.8K | 1.3K | 22K | 8.7K | 12K |
 | **Languages** | **60** | 1 | 8 | 7 | 1 | 1 | 1 | 1 | 1 |
 | **Writing scripts** | **32** | 1 | 3 | 1 | 1 | 1 | 1 | 1 | 1 |
 | **Entity types** | **65** | 55+ | 20-54 | 18 | 55 | Semantic | 14 | 7 | 6 |
-| **Document types** | **23+** | 50+ | ~5 | 100+ | ~5 | 1 | 1 | 2 | Code |
+| **Document types** | **40** | 50+ | ~5 | 100+ | ~5 | 1 | 1 | 2 | Code |
+| **Anonymized variants per record** | **4 (masked, pseudo, generalized, llm-sanitized)** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **Behavioral signals (Tier 3)** | **All 160K records, 6 categories** | No | No | No | No | No | No | No | No |
+| **Re-identification Resistance Score (RRS)** | **All 160K records** | No | No | No | No | No | No | No | No |
+| **Paired persona profiles** | **2,500 personas / 5K records** | No | No | No | No | No | No | No | No |
+| **ESRC-attack evaluation records** | **2,003** | No | No | No | No | No | No | No | No |
 | **Eval dimensions** | **7** | - | - | - | 2 | - | - | - | - |
 | **Coreference** | **25K records** | No | No | No | No | Yes (small) | No | No | No |
 | **Query-aware** | **13K records** | No | No | No | 2.8K | No | No | No | No |
 | **Sensitivity class** | **All records** | No | No | No | No | Yes | No | No | No |
-| **Domain subsets** | **4 domains** | 50+ industries | 3-4 | Finance | Multi | Legal | Education | Medical/Legal | Code |
-| **Adversarial** | **23K records, 13+ attack types** | No | No | No | No | No | No | No | No |
-| **Risk scoring** | **Per-record k-anonymity** | No | No | Quality scores | No | No | No | No | No |
+| **Domain subsets** | **5 domains** | 50+ industries | 3-4 | Finance | Multi | Legal | Education | Medical/Legal | Code |
+| **Adversarial** | **24K records, 17+ attack types** | No | No | No | No | No | No | No | No |
+| **Risk scoring** | **k-anonymity + RRS** | No | No | Quality scores | No | No | No | No | No |
 | **Regulatory tags** | **GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA** | No | No | No | No | No | No | No | No |
 | **Train/dev/test** | **70/10/20 stratified** | 50/50 | 80/20 | 90/10 | Yes | 80/10/10 | Competition | No | No |
-| **Baselines** | **Regex, Presidio, CoNLL export** | GLiNER-PII | DistilBERT | GLiNER | LLM baselines | Custom eval | Fine-tuned GPT | Presidio | StarPII |
+| **Baselines** | **Regex, Presidio, LLM, CoNLL export** | GLiNER-PII | DistilBERT | GLiNER | LLM baselines | Custom eval | Fine-tuned GPT | Presidio | StarPII |
 | **Data source** | Synthetic | Synthetic | Synthetic | Synthetic | Synthetic | Real (courts) | Real (essays) | Synthetic | Real (code) |
 | **License** | Apache 2.0 / CC0 | CC BY 4.0 | CC BY 4.0 | Apache 2.0 | Open | MIT | CC BY 4.0 | CC BY 4.0 | Gated |
 

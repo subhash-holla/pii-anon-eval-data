@@ -2,6 +2,88 @@
 
 All notable changes to the PII-Anon Evaluation Dataset are documented here.
 
+## [1.3.0] - 2026-04-15
+
+Major release adding **Tier 3 evaluation infrastructure** for resistance against
+LLM-based semantic re-identification attacks (Lermen et al. 2026, "Large-scale
+online deanonymization with LLMs"). Directly enables the PII-Rate-Elo paper's
+proposed Tier 3 framework extension (Section 4.2.1).
+
+### Added — Behavioral Signal Annotations (Tier 3 USP)
+- **Per-record `behavioral_signals` block** on all 159,891 records covering 6 categories:
+  writing style, professional domain, interest topics, temporal patterns, location signals,
+  personal anecdote markers
+- Each signal has presence flag, uniqueness rating (`none`/`low`/`moderate`/`high`/`very_high`),
+  and detected indicators
+- **`behavioral_signal_density`** (0.0-1.0): aggregate density of identity-revealing signals
+  (analogous to `pii_density` for quasi-identifiers)
+- **`reidentification_contribution`** (low/moderate/high/critical): categorical risk level
+
+### Added — Re-identification Resistance Score (RRS, Tier 3 metric)
+- **`privacy_risk.re_identification_resistance_score`** (0.0=easy reid, 1.0=resistant)
+- **`privacy_risk.estimated_reid_recall`** — estimated ESRC attack recall against this record
+- **`privacy_risk.tier3_risk_level`** (low/moderate/high/critical)
+- All 159,891 records scored
+
+### Added — LLM-Sanitized 4th Anonymized Variant
+- **`context_preservation.anonymized_llm_sanitized`** — text with both PII AND behavioral
+  signals removed (Tier 3 defense)
+- **`utility_metrics.semantic_similarity_llm_sanitized`** — Jaccard vs original
+- **`utility_metrics.behavioral_signal_residual`** — fraction of behavioral info still leaking
+- **`utility_metrics.coherence_preserved_llm_sanitized`**
+
+### Added — Paired Profile Records (5,000 records, 2,500 personas)
+- **2,500 personas × 2 profiles each**: pseudonymous forum profile + real-identity profile
+- Same `persona_id` + `linked_profile_id` enables ESRC-attack matching evaluation
+- Mirrors the Hacker News ↔ LinkedIn experiment in Lermen et al.
+- Distribution: technology (1000 personas), clinical (500), financial (500), legal (250), academic (250)
+
+### Added — ESRC-Attack Evaluation Records (2,003 records)
+- **791 entity-level de-id succeeded, behavioral signals intact** — should be re-identifiable
+- **812 behavioral signals removal attempted** (LLM-sanitized) — should resist re-identification
+- **400 adversarial signal injection** — fake signals to confuse matching
+
+### Added — Stylometric Adversarial Categories (1,136 records)
+- `stylometric_obfuscation`: deliberately altered writing register (formal ↔ informal swap)
+- `interest_diversification`: off-topic content mixed in to defeat topic-based matching
+- `temporal_pattern_disruption`: randomized timezone/posting markers
+- `paraphrased_content`: LLM-rewritten preserving meaning, removing style fingerprints
+
+### Added — Tier 3 Schema Extensions
+- **`tier3_evaluation`** block with `is_paired_profile`, `persona_id`, `profile_type`,
+  `linked_profile_id`, `esrc_attack_target`, `expected_reidentification_difficulty`,
+  `behavioral_signal_removal_attempted`
+- 7,003 records have populated `tier3_evaluation`
+
+### Changed
+- Total records: 151,752 → **159,891** (+8,139)
+- Document types: 31 → **40** (+9 Tier 3 types)
+- Adversarial categories: 13 → **17** (+4 stylometric)
+- Anonymized variants per record: 3 → **4** (added llm_sanitized)
+- Behavioral signal annotations: 0 → **159,891 (100%)**
+- Per-record RRS: 0 → **159,891 (100%)**
+- Tier 3 evaluation records: 0 → **7,003**
+- Paired persona pairs: 0 → **2,500**
+
+### Documentation
+- New: `docs/V13_BEHAVIORAL_SIGNALS.md` — design rationale and schema reference
+- Updated: README.md, TAXONOMY.md, COMPARISON.md with Tier 3 capabilities
+
+### Paper Alignment
+This release directly enables the PII-Rate-Elo paper's Tier 3 framework extension
+(Section 4.2.1, lines 381-399). Maps to recommendations in
+`pii-anon-research-paper/recommendations-dataset-metric-evolution.md`:
+- Recommendation 1 (Tier A): quasi-identifier behavioral annotations ✓
+- Recommendation 2 (Tier A): paired profile datasets ✓
+- Recommendation 3 (Tier A): ESRC-attack evaluation records ✓
+- Recommendation 4 (Tier A): stylometric adversarial categories ✓
+- Recommendation 5 (Tier B): behavioral signal density scoring ✓
+- Recommendation 7 (Tier B): LLM-sanitized variant ✓
+- Metric Recommendation 1 (Tier A): Re-identification Resistance Score (RRS) ✓
+- Metric Recommendation 3 (Tier A): quasi-identifier coverage metric (via category presence) ✓
+
+---
+
 ## [1.2.0] - 2026-03-27
 
 ### Added — Context Preservation (USP)

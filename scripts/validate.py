@@ -84,8 +84,23 @@ def validate_record(rec: dict, line_num: int, seen_ids: set) -> list[str]:
         errors.append(f"[{rid}] Invalid version: {rec.get('version')} (expected {DATASET_VERSION})")
 
     # Annotations
+    # NOTE: Tier 3 evaluation records (v1.3.0) include intentionally de-identified text
+    # with zero PII annotations — they are the "after de-identification" reference for
+    # evaluating LLM-based re-identification resistance.
+    DEID_DOC_TYPES = {
+        "paired_profile_pseudonymous",
+        "esrc_target_signals_intact",
+        "esrc_target_signals_removed",
+        "esrc_signal_injection",
+        "stylometric_obfuscation",
+        "interest_diversification",
+        "temporal_pattern_disruption",
+        "paraphrased_content",
+    }
     annotations = rec.get("annotations", [])
     if not annotations:
+        if rec.get("document_type") in DEID_DOC_TYPES:
+            return errors  # Empty annotations are intentional for Tier 3 records
         errors.append(f"[{rid}] No annotations")
         return errors
 
