@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pii-anon-datasets"
+version = "2.0.0"
+description = "Comprehensive multilingual benchmark dataset for PII detection and de-identification evaluation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{ name = "Subhash Holla" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Security",
+]
+
+[project.urls]
+Homepage = "https://github.com/subhash-holla/pii-anon-eval-data"
+Repository = "https://github.com/subhash-holla/pii-anon-eval-data"
+Documentation = "https://github.com/subhash-holla/pii-anon-eval-data#readme"
+Issues = "https://github.com/subhash-holla/pii-anon-eval-data/issues"
+Changelog = "https://github.com/subhash-holla/pii-anon-eval-data/blob/main/CHANGELOG.md"
+
+# FR-024 / DX-03: the one copy-paste CI invocation surface — five THIN dispatch verbs
+# (generate / score / export / validate / leaderboard); logic lives in the delegated subsystems.
+[project.scripts]
+pii-anon = "pii_anon_datasets.cli:main"
+
+# Optional dependency groups (closes brownfield finding M5 — baselines imported but undeclared).
+# The scoring/stats CORE is pure-stdlib (no runtime deps) per NFR-004.
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov>=5"]
+baselines = ["presidio-analyzer", "presidio-anonymizer", "spacy"]
+# Additional local detector engines for the `pii-anon baselines` leaderboard (presidio/spacy come via [baselines]).
+# Piiranha is an HF model run through `transformers` (no standalone pip package). Heavy libs stay LAZY (NFR-050):
+# the scoring/orchestrator cores import none of these at module load.
+engines = ["gliner>=0.2", "transformers>=4.38", "torch>=2.0", "stanza>=1.8", "flair>=0.14", "scrubadub>=2.0"]
+# Cloud DLP detector SDKs (adapters built behind keys; DECLARED here but NOT run until budget is confirmed).
+cloud = ["boto3", "google-cloud-dlp", "azure-ai-textanalytics"]
+llm = ["anthropic"]            # LLM adversary / baseline (optional; offline adversary is the headline)
+distribution = ["pyarrow", "datasets", "huggingface_hub"]   # S5-02 Parquet export (pyarrow) + NFR-012 loadability (datasets round-trip)
+croissant = ["mlcroissant"]   # S5-03 full Croissant 1.0 spec validation (skip-if-absent; always-on shape check is pure-stdlib)
+viz = ["matplotlib"]           # S4-05 report visualizations (reliability/Pareto/heatmap/Sankey/coverage-risk); resolves power.py::heatmap's install hint
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pii_anon_datasets = [
+  "data/*.jsonl.gz",
+  "data/*.json",
+  "subsets/**/*.jsonl.gz",
+  "splits/*.jsonl.gz",
+]
+
+# DC-15 (NFR-016): test harness config — was 0% coverage at brownfield assessment (finding C1).
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+# S5 close: the sprint/release coverage gate now measures the new packages too (was scoring+stats only).
+# cli.py is the THIN dispatch surface — included now that its dispatch branches are covered to >=85%.
+source = [
+  "pii_anon_datasets.scoring",
+  "pii_anon_datasets.stats",
+  "pii_anon_datasets.compliance",
+  "pii_anon_datasets.distribution",
+  "pii_anon_datasets.reporting",
+  "pii_anon_datasets.integrations",
+  "pii_anon_datasets.cli",
+  "pii_anon_datasets.leaderboard",
+  "pii_anon_datasets.validation",
+  "pii_anon_datasets.subsets",
+]
+branch = true   # NFR-016: branch coverage on scorer/statistical modules (R10 ACCEPTED-WITH-CAVEATS)

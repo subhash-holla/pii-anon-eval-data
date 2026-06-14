@@ -1,0 +1,34 @@
+{
+  "title": "PII Anonymization Evaluation Dataset: Three-Tier Synthetic Benchmark with Behavioral-Signal Annotations",
+  "upload_type": "dataset",
+  "version": "2.0.0",
+  "language": "eng",
+  "access_right": "open",
+  "license": "CC0-1.0",
+  "description": "575,604 fully synthetic records across 60 languages and 63 entity types for evaluating PII detection, anonymization quality, and resistance to LLM-based re-identification. 100% synthetic - contains NO real personal information (AX-001), so the corpus is itself not regulated personal data. The harness/schema code is Apache-2.0; the record content is CC0-1.0. Synthetic-distribution results are not external validity - see CLAIMS_POLICY.md and the real-data correlation slice.",
+  "creators": [
+    { "name": "Holla, Subhash" }
+  ],
+  "keywords": [
+    "PII",
+    "de-identification",
+    "anonymization",
+    "pseudonymization",
+    "synthetic-data",
+    "benchmark",
+    "evaluation",
+    "privacy",
+    "re-identification",
+    "GDPR",
+    "HIPAA"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/subhash-holla/pii-anon-eval-data",
+      "relation": "isSupplementTo",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ],
+  "notes": "Synthetic-only (AX-001) is a permanent invariant: results on this corpus do not establish real-world generalization absent the real-data correlation slice. ~72% of records carry provenance.source_type=synthetic_lattice_enrichment (raises statistical power, not external validity)."
+}

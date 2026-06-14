@@ -1,0 +1,192 @@
+# developer-assistant per-project configuration
+# Read by skills + hooks. Sibling of dev-assist-artifacts/MANIFEST.md.
+# Full schema in ${CLAUDE_PLUGIN_ROOT}/references/config-spec.md.
+#
+# This project is a SYNTHETIC PII BENCHMARK DATASET + evaluation harness, not a
+# typical software product. The vocabulary block below remaps the PDLC's
+# product-centric canonical IDs onto benchmark-dataset concepts so every stage
+# emits benchmark-relevant prose. See dev-assist-artifacts/MANIFEST.md
+# "Methodology Notes" for the full adaptation rationale.
+
+schema_version: 1
+
+# --- Project profile ---------------------------------------------------------
+
+project_name: "pii-anon-eval-data"
+created: "2026-05-28"
+plugin_version: "0.1.0"
+language_profile: "python"
+
+# --- Spec versioning (4D) ----------------------------------------------------
+
+spec_version: "1.0.0"
+template_compatibility: ">=0.1.0 <1.0.0"
+
+# --- Inheritance + extension (4D) --------------------------------------------
+
+extends:
+  profile: null
+  domain_packs: []
+
+scope:
+  type: brownfield                          # existing v1.3.0 benchmark; see 00-brownfield-assessment/
+
+# --- Vocabulary remap (NFR-024) ---------------------------------------------
+# Benchmark-dataset framing of the product-centric PDLC vocabulary.
+
+vocabulary:
+  UC: "Evaluation Scenario"                 # a consumer job: "score query-aware masking on RAG prompts"
+  PGO: "Benchmark Goal"                      # "credibly compare detectors across contextual/multilingual/adversarial slices"
+  FR: "Benchmark Capability"                # a dataset property OR a harness capability
+  NFR: "Quality Attribute"                  # coverage / statistical-power / determinism / calibration / ethics thresholds
+  DC: "Benchmark Component"                 # corpus, schema, generation pipeline, eval harness, scoring/leaderboard, distribution
+  Story: "Build Task"
+
+# --- Domain packs (legacy top-level; superseded by extends.domain_packs) ------
+# None selected: neither `financial` nor `agentic-runtime` fits a benchmark
+# dataset cleanly. Project-specific invariants (no-real-PII, determinism,
+# statistical power) are encoded as project-authored axioms in
+# dev-assist-artifacts/00-axioms/project-axioms.yaml instead.
+
+domain_packs: []
+
+# --- Test mode (K) -----------------------------------------------------------
+
+test_mode: tests-as-stage                   # Stage 5 is the formal verification stage
+                                            # (Stage 4 still runs strict TDD per build task)
+
+# --- Sign-off policy (L) -----------------------------------------------------
+
+signoff:
+  required_at_stage_transitions: false
+  policy: solo
+
+# --- Hook toggles ------------------------------------------------------------
+
+hooks:
+  advisory_or_blocking: advisory
+  enabled:
+    validate_story_on_write: true
+    refresh_manifest: true
+    enforce_plan_naming: true
+    aggregate_review_gate: true
+    notify_gate_completion: true
+    load_manifest_on_session: true
+    journal_story_lifecycle: true
+    journal_git_event: true
+    auto_scaffold_on_stage_complete: true
+    dispatch_reviewers_on_review: true
+    flag_consistency_drift: false
+    sensitive_data_scan: true               # no-real-PII invariant for a PII corpus
+    regen_html_on_write: true
+    learnings_trigger_synthesis: false
+
+# --- Lifecycle journal (A) ---------------------------------------------------
+
+lifecycle_journal:
+  mode: aggregate
+  per_story_threshold: 50
+
+# --- Worktree isolation (E) --------------------------------------------------
+
+worktree:
+  mode: auto                                # allocate when parallel dispatch >= 2 (Stage 4 stories)
+  base_dir: worktrees
+  auto_merge_back_on_done: false            # merge explicitly via /dev-assist-worktree-merge
+
+# --- Reviewer dispatch (C) ---------------------------------------------------
+
+reviewer_dispatch:
+  auto_on_review: true
+  parallelism: 8
+  security_paths: [src, scripts, baselines, integrations]
+  default_model: opus
+
+# --- Manifest reconcile ------------------------------------------------------
+
+manifest:
+  auto_refresh: false
+
+# --- Cross-artifact consistency (F) ------------------------------------------
+
+consistency:
+  hook_enabled: false
+  on_demand_command: true
+  blocking_at_stage_transition: true
+
+# --- Security (G) ------------------------------------------------------------
+
+security:
+  sensitive_data_scan:
+    enforcement: advisory                   # advisory at setup; tighten to blocking once a
+                                            # real-PII pattern set is authored in development
+    exceptions_file: dev-assist-artifacts/00-security/exceptions.yaml
+
+# --- Project axioms (J) ------------------------------------------------------
+
+axioms:
+  registry_path: dev-assist-artifacts/00-axioms/project-axioms.yaml
+  enforce_at_gates: true
+
+# --- HTML renderer -----------------------------------------------------------
+
+html:
+  theme: default
+  auto_regenerate: true
+  engineering_tree_depth: 2
+  custom_logo_path: null
+
+# --- Cohort defaults (4B) — FULL RIGOR ---------------------------------------
+# Set to the methodology-strict reference values (the user chose "Full rigor"):
+# 30 interviews / 60 surveys / 30 design-research participants / 9 SME reviewers.
+
+cohorts:
+  simulated_interviews: 30
+  simulated_surveys: 60
+  concept_value_study: 15
+  diverge_orchestrators: 3
+  user_research_participants: 30
+  sme_reviewers: 9
+  cvs_questions: 30
+
+# --- Persona model (4B) ------------------------------------------------------
+# Personas are BENCHMARK CONSUMERS: ML/NLP researcher, enterprise privacy
+# engineer, privacy-tool vendor, compliance/legal reviewer, academic de-id
+# researcher, agentic-security red-teamer.
+
+personas:
+  classification: priority
+  max_personas: 10
+  target_count: 6
+
+# --- Reviewer matrix (4B) ----------------------------------------------------
+# accessibility dropped from gate_overrides: no interactive UI surface
+# (consumer surface is the HF dataset card + exports + CLI, all markdown/text).
+
+reviewers:
+  default_set: [code-quality, security-sast, requirements-coverage, traceability]
+  optional_set: [accessibility, performance-benchmark, axiom-compliance, contributor-experience]
+  gate_overrides:
+    story:                  { add: [axiom-compliance] }
+    epic:                   { add: [performance-benchmark, axiom-compliance] }
+    sprint:                 { add: [performance-benchmark, axiom-compliance] }
+    release:                { add: [performance-benchmark, axiom-compliance] }
+    contributor_readiness:  { add: [contributor-experience] }
+
+# --- TDD discipline (4B) — STRICT --------------------------------------------
+# World-class benchmark + currently 0% test coverage -> strict RED -> GREEN -> REFACTOR.
+
+tdd:
+  discipline: strict
+  require_red_commit: true
+  require_refactor_commit: false
+
+# --- Testing (4B) ------------------------------------------------------------
+# pass2_required stays false: agent-simulated cohorts are NOT a substitute for
+# real benchmark consumers. Real Pass-2 user research is a genuine follow-up;
+# the release verdict downgrades SHIP -> SHIP-WITH-CAVEATS for DIVERGED items
+# lacking real-user evidence.
+
+testing:
+  pass2_required: false
+  pass2_default_protocol: agent-simulated
