@@ -1,0 +1,17 @@
+# REUSE 3.2 machine-readable licensing (https://reuse.software).
+# Dual license: the harness / schema / docs are Apache-2.0; the SYNTHETIC record content (the .jsonl.gz corpus,
+# splits and subsets) is dedicated to the public domain under CC0-1.0. This mirrors LICENSE (Apache-2.0) +
+# LICENSE-DATA (CC0-1.0), CITATION.cff, and pii_anon.metadata.json.
+version = 1
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Subhash Holla"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "**/*.jsonl.gz"
+precedence = "override"
+SPDX-FileCopyrightText = "PII-Anon — 100% synthetic record content, dedicated to the public domain (no real PII; AX-001)"
+SPDX-License-Identifier = "CC0-1.0"

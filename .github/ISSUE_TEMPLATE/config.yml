@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability (private)
+    url: https://github.com/subhash-holla/pii-anon-eval-data/security/advisories/new
+    about: Do NOT open a public issue for security problems. See SECURITY.md.
+  - name: Question / discussion
+    url: https://github.com/subhash-holla/pii-anon-eval-data/discussions
+    about: Ask questions or discuss ideas.

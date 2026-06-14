@@ -1,0 +1,8 @@
+# Default owner for everything in this repo.
+* @subhash-holla
+
+# Frozen evaluation assets — changes here need extra scrutiny and must preserve the guardrails
+# (committed lattice = 730 cells @ 47c3a8f; corpus 575,604 records; tags v1.3.0 / pre-lattice-enrichment).
+/src/pii_anon_datasets/data/ @subhash-holla
+/src/pii_anon_datasets/taxonomy.py @subhash-holla
+/dev-assist-artifacts/ @subhash-holla

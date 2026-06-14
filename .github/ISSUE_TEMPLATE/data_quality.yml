@@ -1,0 +1,32 @@
+name: Data quality / annotation issue
+description: Report a problem with a record, annotation, or a suspected real-PII leak
+labels: ["data-quality"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **If you suspect a record contains REAL personal data (an AX-001 violation), do NOT paste it here.**
+        Report it privately via **SECURITY.md** with only the `record_id` — never the suspected real data.
+  - type: input
+    id: record_id
+    attributes:
+      label: record_id (if applicable)
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Issue kind
+      options:
+        - Wrong / missing annotation
+        - Wrong entity type
+        - Span boundary error
+        - Provenance / source_type concern
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: Details
+      description: Describe the issue. Synthetic record content may be quoted; do not quote suspected real PII.
+    validations:
+      required: true

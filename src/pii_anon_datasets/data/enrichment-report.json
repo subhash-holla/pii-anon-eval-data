@@ -1,0 +1,45 @@
+{
+  "work_stream": "S-PWR committed-lattice statistical-power enrichment",
+  "date": "2026-05-29",
+  "scope": "Full Broad (user-approved at dry-run checkpoint)",
+  "before": {
+    "records": 159891,
+    "annotations": 1239637
+  },
+  "after": {
+    "records": 575604,
+    "annotations": 2486438
+  },
+  "added": {
+    "records": 415713,
+    "annotations": 1246801
+  },
+  "committed_cells": 730,
+  "count_gated": 710,
+  "power_before": {
+    "well": 251,
+    "under": 200,
+    "empty": 259,
+    "shortfall": 424144,
+    "verdict": "SMALL"
+  },
+  "power_after": {
+    "well": 710,
+    "under": 0,
+    "empty": 0,
+    "shortfall": 0,
+    "verdict": "LARGE"
+  },
+  "seed_lattice": 91237,
+  "determinism": "verified (re-fill identical record_ids; merge stable-sorted by content-addressed id)",
+  "archive": {
+    "pre_tag": "pre-lattice-enrichment",
+    "v1_3_0_tag_intact": true,
+    "manifest": "src/pii_anon_datasets/data/MANIFEST.sha256"
+  },
+  "known_limitations": [
+    "Targeted records are formulaic (carrier template 'Record for {name}, {label}: {target}, contact {email} [#ref]') \u2014 ~72% of the corpus is now enrichment; reduces template diversity. Tagged provenance.source_type='synthetic_lattice_enrichment' (filterable).",
+    "Domain distribution skews to 'general' (cells not pinning a domain default to general). Committed domain marginals + domain\u00d7adv_track cells are individually powered; overall balance is general-heavy.",
+    "Power is statistical precision on the SYNTHETIC distribution, NOT external validity (non-strippable DesignProvenance caveat; real-data correlation slice FR-027 / Pass-2)."
+  ]
+}

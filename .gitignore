@@ -1,0 +1,38 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.so
+.DS_Store
+.venv/
+venv/
+
+# Only track compressed datasets (.jsonl.gz); uncompressed are derived
+src/pii_anon_datasets/data/*.jsonl
+
+# Corpus distributed via HuggingFace, never committed to git (>100MB)
+*.jsonl.gz
+
+# Internal PDLC working artifacts — excluded from the public code snapshot
+dev-assist-artifacts/
+
+# Local run artifacts / logs / scratch (regenerable)
+results/
+logs/
+*.log
+*.out
+
+# Credentials never in git (they live in $HOME)
+*.env
+
+# Quarantined module — never published
+**/significance.py

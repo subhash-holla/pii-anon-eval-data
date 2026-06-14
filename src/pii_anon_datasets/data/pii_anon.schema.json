@@ -1,0 +1,334 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/subhash-holla/pii-anon-eval-data/pii_anon.schema.json",
+  "title": "PII-Anon Evaluation Dataset Record",
+  "description": "Schema for a single record in the PII-Anon Evaluation Dataset",
+  "$defs": {
+    "behavioralSignal": {
+      "type": "object",
+      "description": "A category of behavioral / quasi-identifier signal that may enable LLM-based re-identification",
+      "properties": {
+        "present": { "type": "boolean" },
+        "uniqueness": {
+          "type": "string",
+          "enum": ["none", "low", "moderate", "high", "very_high"]
+        },
+        "indicators": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Specific indicators detected (e.g. 'industry_jargon:medical', 'local_reference:the_T_Boston')"
+        }
+      },
+      "required": ["present", "uniqueness", "indicators"]
+    }
+  },
+  "type": "object",
+  "required": ["record_id", "text", "version", "annotations", "language", "script", "primary_dimension", "dimensions", "data_type", "domain", "difficulty_level", "provenance"],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "Globally unique record identifier (UUID v5)",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "text": {
+      "type": "string",
+      "description": "Source text containing PII entities",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "description": "Dataset version (semver)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "annotations": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["entity_id", "entity_type", "start", "end", "text", "category", "sensitivity_class"],
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "description": "Record-local annotation identifier",
+            "pattern": "^e\\d+$"
+          },
+          "entity_type": {
+            "type": "string",
+            "description": "Canonical PII entity type",
+            "enum": [
+              "PERSON_NAME", "ORGANIZATION_NAME", "LOCATION_NAME", "NATIONALITY", "GENDER", "AGE", "ETHNICITY", "DISABILITY_STATUS",
+              "EMAIL_ADDRESS", "PHONE_NUMBER", "FAX_NUMBER", "PHONE_COUNTRY_CODE", "PHONE_AREA_CODE", "PHONE_EXTENSION", "MOBILE_DEVICE_ID",
+              "CREDIT_CARD_NUMBER", "CREDIT_CARD_FRAGMENT", "BANK_ACCOUNT_NUMBER", "BANK_ROUTING_NUMBER", "IBAN", "SWIFT_BIC_CODE", "CRYPTOCURRENCY_ADDRESS", "TRANSACTION_ID", "TAX_ID",
+              "USERNAME", "PASSWORD", "API_KEY", "AUTHENTICATION_TOKEN", "SOCIAL_MEDIA_HANDLE", "URL", "IP_ADDRESS", "IPV6_ADDRESS", "MAC_ADDRESS", "DEVICE_IDENTIFIER", "BIOMETRIC_ID",
+              "PASSPORT_NUMBER", "DRIVER_LICENSE_NUMBER", "SOCIAL_SECURITY_NUMBER", "NATIONAL_ID_NUMBER", "VISA_NUMBER", "LICENSE_PLATE", "VEHICLE_IDENTIFICATION_NUMBER",
+              "MEDICAL_RECORD_NUMBER", "HEALTH_CONDITION", "HEALTH_INSURANCE_ID", "INSURANCE_CLAIM_NUMBER", "MEDICATION_NAME", "PROCEDURE_NAME", "GENETIC_MARKER", "PRESCRIPTION_NUMBER",
+              "STREET_ADDRESS", "POSTAL_CODE", "LATITUDE_LONGITUDE", "BUILDING_NAME", "TIMESTAMP", "DATE_OF_BIRTH", "EVENT_DATE",
+              "JOB_TITLE", "SALARY", "EMPLOYEE_ID", "EDUCATION_LEVEL",
+              "POLITICAL_OPINION", "RELIGIOUS_BELIEF", "MARITAL_STATUS", "HOUSEHOLD_SIZE", "VEHICLE_MODEL",
+              "VEHICLE_REGISTRATION", "INSURANCE_POLICY_NUMBER", "MEDICAL_PROCEDURE_CODE", "PROFESSIONAL_LICENSE", "COURT_CASE_NUMBER", "SESSION_ID", "COOKIE_ID", "INVOICE_NUMBER",
+              "SEXUAL_ORIENTATION", "UNION_MEMBERSHIP", "CRIMINAL_RECORD", "BIOMETRIC_TEMPLATE",
+              "NPI_NUMBER", "DEA_NUMBER", "MEDICAL_DEVICE_UDI", "BAR_NUMBER", "DOCKET_NUMBER", "CVV", "PIN", "USER_AGENT_STRING"
+            ]
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Start character offset (inclusive)"
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "End character offset (exclusive)"
+          },
+          "text": {
+            "type": "string",
+            "description": "Extracted span text — must equal record.text[start:end]",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": ["identity_demographics", "contact", "financial", "digital_online", "government_legal", "medical_biological", "location_temporal", "employment", "special_category"]
+          },
+          "sensitivity_class": {
+            "type": "string",
+            "enum": ["direct_identifier", "quasi_identifier", "sensitive_attribute"]
+          },
+          "cluster_id": {
+            "type": ["string", "null"],
+            "description": "Coreference cluster ID for entity tracking"
+          },
+          "mention_variant": {
+            "type": ["string", "null"],
+            "description": "Mention variant (full_name, first_name, abbreviation, pronoun, etc.)"
+          },
+          "information_anchor_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "How critical this entity is to document meaning (0=incidental, 1=essential)"
+          },
+          "anonymization_strategy": {
+            "type": "string",
+            "enum": ["mask", "pseudonymize", "generalize", "suppress"],
+            "description": "Recommended anonymization approach for this entity"
+          },
+          "context_dependency": {
+            "type": "string",
+            "enum": ["none", "low", "moderate", "high"],
+            "description": "How much entity classification depends on surrounding context"
+          },
+          "nested_entities": {
+            "type": ["array", "null"],
+            "description": "Entities nested within this span (e.g., LOCATION inside ORGANIZATION)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entity_type": { "type": "string" },
+                "text": { "type": "string" },
+                "start_offset": { "type": "integer", "description": "Offset relative to parent span start" },
+                "end_offset": { "type": "integer", "description": "Offset relative to parent span start" }
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "language": {
+      "type": "string",
+      "description": "BCP 47 language tag",
+      "minLength": 2
+    },
+    "script": {
+      "type": "string",
+      "description": "ISO 15924 script code"
+    },
+    "language_family": {
+      "type": "string"
+    },
+    "resource_level": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "primary_dimension": {
+      "type": "string",
+      "enum": ["entity_tracking", "multilingual", "context_preservation", "diverse_pii_types", "edge_cases", "format_variations", "temporal_consistency"]
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["entity_tracking", "multilingual", "context_preservation", "diverse_pii_types", "edge_cases", "format_variations", "temporal_consistency"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "data_type": {
+      "type": "string",
+      "enum": ["unstructured_text", "structured", "semi_structured", "code", "logs", "form", "table", "csv", "mixed"]
+    },
+    "document_type": {
+      "type": ["string", "null"]
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["general", "clinical", "financial", "legal", "technology", "government", "education", "mixed"]
+    },
+    "difficulty_level": {
+      "type": "string",
+      "enum": ["easy", "moderate", "hard", "challenging"]
+    },
+    "context_length_tier": {
+      "type": "string",
+      "enum": ["short", "medium", "long", "very_long"]
+    },
+    "token_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "entity_tracking": {
+      "type": "object",
+      "properties": {
+        "num_repeated_entities": { "type": "integer", "minimum": 0 },
+        "coreference_chains": { "type": "array" },
+        "tracking_difficulty": { "type": "string", "enum": ["none", "simple", "moderate", "complex", "ambiguous"] },
+        "num_distinct_persons": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["num_repeated_entities", "coreference_chains", "tracking_difficulty", "num_distinct_persons"]
+    },
+    "adversarial": {
+      "type": "object",
+      "properties": {
+        "type": { "type": ["string", "null"] },
+        "difficulty": { "type": "string", "enum": ["clean", "mild", "moderate", "hard", "severe", "challenging"] },
+        "techniques": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["type", "difficulty", "techniques"]
+    },
+    "privacy_risk": {
+      "type": "object",
+      "properties": {
+        "quasi_identifiers": { "type": "array", "items": { "type": "string" } },
+        "reidentification_risk": { "type": "string", "enum": ["low", "moderate", "high", "critical"] },
+        "k_anonymity_estimate": { "type": ["integer", "null"] },
+        "re_identification_resistance_score": {
+          "type": ["number", "null"],
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "RRS: 0.0=easy LLM-based reid, 1.0=resistant. Tier 3 metric per Lermen et al. 2026"
+        },
+        "estimated_reid_recall": {
+          "type": ["number", "null"],
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Estimated recall of an ESRC-style re-identification attack"
+        },
+        "tier3_risk_level": {
+          "type": ["string", "null"],
+          "enum": ["low", "moderate", "high", "critical", null],
+          "description": "Categorical Tier 3 (LLM re-id) risk level"
+        }
+      },
+      "required": ["quasi_identifiers", "reidentification_risk"]
+    },
+    "behavioral_signals": {
+      "type": ["object", "null"],
+      "description": "Quasi-identifier signals enabling LLM-based re-identification (Lermen et al. 2026, Tier 3)",
+      "properties": {
+        "writing_style": { "$ref": "#/$defs/behavioralSignal" },
+        "professional_domain": { "$ref": "#/$defs/behavioralSignal" },
+        "interest_topics": { "$ref": "#/$defs/behavioralSignal" },
+        "temporal_patterns": { "$ref": "#/$defs/behavioralSignal" },
+        "location_signals": { "$ref": "#/$defs/behavioralSignal" },
+        "personal_anecdote": { "$ref": "#/$defs/behavioralSignal" },
+        "behavioral_signal_density": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Aggregate density of behavioral signals (analogue of pii_density for quasi-identifiers)"
+        },
+        "reidentification_contribution": {
+          "type": "string",
+          "enum": ["low", "moderate", "high", "critical"],
+          "description": "Categorical assessment of overall reidentification contribution"
+        }
+      }
+    },
+    "tier3_evaluation": {
+      "type": ["object", "null"],
+      "description": "Metadata for records purpose-built for Tier 3 (LLM re-identification) evaluation",
+      "properties": {
+        "is_paired_profile": { "type": "boolean" },
+        "persona_id": { "type": ["string", "null"] },
+        "profile_type": {
+          "type": ["string", "null"],
+          "enum": ["pseudonymous_forum", "real_identity", "cross_platform_github", "cross_platform_stackoverflow", "cross_platform_twitter", "cross_platform_linkedin", null]
+        },
+        "linked_profile_id": { "type": ["string", "null"] },
+        "esrc_attack_target": { "type": "boolean" },
+        "expected_reidentification_difficulty": {
+          "type": ["string", "null"],
+          "enum": ["easy", "moderate", "hard", "very_hard", null]
+        },
+        "behavioral_signal_removal_attempted": { "type": "boolean" }
+      }
+    },
+    "regulatory_domains": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "query_context": {
+      "type": ["object", "null"],
+      "properties": {
+        "query": { "type": "string" },
+        "relevant_entity_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "context_preservation": {
+      "type": ["object", "null"],
+      "description": "Anonymized text variants and utility metrics for evaluating anonymization quality",
+      "properties": {
+        "anonymized_masked": { "type": "string", "description": "PII replaced with [ENTITY_TYPE] labels" },
+        "anonymized_pseudonymized": { "type": "string", "description": "PII replaced with consistent fake values" },
+        "anonymized_generalized": { "type": "string", "description": "PII replaced with less specific values" },
+        "anonymized_llm_sanitized": {
+          "type": ["string", "null"],
+          "description": "Text with both PII AND behavioral signals removed (Tier 3 defense, v1.3.0)"
+        },
+        "utility_metrics": {
+          "type": "object",
+          "properties": {
+            "pii_density": { "type": "number", "description": "Fraction of text characters that are PII" },
+            "semantic_similarity_masked": { "type": "number", "description": "Token-level Jaccard similarity (original vs masked)" },
+            "semantic_similarity_pseudonymized": { "type": "number", "description": "Token-level Jaccard similarity (original vs pseudonymized)" },
+            "semantic_similarity_llm_sanitized": {
+              "type": ["number", "null"],
+              "description": "Jaccard similarity (original vs llm_sanitized) — typically lower since behavioral signals also removed"
+            },
+            "information_loss_ratio": { "type": "number", "description": "Weighted fraction of document meaning carried by PII" },
+            "behavioral_signal_residual": {
+              "type": ["number", "null"],
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Estimated fraction of behavioral signals leaking through llm_sanitized variant"
+            },
+            "coherence_preserved_pseudonymized": { "type": "boolean" },
+            "coherence_preserved_generalized": { "type": "boolean" },
+            "coherence_preserved_llm_sanitized": { "type": ["boolean", "null"] }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["source_type", "license"],
+      "properties": {
+        "source_type": { "type": "string", "enum": ["synthetic", "curated_public"] },
+        "license": { "type": "string" },
+        "generation_seed": { "type": ["integer", "null"] },
+        "v1_record_id": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "additionalProperties": false
+}
