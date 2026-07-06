@@ -1,0 +1,97 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S7-01
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S7-01-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/functional-requirements.md#FR-017
+    description: |
+      FR-017 ("PII-recognition oracle + payload library", UC-08; SHOULD) is a
+      BIPARTITE requirement: "(a) a callable oracle API returns labeled-entity
+      verdicts, AND (b) injection payloads ship as (obfuscated-span +
+      injection-carrier-template + intent-tag) tuples (multilingual/obfuscated);
+      never marketed as agent-leakage scoring."
+
+      S7-01 delivers ONLY clause (a) — the oracle-API half — plus the
+      non-strippable "never agent-leakage scoring" scope guard. Clause (b), the
+      injection-payload-library, is NOT implemented and has NO test in this
+      story. It is correctly deferred to the named successor S7-02 (S7-01 §5
+      "Blocks: S7-02 (payloads ride alongside the oracle in scoring/adversary/)").
+
+      Therefore FR-017 is PARTIALLY satisfied with an explicit named successor —
+      it must NOT be recorded as fully closed on S7-01 alone. Flagging as a
+      coverage OBSERVATION (deferred-with-successor, not a silent gap) so the
+      traceability/MUST-board status for FR-017 stays "partial — clause (a) done
+      S7-01, clause (b) pending S7-02" rather than flipping to DONE.
+    suggested_resolution: |
+      Keep FR-017's coverage row marked PARTIAL until S7-02 lands clause (b).
+      Ensure the FR-017 → S7-01/S7-02 split is reflected in the traceability
+      matrix (S7-01 = oracle-API clause; S7-02 = payload-library clause). No
+      change required in S7-01 itself. Note: the S7-02 story file does not yet
+      exist on disk — author it before the S7 sprint gate so the deferral target
+      is a real, schedulable story (named successor is present in S7-01 §5, which
+      satisfies the story-gate deferral bar).
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-017
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-01.md#5-dependencies
+
+notes: |
+  Scope = S7-01 oracle-API clause of FR-017 (primary) + NFR-004 / AX-001 / AX-002
+  (supporting). STORY gate — slice-level verification only; full Tier-1/2/3
+  coverage snapshot is an epic/sprint-gate concern, not run here.
+
+  CLAUSE-LEVEL VERIFICATION (oracle-API half of FR-017):
+    - test_fr_017_recognize_returns_labeled_verdicts  → PRESENT, PASSES
+        (recognize(record) → OracleVerdict; one RecognizedEntity per gold
+        annotation; .labels() == ("PERSON","EMAIL"), order-preserved)
+    - test_fr_017_oracle_disclaimer_non_strippable    → PRESENT, PASSES
+        (empty disclaimer raises ValueError; ORACLE_DISCLAIMER carries tokens
+        recognition / never / agent-leakage / fr-017 — the locked scope guard)
+    - test_fr_017_recognize_span_point_query          → PRESENT, PASSES
+        (recognize_span hit returns EMAIL entity; non-PII span → None)
+    - test_nfr004_oracle_pure_stdlib  [NFR-004/AX-002] → PRESENT, PASSES
+        (AST guard: oracle.py imports none of {random,time,uuid,datetime,secrets})
+
+  TARGETED RUN: `python3 -m pytest tests/test_oracle.py -k "fr_017 or nfr004" -q`
+  → "4 passed in 0.13s" (expected 4 — MATCH). All four explicit node IDs resolve
+  (none deselected / no-tests-ran). Each of the three mandated FR-017 names was
+  also asserted individually as a real, passing node.
+
+  SHIPPED SCOPE GUARD (oracle.py:23-27): ORACLE_DISCLAIMER states "NEVER marketed
+  as agent-leakage scoring (FR-017) — cross-turn / transcript-residual /
+  live-harness agent-leakage measurement is out of scope (roadmap
+  FR-018/019/020)." oracle.py contains NO scoring / leak-measurement logic; the
+  only "agent-leakage" occurrences are the disclaimer's out-of-scope statements.
+  The FR-017 "never marketed as agent-leakage scoring" clause is thus verified
+  for the delivered surface.
+
+  EVERY IN-SCOPE CLAUSE IS VERIFIED-OR-DEFERRED:
+    - FR-017 oracle-API + scope-guard ........... VERIFIED (3 tests, all pass)
+    - FR-017 injection-payload-library .......... DEFERRED → successor S7-02
+                                                  (named in S7-01 §5)
+    - NFR-004 / AX-002 (pure-stdlib/determinism)  VERIFIED (AST property test)
+    - AX-001 (synthetic gold only) .............. VERIFIED (fabricated fixtures;
+                                                  runtime reads record's own
+                                                  annotations — no real PII)
+  No clause is silently missing. No orphaned-requirement claim. No competing /
+  duplicate test claim for any clause.
+
+  DIVERGED / Pass-2: FR-017 is provisional_status AGENT_SIMULATED, NOT DIVERGED
+  (S7-01 §4), so no Pass-2 sample-size protocol is required for coverage purposes.
+  Separately, S7-01 §12 schedules a CI re-run (canonical-runner Pass 2) at the S7
+  sprint gate; that is an evidence-runner concern (the dev-host pytest run is not
+  a real CI runner) and does not affect clause coverage at the story gate.
+
+  Out of scope for this reviewer (handled elsewhere): test-quality / RED-before-
+  GREEN discipline (code-quality), FR↔test linkage mechanics (traceability),
+  whether the recognition semantics hold (axiom-compliance), whether FR-017
+  *should* be bipartite (SME / W8).
+
+review_time_seconds: 360
+
+context_bounds_respected: true

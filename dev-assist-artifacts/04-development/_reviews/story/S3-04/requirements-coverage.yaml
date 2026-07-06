@@ -1,0 +1,102 @@
+reviewer: requirements-coverage
+gate: story
+story_id: S3-04
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+independence_attestation: >
+  Reviewed independently from the story-authoring agent. Read S3-04.md, the test
+  module, the implementation, the Wilson-interval and adversary-port sources; re-ran
+  pytest myself. No reliance on the story's self-reported pass counts beyond
+  independent re-execution.
+
+scope:
+  primary_requirement: FR-007
+  supporting_requirements: [FR-009, reidx-02, reidx-01, FR-010, gov-01, NFR-002, AX-002]
+  note_for_sprint_gate: >
+    FR-007 MUST is now substantively covered for the offline-adversary headline path
+    (empirical recall/precision + Wilson CIs on integer counts, RRS=1-r*p, |C| stated).
+    Recall/precision/|C| verified GENUINELY MEASURED from live adversary.attack() output,
+    not read from any precomputed corpus field. FR-009 non-strippable caveat realized
+    structurally via MeasuredRRS.as_dict() nesting RRSResult.as_dict() (mandatory,
+    non-defaulted caveat field on the byte-preserved S1 RRSResult).
+
+verification_evidence:
+  test_file: tests/test_reidentification_measured.py
+  rerun_command: python3 -m pytest tests/test_reidentification_measured.py -q
+  rerun_result: "9 passed in 0.13s"
+  fr_token_selection: "pytest -k 'fr_007 or fr_009' collects exactly 9 (S3-01 gate lesson satisfied)"
+
+acceptance_clause_coverage:
+  - clause: "empirical re-id recall measured w/ Wilson CI on integer counts"
+    test: test_fr_007_recall_ci_uses_integer_n_targets
+    status: PASS
+  - clause: "empirical re-id precision measured on integer non-abstain count"
+    test: test_fr_007_precision_ci_uses_integer_n_guesses
+    status: PASS
+  - clause: "RRS = 1 - recall*precision (exact identity)"
+    test: test_fr_007_rrs_equals_one_minus_recall_times_precision
+    status: PASS
+  - clause: "ground-truth-link correctness (guessed_persona_id == target_id)"
+    test: test_fr_007_correct_is_guesses_matching_target_id
+    status: PASS
+  - clause: "abstain excluded from precision denominator (not counted wrong)"
+    test: test_fr_007_abstentions_excluded_from_precision_denominator
+    status: PASS
+  - clause: "FR-009 caveat non-strippable through MeasuredRRS.as_dict() [AUDIT]"
+    test: test_fr_009_caveat_nonstrippable_in_measured_as_dict
+    status: PASS
+  - clause: "reidx-02 fractional count -> TypeError (integer guard)"
+    test: test_fr_007_reidx02_fractional_count_raises
+    status: PASS
+  - clause: "perfect attack -> RRS=0; all-abstain -> n_guesses=0, recall=0 -> RRS=1 (n=0 Wilson sentinel)"
+    test: test_fr_007_perfect_attack_rrs_zero_and_no_commit_rrs_one
+    status: PASS
+  - clause: "|C| recorded; adversary_id + deterministic propagate (version-pinning); real adversary E2E"
+    test: test_fr_007_candidate_set_size_recorded
+    status: PASS
+
+measured_not_precomputed_check:
+  verdict: CONFIRMED_MEASURED
+  evidence: >
+    score_reidentification (reidentification.py:152) calls adversary.attack() live; derives
+    `correct` by per-guess comparison guessed_persona_id == target_id (line 157) and computes
+    recall/precision from integer tallies (lines 158-159). OfflineDeterministicAdversary emits
+    live Guess objects (offline_adversary.py:244) and holds NO precomputed recall/precision/RRS
+    field. Target.observed_signals is re-extracted via signals.extract per reidx-01, never gold
+    Persona.behavioral_signals. No precomputed corpus field is consulted.
+
+findings:
+  - id: S3-04-RC-01
+    severity: MINOR
+    requirement: FR-007
+    summary: >
+      Story Evidence cites the post-REFACTOR full-suite run as "133 passed" but the iter-1
+      re-review re-ran only the S3-04 module (9 passed). The cross-module 0-regression claim
+      is the sprint gate's full-snapshot responsibility, not the story slice; recorded here so
+      the sprint-gate Tier snapshot picks it up rather than re-deriving it.
+    blocking: false
+  - id: S3-04-RC-02
+    severity: OBSERVATION
+    requirement: FR-008
+    summary: >
+      FR-008 (adjacent re-id figure family) is intentionally out of this story's slice; noted
+      only so the epic/sprint coverage delta tracks that S3-04 advances FR-007 but does not by
+      itself close FR-008. No action for this story.
+    blocking: false
+
+counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 1
+  observation: 1
+
+diverged_pass2_crosscheck:
+  applicable: false
+  note: >
+    Story provisional_status is AGENT_SIMULATED (not DIVERGED). Pass 2 (real CI on real
+    hardware) is scheduled at the sprint CI gate per S3-04 §12; not a DIVERGED-MUST blocker
+    at this story gate.
+
+decision_rule: "APPROVE iff zero MAJOR+. Highest severity = MINOR -> APPROVE."

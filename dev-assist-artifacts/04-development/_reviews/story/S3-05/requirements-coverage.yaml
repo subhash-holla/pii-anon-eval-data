@@ -1,0 +1,123 @@
+# requirements-coverage reviewer — STORY gate
+schema: dev-assist/reviewer-finding/v1
+reviewer: requirements-coverage
+gate: story
+gate_id: S3-05
+iteration: 1
+mode: read-only
+independence_attestation: >-
+  I reviewed S3-05 independently against FR-008's acceptance clauses (§7) and
+  test-first plan (§6). I read the story, the test file, and the implementation
+  source; I re-ran the targeted and full suites myself rather than trusting the
+  story's reported counts. No other reviewer's output influenced this verdict.
+context_bounds_respected: true
+
+scope:
+  story: dev-assist-artifacts/04-development/02-stories/sprint-3/S3-05.md
+  primary_requirement: FR-008
+  supporting_requirements: [AX-002, NFR-004]
+  source_dc: DC-07
+  provisional_status: AGENT_SIMULATED
+  diverged: false
+
+verification:
+  targeted_suite:
+    cmd: "python3 -m pytest tests/test_exposure_index.py -q"
+    result: "6 passed"
+    rerun_by_reviewer: true
+  full_suite:
+    cmd: "python3 -m pytest -q"
+    result: "156 passed in 5.72s"
+    regressions: 0
+    note: "matches story claim (150 prior + 6 new)"
+  tdd_chain:
+    red:  { sha: 2fda0ef, touches: ["tests/test_exposure_index.py", "S3-05.md"], impl_in_red: false }
+    green: { sha: 88bc2c4, touches: ["src/.../scoring/reidentification.py", "src/.../scoring/__init__.py"] }
+    red_precedes_green: true
+  exports_present: true          # __init__.py exports all 5 FR-008 symbols
+  dependencies_present: true     # S3-01 signals.{UNIQUENESS_WEIGHT,compute_signal_density}; S3-04 MeasuredRRS
+
+# §7 acceptance clauses -> §6 tests -> passing test (every clause mapped, all PASSED)
+clause_coverage:
+  - clause: "deterministic exposure index emitted, explicitly labeled pre-screen prior, NOT RRS"
+    test: test_fr_008_exposure_index_is_prior_not_rrs
+    status: PASS
+  - clause: "correlate_index_vs_rrs reports index<->measured-RRS correlation (Pearson + Spearman)"
+    test: test_fr_008_correlation_pearson_and_spearman
+    status: PASS
+  - clause: "NEGATIVE: ExposureIndex cannot be mistaken for MeasuredRRS (different type, no RRS fields)"
+    test: test_fr_008_exposure_index_is_prior_not_rrs
+    status: PASS
+  - clause: "NEGATIVE: empty correlation input does not raise"
+    test: test_fr_008_correlation_n_zero_graceful
+    status: PASS
+  - clause: "value RECOMPUTED transparently from annotations (not a precomputed scalar)"
+    test: test_fr_008_exposure_index_recomputes_density_transparently
+    status: PASS
+  - clause: "per_signal exposes all six category weights (auditable)"
+    test: test_fr_008_exposure_index_per_signal_transparent
+    status: PASS
+  - clause: "AX-002/NFR-004 import purity (no nondeterminism / no third-party numeric stack)"
+    test: test_fr_008_nfr004_exposure_imports_no_nondeterminism
+    status: PASS
+
+critical_checks:
+  a_prior_structurally_distinct_from_measuredrrs:
+    verdict: VERIFIED
+    evidence: >-
+      ExposureIndex is a separate frozen dataclass (reidentification.py:198) with NO
+      rrs/reid_recall/reid_precision field; test asserts type(idx) is ExposureIndex,
+      not isinstance MeasuredRRS/RRSResult, {rrs,reid_recall,reid_precision} disjoint
+      from fields, and `not hasattr` each. Non-empty validated `note` (EXPOSURE_INDEX_NOTE)
+      contains "NOT measured RRS" and "prior"; __post_init__ rejects empty note. The
+      de-circularization guarantee is structurally enforced — the heuristic cannot be
+      cited as an RRS result.
+  b_recomputed_transparently_poison_test:
+    verdict: VERIFIED
+    evidence: >-
+      exposure_index (reidentification.py:247) calls signals.compute_signal_density(block);
+      compute_signal_density (signals.py:334-350) aggregates per-category `uniqueness`
+      weights only — it never reads a precomputed scalar. The poison test (test file
+      lines 80-83) injects behavioral_signal_density=0.123456 and
+      reidentification_contribution="low" and asserts value stays 0.7333. Confirmed PASS.
+  c_correlation_pearson_and_spearman_reported:
+    verdict: VERIFIED
+    evidence: >-
+      IndexRRSCorrelation carries both pearson_r and spearman_rho; computed by-hand in
+      pure stdlib (_pearson_r + _rank average-of-ties => Pearson-on-ranks). Test asserts
+      spearman_rho==1.0 on a monotone set and 0.9 < pearson_r < 1.0 (genuinely distinct
+      nonlinear Pearson, not a copy of Spearman); method names both. n==0 (and degenerate
+      zero-variance) => nan, never raised.
+
+findings:
+  - id: S3-05-RC-OBS-01
+    severity: OBSERVATION
+    requirement: FR-008
+    title: "per_signal unknown-uniqueness fallback (else 0.0) not directly exercised"
+    detail: >-
+      exposure_index's per_signal builder uses UNIQUENESS_WEIGHT.get(uniqueness, 0.0)
+      (reidentification.py:241), a robustness fallback for an unrecognized uniqueness
+      label. No test feeds an out-of-vocabulary label to pin that branch. This is
+      adjacent robustness, not an FR-008 MUST clause — all §7/§6 clauses are covered.
+      No action required at this gate.
+
+counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+
+sprint_gate_note: >-
+  FR-008 MUST is now covered (deterministic exposure-index PRIOR, structurally NOT RRS;
+  index<->RRS correlation reported with Pearson+Spearman; poison test confirms transparent
+  recompute). DC-07 (FR-007/008/009/010) is substantively complete pending S3-03
+  (FR-010 LLM secondary adversary). Carry FR-008 into the S-3 Tier coverage snapshot as
+  verified-by-S3-05.
+
+self_attestation: >-
+  Verdict reflects only requirements-coverage concerns (every §7 clause + §6 test maps to
+  a passing test; FR-008 MUST verified-or-deferred). Test quality, semantic axiom-hold,
+  and whether the requirement should exist are out of my scope. Zero MAJOR-or-above.
+
+verdict: APPROVE

@@ -1,0 +1,175 @@
+reviewer: dev-assist-development-traceability
+
+scope_id: S6-03
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: traceability-S6-03-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:22
+    description: |
+      The traceability-matrix Status-Change-Log carries no per-story advancement row
+      naming S6-03 as the FR-026 (CoI-statement half) + gov-03 (recusal /
+      no-pre-publication-access) + NFR-014 advancer, and no row recording S6-03 as the
+      third FR-023 facet (CoI attestation riding in the store). The UC-15 catalog row
+      (line 22: FR-025, FR-026 | NFR-014 | MUST | AGENT_SIMULATED) and the UC-11 FR-023
+      row exist and are consistent, but no S6-03 advancement entry has been appended.
+      This is the same gap the S6-01 (traceability-S6-01-01) and S6-02
+      (traceability-S6-02-01) reviews logged for the FR-023 store and policy halves —
+      per the established repo convention the 61-MUST / Status-Change-Log refresh is the
+      S6 SPRINT gate's responsibility, so this is non-blocking at the story gate. Flagged
+      for the sprint-gate handoff so the board reflects that, with S6-03 landed, FR-023
+      now closes 3/3 (store=S6-01, policy/anti-gaming=S6-02, CoI=S6-03) and FR-026's
+      CoI-statement slice is satisfied while GOVERNANCE.md / advisory-roster /
+      bus-factor slices remain pending (S6-04/S6-05, not yet authored).
+    suggested_resolution: |
+      At the S6 sprint gate, append a Status-Change-Log row recording S6-03 as the
+      FR-026 CoI-statement-half + gov-03 + NFR-014 advancer (AGENT_SIMULATED) and as the
+      FR-023 CoI-attestation facet; note FR-023 now closes 3/3 across S6-01/02/03, and
+      that FR-026 remains partial (CoI slice landed; GOVERNANCE.md + advisory roster +
+      bus-factor note still pending S6-04/S6-05).
+    references:
+      - dev-assist-artifacts/02-requirements/requirements-document.md#FR-026
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-026
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-014
+
+  - id: traceability-S6-03-02
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-6/S6-03.md:33
+    description: |
+      FR-026 (governance charter — GOVERNANCE.md + advisory-body roster + a CoI
+      statement re: `pii-anon-core` + a bus-factor/succession note; functional-
+      requirements.md:46, MUST) is multi-facet. S6-03 correctly claims ONLY the
+      CoI-statement facet: §3 scopes it to "a CoI statement re: `pii-anon-core`", and §5
+      Blocks says "S6 sprint close (FR-023 CoI half + FR-026 CoI statement)". It does NOT
+      over-claim GOVERNANCE.md, the advisory roster, or the bus-factor note. The
+      orchestrator's intended partition (CoI data structure = S6-03, GOVERNANCE.md =
+      S6-04, CONTRIBUTING.md = S6-05) is honoured, but is NOT written into the S6-03 file
+      (no §3/§5 sentence names S6-04/S6-05 as the complementary FR-026 owners). No actual
+      double-claim exists today: S6-03 is the sole story (any sprint) claiming FR-026, and
+      S6-04.md / S6-05.md are not yet authored. Flagged only so the sprint gate confirms
+      S6-04/S6-05 claim the GOVERNANCE.md / contribution-pipeline FR-026 facets without
+      re-claiming the CoI record, keeping FR-026 a clean partition rather than overlapping
+      owners.
+    suggested_resolution: |
+      No action for S6-03. Optionally add one §5 line naming S6-04 (GOVERNANCE.md) /
+      S6-05 (CONTRIBUTING.md) as the complementary FR-026 facet owners to make the
+      partition explicit in-story. At the S6-04/S6-05 story gates, verify each claims
+      its FR-026 facet without re-claiming the CoI record.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-026
+
+  - id: traceability-S6-03-03
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-6/S6-03.md:35
+    description: |
+      FR-023 (neutral leaderboard) is partitioned across S6 as store=S6-01,
+      policy/anti-gaming=S6-02, CoI-attestation=S6-03. S6-03 claims only the CoI half and
+      satisfies it WITHOUT a dedicated `fr_023`-tokened test: §3 states "FR-023 (the
+      attestation rides on a leaderboard submission)", realised by `as_dict()` being
+      embedded as the payload of a `submitted` store event. This is exercised by
+      `test_nfr_014_coi_as_dict_embeddable_in_store` (tests/test_coi.py:79), which appends
+      `record.as_dict()` via `LeaderboardStore.append(EventType.SUBMITTED, …)`,
+      round-trips `requires_recusal=True`, asserts `verify_chain() is True`, and (per §8b
+      invariant 3) confirms the payload carries no forbidden held-out-gold key. The
+      FR-023 CoI-half is therefore satisfied transitively through the NFR-014 integration
+      test rather than via an `fr_023`-named test — semantically sound (the held-out store
+      records affiliation + attestation, exactly the gov-03/FR-023 CoI obligation) and
+      consistent with the partition the S6-01/S6-02 reviews pre-registered (CoI=S6-03). No
+      double-claim: S6-01/S6-02 own the store / policy facets and neither re-implements the
+      CoI attestation.
+    suggested_resolution: |
+      None required. The FR-023 CoI-half is covered by the NFR-014 integration test
+      (as_dict() embedded in a SUBMITTED event). At the S6 sprint gate, confirm FR-023
+      closes 3/3 with the CoI facet attributed to S6-03 via this integration path.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-023
+      - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-01.md
+
+notes: |
+  Forward trace FR/NFR -> Story -> Test -> DC for S6-03 is intact and APPROVE-clean
+  (zero SHOWSTOPPER / CATASTROPHIC / MAJOR). domain_packs: [] in developer-assistant.yaml
+  — no active domain pack, so no reviewer-extension finding patterns were merged.
+
+  ID existence (no phantom IDs — SHOWSTOPPER cleared; every declared ID resolves):
+    - FR-026 (governance charter / CoI statement re: `pii-anon-core`) —
+      requirements-document.md:19, functional-requirements.md:46 (UC-15; MUST),
+      traceability-matrix.md:22. EXISTS.
+    - NFR-014 (governance neutrality / auditable) — requirements-document.md:20,
+      traceability-matrix.md:22. EXISTS.
+    - FR-023 (neutral leaderboard) — requirements-document.md:19,
+      functional-requirements.md, traceability-matrix.md:18. EXISTS.
+    - NFR-004 (deterministic, provenanced generation; pure-stdlib threshold) —
+      non-functional-requirements.md:13. EXISTS (non-MUST NFR; correctly absent from the
+      line-20 MUST roster — not mis-cited as a MUST).
+    - AX-002 (determinism axiom) — non-functional-requirements.md:13 (NFR-004 *(AX-002)*)
+      + traceability-matrix.md:30 (AX-pii-anon-002 (determinism) -> NFR-004). EXISTS.
+
+  Source DC + locked-revision linkage (§4) — VERIFIED:
+    - DC-13 (Leaderboard & governance) — D-implementation-ready-design.md:30:
+      "DC-13 | Leaderboard & governance ... | FR-023/025/026, NFR-014 | MUST". DC-13
+      explicitly carries FR-023, FR-026 and NFR-014, so all three of the story's traced
+      requirements derive from its source DC.
+    - "locked revision #7 (gov-03)" — D-implementation-ready-design.md §"D6 revisions
+      (post-SME panel — LOCKED into the design)", numbered item 7 (line 105): "Held-out
+      store records submitter affiliation + a no-pre-publication-access attestation;
+      maintainer/`pii-anon-core`-affiliated submissions are flagged for recusal — promoted
+      from switch-point to v1 ... *(gov-03 — §0 neutrality made structural.)*". §4's
+      paraphrase is faithful and the ordinal (#7) matches the list position exactly.
+      Origin finding: sme-heuristic-findings.md:30 (gov-03, MAJOR).
+    - provisional_status cascade: DC-13 is NOT DIVERGED (no DIVERGED marker in the design;
+      sibling S6-01/S6-02 also AGENT_SIMULATED, not DIVERGED). Story §1/§4/§12 all show
+      provisional_status: AGENT_SIMULATED — correct cascade. No DIVERGED Pass-2 obligation.
+
+  Test tokens (orchestrator grep satisfied) — tests/test_coi.py:
+    - fr_026: test_fr_026_attestation_is_non_strippable (L41),
+      test_fr_026_recusal_for_maintainer_and_affiliated (L65) — 2 (>= 2). PASS.
+    - nfr_014: test_nfr_014_coi_as_dict_embeddable_in_store (L79) — 1 (>= 1). PASS.
+    - nfr004: test_nfr004_coi_pure_stdlib (L103) — 1 (>= 1). PASS.
+
+  Test<->ID semantic alignment (finding-pattern #9 cleared — bodies assert what the ID
+  claims, not merely the token in the name):
+    - test_fr_026_attestation_is_non_strippable: rejects empty/whitespace attestation
+      (ValueError); asserts NO_PREPUB_ATTESTATION contains "pre-publication"+"access",
+      "held-out", "train"/"tune" — the FR-026/gov-03 CoI-statement control. ALIGNED.
+    - test_fr_026_recusal_for_maintainer_and_affiliated: requires_recusal True for
+      maintainer / pii-anon-core / Pii-Anon-Core Labs (+ case/whitespace variants), False
+      for Acme University / Independent Researcher — the gov-03 recusal control. ALIGNED.
+    - test_nfr_014_coi_as_dict_embeddable_in_store: appends as_dict() into the append-only
+      auditable store, round-trips requires_recusal, verify_chain() True, no forbidden-gold
+      key — the NFR-014 governance-neutrality/auditability control (also discharges the
+      FR-023 CoI-half). ALIGNED.
+    - test_nfr004_coi_pure_stdlib: AST guard bans {random,time,uuid,datetime,secrets}; the
+      ban set is disjoint from coi.py's actual top-level imports {__future__, dataclasses}
+      (verified against src). NFR-004 / AX-002 determinism. ALIGNED.
+
+  Partition / double-claim audit:
+    - FR-026: S6-03 is the ONLY story (any sprint) claiming it (grep over 02-stories/).
+      Claims only the CoI-statement facet; GOVERNANCE.md/roster/bus-factor unclaimed
+      (S6-04/S6-05 absent). No double-claim. (OBSERVATION traceability-S6-03-02.)
+    - FR-023: store=S6-01 (DONE), policy/anti-gaming=S6-02, CoI=S6-03. S6-03 owns only the
+      CoI attestation facet (via as_dict in the store); no re-claim of the store/policy.
+      Clean 1:1 partition. (OBSERVATION traceability-S6-03-03.)
+
+  Dependency gate: §5 "Must be DONE: S6-01" — S6-01 Status = DONE
+    (sprint-6/S6-01.md:15). Satisfied (finding-pattern #6 cleared).
+
+  Status gate: §1 Status = REVIEW (sprint-6/S6-03.md:15). Matches the gate.
+
+  Evidence SHAs (§12) on feat/v2-scoring-harness (current branch) — all resolve:
+    - RED 0dfe825 — adds tests/test_coi.py (+ S6-03.md). Branch: feat/v2-scoring-harness.
+    - GREEN d4e310f — adds src/pii_anon_datasets/leaderboard/coi.py, modifies
+      leaderboard/__init__.py (CoIRecord / NO_PREPUB_ATTESTATION export confirmed).
+    - REFACTOR 2b88750 — no-edit lint/type marker (preserves the RED/GREEN/REFACTOR
+      triad). File set matches §8 owned-files declaration; RED-before-GREEN ordering holds.
+
+  No orphans: every declared FR/NFR/AX/gov/DC id is traced to a source artifact and (for
+  FR-026/NFR-014/NFR-004) to a tokened, semantically-aligned, passing test; gov-03/FR-023
+  CoI-half are traced to source + the NFR-014 integration test. Nothing dangling.
+
+review_time_seconds: 339
+
+context_bounds_respected: true

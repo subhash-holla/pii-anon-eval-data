@@ -1,0 +1,67 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S6-03
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  S6-03 (gov-03 CoIRecord, iteration 1) — LOAD-BEARING. All four governance-neutrality
+  invariants in §8b hold; zero SHOWSTOPPER/CATASTROPHIC/MAJOR. Verified against the project's
+  cross-cutting axioms (non-functional-requirements.md AX-002 / NFR-004 / AX-001) and the
+  non-strippable-disclaimer pattern (compliance/crosswalk.py:CROSSWALK_DISCLAIMER).
+
+  (1) NON-STRIPPABLE ATTESTATION (gov-03 / FR-026) — UPHELD.
+      coi.py:30 NO_PREPUB_ATTESTATION module constant; coi.py:51 `attestation` is a
+      non-defaulted-validated field; coi.py:53-55 __post_init__ raises ValueError on
+      empty/whitespace. Constant text contains "pre-publication" + "access" (coi.py:31),
+      "held-out" (coi.py:31), and "train"/"tune" (coi.py:32). This mirrors the established
+      crosswalk non-strippable-disclaimer pattern (module-constant + __post_init__ guard) — the
+      attestation cannot be silently dropped to "" without raising. `pytest -k fr_026` → 9 passed
+      (×4 empty/whitespace inputs raise; default-text content asserted).
+
+  (2) RECUSAL CONTROL (gov-03) — UPHELD; governance-neutrality invariant CONFIRMED.
+      coi.py:57-60 requires_recusal normalizes via .strip().lower() then matches exact token set
+      {maintainer, pii-anon-core} OR "pii-anon-core" substring. A pii-anon-core-affiliated
+      submitter CANNOT evade the flag via casing/whitespace — independently exercised:
+      {maintainer, MAINTAINER, "  Maintainer ", pii-anon-core, PII-ANON-CORE, "Pii-Anon-Core Labs",
+      "  pii-anon-core  ", "x pii-anon-core team", "PII-Anon-Core, Inc."} → all True; external
+      {Acme University, Independent Researcher, MIT, maintainers, core-pii-anon, "pii anon core"}
+      → all False. The substring is intentionally tight ("pii-anon-core" with hyphens), so
+      "pii anon core" / "core-pii-anon" / "maintainers" do not false-positive, and casing/leading-
+      trailing whitespace do not false-negative. `pytest -k fr_026` covers ×5 affiliations + 2
+      external negatives.
+
+  (3) NFR-004 PURE-STDLIB — UPHELD. AST guard (test_coi.py:103) bans {random, time, uuid,
+      datetime, secrets}; coi.py top-level imports = {__future__, dataclasses} only (no banned
+      module imported). `pytest -k nfr004` → 1 passed.
+
+  (4) AX-002 DETERMINISM — UPHELD. requires_recusal and as_dict are pure string/dict operations,
+      no clock/RNG/IO. Independently confirmed stable across 5 calls and as_dict() == as_dict().
+
+  AX-001 (no-real-PII) — UPHELD. submitter/affiliation are caller-supplied (not hardcoded in the
+  module). The only module-authored strings are NO_PREPUB_ATTESTATION and the
+  docstrings/exception message — regex scan for email/SSN/phone/credit-card shapes over the
+  attestation text returned no PII shapes. No corpus PII is embedded.
+
+  NFR-014 EMBEDDABLE PROVENANCE — UPHELD. as_dict() keys = {affiliation, attestation,
+  requires_recusal, submitter} are DISJOINT from store._FORBIDDEN_PAYLOAD_KEYS
+  {answers, gold, gold_labels, ground_truth, held_out, held_out_labels}, so
+  LeaderboardStore.append(EventType.SUBMITTED, ...) accepts it (verified independently +
+  `pytest -k nfr_014` → 1 passed; round-trips requires_recusal=True, verify_chain() True). The
+  recusal flag is LOGGED into the append-only chained log, not stripped — the neutrality signal
+  survives into the audit trail (NFR-014 auditable).
+
+  TDD/lint corroboration (not my gate, but observed clean): RED 0dfe825 → GREEN d4e310f →
+  REFACTOR 2b88750 triad present; ruff "All checks passed!"; mypy --strict "no issues found";
+  full suite 319 passed, 1 skipped (the skip is documented pre-existing) — 0 regressions.
+
+  §8b deviations: NONE — the dataclass body was implemented verbatim; additions are docstring +
+  __init__ export wiring only (no logic divergence affecting any axiom).
+
+review_time_seconds: 300
+
+context_bounds_respected: true

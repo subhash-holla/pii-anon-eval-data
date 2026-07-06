@@ -1,0 +1,1423 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>S5-05 — `pii-anon` CLI: 5 thin dispatch verbs (FR-024 / DX-03) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="04-development">
+<h1>S5-05 — <code>pii-anon</code> CLI: 5 thin dispatch verbs (<a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> / DX-03)</h1>
+<blockquote>
+<p><strong>Cold-pickup</strong>: self-contained; §8b authoritative. <strong>Test names carry <code>fr_024</code>/<code>nfr_018</code>/<code>dx_03</code>/
+<code>nfr004</code> tokens.</strong> A console entry point <code>pii-anon</code> with five THIN verbs
+(<code>generate</code>/<code>score</code>/<code>export</code>/<code>validate</code>/<code>leaderboard</code>) — each delegates to the owning subsystem; <strong>no
+business logic in <code>cli.py</code></strong>. The <code>validate</code> verb keeps the <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power gate ON (never injects
+<code>--no-power-gate</code>). <code>leaderboard</code> is graceful-until-S6. One copy-paste CI invocation: <code>pii-anon validate</code> (DX-03).</p>
+</blockquote>
+<h2>1. Metadata</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Parent epic</strong></td>
+<td>S5-A — Distribution (<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-12" data-trace-id="DC-12" aria-label="Trace DC-12">DC-12</a>)</td>
+</tr>
+<tr>
+<td><strong>Sprint</strong></td>
+<td>S-5 (Exports/CLI + Compliance + doc-drift)</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>Estimated agent-effort</strong></td>
+<td>M (≤3d)</td>
+</tr>
+<tr>
+<td><strong>Owner agent</strong></td>
+<td>dev-assist-development-executor (claimed 2026-05-30)</td>
+</tr>
+<tr>
+<td><strong>Story gate</strong></td>
+<td>APPROVE (iter 1, 5/5 reviewers, 0 findings; <code>_reviews/story/S5-05/synthesis.md</code>)</td>
+</tr>
+<tr>
+<td><strong>provisional_status</strong></td>
+<td>AGENT_SIMULATED</td>
+</tr>
+</tbody></table>
+<h2>2. Goal</h2>
+<p>Ship <code>src/pii_anon_datasets/cli.py</code> + the <code>[project.scripts] pii-anon = &quot;pii_anon_datasets.cli:main&quot;</code>
+console entry (<a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> / DX-03 — &quot;one copy-paste CI invocation&quot;). Five THIN verbs, each a pure dispatcher
+that parses args and delegates to the owning subsystem — <strong>zero business logic in <code>cli.py</code></strong> (no metric
+math, no scoring, no file parsing beyond argparse + a streaming line reader for <code>export</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Verb</th>
+<th>Delegates to</th>
+<th>Mechanism</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>generate</code></td>
+<td><code>scripts/generate_records.py</code> (deterministic seeded generator; default output <code>*_generated.jsonl</code> — NEVER the frozen corpus)</td>
+<td>subprocess passthrough</td>
+</tr>
+<tr>
+<td><code>score</code></td>
+<td><code>baselines/evaluate.py</code> (the span evaluator)</td>
+<td>subprocess passthrough</td>
+</tr>
+<tr>
+<td><code>export</code></td>
+<td><code>pii_anon_datasets.distribution</code> (S5-02/03/04 — parquet / croissant / conll / spacy / card)</td>
+<td>direct lazy import</td>
+</tr>
+<tr>
+<td><code>validate</code></td>
+<td><code>scripts/validate.py</code> (the <strong><a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> committed-cell power gate</strong>)</td>
+<td>subprocess passthrough — <strong>never injects <code>--no-power-gate</code></strong></td>
+</tr>
+<tr>
+<td><code>leaderboard</code></td>
+<td><code>pii_anon_datasets.leaderboard</code> (S6 governance seam)</td>
+<td>lazy import; graceful &quot;ships in S6&quot; until built</td>
+</tr>
+</tbody></table>
+<p><code>main(argv) -&gt; int</code> returns an exit code (the <code>console_scripts</code> contract). <code>cli.py</code> is pure-stdlib
+(argparse / subprocess / sys / pathlib / json); <code>distribution</code> is imported LAZILY inside <code>_cmd_export</code>.</p>
+<h2>3. Traced requirements</h2>
+<p><strong>Primary</strong>: <a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> (CC0 corpus + standard exports + a CLI surface; DX-03 one copy-paste CI invocation).
+<strong>Supporting</strong>: <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> (the <code>validate</code> verb must keep the committed-cell power gate ON — never silently
+<code>--no-power-gate</code>), <a class="trace-link" href="../sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a> (pure-stdlib CLI; heavy deps lazy), AX-002 (deterministic dispatch),
+no-corpus-regeneration guardrail (the <code>generate</code> verb never targets the frozen
+<code>data/pii_anon.jsonl.gz</code>).</p>
+<h2>4. Source DC + provisional_status</h2>
+<p><a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-12" data-trace-id="DC-12" aria-label="Trace DC-12">DC-12</a> (distribution) + locked revision #10 (CLI entry point: 5 verbs as thin dispatchers; one copy-paste
+CI invocation) · AGENT_SIMULATED · not DIVERGED.</p>
+<h2>5. Dependencies</h2>
+<p><strong>Must be DONE</strong>: S5-02 (<code>export_parquet</code>), S5-03 (<code>build_croissant</code>/<code>build_dataset_card</code>), S5-04
+(<code>export_conll</code>/<code>export_spacy_docbin</code>) — the <code>export</code> verb dispatches to these. ✅
+<strong>Soft (graceful until built)</strong>: S6 <code>leaderboard/</code> — the <code>leaderboard</code> verb reports &quot;ships in S6&quot; until
+the package exists, then S6 wires it.
+<strong>Blocks</strong>: S5 sprint close (<a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> fully closed once the CLI surface lands).</p>
+<h2>6. Test-first plan (RED→GREEN) — <code>fr_024</code>/<code>nfr_018</code>/<code>dx_03</code>/<code>nfr004</code> tokened</h2>
+<p><code>tests/test_cli.py</code> (patch <code>subprocess.run</code> / <code>distribution</code> to assert DISPATCH, not run the backends):</p>
+<ol>
+<li><code>test_fr_024_cli_exposes_five_verbs</code> — <code>build_parser()</code> registers exactly the subcommands
+<code>generate</code>, <code>score</code>, <code>export</code>, <code>validate</code>, <code>leaderboard</code>; <code>main([&quot;--help&quot;])</code> exits 0 and the help
+text names all five — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_024_cli_export_dispatches_to_distribution</code> — <code>main([&quot;export&quot;, &quot;--format&quot;, &quot;parquet&quot;, &quot;--output&quot;, str(tmp)])</code> calls <code>distribution.export_parquet</code> with a record iterator (monkeypatch
+<code>export_parquet</code> + the record source); the CLI itself computes nothing — <code>[INTEGRATION-TEST]</code>.</li>
+<li><code>test_nfr_018_cli_validate_keeps_power_gate_on</code> — <code>main([&quot;validate&quot;])</code> spawns <code>scripts/validate.py</code>
+with an argv that does NOT contain <code>--no-power-gate</code> (monkeypatch <code>subprocess.run</code>, capture argv;
+assert <code>validate.py</code> present AND <code>--no-power-gate</code> absent) — the guardrail — <code>[CONTRACT-TEST]</code>.</li>
+<li><code>test_fr_024_cli_validate_forwards_user_args</code> — <code>main([&quot;validate&quot;, &quot;--summary-only&quot;])</code> forwards
+<code>--summary-only</code> to <code>validate.py</code> (still no injected <code>--no-power-gate</code>) — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_nfr004_cli_generate_never_targets_frozen_corpus</code> — <code>main([&quot;generate&quot;])</code> dispatches to
+<code>scripts/generate_records.py</code>; the CLI never injects the shipped <code>data/pii_anon.jsonl.gz</code> path as the
+output (no-corpus-regeneration guardrail — the script&#39;s own default is <code>*_generated.jsonl</code>) —
+<code>[CONTRACT-TEST]</code>.</li>
+<li><code>test_fr_024_cli_leaderboard_graceful_until_s6</code> — with <code>pii_anon_datasets.leaderboard</code> absent,
+<code>main([&quot;leaderboard&quot;])</code> returns a clean non-crash exit code (2) and prints a clear &quot;ships in the S6
+governance seam&quot; message (no traceback) — <code>[CONTRACT-TEST]</code>.</li>
+<li><code>test_dx_03_console_entry_point_declared</code> — <code>pyproject.toml</code> declares <code>[project.scripts] pii-anon = &quot;pii_anon_datasets.cli:main&quot;</code>; <code>main</code> is callable and returns an <code>int</code> — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_nfr004_cli_thin_pure_stdlib</code> — <code>import pii_anon_datasets.cli</code> succeeds with <code>pyarrow</code>/<code>spacy</code>/
+<code>mlcroissant</code> ABSENT (distribution imported lazily inside <code>_cmd_export</code>); AST guard: <code>cli.py</code> imports
+none of <code>{random, time, uuid, datetime, secrets}</code> AND none of the scoring/stats metric modules at top
+level (no business logic) — <code>[PROPERTY-TEST]</code>.</li>
+</ol>
+<h2>7. Acceptance criteria (G/W/T from <a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> / DX-03 / <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>)</h2>
+<blockquote>
+<p><strong>Given</strong> the installed package,
+<strong>When</strong> <code>pii-anon &lt;verb&gt; …</code> runs,
+<strong>Then</strong> each of the five verbs dispatches to its owning subsystem (export → <code>distribution</code>; validate →
+the power-gate script with the gate ON; generate → the seeded generator targeting a non-frozen output;
+score → the evaluator; leaderboard → the S6 seam), <code>cli.py</code> holding no business logic, and <code>pii-anon validate</code> is a single copy-paste CI invocation that runs the <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> committed-cell power gate.
+<strong>Negative</strong>: the CLI never injects <code>--no-power-gate</code>; never targets the frozen corpus for <code>generate</code>;
+<code>leaderboard</code> degrades gracefully (no traceback) until S6; <code>import cli</code> works without any heavy extra.</p>
+</blockquote>
+<h2>8. Files this story owns</h2>
+<p><strong>NEW</strong>: <code>src/pii_anon_datasets/cli.py</code>, <code>tests/test_cli.py</code>
+<strong>MODIFIED</strong>: <code>pyproject.toml</code> (add <code>[project.scripts]\npii-anon = &quot;pii_anon_datasets.cli:main&quot;</code>).
+<strong>DO NOT TOUCH</strong>: <code>scripts/validate.py</code>, <code>scripts/generate_records.py</code>, <code>baselines/evaluate.py</code> (the CLI
+WRAPS them; it does not modify them); the corpus / lattice / tags.</p>
+<h2>8b. Implementation spec (authoritative)</h2>
+<p><code>cli.py</code> is a thin argparse dispatcher. <code>subprocess</code> runs the repo scripts (logic stays in them);
+<code>distribution</code> is a LAZY import inside <code>_cmd_export</code>. <code>main</code> returns an <code>int</code> exit code.</p>
+<pre><code class="language-python">from __future__ import annotations
+import argparse
+import gzip
+import json
+import subprocess
+import sys
+from collections.abc import Iterator, Sequence
+from pathlib import Path
+
+def _repo_root() -&gt; Path:
+    &quot;&quot;&quot;Walk up to the repo root (the dir holding pyproject.toml).&quot;&quot;&quot;
+    for parent in Path(__file__).resolve().parents:
+        if (parent / &quot;pyproject.toml&quot;).exists():
+            return parent
+    return Path(__file__).resolve().parents[2]  # &lt;root&gt;/src/pii_anon_datasets/cli.py -&gt; &lt;root&gt;
+
+def _run_script(rel_path: str, args: Sequence[str]) -&gt; int:
+    &quot;&quot;&quot;Spawn a repo script as a subprocess; return its exit code. Thin — no logic, no arg injection.&quot;&quot;&quot;
+    script = _repo_root() / rel_path
+    if not script.exists():
+        print(f&quot;pii-anon: {rel_path} not found (run from a source checkout)&quot;, file=sys.stderr)
+        return 2
+    return subprocess.run([sys.executable, str(script), *args]).returncode  # noqa: S603
+
+def _iter_jsonl(path: Path) -&gt; Iterator[dict]:
+    &quot;&quot;&quot;Stream records from a .jsonl(.gz) file (plumbing — not business logic).&quot;&quot;&quot;
+    opener = gzip.open if path.suffix == &quot;.gz&quot; else open
+    with opener(path, &quot;rt&quot;, encoding=&quot;utf-8&quot;) as f:
+        for line in f:
+            if line.strip():
+                yield json.loads(line)
+
+# ---- thin verb handlers: parse -&gt; delegate ----
+def _cmd_generate(args: argparse.Namespace) -&gt; int:
+    return _run_script(&quot;scripts/generate_records.py&quot;, args.rest)  # default output is *_generated.jsonl
+
+def _cmd_score(args: argparse.Namespace) -&gt; int:
+    return _run_script(&quot;baselines/evaluate.py&quot;, args.rest)
+
+def _cmd_validate(args: argparse.Namespace) -&gt; int:
+    # GUARDRAIL (NFR-018): forward the user&#39;s args verbatim; NEVER inject --no-power-gate. The gate
+    # runs by default; only the user may opt out by passing --no-power-gate through `rest`.
+    return _run_script(&quot;scripts/validate.py&quot;, args.rest)
+
+_EXPORTERS = (&quot;parquet&quot;, &quot;conll&quot;, &quot;spacy&quot;, &quot;croissant&quot;, &quot;card&quot;)
+
+def _cmd_export(args: argparse.Namespace) -&gt; int:
+    from pii_anon_datasets import get_data_path  # lazy
+    src = Path(args.input) if args.input else (get_data_path() / &quot;pii_anon.jsonl.gz&quot;)
+    fmt = args.format
+    if fmt == &quot;parquet&quot;:
+        from pii_anon_datasets.distribution import export_parquet
+        export_parquet(_iter_jsonl(src), args.output)
+    elif fmt == &quot;conll&quot;:
+        from pii_anon_datasets.distribution import export_conll
+        export_conll(_iter_jsonl(src), args.output, fmt=args.conll_format)
+    elif fmt == &quot;spacy&quot;:
+        from pii_anon_datasets.distribution import export_spacy_docbin
+        export_spacy_docbin(_iter_jsonl(src), args.output)
+    elif fmt == &quot;croissant&quot;:
+        from pii_anon_datasets.distribution import build_croissant
+        Path(args.output).write_text(json.dumps(build_croissant(), indent=2, ensure_ascii=False), &quot;utf-8&quot;)
+    elif fmt == &quot;card&quot;:
+        from pii_anon_datasets.distribution import build_dataset_card
+        Path(args.output).write_text(build_dataset_card(), encoding=&quot;utf-8&quot;)
+    print(f&quot;pii-anon: wrote {fmt} -&gt; {args.output}&quot;)
+    return 0
+
+def _cmd_leaderboard(args: argparse.Namespace) -&gt; int:
+    try:
+        from pii_anon_datasets import leaderboard  # built in S6
+    except ImportError:
+        print(&quot;pii-anon leaderboard: ships in the S6 governance seam — not yet available&quot;,
+              file=sys.stderr)
+        return 2
+    return int(leaderboard.main(args.rest))  # wired in S6
+
+def build_parser() -&gt; argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog=&quot;pii-anon&quot;, description=&quot;PII-Anon benchmark CLI&quot;)
+    sub = parser.add_subparsers(dest=&quot;verb&quot;)
+    for verb, fn in ((&quot;generate&quot;, _cmd_generate), (&quot;score&quot;, _cmd_score),
+                     (&quot;validate&quot;, _cmd_validate), (&quot;leaderboard&quot;, _cmd_leaderboard)):
+        sp = sub.add_parser(verb)
+        sp.add_argument(&quot;rest&quot;, nargs=argparse.REMAINDER)  # forward verbatim to the delegate
+        sp.set_defaults(func=fn)
+    ex = sub.add_parser(&quot;export&quot;)
+    ex.add_argument(&quot;--format&quot;, choices=_EXPORTERS, default=&quot;parquet&quot;)
+    ex.add_argument(&quot;--output&quot;, required=True)
+    ex.add_argument(&quot;--input&quot;, default=None)
+    ex.add_argument(&quot;--conll-format&quot;, dest=&quot;conll_format&quot;, choices=(&quot;bio&quot;, &quot;bilou&quot;), default=&quot;bio&quot;)
+    ex.set_defaults(func=_cmd_export)
+    return parser
+
+def main(argv: Sequence[str] | None = None) -&gt; int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    func = getattr(args, &quot;func&quot;, None)
+    if func is None:
+        parser.print_help()
+        return 1
+    return int(func(args))
+</code></pre>
+<p><strong>Load-bearing invariants:</strong> (1) <strong>no business logic in cli</strong> — every verb delegates (subprocess to a
+repo script or a lazy <code>distribution</code> call); <code>cli.py</code> imports no scoring/stats metric module at top level
+(AST test). (2) <strong><a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power gate</strong> — <code>_cmd_validate</code> forwards args verbatim and NEVER appends
+<code>--no-power-gate</code>; test #3 asserts the spawned argv. (3) <strong>no corpus regeneration</strong> — <code>_cmd_generate</code>
+injects no output path (the script defaults to <code>*_generated.jsonl</code>, never the frozen corpus). (4)
+<strong>thin + lazy</strong> — <code>import cli</code> works with no heavy extra; <code>distribution</code> imported only inside
+<code>_cmd_export</code>; pure-stdlib AST guard. (5) <strong><code>main -&gt; int</code></strong> — the <code>console_scripts</code> exit-code contract.</p>
+<h2>9. Test type tags</h2>
+<p><code>[UNIT-TEST]</code> <code>[INTEGRATION-TEST]</code> <code>[CONTRACT-TEST]</code> <code>[PROPERTY-TEST]</code></p>
+<h2>10. Definition of Done</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> TDD RED→GREEN→REFACTOR (8 <code>fr_024</code>/<code>nfr_018</code>/<code>dx_03</code>/<code>nfr004</code>-tokened tests; RED precedes GREEN).</li>
+<li><input checked="" disabled="" type="checkbox"> Five thin verbs dispatch correctly (export → distribution; validate/generate/score → subprocess;
+leaderboard → graceful-until-S6); <code>cli.py</code> holds no business logic (AST).</li>
+<li><input checked="" disabled="" type="checkbox"> <code>validate</code> keeps the power gate ON (no injected <code>--no-power-gate</code>); <code>generate</code> never targets the
+frozen corpus; <code>pii-anon validate</code> is the documented one-line CI invocation (DX-03).</li>
+<li><input checked="" disabled="" type="checkbox"> <code>[project.scripts] pii-anon = &quot;pii_anon_datasets.cli:main&quot;</code> in pyproject; <code>main</code> returns <code>int</code>;
+<code>import cli</code> works with pyarrow/spacy/mlcroissant absent (lazy).</li>
+<li><input checked="" disabled="" type="checkbox"> <code>ruff</code> + <code>mypy --strict --follow-imports=silent</code> clean (a scoped <code># noqa: S603</code> on the trusted
+<code>subprocess.run</code> is acceptable — fixed script paths, no shell, no untrusted input); full suite 0
+regressions (242 → ~250 passed, 1 pre-existing skip).</li>
+</ul>
+<h2>11. Reviewer agents at story gate</h2>
+<p>code-quality · traceability · requirements-coverage · security-sast · axiom-compliance.
+(security-sast load-bearing: <code>subprocess</code> usage — assert no <code>shell=True</code>, fixed script paths under the
+repo root, no untrusted-input interpolation; the CLI runs trusted repo scripts only. axiom-compliance:
+the <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power-gate-on guardrail + the no-corpus-regeneration guardrail + thin-dispatch / pure-stdlib.)</p>
+<h2>12. Evidence on completion</h2>
+<p><strong>provisional_status: AGENT_SIMULATED</strong> — the 8 tests genuinely RAN in this env (pytest 9.0.2,
+Python 3.10.6). They patch <code>subprocess.run</code> and the <code>distribution</code> exporters to assert DISPATCH, so
+they NEVER spawn <code>validate.py</code>/<code>generate_records.py</code> over the real corpus and never write a real
+Parquet/CoNLL/DocBin — exactly the contract the story specifies. The thin/pure-stdlib import guard
+(#8) and the leaderboard-absent path (#6) ran against the real package state (the S6 <code>leaderboard/</code>
+package is genuinely absent). Pass-2 real-CI re-run on the project image is still scheduled (the CLI
+is pure-stdlib + I/O dispatch; no benchmark hardware needed).</p>
+<h3>TDD cycle (commits on <code>feat/v2-scoring-harness</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>SHA</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RED</td>
+<td><code>c003174</code></td>
+<td><code>tests/test_cli.py</code> — 8 <code>fr_024</code>/<code>nfr_018</code>/<code>dx_03</code>/<code>nfr004</code> tests. Failed at <strong>collection</strong> (<code>ImportError: cannot import name &#39;cli&#39;</code> — <code>cli.py</code> absent; 0 passed, 1 error). Status CLAIMED→IN_PROGRESS.</td>
+</tr>
+<tr>
+<td>GREEN</td>
+<td><code>ded2281</code></td>
+<td><code>src/pii_anon_datasets/cli.py</code> per §8b (thin argparse dispatcher) + <code>pyproject.toml</code> <code>[project.scripts] pii-anon = &quot;pii_anon_datasets.cli:main&quot;</code>. 8/8 GREEN; full suite 250 passed / 1 skip.</td>
+</tr>
+<tr>
+<td>REFACTOR</td>
+<td><code>7efedbd</code></td>
+<td>ruff check + ruff format clean; <code>mypy --strict --follow-imports=silent</code> clean (the two strict-mypy deviations below). Full suite still 250 / 1.</td>
+</tr>
+</tbody></table>
+<h3>Test results (RED→GREEN counts)</h3>
+<ul>
+<li><strong>RED</strong>: <code>python3 -m pytest tests/test_cli.py -q</code> → <code>1 error during collection</code> (<code>ImportError: cannot import name &#39;cli&#39; from &#39;pii_anon_datasets&#39;</code>; 0 passed) — the test pins production code that does not yet exist.</li>
+<li><strong>GREEN (file)</strong>: <code>python3 -m pytest tests/test_cli.py</code> → <strong>8 passed</strong>.</li>
+<li><strong>Full suite (post-REFACTOR)</strong>: <code>python3 -m pytest</code> → <strong>250 passed, 1 skipped</strong> — <strong>242 prior + 8 new, 0 regressions, 1 pre-existing skip</strong>.</li>
+<li><strong>Token selection</strong> (no double-claim; sums to 8): <code>-k fr_024</code> → 4, <code>-k nfr_018</code> → 1, <code>-k dx_03</code> → 1, <code>-k nfr004</code> → 2.</li>
+</ul>
+<p>The 8 tests (all <code>fr_024</code>/<code>nfr_018</code>/<code>dx_03</code>/<code>nfr004</code>-tokened):</p>
+<ol>
+<li><code>test_fr_024_cli_exposes_five_verbs</code> <code>[UNIT-TEST]</code> — parser registers exactly <code>{generate, score, export, validate, leaderboard}</code>; <code>main([&quot;--help&quot;])</code> exits 0 and the help names all five.</li>
+<li><code>test_fr_024_cli_export_dispatches_to_distribution</code> <code>[INTEGRATION-TEST]</code> — <code>export --format parquet</code> calls <code>distribution.export_parquet</code> with a streaming record <strong>iterator</strong> (not a list/tuple); the CLI computes nothing.</li>
+<li><code>test_nfr_018_cli_validate_keeps_power_gate_on</code> <code>[CONTRACT-TEST]</code> — <code>main([&quot;validate&quot;])</code> spawns an argv ending in <code>validate.py</code> with <strong><code>--no-power-gate</code> ABSENT</strong> (captured spawned argv).</li>
+<li><code>test_fr_024_cli_validate_forwards_user_args</code> <code>[UNIT-TEST]</code> — <code>validate --summary-only</code> forwards <code>--summary-only</code> to <code>validate.py</code>; still no injected <code>--no-power-gate</code>.</li>
+<li><code>test_nfr004_cli_generate_never_targets_frozen_corpus</code> <code>[CONTRACT-TEST]</code> — <code>generate</code> dispatches to <code>generate_records.py</code>; the spawned argv contains no <code>--output</code> and no <code>pii_anon.jsonl.gz</code>.</li>
+<li><code>test_fr_024_cli_leaderboard_graceful_until_s6</code> <code>[CONTRACT-TEST]</code> — with <code>pii_anon_datasets.leaderboard</code> genuinely absent (<code>find_spec is None</code>), <code>main([&quot;leaderboard&quot;])</code> returns <strong>2</strong>, prints an &quot;S6&quot; message to stderr, leaks no <code>Traceback</code>.</li>
+<li><code>test_dx_03_console_entry_point_declared</code> <code>[UNIT-TEST]</code> — <code>pyproject.toml</code> declares <code>[project.scripts] pii-anon = &quot;pii_anon_datasets.cli:main&quot;</code>; <code>main</code> is callable and returns an <code>int</code>.</li>
+<li><code>test_nfr004_cli_thin_pure_stdlib</code> <code>[PROPERTY-TEST]</code> — <code>import pii_anon_datasets.cli</code> succeeds with <code>pyarrow</code>/<code>spacy</code>/<code>mlcroissant</code> blocked (real <code>__import__</code> hook); AST guard: no top-level import of <code>{random, time, uuid, datetime, secrets}</code> nor any <code>{scoring, stats, baselines}</code> metric module.</li>
+</ol>
+<h3>Lint / type</h3>
+<ul>
+<li><code>ruff check src/pii_anon_datasets/cli.py tests/test_cli.py</code> → <strong>All checks passed!</strong> (ruff 0.15.7).</li>
+<li><code>ruff format --check …</code> → <strong>2 files already formatted</strong>.</li>
+<li><code>mypy --strict --follow-imports=silent src/pii_anon_datasets/cli.py</code> → <strong>Success: no issues found in 1 source file</strong> (mypy 1.19.1).</li>
+</ul>
+<h3>thin-dispatch + power-gate-on + no-corpus-regeneration + lazy-import + subprocess-safety audit (static + dynamic)</h3>
+<ul>
+<li><strong>thin dispatch / no business logic</strong>: AST of <code>cli.py</code> — top-level import roots are exactly <code>{__future__, argparse, collections, gzip, json, pathlib, subprocess, sys}</code> (pure-stdlib). Banned ∩ top-level = <strong>∅</strong> (no <code>random/time/uuid/datetime/secrets</code>; no <code>scoring/stats/baselines</code>; no <code>pyarrow/spacy/mlcroissant/numpy/scipy</code>). Every verb delegates: <code>generate</code>/<code>score</code>/<code>validate</code> → <code>_run_script</code> (subprocess to a fixed repo script); <code>export</code> → a LAZY <code>distribution</code> call; <code>leaderboard</code> → the S6 seam. The only non-argparse &quot;parsing&quot; is <code>_iter_jsonl</code> (a streaming <code>json.loads</code> line reader = plumbing, not metric logic).</li>
+<li><strong><a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power-gate-on</strong>: <code>_cmd_validate</code> forwards <code>args.rest</code> verbatim to <code>scripts/validate.py</code> and appends nothing; test #3 asserts the spawned argv has <code>--no-power-gate</code> ABSENT (the script&#39;s own <code>--no-power-gate</code> is <code>store_true</code> default-False → gate ON unless the <em>user</em> opts out). Test #4 confirms forwarding a real user flag (<code>--summary-only</code>) still never smuggles in <code>--no-power-gate</code>.</li>
+<li><strong>no-corpus-regeneration</strong>: <code>_cmd_generate</code> passes only <code>args.rest</code> (no injected <code>--output</code>); <code>generate_records.py</code>&#39;s own default is <code>…/pii_anon_generated.jsonl</code> (verified at its source line 35), never the frozen <code>data/pii_anon.jsonl.gz</code>. Test #5 asserts the spawned argv contains neither <code>--output</code> nor <code>pii_anon.jsonl.gz</code>.</li>
+<li><strong>lazy-import / <a class="trace-link" href="../sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></strong>: live probe — <code>import pii_anon_datasets.cli</code> succeeds with <code>pyarrow</code>/<code>spacy</code>/<code>mlcroissant</code> blocked via a real <code>builtins.__import__</code> hook (<code>distribution</code> and <code>get_data_path</code> are imported only inside <code>_cmd_export</code>; <code>leaderboard</code> only inside <code>_cmd_leaderboard</code>). <code>main([])</code> returns <code>int</code> 1 (prints help). <code>main</code> always returns an <code>int</code> (the <code>console_scripts</code> exit-code contract).</li>
+<li><strong>subprocess safety (security-sast)</strong>: exactly ONE call site — <code>subprocess.run([sys.executable, str(script), *args])</code> with a <strong>fixed list argv</strong> (no <code>shell=True</code>), <code>script</code> resolved under <code>_repo_root()/&lt;fixed rel path&gt;</code> (<code>scripts/validate.py</code>, <code>scripts/generate_records.py</code>, <code>baselines/evaluate.py</code>), and a <code># noqa: S603</code> scoped to that line. No shell-string execution, no <code>Popen</code>, no <code>check_output</code>, no untrusted-input interpolation (the trusted repo scripts are the only targets; <code>args</code> is the user&#39;s verbatim CLI tail forwarded to a known script). Missing-script branch returns 2 (thin, no crash).</li>
+<li><strong>scope</strong>: diff since RED base touches only the §8 owned files — <code>src/pii_anon_datasets/cli.py</code> (NEW), <code>tests/test_cli.py</code> (NEW), <code>pyproject.toml</code> (<code>[project.scripts]</code> added). <code>scripts/validate.py</code>, <code>scripts/generate_records.py</code>, <code>baselines/evaluate.py</code>, the corpus / lattice / tags are <strong>UNTOUCHED</strong> (confirmed via <code>git diff --name-only</code>).</li>
+</ul>
+<h3>§8b deviations (justified — argparse-semantics / strict-mypy; dispatch contract &amp; module shape unchanged)</h3>
+<ol>
+<li><strong>Passthrough verbs use <code>parser.parse_known_args(argv)</code> (not a <code>nargs=argparse.REMAINDER</code> positional).</strong> The §8b spec attaches <code>rest = nargs=REMAINDER</code> to each passthrough subparser; verified empirically that <code>REMAINDER</code> <strong>drops a leading option-like token</strong> — <code>parse_args([&quot;validate&quot;, &quot;--summary-only&quot;])</code> raises <code>SystemExit(2)</code> (&quot;unrecognized arguments: --summary-only&quot;), which would break <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>/<a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> arg-forwarding (§7 + test #4 require <code>validate --summary-only</code> to forward). Fix: passthrough verbs declare no options; <code>main</code> collects the verbatim tail via <code>parse_known_args</code> and attaches it as <code>args.rest</code>, so the <code>_cmd_*</code> handler bodies are <strong>unchanged</strong> (they still read <code>args.rest</code>). This is strictly more correct for a pure passthrough dispatcher (it forwards an arbitrary leading <code>--flag</code> verbatim), still validates the <code>export</code> verb&#39;s OWN declared options (a missing <code>--output</code> is still rejected), and the tail is never mutated (no injected flags — <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> preserved). RED test #4 passes against this.</li>
+<li><strong><code>_iter_jsonl(path) -&gt; Iterator[dict[str, object]]</code></strong> (parametrised the bare <code>dict</code> the §8b spec used) and <strong>a scoped <code># type: ignore[attr-defined]</code> on <code>from pii_anon_datasets import leaderboard</code></strong> — both required for <code>mypy --strict</code> (bare <code>dict</code> → <code>[type-arg]</code>; <code>leaderboard</code> is genuinely absent until S6, and the <code>except ImportError</code> is the graceful-degradation contract, so the ignore is precisely the absent-until-S6 seam). Same class as S5-04&#39;s strict-mypy type refinements; module behavior unchanged. The <code># noqa: S603</code> on the trusted <code>subprocess.run</code> is retained per §8b/§10 (the story explicitly sanctions it).</li>
+<li><strong>Non-behavioral addition</strong>: a trailing <code>if __name__ == &quot;__main__&quot;: raise SystemExit(main())</code> so the module is also runnable as <code>python -m pii_anon_datasets.cli</code>. No §8b function body changed; no dispatch behavior changed.</li>
+</ol>
+<h3>Files</h3>
+<ul>
+<li>NEW <code>src/pii_anon_datasets/cli.py</code>, <code>tests/test_cli.py</code></li>
+<li>MODIFIED <code>pyproject.toml</code> (<code>[project.scripts] pii-anon = &quot;pii_anon_datasets.cli:main&quot;</code>)</li>
+<li>UNTOUCHED <code>scripts/validate.py</code>, <code>scripts/generate_records.py</code>, <code>baselines/evaluate.py</code>, the corpus / lattice / tags (the CLI WRAPS them; the dispatch targets were read-only-confirmed).</li>
+</ul>
+<h3>Reviewer verdicts</h3>
+<p>Story gate <strong>APPROVE</strong> (iteration 1, 5/5 reviewers, <strong>0 findings</strong> — fully clean gate;
+<code>_reviews/story/S5-05/synthesis.md</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Reviewer</th>
+<th>Verdict</th>
+<th>Findings</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>code-quality</td>
+<td>✅ APPROVE</td>
+<td>0</td>
+</tr>
+<tr>
+<td>security-sast</td>
+<td>✅ APPROVE</td>
+<td>0 (load-bearing — subprocess audited clean: list argv, no <code>shell=True</code>, scoped <code># noqa: S603</code>)</td>
+</tr>
+<tr>
+<td>requirements-coverage</td>
+<td>✅ APPROVE</td>
+<td>0 (<a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> now fully closed across S5-02/03/04/05 + JSONL)</td>
+</tr>
+<tr>
+<td>traceability</td>
+<td>✅ APPROVE</td>
+<td>0 (tokens 4/1/1/2=8; no double-claim; <a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-12" data-trace-id="DC-12" aria-label="Trace DC-12">DC-12</a> + locked rev #10)</td>
+</tr>
+<tr>
+<td>axiom-compliance</td>
+<td>✅ APPROVE</td>
+<td>0 (<a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power-gate-on + no-corpus-regen + thin/pure-stdlib all held)</td>
+</tr>
+</tbody></table>
+<p><strong>Joint signals:</strong> <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power-gate-on guardrail ENFORCED (<code>--no-power-gate</code> never injected — test
+asserts the spawned argv); no-corpus-regeneration held (<code>generate</code> never targets the frozen corpus);
+subprocess safety (no <code>shell=True</code>, fixed paths); thin + pure-stdlib + lazy. <strong>Roll-up:</strong> <a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> is now
+<strong>fully closed</strong> (Parquet + Croissant/card + spaCy/CoNLL + CLI + JSONL) — sprint-gate signal. <strong>Deferral:</strong>
+the <code>leaderboard</code> verb backend = named successor S6 (graceful stub now).</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>04-development/02-stories/sprint-5/S5-05.md</code> ·
+  content-hash <code>e46898da5268</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

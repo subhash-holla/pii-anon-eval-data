@@ -1,0 +1,85 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S6-03
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: security-S6-03-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/leaderboard/coi.py:57-60
+    description: |
+      requires_recusal normalizes with affiliation.strip().lower() and substring-matches the literal
+      "pii-anon-core". This correctly defeats the in-scope evasion vectors (verified empirically):
+      casing (PII-ANON-CORE, Pii-Anon-Core), leading/trailing whitespace and tabs/newlines
+      ("\tPII-Anon-Core\n", "  pii-anon-core  "), suffix ("pii-anon-core-team", "Pii-Anon-Core Labs"),
+      prefix ("ex-pii-anon-core"), and punctuation suffix ("Pii-Anon-Core, Inc.") all flag True; an
+      affiliated submitter cannot bypass the recusal flag by casing/whitespace/suffix manipulation.
+      However, semantic-equivalence variants evade the flag (all return False): hyphen-dropped
+      "piianoncore", space-separated "pii anon core", camel "PiiAnonCore", and unicode look-alikes
+      (fullwidth "pｉｉ-anon-core", dotless-i "pıi-anon-core"). This is a known, deliberate limitation
+      of a substring control on free-text affiliation and is explicitly out of scope for blocking at
+      this gate. The recusal flag is an attested governance signal, not an adversarial authentication
+      boundary — a determined affiliated submitter who would obfuscate their affiliation to dodge
+      recusal is already violating the gov-03 attestation they signed. Recorded for monitoring only.
+    suggested_resolution: |
+      Optional hardening (NOT required to clear this gate): NFKC-normalize the affiliation before
+      matching (unicodedata.normalize("NFKC", a)) to fold fullwidth/look-alike code points, and/or
+      strip non-alphanumerics before the substring test so that "piianoncore" / "pii anon core" also
+      match. Track as a governance-robustness follow-up; coordinate with axiom-compliance (the
+      governance-neutrality invariant owner) rather than patching in-story.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-03.md#8b
+      - requirements.md#gov-03
+      - requirements.md#NFR-014
+
+notes: |
+  Security surface is a frozen pure-stdlib value object; light review per dispatch brief. All four
+  in-scope security controls verified empirically (PYTHONPATH=src, Python 3.10.6):
+
+  1. RECUSAL CANNOT BE EVADED (in-scope vectors) — PASS. strip().lower() + substring("pii-anon-core")
+     plus exact-token frozenset({"maintainer","pii-anon-core"}) flag True across all casing/whitespace/
+     tab-newline/suffix/prefix/punctuation variants tested; False for external affiliations
+     ("Acme University", "Independent Researcher", "MIT", "Google", ""). Hyphen-drop / unicode
+     look-alike evasions logged as OBSERVATION security-S6-03-01 (non-blocking, per brief).
+
+  2. ATTESTATION NON-STRIPPABLE — PASS. __post_init__ raises ValueError on "", "   ", "\t\n", and an
+     NBSP-only string ("\xa0"). attestation defaults to NO_PREPUB_ATTESTATION, which contains
+     "pre-publication", "held-out", and "train"/"tune". A submission cannot be recorded without the
+     no-pre-publication-access attestation. dataclass(frozen=True) additionally prevents stripping the
+     attestation or swapping the affiliation (and thus the recusal flag) after construction
+     (FrozenInstanceError confirmed).
+
+  3. NO GOLD-LEAK — PASS. as_dict() emits exactly {submitter, affiliation, attestation,
+     requires_recusal}. Intersection with the S6-01 store's _FORBIDDEN_PAYLOAD_KEYS
+     ({gold, gold_labels, held_out, held_out_labels, answers, ground_truth}) is empty, so
+     LeaderboardStore.append(EventType.SUBMITTED, ..., payload=record.as_dict()) is accepted (the
+     store's FR-023 guard at store.py:143-145 does not trip). The recusal flag is logged as provenance,
+     not stripped. No held-out-gold key is carried.
+
+  4. NO EGRESS / SECRETS / UNSAFE DESERIALIZATION / NO REAL PII — PASS. Top-level imports are exactly
+     {__future__, dataclasses} (AST-confirmed). grep for network/subprocess/socket/urllib/pickle/
+     marshal/eval/exec/__import__/open/os.environ/secrets/credential-shapes/md5/sha1 matched only
+     docstring prose and the recusal-token literals, never an actual call or import. submitter and
+     affiliation are free-text org/person identifiers (governance metadata), not corpus PII subjects;
+     no held-out evaluation data flows through this module. No new dependency (pure-stdlib) -> no CVE/
+     SBOM/composition-root/license surface; no capability registry, trust boundary, HSM port, or
+     egress-manifest entity touched (the agentic-runtime/financial security entities do not apply to
+     this benchmark repo, domain_packs: []). sensitive_data_scan is enabled at repo level; the
+     no-real-PII invariant holds for this module — no SSN/ABA/API-key/PII-pattern literals present.
+
+  Common-findings catalog (1-15) swept: none apply. No SHOWSTOPPER/CATASTROPHIC/MAJOR/MINOR.
+
+  Diff reviewed: src/pii_anon_datasets/leaderboard/coi.py (new, 69 LOC) and
+  src/pii_anon_datasets/leaderboard/__init__.py (export wiring of CoIRecord + NO_PREPUB_ATTESTATION,
+  plus a pre-existing minimal verify CLI not introduced by this story). Both within S6-03's §8
+  owned-files set; store.py/policy.py untouched.
+
+  No active domain pack supplies a security-sast reviewer extension (developer-assistant.yaml
+  domain_packs: []), so no pack-sourced patterns were merged and source_pack is not set on any finding.
+
+review_time_seconds: 196
+
+context_bounds_respected: true

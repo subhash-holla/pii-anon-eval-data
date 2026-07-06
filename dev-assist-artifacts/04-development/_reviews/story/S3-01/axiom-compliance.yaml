@@ -1,0 +1,114 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S3-01
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: axiom-S3-01-01
+    severity: OBSERVATION
+    location: tests/test_signals.py:test_detect_signals_pure_and_deterministic
+    description: |
+      AX-002 determinism. The purity/determinism test asserts intra-process
+      idempotence (det(text) == det(text); extract(text) == extract(text)) but
+      does not by itself foreclose a shared seeded-RNG/clock side channel — two
+      calls in one process could agree yet still be nondeterministic across
+      processes. The axiom still holds: independently confirmed there is zero
+      clock/RNG/IO in the owned files (no random/secrets/uuid/time/datetime
+      import or call; the only "time" tokens are the word "timezone" in
+      comments), every detect_* is a pure regex/string function of `text`, and
+      a 100-run extract() loop is byte-identical. So the spirit is fully upheld;
+      only the test's stated warrant lags its claim ("no RNG/clock") — the
+      property is proven by construction + the cross-process experiment, not by
+      the assertion. Form-lags-spirit only; non-blocking.
+    suggested_resolution: |
+      Optional hardening (not required to clear the gate): add a one-line
+      assertion that the owned modules import none of {random, secrets, uuid,
+      time, datetime} (e.g. assert no such name in
+      vars(signals)/sys.modules-delta), or assert extract() equals a frozen
+      golden block so the no-RNG claim is mechanically pinned rather than
+      inferred. Track in S3-02+ if convenient.
+    references:
+      - dev-assist-artifacts/00-axioms/project-axioms.yaml#AX-pii-anon-002
+      - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-01.md#6
+
+notes: |
+  STORY-GATE AXIOM SLICE — only the axioms the S3-01 diff triggers were reviewed
+  (adversary port value objects + assemble_paired_set + signals.py port). All
+  PASS; one OBSERVATION (non-blocking). Out of scope (correctly): whether the
+  ported detect_* heuristics are the *right* signals (executor/traceability),
+  Wilson-CI per-cell power (AX-pii-anon-003 — no metric emission in this story),
+  and anon/pseudo metric separation (AX-pii-anon-004 — no scorer impl yet).
+
+  ── AX-002 deterministic-reproducible-generation (AX-pii-anon-002) — PASS ──
+  • assemble_paired_set is sort-based: substrate.sort(key=lambda r: r["record_id"])
+    then slice — no RNG, no clock, no set-iteration leak into output. Test #4
+    (test_assemble_paired_set_deterministic) has real teeth: input order is
+    ["ccc-3","aaa-1","bbb-2"] but it asserts the assembled order is the SORTED
+    ["aaa-1","bbb-2","ccc-3"] AND equality across two runs — would fail if the
+    assembler preserved insertion order or used a set/dict-keyed dedup.
+  • Persona/Target/Guess are frozen dataclasses (@dataclass(frozen=True));
+    Test #1 proves FrozenInstanceError on mutation.
+  • signals.extract is a pure function of text: detect_* are regex/string ops;
+    indicator lists are built by in-order append over insertion-ordered dict
+    catalogues (no set->list ordering leak); compute_signal_density iterates a
+    dict in insertion order. Independently ran extract() 100x → byte-identical.
+  • Grepped owned files for {random, secrets, uuid, time, datetime, urandom,
+    perf_counter, monotonic}: NONE (only the word "timezone" in comments).
+    Determinism is airtight by construction, not merely by the passing test.
+
+  ── reidx-01 de-circularization (LOAD-BEARING) — PASS (independently proven) ──
+  Verified BOTH by reading assemble_paired_set §3-4 and by a direct data-level
+  experiment, not by trusting the test assertion:
+  • Code path: Target.observed_signals = signals.extract(anonymized_text), where
+    anonymized_text = record["context_preservation"][f"anonymized_{variant}"].
+    Persona.behavioral_signals = record["tier3_evaluation"]["behavioral_signals"]
+    (gold) is assigned to the Persona ONLY — it is NEVER read into the Target.
+    There is no aliasing and no copy of gold into observed_signals anywhere.
+  • Empirical proof (gold says location=very_high "the T/Beacon Hill"; the
+    pseudonymized variant strips it to "commute downtown"):
+        GOLD  location uniqueness : very_high   |  OBS location uniqueness : none
+        GOLD  density             : 0.93        |  OBS density             : 0.2433
+        observed IS gold (alias)? : False       |  observed == gold?        : False
+    The two genuinely diverge in BOTH object identity and value; gold is left
+    unmutated. Test #7 (test_target_observed_signals_reextracted_not_gold)
+    faithfully guards exactly this. This is the exact SME-flagged defect
+    (downstream RRS collapsing into the precomputed heuristic) and it is closed.
+  • Strengthening note: the documented Deviation #1 — detect_professional_domain
+    defaulting record_domain="general" inside extract() — actually REINFORCES
+    reidx-01: it removes a record-metadata side channel so the adversary's view
+    is a function of anonymized TEXT ALONE. Correct call, not a violation.
+
+  ── NFR-004 pure-stdlib — PASS ──
+  • Owned-file imports are exclusively: re, statistics, dataclasses, typing,
+    collections.abc, __future__, and intra-package relatives (..signals,
+    .base, .. import signals). No numpy/scipy/pandas. No `from scripts` /
+    `import scripts` / `scripts.` anywhere — src stays import-pure; the
+    detect_*/UNIQUENESS_WEIGHT/compute_signal_density logic is a faithful
+    in-tree port of scripts/enrich_behavioral_signals.py (verified line-by-line:
+    identical regexes, identical INDUSTRY_JARGON/LOCATION_REFERENCES/etc.
+    catalogues, identical density formula 0.6*peak + 0.4*mean rounded to 4dp;
+    Test #8 pins UNIQUENESS_WEIGHT, Test #9 pins density to 0.7333).
+
+  ── AX-001 synthetic-only-no-real-PII (AX-pii-anon-001) — PASS (this surface) ──
+  • Owned src/ files perform ZERO corpus I/O — assemble_paired_set takes
+    `records` as an argument; the only "load_dataset" token is a comment. No
+    gzip/open/Path/json.load in any owned file.
+  • Both test files use inline synthetic fixtures (_record/_basic_records:
+    "Carla","Alice the attending physician","Bob in Boston","My commute on the
+    T into Beacon Hill") — never the real corpus. No real-PII heuristic surface
+    is introduced by this story. (Full corpus AX-001 scan remains security-sast's
+    standing hook, unchanged by S3-01.)
+
+  TDD trail confirmed in git: 3b1a952 [RED] -> dc8cd7f [GREEN] -> 3827d89
+  [REFACTOR], matching DoD §10 / §12. 11/11 owned tests pass (0.13s).
+
+  Independence self-attestation: findings reached independently from reading the
+  diff, the source script, and direct data-level experiments; not influenced by
+  other reviewers' outputs (none read).
+
+review_time_seconds: 300
+
+context_bounds_respected: true

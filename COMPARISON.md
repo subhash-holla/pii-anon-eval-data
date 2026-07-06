@@ -18,13 +18,13 @@ PII-Anon is the only dataset providing comprehensive coverage across all three t
 
 | Feature | PII-Anon v2.0 | Nemotron-PII | AI4Privacy | Gretel Finance | PII-Bench | TAB | PIILO | SPY | BigCode PII |
 |---------|:-----------:|:------------:|:----------:|:-----------:|:---------:|:---:|:-----:|:---:|:-----------:|
-| **Records** | **575,604** | ~100K | ~220K | 56K | 2.8K | 1.3K | 22K | 8.7K | 12K |
+| **Records** | **782,677** | ~100K | ~220K | 56K | 2.8K | 1.3K | 22K | 8.7K | 12K |
 | **Languages** | **60** | 1 | 8 | 7 | 1 | 1 | 1 | 1 | 1 |
-| **Writing scripts** | **32** | 1 | 3 | 1 | 1 | 1 | 1 | 1 | 1 |
-| **Entity types** | **63** | 55+ | 20-54 | 18 | 55 | Semantic | 14 | 7 | 6 |
+| **Writing scripts** | **19** | 1 | 3 | 1 | 1 | 1 | 1 | 1 | 1 |
+| **Entity types** | **66** | 55+ | 20-54 | 18 | 55 | Semantic | 14 | 7 | 6 |
 | **Document types** | **40** | 50+ | ~5 | 100+ | ~5 | 1 | 1 | 2 | Code |
 | **Anonymized variants per record** | **4 (masked, pseudo, generalized, llm-sanitized)** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| **Behavioral signals (Tier 3)** | **159,891 Tier-3 records (27.8% eval substrate), 6 categories** | No | No | No | No | No | No | No | No |
+| **Behavioral signals (Tier 3)** | **159,891 Tier-3 records (27.6% eval substrate), 6 categories** | No | No | No | No | No | No | No | No |
 | **Re-identification Resistance Score (RRS)** | **159,891 Tier-3 records** | No | No | No | No | No | No | No | No |
 | **Paired persona profiles** | **2,500 personas / 5K records** | No | No | No | No | No | No | No | No |
 | **ESRC-attack evaluation records** | **2,003** | No | No | No | No | No | No | No | No |
@@ -51,12 +51,12 @@ PII-Anon is the only dataset providing comprehensive coverage across all three t
 ### AI4Privacy (2023-2024)
 - **Strengths**: Largest dataset (220K+), 6 languages, community-driven
 - **Weaknesses**: Inconsistent annotation quality, limited entity types (27-47 depending on version), no structured evaluation dimensions, mixed real/synthetic data raises privacy concerns
-- **PII-Anon advantage**: 60 languages (vs 6), 63 entity types, 7 evaluation dimensions, fully synthetic (no privacy risk), sensitivity classification
+- **PII-Anon advantage**: 60 languages (vs 6), 66 entity types, 7 evaluation dimensions, fully synthetic (no privacy risk), sensitivity classification
 
 ### PII-Bench (2024)
 - **Strengths**: First query-aware PII benchmark (2.8K samples), multi-domain
 - **Weaknesses**: Small scale, English-only, no coreference, limited adversarial coverage
-- **PII-Anon advantage**: ~200x scale (575,604 vs 2.8K), 60 languages, 8K query-aware records (nearly 3x), coreference tracking, adversarial taxonomy
+- **PII-Anon advantage**: ~280x scale (782,677 vs 2.8K), 60 languages, 8K query-aware records (nearly 3x), coreference tracking, adversarial taxonomy
 
 ### TAB - Text Anonymization Benchmark (Pilán et al., 2022)
 - **Strengths**: Real court documents (authentic PII patterns), semantic entity types, direct/quasi identifier distinction, coreference support
@@ -66,30 +66,30 @@ PII-Anon is the only dataset providing comprehensive coverage across all three t
 ### PIILO (Pikkanen et al., 2024)
 - **Strengths**: Educational domain focus, 22K samples, real student essays
 - **Weaknesses**: Single domain, single language, 14 entity types only, no adversarial or coreference
-- **PII-Anon advantage**: ~26x scale, 60 languages, 63 entity types, 4 domains, full evaluation framework
+- **PII-Anon advantage**: ~26x scale, 60 languages, 66 entity types, 4 domains, full evaluation framework
 
 ### SPY (Mökander et al., 2023)
 - **Strengths**: Clinical notes focus, 6.6K samples
 - **Weaknesses**: Single domain/language, 11 entity types, restricted access
-- **PII-Anon advantage**: Open license, 63 entity types, 60 languages, clinical domain subset (11.7K records alone)
+- **PII-Anon advantage**: Open license, 66 entity types, 60 languages, clinical domain subset (11.7K records alone)
 
 ### BigCode PII (Elazar et al., 2024)
 - **Strengths**: Code-specific PII detection (12K), StarCoder training data
 - **Weaknesses**: Limited to source code, 6 entity types only, English only
-- **PII-Anon advantage**: Code subset (5.7K) with 63 entity types, plus 3 other domains, 60 languages
+- **PII-Anon advantage**: Code subset (5.7K) with 66 entity types, plus 3 other domains, 60 languages
 
 ## Unique Differentiators
 
 Features available **only** in PII-Anon v2.0.0:
 
 1. **Multi-domain realistic document formats**: 23+ document types spanning clinical (SOAP notes, nursing notes, radiology/pathology reports, transcripts), legal (depositions, witness statements, memos, court opinions), and financial (complaint emails, chat logs, SARs, KYC notes)
-2. **Advanced adversarial test set**: 13 attack categories including Unicode homoglyphs, zero-width chars, BiDi attacks, Base64 encoding, OCR artifacts, negated PII, and context-dependent ambiguity — failure modes where production systems drop from 94% to 14% F1
+2. **Advanced adversarial test set**: 13 attack categories including Unicode homoglyphs, zero-width chars, BiDi attacks, Base64 encoding, OCR artifacts, negated PII, and context-dependent ambiguity — off-the-shelf detectors degrade sharply on these (measured, attack- and detector-specific; see `results/tier-a/adversarial_table.md`)
 3. **Multilingual + query-aware PII**: The only dataset combining query-aware PII detection (13K records) with multilingual support (60 languages)
 4. **7 evaluation dimensions**: Systematic coverage of entity tracking, multilingual, context preservation, diverse PII types, edge cases, format variations, and temporal consistency
 5. **Regulatory domain tagging**: Per-record tagging with 7 applicable frameworks (GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA)
 6. **Evaluation infrastructure**: 70/10/20 train/dev/test splits, cross-domain test sets, an 11-detector F2 leaderboard (8 local + 3 cloud DLP; see [BASELINES.md](BASELINES.md)), CoNLL BIO export, Parquet export
 7. **Re-identification risk scoring**: Per-record quasi-identifier analysis with k-anonymity estimates
-8. **Sensitivity classification at scale**: Every annotation across 575,604 records tagged as direct_identifier, quasi_identifier, or sensitive_attribute
+8. **Sensitivity classification at scale**: Every annotation across 782,677 records tagged as direct_identifier, quasi_identifier, or sensitive_attribute
 9. **Domain x Language matrix**: Clinical, financial, legal, and technology subsets available across multiple languages
 10. **Ambiguous entity tracking**: 3K records with shared name components testing disambiguation
 

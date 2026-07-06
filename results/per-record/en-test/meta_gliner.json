@@ -1,0 +1,16 @@
+{
+  "status": "scored",
+  "model_id": "urchade/gliner_multi_pii-v1",
+  "deterministic": true,
+  "build_seconds": 9.5,
+  "wall_seconds": 5470.6,
+  "record_errors": 0,
+  "n_records": 31048,
+  "n_gold": 201880,
+  "n_pred": 177881,
+  "n_tp": 144604,
+  "precision": 0.8129254951343876,
+  "recall": 0.7162869031107588,
+  "f1": 0.7615526607524206,
+  "f2": 0.7337317498155572
+}

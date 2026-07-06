@@ -1,0 +1,155 @@
+# requirements-coverage reviewer — STORY gate
+schema: dev-assist/reviewer-finding/v1
+reviewer: requirements-coverage
+gate: story
+gate_id: S4-03
+iteration: 1
+review_mode: read-only
+timestamp: 2026-05-29
+context_bounds_respected: true
+source_pack: null   # developer-assistant.yaml domain_packs: [] — no pack extensions merged
+
+verdict: APPROVE
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 2
+approve_condition: "zero MAJOR+ — satisfied (0 SHOWSTOPPER/CATASTROPHIC/MAJOR)"
+
+story:
+  title: "S4-03 — Calibration: ECE + Brier + reliability bins (per entity class)"
+  status: REVIEW
+  provisional_status: AGENT_SIMULATED
+  traced_requirements:
+    primary: [FR-005, NFR-008]
+    supporting: [AX-003, NFR-004]
+  source_dc: DC-09
+  diverged: false   # no provisional_status:DIVERGED MUST in scope → no Pass-2 cross-check owed here
+
+scope_statement: >
+  Every requirement-slice S4-03 CLAIMS is fully verified by a passing, correctly-mapped test.
+  FR-005's ECE+Brier+per-bin-reliability surface (per entity class) is covered. NFR-008 is
+  surfaced as a REPORTED meets_reference flag, never a gate. FR-005's abstention coverage-risk
+  curve is NOT claimed by this story (out of its declared scope) — recorded as OBSERVATION, not
+  a coverage gap for this gate.
+
+independent_verification:
+  ece_recompute:
+    method: "independent re-implementation of equal-width ECE (idx=min(n_bins-1,int(conf*n_bins))); implementation NOT trusted"
+    fixed_input:
+      conf: [0.05, 0.15, 0.25, 0.35, 0.85, 0.95, 0.95, 1.00]
+      correct: [0, 0, 1, 0, 1, 1, 1, 0]
+    computed: 0.29375           # 0.29374999999999996 == approx(0.29375, abs=1e-12)
+    story_and_test_claim: 0.29375
+    match: true
+    note: "dense bin9 (0.95,0.95,1.00): count3 acc 2/3 conf_mean 2.9/3 gap 0.3 weight 3/8 contrib 0.1125 — confirmed"
+  brier_recompute:
+    method: "independent mean((conf-correct)**2)"
+    computed: 0.2171875
+    story_and_test_claim: 0.2171875
+    match: true
+  ancillary_recompute:
+    perfect_calibration_ece: 0.0          # claim 0.0 — match
+    person_ece: 0.0
+    person_brier: 0.1875                  # claim 0.1875 — match
+    email_ece: 0.9
+    email_brier: 0.81                     # claim 0.81 — match
+
+  nfr_008_reported_not_gated:
+    honesty_check: PASS
+    evidence:
+      - "Only `raise` in calibration.py is ValueError on len(confidences)!=len(correct) (line 103) — no raise/block on high ECE"
+      - "calibrate() on high-ECE input (0.29375) RETURNS a CalibrationResult; meets_reference == False; surfaced via property + as_dict()"
+      - "EMAIL class (ece 0.9) still returns a result — badly-calibrated class reported, not gated"
+      - "test_nfr_008_meets_reference_is_reported_not_gated asserts no-raise + flag False + live comparison (good→True)"
+    note: "NFR-008 is REPORTED (reference target), not a submitter pass/fail — load-bearing honesty property holds end-to-end"
+
+  coverage_calibration_py:
+    target_module: pii_anon_datasets.stats.calibration
+    command: "python3 -m pytest tests/test_calibration.py --cov=pii_anon_datasets.stats.calibration --cov-report=term-missing"
+    stmts: 93
+    missed: 2
+    line_coverage_pct: 97.8        # (93-2)/93 — comfortably >= 85% line requirement
+    branch_coverage_pct: 96
+    missing_lines: [128, 154]
+    missing_lines_nature: "empty-input early returns (n==0 -> 0.0) in expected_calibration_error & brier_score; not calibration logic — acceptable to miss"
+    meets_85_line: true
+
+  test_execution:
+    calibration_suite: "8 passed in 0.13s"
+    collected: 8
+    full_suite: "192 passed, 1 skipped in 2.37s"
+    regressions: 0
+    matches_story_claim: true        # story claimed 192 passed / 1 pre-existing skip
+
+acceptance_clause_coverage:   # §7 G/W/T → test mapping (every clause has a passing test)
+  - clause: "Then ECE emitted"
+    test: test_fr_005_ece_known_value
+    status: PASS
+    independently_recomputed: true
+  - clause: "Then Brier emitted"
+    test: test_fr_005_brier_known_value
+    status: PASS
+    independently_recomputed: true
+  - clause: "Then per-bin reliability emitted (partition [0,1], sum==n, exactly one bin)"
+    test: test_fr_005_reliability_bins_partition
+    status: PASS
+  - clause: "NFR-008 reference reported as meets_reference flag — never a gate"
+    test: test_nfr_008_meets_reference_is_reported_not_gated
+    status: PASS
+  - clause: "Negative: ECE>0.05 returns normally (reported, not raised)"
+    test: test_nfr_008_meets_reference_is_reported_not_gated
+    status: PASS
+  - clause: "Negative: mismatched input lengths -> ValueError"
+    test: test_fr_005_input_length_mismatch_raises
+    status: PASS
+  - clause: "Optionally grouped by entity class — per-class ECE/Brier independent"
+    test: test_nfr_008_calibration_by_entity_class
+    status: PASS
+  - clause: "Perfect calibration -> ECE ~= 0.0 (FR-005 sanity)"
+    test: test_fr_005_perfect_calibration_zero_ece
+    status: PASS
+  - clause: "Pure-stdlib / deterministic (NFR-004 / AX-002) — supporting"
+    test: test_fr_005_nfr004_calibration_imports_no_nondeterminism
+    status: PASS
+
+section6_test_plan_coverage:   # §6 RED->GREEN plan: all 8 tokened tests present, collected, passing
+  expected: 8
+  present: 8
+  collected: 8
+  passing: 8
+  all_carry_fr005_or_nfr008_token: true
+  missing: []
+
+findings:
+  - id: RC-S4-03-OBS-01
+    severity: OBSERVATION
+    requirement: FR-005
+    title: "FR-005 abstention coverage-risk curve not addressed by this story"
+    detail: >
+      FR-005 reads "ECE + Brier + a reliability diagram per entity class AND an abstention
+      coverage-risk curve". S4-03 covers the ECE/Brier/reliability slice and explicitly does not
+      claim the abstain-to-review coverage-risk curve (no claim in S4-03 §2/§7; not in §8 files).
+      This is a correct, honest scope boundary for the story — flagged only so the EPIC/SPRINT
+      coverage gate tracks that the abstention slice of FR-005 still needs a successor story
+      (sprint-4 planning shows no dedicated abstention story yet). Not a story-gate gap.
+    action: "At epic/sprint gate, ensure FR-005 abstention coverage-risk curve has a successor story or explicit deferral."
+  - id: RC-S4-03-OBS-02
+    severity: OBSERVATION
+    requirement: NFR-008
+    title: "NFR-008 full verification is a Stage-5 (real-CI Pass 2) concern, not closed by this AGENT_SIMULATED story"
+    detail: >
+      provisional_status is AGENT_SIMULATED; §5 names "Stage 5 NFR-008 verification" as downstream
+      and §12 schedules Pass 2 (real CI on real hardware) before DONE is final. The calibration
+      MACHINERY for NFR-008 is verified here (ECE per entity class, reference reported-not-gated);
+      final NFR-008 sign-off remains owed at the release/Stage-5 bar. No action at story gate.
+    action: "Carry NFR-008 final verification (real-CI Pass 2) to release gate; do not mark NFR-008 DONE on simulated evidence."
+
+self_attestation:
+  independent: true
+  recomputed_critical_values_without_trusting_impl: true
+  reran_tests_and_coverage: true
+  read_only: true
+  no_files_modified_other_than_this_review: true

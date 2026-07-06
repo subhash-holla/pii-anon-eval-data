@@ -1,0 +1,144 @@
+# Traceability reviewer — STORY gate
+schema_version: "1.0"
+reviewer: traceability
+gate: story
+story_id: S5-01
+iteration: 1
+mode: read-only
+timestamp: "2026-05-30"
+independence_attestation: >-
+  I reviewed S5-01 forward-traceability independently against the requirements
+  document, design synthesis, and the owned source/test files. I did not author
+  any of the artifacts under review and ran only read-only verification commands.
+context_bounds_respected: true
+
+scope:
+  primary_requirement: FR-022
+  source_dc: DC-11
+  design_revision: gov-02
+  owned_files:
+    - src/pii_anon_datasets/compliance/__init__.py
+    - src/pii_anon_datasets/compliance/crosswalk.py
+    - tests/test_crosswalk.py
+  domain_packs_active: []   # developer-assistant.yaml domain_packs: [] — no pack extensions merged
+
+verdict: APPROVE
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+
+checks:
+  - id: fr_exists_in_requirements
+    description: >-
+      FR-022 declared by story exists in functional-requirements.md at the
+      cited locator :40.
+    status: PASS
+    evidence: >-
+      02-requirements/functional-requirements.md:40 — "FR-022 — Legally-distinct
+      regulatory crosswalk. ... GDPR / HIPAA-Safe-Harbor / HIPAA-Expert-Determination /
+      CCPA-deidentified / PCI-DSS columns ... kept legally distinct at the display layer
+      (no cross-regime equivalence). (UC-10, N9; MUST)". Line number matches the
+      dispatch locator exactly.
+  - id: tests_embed_fr_token
+    description: Every test function name carries an fr_022 token.
+    status: PASS
+    evidence: >-
+      All 6 test fns in tests/test_crosswalk.py are prefixed test_fr_022_*
+      (test_fr_022_five_legally_distinct_columns, _hipaa_is_two_distinct_columns,
+      _no_merged_or_equivalence_column, _presence_to_status_conservative,
+      _corpus_tag_mapping, _nfr004_crosswalk_pure_stdlib).
+  - id: pytest_k_selects_all_six
+    description: >-
+      `python3 -m pytest tests/test_crosswalk.py -k fr_022 -q` selects all 6 tests
+      (story claim "selects all 6").
+    status: PASS
+    evidence: >-
+      Ran the exact command: output "......" (6 dots), summary "6 passed in 0.11s",
+      exit code 0, zero deselected. The -k filter is co-extensive with the file's
+      6 tests; none leak outside the token.
+  - id: symbol_docstrings_cite_fr_and_gov
+    description: Symbol docstrings cite FR-022 / gov-02.
+    status: PASS
+    evidence: >-
+      crosswalk.py module docstring L1 "(FR-022 / gov-02)"; RegulatoryCrosswalk
+      docstring L83 "kept legally distinct (gov-02)"; crosswalk_record docstring
+      L130 "Each FR-022 regime"; as_columns docstring L162 "no merged column (gov-02)";
+      REGIMES/CROSSWALK_DISCLAIMER comments + L53 "(gov-02 / FR-022)". __init__.py L1
+      "(FR-022 / gov-02)". Citations present on the package, module, dataclass, and
+      both public functions.
+  - id: fr022_contract_realized
+    description: >-
+      FR-022 contract (GDPR/HIPAA-SH/HIPAA-ED/CCPA-deid/PCI-DSS legally distinct,
+      no equivalence) is realized in code and asserted by tests.
+    status: PASS
+    evidence: >-
+      REGIMES = 5 ordered named regimes; RegulatoryCrosswalk has exactly those 5
+      RegimeStatus fields + other_regimes + disclaimer and DELIBERATELY no merged
+      field; HIPAA is two separate regimes (safe_harbor §164.514(b)(2),
+      expert_determination §164.514(b)(1)); as_columns emits exactly 5 reg_* keys;
+      no compliant/overall/equivalent symbol survives (verified independent grep on
+      src — zero matches); reg_regulatory_domains absent from src. Forbidden-column
+      set {compliant,deidentified,overall,equivalent,regulatory_domains} disjoint
+      from emitted keys (the legitimate reg_ccpa_deidentified regime is not a false
+      positive — source grep bans compliant/overall/equivalent as whole words only,
+      column check is on emitted keys). All 6 tests pass.
+  - id: gov02_cited_in_design
+    description: gov-02 cited in D-implementation-ready-design.md.
+    status: PASS
+    evidence: >-
+      03-design/06-synthesis/D-implementation-ready-design.md:104 (D6 LOCKED
+      revisions, item 6): "Regulatory crosswalk = N separate typed columns in
+      compliance/ + distribution/; the existing export_parquet.py regime-flattening
+      is fixed, not inherited; export test asserts each regime independently
+      addressable, no equivalence field. (gov-02 — FR-022 made structural.)" Story §4
+      quotes this revision text faithfully.
+  - id: no_name_says_x_asserts_y
+    description: No test whose name claims X but body asserts unrelated Y.
+    status: PASS
+    evidence: >-
+      Each of the 6 test bodies asserts exactly what its name states (five-columns →
+      column set+ordering; hipaa-two → both HIPAA cols + no reg_hipaa collapse;
+      no-merged → forbidden cols/fields + source grep; presence-conservative →
+      in_scope/out_of_scope signal + disclaimer + __post_init__ guard; corpus-mapping →
+      tag→regime map + sox/lgpd/pipa surfaced-not-folded; nfr004-stdlib → AST import
+      ban). No mismatch.
+  - id: provisional_status_cascade
+    description: Story provisional_status matches source DC (DC-11 AGENT_SIMULATED, not DIVERGED).
+    status: PASS
+    evidence: >-
+      Story §1 metadata and §4 both declare provisional_status: AGENT_SIMULATED;
+      DC-11 is AGENT_SIMULATED, not DIVERGED — no DIVERGED cascade obligation. §12
+      records the Pass-2 (real CI) commitment consistent with AGENT_SIMULATED.
+  - id: dependencies_done
+    description: Declared upstream dependencies are DONE.
+    status: PASS
+    evidence: >-
+      §5 declares no new must-be-DONE dependencies (operates on a record's
+      regulatory_domains tags). S5-01 BLOCKS S5-02/S5-06 (downstream) — no inbound
+      blocker to verify.
+
+findings:
+  - id: TRACE-S5-01-OBS-01
+    severity: OBSERVATION
+    title: traceability-matrix.md row for FR-022→S5-01 not verified in this read-only pass
+    detail: >-
+      Dispatch scoped this review to the owned source/test files, requirements
+      locator, and design doc; it did not name the traceability matrix path. Common
+      finding #4 (matrix row for the story's FR claim) is therefore not affirmatively
+      confirmed here. Recommend the matrix maintainer ensure a FR-022 → S5-01 row with
+      the GREEN test evidence (tests/test_crosswalk.py::test_fr_022_*, 6 passed) is
+      present at sprint gate. Non-blocking for the story gate.
+    files: []
+    requirement: FR-022
+
+evidence_commands:
+  - "python3 -m pytest tests/test_crosswalk.py -k fr_022 -q  =>  ...... / 6 passed in 0.11s / exit 0 / 0 deselected"
+  - "grep -nE '^def test_' tests/test_crosswalk.py  =>  6 test fns, all test_fr_022_*"
+  - "python3 -m pytest  =>  217 passed, 1 skipped in 2.98s (matches story §12: 211 prior + 6 new, 0 regressions)"
+  - "git diff --name-only fdc3b450~1 HEAD  =>  only compliance/__init__.py, crosswalk.py, test_crosswalk.py (+ story md) — scope clean; RED SHA resolves in tree"
+  - "independent grep \\b{compliant,overall,equivalent}\\b on crosswalk.py  =>  zero matches; reg_regulatory_domains absent"
+  - "functional-requirements.md:40  =>  FR-022 present at cited locator"
+  - "D-implementation-ready-design.md:104  =>  gov-02 cited (FR-022 made structural)"

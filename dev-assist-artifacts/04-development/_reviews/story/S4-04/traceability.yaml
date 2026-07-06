@@ -1,0 +1,201 @@
+# Traceability reviewer — STORY gate
+schema: dev-assist/reviewer-finding/v1
+reviewer: traceability
+gate: story
+story_id: S4-04
+story_title: "Per-language + language×type power table (NFR-003 transparency)"
+iteration: 1
+mode: read-only
+reviewed_at: "2026-05-30"
+reviewer_email: subhashholla23@gmail.com
+branch: feat/v2-scoring-harness
+
+scope:
+  chain: "FR/NFR -> Story -> Test -> DC (forward traceability only)"
+  primary_requirements: [NFR-003]
+  supporting_requirements: [FR-029, AX-003, NFR-004]
+  source_dc: DC-09
+  owned_files:
+    - src/pii_anon_datasets/reporting/language_power.py
+    - src/pii_anon_datasets/reporting/__init__.py
+    - tests/test_language_power.py
+
+verdict: APPROVE
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+context_bounds_respected: true
+
+# ---------------------------------------------------------------------------
+# Verification log (all forward-trace gates GREEN)
+# ---------------------------------------------------------------------------
+checks:
+  - id: TRC-S4-04-01
+    name: "Declared primary NFR-003 exists in non-functional-requirements.md"
+    status: PASS
+    evidence: >
+      NFR-003 present at non-functional-requirements.md:9 — "Per-language (and language×type)
+      power transparency. Threshold: a per-language positive-count table AND a
+      per-(language×entity-type) power matrix are published; no aggregate '60-language' ... claim
+      without them; any language, type, or language×type cell below its tier target is labeled
+      low-power. Measure: ... emitted by the DC-09 power-table reporter." Story title + §2 + §3
+      match the requirement statement verbatim. No SHOWSTOPPER (no phantom ID).
+
+  - id: TRC-S4-04-02
+    name: "Supporting FR-029 / AX-003 / NFR-004 exist"
+    status: PASS
+    evidence: >
+      FR-029 (committed-lattice provenance), AX-pii-anon-003 (statistical power -> NFR-003 +
+      FR-029, traceability-matrix.md:31), NFR-004 (determinism) all present in the requirements
+      corpus. Supporting IDs are real, not invented.
+
+  - id: TRC-S4-04-03
+    name: "Every test fn carries an nfr_003 token"
+    status: PASS
+    evidence: >
+      6/6 test fns tokened (grep `def test_` -> 6; `def test_nfr_003` -> 6):
+      test_nfr_003_per_language_table_has_row_per_language (L80),
+      test_nfr_003_language_x_type_matrix_grouped (L94),
+      test_nfr_003_low_power_cells_labeled (L112),
+      test_nfr_003_render_markdown_and_csv (L132),
+      test_nfr_003_no_corpus_read (L152),
+      test_nfr_003_nfr004_imports_no_nondeterminism (L183).
+      No untokened test in the owned file.
+
+  - id: TRC-S4-04-04
+    name: "`pytest -k nfr_003` selects ALL 6 and they pass"
+    status: PASS
+    evidence: >
+      `python3 -m pytest tests/test_language_power.py -k nfr_003 -q` -> 6 dots, all pass;
+      `--collect-only -q` reports exactly 6 selected (no over/under selection). Full suite
+      `python3 -m pytest` -> 198 passed, 1 skipped — 0 regressions, matching the story's §1
+      Evidence claim (198 passed / 1 skipped).
+
+  - id: TRC-S4-04-05
+    name: "Symbol docstrings cite NFR-003 (DC-09)"
+    status: PASS
+    evidence: >
+      Module docstring cites "(DC-09; NFR-003, FR-029, AX-003)" (L1) and quotes the NFR-003
+      threshold (L3-8). per_language_table docstring: "(NFR-003 per-language table)" (L37);
+      language_x_type_matrix: "(NFR-003 power matrix)" (L61); render_markdown:
+      "(NFR-003 low-power labelling)" (L100); render_csv + column-order comment cite NFR-004
+      (L87,L112). __init__.py export block tagged "S4-04 ... (NFR-003)" (L15).
+
+  - id: TRC-S4-04-06
+    name: "Contract realized — per-language table AND language×type matrix; low-power labelling"
+    status: PASS
+    evidence: >
+      per_language_table filters interaction=="marginal:language" -> rows
+      {language, positives, target_n, tier, power_class} sorted by language (L36-57);
+      language_x_type_matrix filters interaction=="language_x_entity_type" -> rows
+      {language, entity_type, positives, target_n, tier, power_class} sorted (language,
+      entity_type) for forward/reverse navigation (L60-84); render_markdown + render_csv both emit
+      a low_power flag column derived from power_class != "well_powered" (L98-121). Below-target
+      cells are therefore labelled low-power, satisfying the NFR-003 threshold. The interaction
+      tags + id prefixes + dimensions shape are CONFIRMED against the frozen committed lattice:
+      data/eval_lattice.json carries 60 "marginal:language" cells (sample id M:language=af,
+      dimensions{language}) and 492 "language_x_entity_type" cells (sample id
+      LxE:entity_type=API_KEY|language=ar, dimensions{entity_type,language}) — and against
+      stats/lattice.py:163,176 which emit exactly those interactions. The reporter's filter
+      constants therefore bind to real cells, not phantom tags.
+
+  - id: TRC-S4-04-07
+    name: "Reuses power_table classification (single source of truth) — no parallel classifier"
+    status: PASS
+    evidence: >
+      language_power imports `_power_class` from .power_table (L21) and calls it as
+      `_power_class(positives, cell["target_n"])` (L33); power_table._power_class signature is
+      (observed:int, target:int) -> str returning empty/well_powered/under_powered
+      (power_table.py:17-20). Argument order + return contract match — the per-language /
+      language×type rows carry the SAME power_class label as the published per-cell power table.
+
+  - id: TRC-S4-04-08
+    name: "No name-says-X-asserts-Y mismatch (test body matches name)"
+    status: PASS
+    evidence: >
+      Each test asserts what its name claims: ..._has_row_per_language asserts row-per-language
+      marginal + entity_type marginal excluded (L83-90); ..._matrix_grouped asserts 4 LxE rows,
+      contiguous-by-language ordering, navigable by type (L97-108); ..._low_power_cells_labeled
+      asserts fr under-powered / en well-powered / fr-IBAN empty / en-IBAN well-powered + the
+      invariant (power_class=="well_powered") == (positives>=target_n) (L116-128);
+      ..._render_markdown_and_csv asserts non-empty header-bearing output + CSV round-trips to
+      same row count (L136-148); ..._no_corpus_read is an AST guard forbidding
+      load_dataset/gzip/open/load_lattice (L152-179); ..._nfr004_imports_no_nondeterminism is an
+      AST guard forbidding {random,time,uuid,datetime,secrets} (L183-197). No semantic divergence.
+
+  - id: TRC-S4-04-09
+    name: "Dependencies (S-PWR) DONE — lattice + power_table present, frozen, green"
+    status: PASS
+    evidence: >
+      §5 "Must be DONE: S-PWR (stats/lattice.py frozen eval_lattice.json, reporting/power_table.py)".
+      All three dependency artifacts exist and import cleanly: stats/lattice.py (emits the
+      marginal:language + language_x_entity_type cells), reporting/power_table.py (exposes
+      _power_class consumed here), and data/eval_lattice.json (730 cells, committed/frozen). Full
+      suite green (198 passed) confirms the dependency surface is intact, not IN_PROGRESS. No
+      unmet/IN_PROGRESS upstream blocker. The S-PWR work is upstream-DONE (a prior sprint);
+      sprint-3 S3-03/06/08 matched on a DC-09/eval_lattice substring grep are NOT the owner
+      (S3-03 = llm_adversary; S3-06 = anon Pareto; S3-08 = reid seam) and are all DONE regardless.
+
+  - id: TRC-S4-04-10
+    name: "traceability-matrix.md carries NFR-003 (use-case granularity)"
+    status: PASS
+    evidence: >
+      NFR-003 appears at traceability-matrix.md:9 (UC-02 powered per-slice + crossed cells ->
+      FR-004,FR-029 / NFR-001,NFR-002,NFR-003,NFR-018 · MUST · AGENT_SIMULATED), :20 (UC-13), and
+      the AX-pii-anon-003 axiom map (:31). The matrix tracks use-cases/MUSTs (not one row per
+      story) — same granularity accepted for S4-01/02/03; the NFR-003 -> UC-02 -> AX-003 trace is
+      present and status-consistent. (Per the matrix's own discipline a Status Change Log entry on
+      S4-04 close is the per-story record; absence pre-close is not a story-gate defect.)
+
+  - id: TRC-S4-04-11
+    name: "provisional_status cascade matches source DC-09 (not DIVERGED)"
+    status: PASS
+    evidence: >
+      Story metadata provisional_status=AGENT_SIMULATED (S4-04.md:17); §4 "DC-09 · AGENT_SIMULATED
+      · not DIVERGED" (L33). Matches the UC-02 matrix row (AGENT_SIMULATED) and the corroborated
+      DC-09 state (S4-01/02/03 all record DC-09 NOT DIVERGED). No DIVERGED cascade required — no
+      Pass-2 §10 commitment owed.
+
+  - id: TRC-S4-04-12
+    name: "Single-owner of the NFR-003 per-language facet (no ambiguous tracing)"
+    status: PASS
+    evidence: >
+      language_power.py (per_language_table / language_x_type_matrix) is the sole owner of the
+      NFR-003 per-language + language×type transparency facet. power_table.py owns the per-cell
+      power table (FR-029/AX-003) and is REUSED here, not duplicated. No second pub item claims
+      NFR-003's per-language facet. No finding-pattern-12.
+
+# ---------------------------------------------------------------------------
+findings:
+  - id: TRC-S4-04-OBS-1
+    severity: OBSERVATION
+    pattern: 4  # traceability.md per-story row (Status Change Log) on close
+    title: "Log the S4-04 NFR-003 trace in traceability-matrix.md Status Change Log on close"
+    file: dev-assist-artifacts/02-requirements/traceability-matrix.md
+    line: 9
+    detail: >
+      NFR-003 is fully traced at use-case granularity (UC-02 row + AX-003 map), consistent with how
+      S4-01/02/03 were accepted, so this is NOT a MAJOR finding-pattern-4 miss. Recorded only so
+      that, on S4-04 transition REVIEW->DONE, a one-line Status Change Log entry
+      ("S4-04 realizes NFR-003 per-language + language×type reporter; tests
+      tests/test_language_power.py::test_nfr_003_*") is added — preserving the per-story evidence
+      link at sprint/release roll-up. No action required at the story gate.
+    action: "On S4-04 close, append a Status Change Log row in traceability-matrix.md linking NFR-003 to language_power.py + the 6 nfr_003 tests."
+
+self_attestation:
+  independent: true
+  reviewed_only_owned_surface_and_traces: true
+  no_code_authored: true
+  context_bounds_respected: true
+  statement: >
+    Reviewed forward FR/NFR -> Story -> Test -> DC traceability for S4-04 only. Verified NFR-003
+    existence, the 6 nfr_003 test tokens + their `-k nfr_003` selection (all 6 pass), symbol
+    docstrings, the per-language-table + language×type-matrix + low-power-labelling contract
+    (cross-checked against the frozen eval_lattice.json interaction tags and stats/lattice.py),
+    power_table._power_class reuse, dependency presence/greenness, and the AGENT_SIMULATED cascade
+    from DC-09. Did not assess test quality, idiom, NFR threshold attainment, or NFR semantics
+    beyond G/W/T (out of scope — code-quality / requirements-coverage / performance own those).
+    Read-only; no files mutated except this review artifact.

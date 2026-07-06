@@ -22,8 +22,8 @@ from pii_anon_datasets.release.citation import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-# The real Zenodo DOI minted for v2.0.0 (replaced the PENDING sentinel on deposit).
-MINTED_DOI = "10.5281/zenodo.20690979"
+# The real Zenodo DOI minted for v2.2.0 (the v2.0.0 re-mint; replaced the PENDING sentinel on deposit).
+MINTED_DOI = "10.5281/zenodo.21207288"
 
 
 def test_doi_is_minted_real_doi_off_the_sentinel() -> None:
@@ -38,7 +38,7 @@ def test_doi_is_minted_real_doi_off_the_sentinel() -> None:
 
 
 def test_metadata_pins_canonical_version_and_license() -> None:
-    assert CITATION_METADATA["version"] == "2.0.0"
+    assert CITATION_METADATA["version"] == "2.2.0"
     assert CITATION_METADATA["license"] == "CC0-1.0"
     # author + repo provenance present
     assert "Holla" in str(CITATION_METADATA["authors"])
@@ -48,7 +48,7 @@ def test_metadata_pins_canonical_version_and_license() -> None:
 def test_render_citation_cff_is_valid_cff_text_with_pinned_facts() -> None:
     cff = render_citation_cff()
     assert "cff-version: 1.2.0" in cff
-    assert 'version: "2.0.0"' in cff or "version: 2.0.0" in cff
+    assert 'version: "2.2.0"' in cff or "version: 2.2.0" in cff
     assert "CC0-1.0" in cff
     # the DOI line must carry the real minted DOI, the sentinel must be gone, no fabricated 10.x
     assert MINTED_DOI in cff
@@ -60,7 +60,7 @@ def test_render_citation_cff_is_valid_cff_text_with_pinned_facts() -> None:
 def test_render_bibtex_misc_entry_carries_minted_doi() -> None:
     bib = render_bibtex()
     assert bib.lstrip().startswith("@misc")
-    assert "2.0.0" in bib
+    assert "2.2.0" in bib
     assert "CC0" in bib
     # DOI is minted — the note must carry the real DOI, the sentinel must be gone, no fake DOI
     assert MINTED_DOI in bib

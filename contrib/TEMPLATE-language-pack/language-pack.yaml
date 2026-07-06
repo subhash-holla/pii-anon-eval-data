@@ -1,0 +1,36 @@
+# Language-pack manifest — copy this folder to contrib/<bcp47-tag>/ and fill it in.
+# See ../../docs/contributing-languages.md. Everything here describes a SYNTHETIC, CC0 contribution.
+
+language: "ta-IN"                 # BCP-47 tag (incl. dialect/region subtag where true)
+script: "Taml"                    # ISO 15924
+language_family: "Dravidian"
+display_name: "Tamil (India)"
+
+mode: "B"                         # A = generation recipe (preferred); B = validated record batch
+
+contributor:
+  name: "Your Name or handle"
+  native_or_fluent_speaker: true
+  native_speaker_reviewer: "who reviewed the linguistic realism"
+
+license: "CC0-1.0"               # data is CC0; no incompatible upstream sources
+synthetic_only: true             # AX-001 attestation — 100% synthetic, no real/scraped/anonymized-real PII
+
+records:
+  file: "records.sample.jsonl"   # path to the .jsonl(.gz) batch (Mode B) or generated sample (Mode A)
+  count: 2                        # number of records
+  powered: false                 # true if >= 100 records (per docs quality bar)
+
+coverage:
+  domains: ["general"]           # which domains the records span
+  dimensions: ["multilingual", "diverse_pii_types"]
+  entity_types: ["PERSON_NAME", "EMAIL_ADDRESS", "PHONE_NUMBER"]   # canonical types represented
+  locale_notes: >
+    Names in given-name + surname order; +91 phone format; Aadhaar-style 12-digit national IDs
+    would be NATIONAL_ID_NUMBER. Replace with your locale's realities.
+
+# Mode A only — describe the generation recipe the maintainers will wire into the generator:
+generation_recipe:
+  value_generators: []           # synthetic name lists / id formats / address formats (public-domain or original)
+  document_templates: []         # carrier-text templates in the target language
+  notes: ""

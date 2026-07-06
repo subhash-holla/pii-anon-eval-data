@@ -1,0 +1,80 @@
+reviewer: dev-assist-development-performance-benchmark
+
+scope_id: S7
+
+gate: sprint
+
+verdict: APPROVE
+
+findings:
+  - id: performance-S7-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/validation/correlation.py:176
+    description: |
+      The Kendall-tau bootstrap is the one super-linear cost on the S7 seam surface.
+      kendall_tau() is O(n^2) (concordant/discordant over all i<j pairs, lines 103-114),
+      and _bootstrap_ci() invokes the pair-statistic n_boot times (default 1000), so the
+      tau CI is O(n^2 * n_boot). Empirically measured (n_boot=1000, tau+rho together):
+      n=50 -> 0.32s, n=100 -> 1.07s, n=200 -> 3.95s, n=400 -> 15.4s — i.e. the cost
+      roughly quadruples per doubling of n, the textbook O(n^2) signature.
+
+      For the INTENDED scale this is a non-issue: the real-data validation slice (FR-027,
+      v1.1 SEAM) is dozens-to-low-hundreds of PAIRED detector scores, where the whole
+      correlate() call is sub-second to a few seconds in an offline, one-shot validation
+      harness. There is NO corpus hot-path leakage: grep confirms the only caller of
+      kendall_tau/_bootstrap_ci is correlate() itself plus tests/test_correlation.py over
+      small fixtures; the 575K-row corpus never reaches the tau-bootstrap (the scoring
+      reidentification.py correlate_index_vs_rrs is a SEPARATE O(n) Pearson/Spearman path,
+      not this O(n^2) tau). No NFR budget applies to this v1.1 seam (advisory gate).
+
+      Flagged purely so the quadratic-in-n cost is on record before any future caller
+      attempts a large-n (n in the thousands) tau-bootstrap.
+    suggested_resolution: |
+      No change required for v1.1 / the intended validation-slice scale. As a v1.x guard,
+      IF a future use feeds large n (thousands of pairs) into correlate(): either
+      (a) sub-sample the paired scores to a fixed cap (e.g. n<=500) before the tau-bootstrap
+      and record the cap in the CorrelationResult, or (b) swap kendall_tau() for an
+      O(n log n) merge-sort-inversion tau-b implementation so the bootstrap becomes
+      O(n log n * n_boot). Optionally add a soft-warn (or a documented n threshold) in
+      correlate() when n is large enough that the O(n^2 * n_boot) cost is material.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-01.md
+
+notes: |
+  SPRINT S7 (Extension seams) — performance-benchmark, ADVISORY (v1.1 seams, no hard perf NFR).
+
+  Bounded context reviewed (perf-relevant S7 surfaces only):
+    - validation/correlation.py  — Kendall-tau O(n^2); tau-bootstrap O(n^2 * n_boot);
+                                    spearman/pearson O(n) + O(n log n) ranking; bland_altman O(n).
+    - subsets/slices.py          — coreference_slice / quasi_identifier_slice are O(n)
+                                    order-preserving filters, O(1) per record. No super-linear cost.
+    - scoring/adversary/oracle.py    — recognize() O(#annotations); recognize_span() O(#annotations)
+                                        linear scan. O(1)-ish per record. No super-linear cost.
+    - scoring/adversary/payloads.py  — build_payloads() O(3 transforms * span length); base64/ocr/
+                                        zero_width each O(span length). O(1)-ish. No super-linear cost.
+
+  Correct + bounded for the intended scale: CONFIRMED. These are seam tools over small inputs
+  (paired validation scores / per-record annotations / single spans), NOT the 575K corpus.
+  No corpus hot-path leakage found (caller grep: kendall_tau/_bootstrap_ci reachable only via
+  correlate() + its tests).
+
+  Benchmark/test-harness reproducibility: STRONG.
+    - tests/test_correlation.py + test_slices.py + test_oracle.py + test_payloads.py: 19 passed.
+    - Determinism verified: correlate(seed=42) yields byte-identical tau_ci/rho_ci across two
+      runs (tau_ci=(0.7837837837837838, 1.0), rho_ci=(0.8701298701298701, 1.0)); the bootstrap
+      owns a LOCAL random.Random(seed) and is provably immune to module-global RNG perturbation
+      (test seeds random.seed(0)/random.seed(999999) between calls and asserts identical output).
+    - No network / no clock / no os.environ in any of the four modules (grep NONE) — fully
+      fixture- and seed-driven, reproducible (NFR-004 / AX-002). FR-027 epistemic guard holds:
+      absent real scores -> RealDataAbsent sentinel, never a fabricated correlation.
+    - Bootstrap CI percentile indices in-range for n_boot in {100,1000,10000}.
+
+  Domain packs: developer-assistant.yaml domain_packs = [] -> no reviewer-extension catalogs to merge.
+
+  No MAJOR+ perf defect for the intended scale. One advisory OBSERVATION (tau-bootstrap
+  O(n^2 * n_boot)) recorded for v1.x. APPROVE.
+
+review_time_seconds: 280
+
+context_bounds_respected: true

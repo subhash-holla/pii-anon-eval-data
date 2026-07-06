@@ -1,0 +1,102 @@
+# Axiom-compliance review — STORY gate S3-02 (iteration 1)
+schema: dev-assist/reviewer-finding/v1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S3-02
+iteration: 1
+review_date: "2026-05-29"
+repo: pii-anon-eval-data
+branch: feat/v2-scoring-harness
+mode: read-only
+
+verdict: APPROVE
+approve_iff_zero_major_plus: true
+context_bounds_respected: true
+
+scope:
+  owned_files:
+    - src/pii_anon_datasets/scoring/adversary/offline_adversary.py
+    - tests/test_offline_adversary.py
+    - src/pii_anon_datasets/scoring/adversary/__init__.py   # export edit
+    - src/pii_anon_datasets/scoring/__init__.py             # re-export edit
+  diff_basis: "2e4344d (RED) .. f78e8b8 (REFACTOR); story doc f55f99d — 5 files, matches §8 ownership exactly"
+  axioms_in_play:
+    - AX-pii-anon-002   # deterministic-reproducible-generation (AX-002 determinism)
+    - AX-pii-anon-001   # synthetic-only-no-real-pii (AX-001) — fixture/prose slice only
+    - reidx-01          # design revision #1: target uses post-anon observed_signals + surviving QI, NOT gold
+    - NFR-004           # purity (stdlib-only; intra-package imports limited to signals/base)
+
+axiom_checks:
+
+  - axiom: AX-pii-anon-002
+    name: determinism / byte-reproducibility (AX-002)
+    triggered_by: "attack() is the headline RRS attacker; MUST be byte-reproducible (no RNG/clock)"
+    status: UPHELD
+    evidence:
+      - "AST import-purity guard test_fr_007_nfr004_offline_adversary_imports_no_nondeterminism bans {random,time,uuid,datetime,secrets} via ast.walk over Import/ImportFrom — PASS."
+      - "INDEPENDENT AST scan (reviewer-run): offline_adversary top-level imports = [__future__, base, collections, dataclasses, signals]; banned_hit=[]. The signals dependency itself imports only [__future__, re, statistics]; banned_hit=[] — so the determinism warrant is transitively clean, not just first-hop."
+      - "test_fr_007_attack_is_deterministic: two attack() calls on identical (targets,candidates,|C|) -> g1==g2 (frozen-dataclass equality == byte-equal) — PASS."
+      - "test_fr_007_ranking_is_order_independent: forward == reversed == shuffled candidate orderings — PASS."
+      - "INDEPENDENT permutation probe (reviewer-run): all 6 candidate permutations -> exactly 1 distinct output repr. Stronger than the test's 3 orderings."
+      - "Order-independence MECHANISM verified in source: attack() does sorted(candidates, key persona_id)[:|C|] BEFORE scoring (line 223), so even |C|-truncation is order-invariant; ranking loop uses strict 'sim > best_sim' over a persona_id-ascending pool, so ties keep the lexicographically-smallest persona_id == the (sim desc, persona_id asc) total order §8b mandates."
+      - "Tie-break DIRECTION verified (reviewer-run): two equal-sim personas p-aaa/p-bbb -> winner p-aaa in BOTH forward and reversed input order (persona_id asc, not input-first)."
+    severity: n/a
+
+  - axiom: NFR-004
+    name: purity — stdlib-only; intra-package imports limited to {signals, base}
+    triggered_by: "story DoD + §8b 'Pure-stdlib'"
+    status: UPHELD
+    evidence:
+      - "offline_adversary.py imports: stdlib (__future__, collections.abc.Sequence, dataclasses.dataclass) + intra-package '..signals' (UNIQUENESS_WEIGHT, SignalsBlock) and '.base' (Guess, Persona, Target). No third-party, no network, no LLM, no I/O. Matches the 'only signals/base from the package' bound exactly."
+      - "Export edits (adversary/__init__.py, scoring/__init__.py) add only typing.Any / collections.abc.Sequence + re-exports — no nondeterministic import introduced."
+      - "ruff check (executor) + reviewer pytest green corroborate; no [tool.ruff] config gaps affect owned files."
+    severity: n/a
+
+  - axiom: reidx-01
+    name: target side = post-anonymization signal only (NOT gold behavioral_signals)
+    triggered_by: "the load-bearing SME-panel defect-avoidance invariant for the headline adversary"
+    status: UPHELD
+    evidence:
+      - "_target_feature_weights(target, candidate, config) (lines 134-151) sources signal features from target.observed_signals ONLY; QI features are candidate QI value strings tested for survival as case-insensitive substrings of target.anonymized_text. The gold Persona.behavioral_signals of the target's own source is never referenced on the target path."
+      - "_candidate_feature_weights (lines 122-131) correctly DOES read the candidate's gold behavioral_signals + quasi_identifiers — that is the real-side pool the adversary searches, which the prompt confirms is correct."
+      - "DECISIVE reviewer-run proof: a target whose anonymized_text is fully scrubbed of signal+QI ('[REDACTED] ... discussed [REDACTED] ...') does NOT link to its true source p-boston — it scores 0.43 to an unrelated persona on a residual writing-style artifact. A gold-leak would have forced score 1.0 to p-boston. Conversely, when QI 'Beacon Hill' survives into the anonymized text, the link correctly fires to p-boston (0.64) via candidate-QI substring match. This empirically separates 'reads post-anon signal' from 'reads gold'."
+      - "assemble_paired_set (S3-01, read for context) builds Target.observed_signals = signals.extract(anonymized_text) — re-extracted, never copied from gold — consistent with the adversary's contract."
+    severity: n/a
+
+  - axiom: AX-pii-anon-001
+    name: synthetic-only (no real PII) — fixture/prose slice
+    triggered_by: "owned test fixtures + module docstrings/prose embedded in the diff"
+    status: UPHELD
+    evidence:
+      - "Inline fixtures use synthetic/generic prose: 'Beacon Hill' (public neighborhood name, not tied to a real natural person + contact data), generic medical/fitness jargon, 'my husband', no SSNs/cards/emails/phones/real-person full-name+contact pairings. No real-PII heuristic match in the owned diff. (SAST owns the corpus-wide scan; this is the story-slice observation.)"
+    severity: n/a
+
+cross_axiom_findings: []
+
+findings: []   # zero MAJOR+, zero MINOR, zero OBSERVATION
+
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+  total: 0
+
+out_of_scope_deferred:
+  - "RRS scoring correctness (recall/precision/RRS + Wilson CIs) — S3-04 (requirements-coverage / traceability)."
+  - "Whether the link result is the CORRECT attribution at corpus scale — executor's + traceability's."
+  - "Attack complexity O(|targets|*|C|*features) — performance advisory only at story scope (no [BENCHMARK] tag)."
+  - "Distractor ASSEMBLY from non-candidate tier3 records — explicitly S3-01 assemble_paired_set distractor mode / later wiring per §8b; this story correctly only version-stamps adversary_id + accepts a caller-supplied decoy pool."
+
+self_attestation:
+  independent: true
+  read_only_confirmed: true
+  no_files_modified_outside_review_dir: true
+  verification_performed:
+    - "Read owned impl + tests + both export edits + base.py port + signals.py dependency."
+    - "Ran tests/test_offline_adversary.py -> 9 passed (corroborates executor §12)."
+    - "Re-derived AST import-purity independently for BOTH offline_adversary.py and its signals dep."
+    - "Re-ran determinism as a full 6-permutation byte-equality probe + tie-break direction check."
+    - "Constructed a scrubbed-target counterfactual to positively prove no gold-leak on the target path (reidx-01)."
+  conflicts_of_interest: none

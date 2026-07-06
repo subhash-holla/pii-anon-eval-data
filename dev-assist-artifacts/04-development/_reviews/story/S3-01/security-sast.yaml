@@ -1,0 +1,71 @@
+reviewer: dev-assist-development-security-sast
+scope_id: S3-01
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY-gate security-sast review of S3-01 (iteration 1), read-only. Bounded context:
+  story file, the 6 in-scope files (scoring/adversary/{__init__,base}.py, scoring/signals.py,
+  scoring/__init__.py, tests/test_adversary_port.py, tests/test_signals.py), developer-assistant.yaml
+  (domain_packs only). No findings at any severity.
+
+  AX-001 (no-real-PII) — PRIMARY axiom, VERIFIED CLEAN on three independent grounds:
+    1. assemble_paired_set reads NO corpus itself. It is a pure in-memory transform over a
+       caller-supplied `records: Sequence[Record]` argument -> frozen dataclasses + re-extracted
+       signals. It does NOT call load_dataset, open(), json, or any ingestion primitive. The
+       "reads only the synthetic corpus" requirement is satisfied structurally: there is no read
+       path in scope to point at a real-PII source. Whatever the caller passes in is the only data
+       surface, and selection is sort-by-record_id + slice (no transform that could synthesize PII).
+    2. Zero I/O of any kind. AST-level import audit of all 3 src modules: every import is stdlib
+       (re, statistics, dataclasses, typing, collections.abc, __future__) or in-package relative.
+       No socket/urllib/requests/httpx/http.client/ftplib/smtplib (NO network egress), no open/
+       Path/read_text/read_bytes (no filesystem), no os.environ/getenv (no secret pull). Egress
+       surface for this story = none.
+    3. Tests use inline synthetic fixtures (tiny dicts; synthetic names Alice/Bob/Carla/Dana/
+       Robin/Sam) — they do NOT touch load_dataset or any real corpus path. This is MORE
+       conservative than §6's described "<=200-record load_dataset slice"; no real-PII can enter
+       the test path either.
+
+  signals.py inertness (regex/keyword extractor) — VERIFIED:
+    - No eval/exec/compile/__import__/globals/locals; no subprocess (shell or otherwise);
+      no pickle/marshal/shelve; no yaml; no getattr/setattr abuse.
+    - All 8 re.* call sites use STATIC string-literal patterns or iterate over module-level
+      constant pattern lists (TIMEZONE_PATTERNS, PERSONAL_ANECDOTE_PATTERNS). No pattern is built
+      from runtime/external/input data; no re.compile of untrusted bytes. ReDoS triage: patterns
+      are flat alternations + char-classes with NO nested/overlapping quantifiers -> linear-time
+      even on adversary-controlled Target.anonymized_text.
+
+  Pure-stdlib / supply-chain (NFR-004): no risky deps; the S3-01 RED..HEAD range touches ZERO
+  dependency manifests (no pyproject/requirements/setup/.toml/.cfg changes). No new CVE,
+  supply-chain (git-pinned dep), or denied-license surface introduced.
+
+  Hardcoded secrets: none. Secret-shape + PII-shape scan (AWS/GH/Slack key prefixes, PEM headers,
+  long base64/hex, SSN, email) over all 6 files: no matches. Lexical catalogues
+  (INDUSTRY_JARGON/LOCATION_REFERENCES/etc.) are generic domain vocabulary, not identifiers.
+
+  Domain packs: developer-assistant.yaml `domain_packs: []` (financial / agentic-runtime NOT
+  active; project encodes no-real-PII/determinism as project-authored axioms). No pack-extension
+  finding patterns merged; no sensitive-data scan output to consult; no `source_pack` findings.
+
+  pip-audit: NOT installed in this environment -> not run (per dispatch: run only if quick).
+  Moot for this story: stdlib-only diff adds zero auditable dependencies.
+
+  Non-blocking observation (NOT a finding): §8b/§6 narrate assemble_paired_set as consuming a
+  load_dataset(...) slice and the assembly test using load_dataset; the committed implementation is
+  loader-agnostic (records passed in directly) and tests are fully inline. From a no-real-PII /
+  egress standpoint this divergence is strictly safer, so it raises no security concern. Whether it
+  affects requirement/spec fidelity is for traceability/requirements-coverage, not security-sast.
+
+  Common-pattern catalog (15) sweep: patterns 1-15 N/A to this diff (no capability registry, no
+  trust-boundary/mediator code, no HSM port, no event-signing path, no unsafe blocks [Python], no
+  new egress route, no SQL/NoSQL string interpolation, no git-pinned dep, no wildcard capability,
+  no tokio::spawn, no cross-crate architectural egress, no md5/sha1). Story-gate conditional
+  signals did NOT trip (this is a pure-stdlib value-object + transform + extractor story); the
+  no-real-PII corpus-read check (the project-specific reason this reviewer is in the default_set)
+  is the binding concern and it passes.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

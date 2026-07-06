@@ -1,0 +1,131 @@
+# Canonical reviewer output — security-sast @ STORY gate
+reviewer: security-sast
+gate: story
+story_id: S5-02
+iteration: 1
+mode: read-only
+verdict: APPROVE
+context_bounds_respected: true
+independence_attested: true
+
+scope_reviewed:
+  story: dev-assist-artifacts/04-development/02-stories/sprint-5/S5-02.md
+  owned_files:
+    - src/pii_anon_datasets/distribution/__init__.py
+    - src/pii_anon_datasets/distribution/parquet_export.py
+    - pyproject.toml
+    - tests/test_parquet_export.py
+  conditional_signals_tripped:
+    network_egress_added: evaluated   # PRIMARY AX-001 concern — verified ABSENT in production
+    capability_registry_touched: false
+    trust_boundary_touched: false
+    hsm_port_touched: false
+    event_signing_touched: false
+    unsafe_block_added: false
+
+# ---- Primary AX-001 verifications (independently re-derived via grep + AST, not trusting §12) ----
+primary_checks:
+  ax_001_no_network_egress:
+    status: PASS
+    evidence: >
+      grep over both production files for requests|urllib|httpx|aiohttp|socket|smtplib|ftplib|
+      boto3|botocore|push_to_hub|HfApi|hf_hub|huggingface_hub|upload|put_object|webhook|curl|wget
+      yielded only 3 hits, all in DOCSTRINGS asserting absence (__init__.py:11, parquet_export.py:17,114).
+      No egress symbol in executable code.
+  ax_001_no_hf_upload_by_default:
+    status: PASS
+    evidence: >
+      No push_to_hub / HfApi / hf_hub / upload call anywhere in production. export_parquet's only
+      I/O sinks (AST) are pyarrow ParquetWriter (parquet_export.py:137,154), write_table (:138),
+      close (:157). Writes the caller-supplied LOCAL out_path only. huggingface_hub is declared in
+      the [distribution] extra but imported by NOTHING in src/ (see OBS-1).
+  datasets_call_is_tests_only:
+    status: PASS
+    evidence: >
+      'import datasets'/'from datasets' absent from all of src/. HF datasets.load_dataset("parquet",...)
+      occurs ONLY at tests/test_parquet_export.py:149 (importorskip-guarded). The load_dataset symbols
+      in src/ are the project's OWN local corpus loader (pii_anon_datasets.load_dataset, reads bundled
+      data/*.jsonl.gz from disk) — unrelated to HF datasets.
+  synthetic_cc0_no_real_pii_ingest:
+    status: PASS
+    evidence: >
+      Exporter opens NO external path for reading; it consumes a caller-supplied iterator and writes
+      out_path. No /Users//home//s3:///http(s):// read, no real-dataset fetch. Test fixtures are
+      synthetic, PII-free, provenance.license=CC0-1.0, source_type=synthetic.
+  lazy_pyarrow_import:
+    status: PASS
+    evidence: >
+      AST: pyarrow appears at module top in NEITHER file. Both pyarrow imports (parquet_export.py:47,48)
+      are inside _require_pyarrow(). distribution/__init__.py top-level pulls only __future__ + the
+      in-repo exporter. Contract test test_nfr004_distribution_imports_without_pyarrow dynamically
+      confirms import-without-pyarrow + clear RuntimeError naming the install command.
+  inert_no_dynamic_exec_or_deser:
+    status: PASS
+    evidence: >
+      grep for eval|exec|subprocess|os.system|os.popen|pickle|marshal|shelve|yaml|dill|__import__:
+      ZERO matches in production. Sole nested encoding is stdlib json.dumps (sort_keys, ensure_ascii=False).
+  distribution_extra_opt_in:
+    status: PASS
+    evidence: >
+      pyproject has NO [project].dependencies key -> core install pulls zero runtime deps (NFR-004).
+      pyarrow/datasets/huggingface_hub live only in [project.optional-dependencies].distribution.
+  supply_chain_no_vcs_pins:
+    status: PASS
+    evidence: "No git+/url=/@git/file:// dep specs in pyproject; distribution deps resolve from index."
+  determinism_no_clock_rng:
+    status: PASS
+    evidence: "No time|random|uuid|datetime|secrets|os.urandom in exporter; output is pure fn of input."
+  no_weak_crypto:
+    status: PASS
+    evidence: "No md5|sha1|hashlib introduced."
+  no_hardcoded_secrets:
+    status: PASS
+    evidence: "No api_key|secret|token=|AKIA|hf_/sk- key shapes across owned files."
+  transitive_dep_purity:
+    status: PASS
+    evidence: >
+      The only non-stdlib production import is in-repo pii_anon_datasets.compliance.crosswalk
+      (S5-01), used read-only. crosswalk imports only stdlib (collections.abc, dataclasses, enum);
+      no open/egress/dynamic-exec; as_columns is a pure record->dict transform.
+
+findings:
+  catalog_patterns_checked: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+  counts:
+    showstopper: 0
+    catastrophic: 0
+    major: 0
+    minor: 0
+    observation: 1
+  items:
+    - id: SEC-S5-02-OBS-1
+      severity: OBSERVATION
+      pattern: 7   # new-egress-capability monitoring (adjacent)
+      title: "huggingface_hub declared in [distribution] extra but unused by production code"
+      file: pyproject.toml
+      line: 36
+      detail: >
+        The [distribution] extra now lists huggingface_hub (a network-capable upload SDK) alongside
+        pyarrow + datasets. No production code imports it (verified: zero HfApi/hf_hub/push_to_hub/
+        huggingface_hub symbols in src/), so it grants NO active egress path in this story and does
+        not breach AX-001. Flagging only because it is the most plausible FUTURE vector for an
+        accidental upload-by-default if a later story wires a publish() helper into this package.
+      breach: false
+      recommendation: >
+        No change required for S5-02. When the publish/upload path lands (separate opt-in story),
+        re-fire security-sast on the egress signal and add huggingface_hub usage to the egress
+        manifest; keep any push_to_hub strictly opt-in (explicit verb), never default in export_parquet.
+
+severity_gate:
+  approve_iff_zero_major_plus: true
+  highest_severity: OBSERVATION
+  result: APPROVE
+
+summary: >
+  S5-02 Parquet exporter passes the AX-001 STORY-gate security review. The exporter is a pure,
+  inert, streaming local-file writer: pyarrow is lazily imported (AST-confirmed not at module top),
+  records are consumed one-pass with no list()/len()/subscript materialization, and the sole I/O is
+  a pyarrow ParquetWriter on the caller-supplied out_path. No network egress, no HF upload, no
+  dynamic-exec/deserialization, no real-PII ingestion (synthetic CC0 fixtures), no embedded secrets,
+  no weak crypto, no VCS-pinned deps. The new datasets dep is opt-in and used only in tests; core
+  stays runtime-dep-free. One OBSERVATION: huggingface_hub is present-but-unused in the extra — a
+  future-monitoring note, not a breach. Zero MAJOR+ findings -> APPROVE.

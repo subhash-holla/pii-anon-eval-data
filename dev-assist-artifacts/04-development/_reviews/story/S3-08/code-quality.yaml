@@ -1,0 +1,114 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S3-08
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S3-08-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/stats/power.py:133
+    description: |
+      ReidTier (str, Enum) has no explicit class-level docstring — the class body begins
+      immediately with enum members. The runtime __doc__ is the Python default "An enumeration."
+      The two member-level inline comments (# p_ref=0.30, d=0.030 → 897 pairs ...) do convey
+      the semantic meaning, and the pre-existing Tier enum follows the identical pattern, so this
+      is consistent house style rather than a new omission introduced by S3-08.
+    suggested_resolution: |
+      No action required for story gate approval. If the team ever adopts a
+      "Enum must have explicit class docstring" policy, add a one-liner above the first
+      member: '"""Re-id operating-point power tiers (sampling-design.md §5; NFR-018)."""'
+    references:
+      - sampling-design.md#5
+
+  - id: code-quality-S3-08-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/stats/power.py:139
+    description: |
+      ReidTierSpec dataclass has no explicit class-level docstring. The fields are
+      self-documenting (tier, p_ref, half_width, target_n_pairs) and the class is fully
+      typed and frozen. The pre-existing TierSpec, CellAudit, and PowerMatrix dataclasses
+      follow the identical no-class-docstring pattern. Consistent house style, not a new
+      omission from this story.
+    suggested_resolution: |
+      No action required for story gate approval. Add a one-liner docstring
+      '"""Frozen spec for a re-id power tier."""' if the team adopts a stricter doc policy.
+
+notes: |
+  ## Review summary
+
+  ### TDD RED-before-GREEN
+  Verified via git log: d9bcecb ([RED]) commits ONLY test files (tests/test_reid_power.py,
+  tests/test_nfr005_separation.py) and the story file. Production code (stats/power.py,
+  stats/__init__.py) appears for the first time in c59648f ([GREEN]). The [REFACTOR] commit
+  d2dfb1a makes only lint/type-annotation corrections. Discipline is correct and strict.
+
+  ### Scope discipline
+  git diff d9bcecb~1..HEAD --name-only shows only the 5 §8-owned paths changed
+  (stats/power.py, stats/__init__.py, tests/test_reid_power.py, tests/test_nfr005_separation.py,
+  S3-08.md). The docs/review artifacts for S3-03 also appear in the range (they predate this
+  story and were already committed before the RED commit). No out-of-scope source file was
+  touched by this story's production commits.
+
+  ### Lint + type (pre-existing baseline confirmed separate)
+  ruff: the 4 findings on power.py (UP035 at line 22, E702 at lines 419-421) are all on
+  pre-existing lines — none fall in the new reid-seam range (lines 106-203). Confirmed by
+  line-number audit. The added file stats/__init__.py and both test files are ruff-clean.
+  mypy --strict: the 11 [type-arg] errors (bare tuple/dict house style) are at lines
+  39, 88, 290, 303, 321, 322, 325, 339, 342, 345, 432 — all outside the new code (106-203).
+  The new ReidTierSpec.as_dict and ReidProvenance.as_dict correctly annotate
+  'dict[str, object]' (fixed in the REFACTOR commit). Zero new mypy findings on added lines.
+
+  ### Lazy-import circular-cycle analysis (disclosed deviation from §8b)
+  §8b originally specified top-level import of ANTI_ANONYMITY_CAVEAT. The executor instead
+  used a module-private _anti_anonymity_caveat() function with a lazy `from ..scoring.reidentification
+  import ANTI_ANONYMITY_CAVEAT` inside its body, set as the `default_factory` for
+  ReidProvenance.caveat.
+
+  Soundness confirmed on three dimensions:
+  1. Cycle-free at load time: importing pii_anon_datasets.stats does NOT trigger import of
+     pii_anon_datasets.scoring — verified live: `'pii_anon_datasets.scoring' not in sys.modules`
+     after `import pii_anon_datasets.stats`. stats remains a leaf subsystem.
+  2. Canonical value: the lazy helper returns the identical object as the top-level constant.
+     `prov.caveat == ANTI_ANONYMITY_CAVEAT` confirmed True (same string, not a redefinition).
+  3. Non-strippable: __post_init__ rejects any ReidProvenance whose caveat.strip() is empty,
+     so the FR-009 guarantee holds even if the default_factory were replaced — confirmed by the
+     pytest.raises(ValueError) assertion in test #3.
+
+  The deviation is sound. The `default_factory` pattern is the idiomatic Python resolution
+  for deferred constant capture within frozen dataclasses.
+
+  ### Public API docs
+  All 5 new public symbols have meaningful docstrings:
+  - reid_required_n: 565-char docstring with operating-point semantics and §5 pin.
+  - ReidTier: inline member comments (consistent with pre-existing Tier house style; noted
+    as OBSERVATION above, non-blocking).
+  - ReidTierSpec: self-documenting fields; no docstring (same as TierSpec, CellAudit,
+    PowerMatrix; noted as OBSERVATION, non-blocking).
+  - REID_TIER_SPECS: block comment above the dict documents the derived-not-typed discipline.
+  - ReidProvenance: 692-char class docstring with track, |C|, caveat, serializer guarantee.
+  Private helper _anti_anonymity_caveat has a full explanatory docstring covering the lazy
+  import rationale and cycle path.
+
+  ### Test quality
+  All 7 test names carry nfr_018 or nfr_005 tokens (verified via --collect-only).
+  Tests are deterministic: no datetime.now / time.time / random / uuid / network calls.
+  The lattice regression guard (test #5) reads from a static committed file — pure I/O,
+  non-mutating. _NullAdversary in test_reid_power.py provides a self-contained stub
+  (no real adversary I/O). Full suite: 167 passed, 1 skipped (pre-existing anthropic skip).
+
+  ### Frozen-lattice invariant
+  eval_lattice.json cell_count == 730 pinned and passing. The seam is code-only: no lattice
+  build functions (build_committed_lattice / write_lattice) were called.
+
+  ### Detection symbols preserved
+  All 15 pre-existing detection symbols (Tier, TierSpec, TIER_SPECS, PowerClass,
+  required_n, projected_wilson_halfwidth, projected_interval, target_for_tier, classify,
+  default_tier_of, required_discordant_pairs, paired_vs_independent_ratio, CellAudit,
+  PowerMatrix, audit_crossing) remain in power.py __all__ and stats.__all__ — confirmed.
+
+review_time_seconds: 420
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

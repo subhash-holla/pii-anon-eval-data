@@ -1,8 +1,10 @@
-# PII Anonymization Evaluation Dataset v2.0.0
+# PII Anonymization Evaluation Dataset v2.2.0
 
-A comprehensive, multilingual benchmark dataset for evaluating PII detection, anonymization quality, context preservation, and **resistance to LLM-based semantic re-identification** (Tier 3). Provides unified evaluation across 60 languages, 63 entity types, 40 document formats, and 7 evaluation dimensions with 575,604 synthetic records (159,891 of which form the Tier-3 re-identification EVALUATION substrate).
+A comprehensive, multilingual benchmark dataset for evaluating PII detection, anonymization quality, context preservation, and **resistance to LLM-based semantic re-identification** (Tier 3). Provides unified evaluation across 60 languages, 66 entity types, 40 document formats, and 7 evaluation dimensions with 782,677 synthetic records (159,891 of which form the Tier-3 re-identification EVALUATION substrate).
 
-> **v2.0.0 (schema):** the scattered Tier-3 re-identification-resistance signal (RRS, behavioral signals, tier3 risk) is consolidated into a single `tier3_evaluation` wrapper per record; `record_id` is now deterministic/content-addressed; the canonical entity-type set is **63** (single source: `pii_anon_datasets.taxonomy`). v1.3.0 records load via `pii_anon_datasets.compat.to_v1_record()`. See MIGRATION.md / CHANGELOG.md.
+> **v2.0.0 (schema):** the scattered Tier-3 re-identification-resistance signal (RRS, behavioral signals, tier3 risk) is consolidated into a single `tier3_evaluation` wrapper per record; `record_id` is now deterministic/content-addressed; the canonical entity-type set was **63** (single source: `pii_anon_datasets.taxonomy`). v1.3.0 records load via `pii_anon_datasets.compat.to_v1_record()`. See MIGRATION.md / CHANGELOG.md.
+
+> **v2.1.0 (working/unarchived):** additive honesty release — honest field aliases + caveats travel into the shipped data (`token_overlap_jaccard_*`, `legal_category`, `residual_quasi_identifier`, `exposure_index_prior`, `_caveat` fields, `reg_hipaa_phi_present` column, file-level metadata disclaimers). No synthetic-content regeneration; no Zenodo/HF re-mint (deferred to Phase 2). All v2.0.0 keys preserved. Publication metadata and DOI remain at v2.0.0.
 
 **What makes this dataset unique**: PII-Anon is the only benchmark that evaluates **all three tiers** of PII protection:
 - **Tier 1**: Entity-level PII detection (precision, recall, F1, F2)
@@ -13,30 +15,30 @@ A comprehensive, multilingual benchmark dataset for evaluating PII detection, an
 
 | Property | Value |
 |----------|-------|
-| **Total Records** | 575,604 |
-| **Total Annotations** | 2,486,438 |
-| **Entity Types** | 63 (9 categories) |
-| **Languages** | 60 (32 writing systems) |
+| **Total Records** | 782,677 |
+| **Total Annotations** | 3,107,240 |
+| **Entity Types** | 66 (9 categories) |
+| **Languages** | 60 (19 writing systems) |
 | **Document Types** | 40 (clinical, legal, financial, technology, Tier 3 evaluation) |
 | **Evaluation Dimensions** | 7 |
 | **Adversarial Attack Categories** | 17+ |
 | **AI-Era Test Cases** | 1,000 (prompt injection, RAG, multi-agent, system prompt leakage) |
 | **Anonymized Variants per Record** | 4 (masked, pseudonymized, generalized, **LLM-sanitized**) |
-| **Behavioral Signal Annotations** | **159,891 (27.8% — the Tier-3 evaluation substrate)** |
+| **Behavioral Signal Annotations** | **159,891 (27.6% — the Tier-3 evaluation substrate)** |
 | **Tier 3 Evaluation Records** | **7,003** (paired profiles + ESRC + stylometric) |
 | **Paired Personas** | **2,500** (5,000 records: pseudonymous + real-identity) |
-| **Per-record RRS Score** | **159,891 (27.8% — Tier-3 evaluation substrate)** |
+| **Per-record RRS Score** | **159,891 (27.6% — Tier-3 evaluation substrate)** |
 | **Avg Re-identification Resistance Score** | **0.78** |
-| **Synthetic-lattice enrichment (S-PWR)** | ~72% of records (provenance.source_type=synthetic_lattice_enrichment) |
+| **Synthetic-lattice enrichment (S-PWR)** | 79.2% of records (provenance.source_type=synthetic_lattice_enrichment) |
 | **Nested Entity Annotations** | 136,000+ |
 | **Train/Dev/Test Split** | 70/10/20 (template-level stratified) |
 | **Regulatory Frameworks** | 7 (GDPR, HIPAA, CCPA, PCI-DSS, SOX, LGPD, PIPA) |
 | **Data Source** | 100% Synthetic (CC0-1.0) |
 | **License** | Apache 2.0 (code) / CC0 (data) |
 
-> **Train-vs-eval.** The 159,891 `tier3_evaluation` records are the ~27.8% EVALUATION substrate of the 575,604-record corpus — behavioral-signal / RRS scoring runs on this substrate; the full corpus is the detection substrate.
+> **Train-vs-eval.** The 159,891 `tier3_evaluation` records are the EVALUATION substrate of the 782,677-record corpus — behavioral-signal / RRS scoring runs on this substrate; the full corpus is the detection substrate.
 
-> **Statistical power (epistemic honesty).** PII-Anon v2 is powered for all single-factor marginal recall claims (95% Wilson CIs; credential/financial-critical types to ±0.5pp at recall 0.99, standard to ±1pp at 0.98) and for three pre-registered 2-way interactions (language×entity-type on a 12×41 committed rectangle, domain×track, adversarial-type×entity-type). It is not powered for the full multilingual×entity-type grid or any ≥3-way interaction; those are reported as exploratory. Synthetic-distribution power is not external validity — see the real-data correlation slice. ~72% of records carry `provenance.source_type="synthetic_lattice_enrichment"` (S-PWR formulaic enrichment), which raises statistical power but does NOT establish real-world generalization.
+> **Statistical power (epistemic honesty).** PII-Anon v2 is powered for all single-factor marginal recall claims (95% Wilson CIs; credential/financial-critical types to ±0.5pp at recall 0.99, standard to ±1pp at 0.98) and for three pre-registered 2-way interactions (language×entity-type on a committed rectangle, domain×track, adversarial-type×entity-type). The corpus carries a committed evaluation lattice powering **17 languages across 11 writing systems** (Latin, Han, Japanese, Hangul, Arabic, Devanagari, Cyrillic, Thai, Greek, Bengali, Hebrew) to statistically-calibrated positive-count targets (critical n≥1522, standard n≥753). It is not powered for the full multilingual×entity-type grid or any ≥3-way interaction; those are reported as exploratory. Synthetic-distribution power is not external validity — see the [External-Validity Protocol (FR-027)](docs/external-validity-protocol.md) and the real-data correlation slice. 79.2% of records carry `provenance.source_type="synthetic_lattice_enrichment"` (S-PWR formulaic enrichment), which raises statistical power but does NOT establish real-world generalization.
 
 ## Installation
 
@@ -84,22 +86,24 @@ record["context_preservation"] = {
     "anonymized_masked": "Patient [PERSON_NAME] (MRN: [MEDICAL_RECORD_NUMBER])...",
     "anonymized_pseudonymized": "Patient Alex Anderson (MRN: MRN-5678901)...",
     "anonymized_generalized": "Patient [Person] (MRN: [Medical Record Number])...",
-    "anonymized_llm_sanitized": "Patient [...] - clinical assessment unremarkable.",  # NEW v1.3.0: removes PII AND behavioral signals
+    "anonymized_llm_sanitized": "Patient [...] - clinical assessment unremarkable.",  # removes PII AND behavioral signals
     "utility_metrics": {
         "pii_density": 0.35,
         "semantic_similarity_masked": 0.62,
         "semantic_similarity_pseudonymized": 0.58,
-        "semantic_similarity_llm_sanitized": 0.42,            # NEW v1.3.0
+        "semantic_similarity_llm_sanitized": 0.42,
         "information_loss_ratio": 0.28,
-        "behavioral_signal_residual": 0.18,                    # NEW v1.3.0: how much identity info leaks through
+        "behavioral_signal_residual": 0.18,                    # how much identity info leaks through
         "coherence_preserved_pseudonymized": true,
         "coherence_preserved_generalized": true,
-        "coherence_preserved_llm_sanitized": true              # NEW v1.3.0
+        "coherence_preserved_llm_sanitized": true
     }
 }
 ```
 
-### 2. Tier 3: Re-identification Resistance (NEW in v1.3.0)
+> **Honesty disclosure (v2.1.0):** `semantic_similarity_*` is **token-overlap Jaccard** (set intersection / union of whitespace tokens via `compute_token_overlap`), **not** a semantic embedding or neural similarity measure. `coherence_preserved_*` is an **assumed constant** (hardcoded `True`) rather than a measured coherence score. `information_loss_ratio` is an **entity-type prior** (a closed-form mapping over entity-type counts), not a measured information loss. Honest aliases `token_overlap_jaccard_*` are added in v2.1.0 and travel into the shipped data.
+
+### 2. Tier 3: Re-identification Resistance
 
 Addresses the Lermen et al. (2026) finding that LLMs can re-identify users at **67% recall / 90% precision** even after all direct PII is removed. Every record includes:
 
@@ -119,6 +123,8 @@ record["privacy_risk"]["re_identification_resistance_score"] = 0.62   # RRS: 0.0
 record["privacy_risk"]["estimated_reid_recall"] = 0.38                # estimated ESRC attack recall
 record["privacy_risk"]["tier3_risk_level"] = "moderate"               # low/moderate/high/critical
 ```
+
+> **Honesty disclosure (v2.1.0):** **No record is demonstrated anonymised under GDPR Recital 26.** `tier3_risk_level` and `re_identification_resistance_score` (and its v2.1.0 alias `exposure_index_prior`) are **heuristic priors** — closed-form scores computed from behavioral signal density — **not** the result of measured adversarial attacks. For a CI-bearing, attack-measured number, run the FR-007 MeasuredRRS adversary (see `results/tier-a/measured_rrs.md`). `anonymized_pseudonymized` and `anonymized_llm_sanitized` remain **personal data** under GDPR Art.4(5); neither constitutes anonymisation under Recital 26.
 
 **Paired Profile Records (5,000 records, 2,500 personas):**
 Each persona has both a pseudonymous forum profile (no direct PII, full behavioral signals) and a real-identity LinkedIn-style profile. Same `persona_id` enables ESRC-attack matching evaluation — directly mirroring the Hacker News ↔ LinkedIn experiment in Lermen et al.
@@ -159,9 +165,11 @@ Purpose-built evaluation scenarios for LLM and agentic systems:
 - **Multi-agent PII sharing** (250): Cross-agent PII propagation audit scenarios
 - **System prompt leakage** (250): Credentials and admin PII embedded in system configurations
 
+> **Honesty disclosure (v2.1.0):** The "250 each" count above is for the **full corpus**. The **test split** carries fewer AI-era records (counted by `document_type`): **51 / 50 / 57 / 41** for prompt-injection / RAG / multi-agent / system-prompt-leakage respectively (the full 250-each splits 70/10/20 across train/dev/test). These are **scenario fixtures** designed to exercise detection, **not** a measured security evaluation. FR-017 (security-evaluation harness) was not implemented in v2.x; FR-018–FR-020 (penetration-test-style adversarial generation) are likewise not yet implemented.
+
 ### 4. Advanced Adversarial Patterns (17+ categories)
 
-Attack patterns where production systems drop from 94% to 14% F1:
+Attack patterns that stress off-the-shelf detectors — obfuscation, encoding, and context-ambiguity. Measured clean→adversarial recall drops are **attack- and detector-specific** (see `results/tier-a/adversarial_table.md`); the widely-quoted but **unbacked "94% → 14% F1" slogan is retracted** — no off-the-shelf detector reaches 94% clean recall (GLiNER's clean recall is ~0.72):
 
 | Category | Technique | Records |
 |----------|-----------|---------|
@@ -187,7 +195,7 @@ Attack patterns where production systems drop from 94% to 14% F1:
 
 **General (7)**: Discharge summaries, wire transfers, court filings, forms, invoices, employee rosters, audit logs
 
-**Tier 3 Evaluation (9, NEW in v1.3.0)**: paired_profile_pseudonymous, paired_profile_real, esrc_target_signals_intact, esrc_target_signals_removed, esrc_signal_injection, stylometric_obfuscation, interest_diversification, temporal_pattern_disruption, paraphrased_content
+**Tier 3 Evaluation (9)**: paired_profile_pseudonymous, paired_profile_real, esrc_target_signals_intact, esrc_target_signals_removed, esrc_signal_injection, stylometric_obfuscation, interest_diversification, temporal_pattern_disruption, paraphrased_content
 
 ### 6. Nested Entity Support
 
@@ -252,17 +260,17 @@ Attack patterns where production systems drop from 94% to 14% F1:
 
 | Dimension | Records | % | Description |
 |-----------|---------|---|-------------|
-| **Diverse PII Types** | 57,414 | 37.8% | Coverage across all 63 entity types |
+| **Diverse PII Types** | 57,414 | 37.8% | Coverage across all 66 entity types |
 | **Entity Tracking** | 25,207 | 16.6% | Coreference across multi-turn contexts (incl. 3K ambiguous) |
-| **Multilingual & Dialect** | 22,716 | 15.0% | 60 languages across 32 writing systems |
+| **Multilingual & Dialect** | 22,716 | 15.0% | 60 languages across 19 writing systems (ISO 15924) |
 | **Edge Cases** | 20,377 | 13.4% | Adversarial patterns, obfuscation, AI-era test cases |
 | **Context Preservation** | 10,538 | 6.9% | Query-aware PII for RAG systems |
 | **Temporal Consistency** | 7,350 | 4.8% | Time-series entity evolution |
 | **Format Variations** | 7,150 | 4.7% | JSON, XML, CSV, tables, forms |
 
-## Entity Categories (9 categories, 63 types)
+## Entity Categories (9 categories, 66 types)
 
-The canonical 63 entity types live in `pii_anon_datasets.taxonomy` (single source of truth; see TAXONOMY.md). Per-category counts:
+The canonical 66 entity types live in `pii_anon_datasets.taxonomy` (single source of truth; see TAXONOMY.md). Per-category counts:
 
 | Category | Types | Examples |
 |----------|-------|---------|
@@ -274,7 +282,14 @@ The canonical 63 entity types live in `pii_anon_datasets.taxonomy` (single sourc
 | **Medical & Biological** | 8 | MEDICAL_RECORD_NUMBER, NPI_NUMBER, DEA_NUMBER, HEALTH_CONDITION, MEDICATION_NAME |
 | **Location & Temporal** | 6 | STREET_ADDRESS, POSTAL_CODE, DATE_OF_BIRTH, TIMESTAMP, LOCATION_NAME, LATITUDE_LONGITUDE |
 | **Employment** | 4 | JOB_TITLE, SALARY, EMPLOYEE_ID, EDUCATION_LEVEL |
-| **Special Category** | 5 | POLITICAL_OPINION, RELIGIOUS_BELIEF, MARITAL_STATUS, HOUSEHOLD_SIZE, VEHICLE_MODEL |
+| **Special Category** | 8 | POLITICAL_OPINION, RELIGIOUS_BELIEF, SEXUAL_ORIENTATION, TRADE_UNION_MEMBERSHIP, GENETIC_DATA, MARITAL_STATUS, HOUSEHOLD_SIZE, VEHICLE_MODEL |
+
+All 6 GDPR Art-9 types (POLITICAL_OPINION, RELIGIOUS_BELIEF, ETHNICITY, SEXUAL_ORIENTATION, TRADE_UNION_MEMBERSHIP, GENETIC_DATA) are powered to ≥400 spans across 12 languages. Art-9 synthetic values are English-anchored (per-language localization deferred). `reg_gdpr` is now discriminative — a `_NON_PERSONAL` out-of-scope record set exists (~417 records) alongside the in-scope records.
+
+> **Honesty disclosures — synthetic-value localization (v2.2 work-in-progress).** Beyond the non-strippable synthetic-only ceiling (AX-001) and the Art-9 English-anchored values above:
+> - Non-name PII **values** (addresses, organizations, occupations, medical, identifiers, financial) are English/US-anchored synthetic across **all 60 languages**; per-language value localization is deferred to a later release (2D).
+> - Person-name values for `hi` and `th` are romanized Latin, not native-script (el/bn/he names ARE native-script: Greek/Bengali/Hebrew).
+> - `he` records mix right-to-left Hebrew names with left-to-right Latin identifiers/emails/URLs — a known display-realism limitation.
 
 ## Domain Coverage
 
@@ -308,26 +323,28 @@ How the most-used PII pipelines score on PII-Anon, ranked by **F2** (recall-weig
 costly error). Full leaderboard with per-entity-type / per-domain / per-language breakdowns, Wilson 95% CIs,
 and the label-map coverage disclosure: **[BASELINES.md](BASELINES.md)**.
 
-> **Synthetic-only (AX-001):** real detectors on *synthetic* data — these are not external-validity claims.
+> **Synthetic-only (AX-001):** real detectors on *synthetic* data — these are not external-validity claims. See the [External-Validity Protocol (FR-027)](docs/external-validity-protocol.md) for the only path to lifting this ceiling.
+
+> **Coverage note:** the leaderboard below is the re-scored **66-type** measured English run (the Coverage column reads `reachable/66`). The 3 GDPR Art-9 special-category types added in the 63→66 taxonomy expansion are unreachable by *every* off-the-shelf detector (recall 0 by construction) — see [art9_coverage_v22dev.md](results/tier-a/art9_coverage_v22dev.md).
 
 <!-- BEGIN-LEADERBOARD-SUMMARY (generated from results/baselines/tier1-en-all; see BASELINES.md) -->
-`test` split · `en` · 30,995 records / 201,701 gold spans · **11 detectors** (8 local + 3 cloud DLP), F2-ranked. Cloud rows are a **single run** of non-deterministic managed services.
+`test` split · `en` · 31,048 records / 201,880 gold spans · **11 detectors** (8 local + 3 cloud DLP), F2-ranked. Cloud rows are a **single run** of non-deterministic managed services.
 
 | Rank | Detector | Precision | Recall | F1 | F2 | Recall 95% CI | Coverage |
 |---|---|---:|---:|---:|---:|---|---:|
-| 1 | aws | 0.769 | 0.729 | 0.748 | 0.737 | [0.727, 0.731] | 24/63 |
-| 2 | gliner | 0.812 | 0.718 | 0.762 | 0.735 | [0.717, 0.720] | 23/63 |
-| 3 | gcp | 0.722 | 0.701 | 0.712 | 0.705 | [0.699, 0.703] | 18/63 |
-| 4 | azure | 0.730 | 0.688 | 0.709 | 0.696 | [0.686, 0.690] | 17/63 |
-| 5 | presidio | 0.419 | 0.563 | 0.480 | 0.527 | [0.561, 0.565] | 20/63 |
-| 6 | regex | 0.856 | 0.348 | 0.495 | 0.395 | [0.346, 0.350] | 9/63 |
-| 7 | piiranha | 0.444 | 0.329 | 0.378 | 0.347 | [0.327, 0.331] | 16/63 |
-| 8 | stanza | 0.581 | 0.308 | 0.403 | 0.340 | [0.306, 0.310] | 3/63 |
-| 9 | flair | 0.566 | 0.296 | 0.389 | 0.327 | [0.294, 0.298] | 3/63 |
-| 10 | spacy | 0.463 | 0.294 | 0.360 | 0.317 | [0.292, 0.296] | 3/63 |
-| 11 | scrubadub | 0.817 | 0.168 | 0.278 | 0.199 | [0.166, 0.169] | 12/63 |
+| 1 | aws | 0.769 | 0.728 | 0.748 | 0.736 | [0.726, 0.730] | 24/66 |
+| 2 | gliner | 0.813 | 0.716 | 0.762 | 0.734 | [0.714, 0.718] | 23/66 |
+| 3 | gcp | 0.722 | 0.700 | 0.711 | 0.704 | [0.698, 0.702] | 18/66 |
+| 4 | azure | 0.730 | 0.688 | 0.709 | 0.696 | [0.686, 0.690] | 17/66 |
+| 5 | presidio | 0.419 | 0.562 | 0.480 | 0.526 | [0.560, 0.564] | 20/66 |
+| 6 | regex | 0.857 | 0.349 | 0.496 | 0.396 | [0.347, 0.351] | 9/66 |
+| 7 | piiranha | 0.441 | 0.327 | 0.376 | 0.345 | [0.325, 0.329] | 16/66 |
+| 8 | stanza | 0.583 | 0.308 | 0.403 | 0.340 | [0.306, 0.310] | 3/66 |
+| 9 | flair | 0.565 | 0.295 | 0.388 | 0.326 | [0.293, 0.297] | 3/66 |
+| 10 | spacy | 0.464 | 0.294 | 0.360 | 0.317 | [0.292, 0.296] | 3/66 |
+| 11 | scrubadub | 0.818 | 0.169 | 0.280 | 0.201 | [0.167, 0.170] | 12/66 |
 
-**GLiNER** (free, local) ties **AWS Comprehend** at the top (F2 0.735 vs 0.737) and beats GCP + Azure; full per-domain / per-type / per-language breakdowns and Wilson CIs in **[BASELINES.md](BASELINES.md)**.
+**GLiNER** (free, local) is F2-competitive with **AWS Comprehend** (F2 0.734 vs 0.736) — a precision/recall trade-off: AWS holds a paired-significant **+1.19pp recall** edge (McNemar p=1.4e-33) while GLiNER matches on F2 via higher precision; both beat GCP + Azure. Full per-domain / per-type / per-language breakdowns and Wilson CIs in **[BASELINES.md](BASELINES.md)**.
 <!-- END-LEADERBOARD-SUMMARY -->
 
 ```bash
@@ -388,7 +405,7 @@ PYTHONPATH=. python integrations/conll_format.py --split train
 
 ## Documentation
 
-- **[TAXONOMY.md](TAXONOMY.md)** -- 63 entity types with sensitivity classes and regulatory mapping
+- **[TAXONOMY.md](TAXONOMY.md)** -- 66 entity types with sensitivity classes and regulatory mapping
 - **[COMPARISON.md](COMPARISON.md)** -- Pugh chart comparison against major competing benchmarks
 - **[docs/PUGH_CHART_ANALYSIS.md](docs/PUGH_CHART_ANALYSIS.md)** -- Detailed competitive analysis with 8 weighted criteria
 - **[DATASHEET.md](DATASHEET.md)** -- Gebru et al. (2021) datasheet for transparency
@@ -404,7 +421,7 @@ PYTHONPATH=. python integrations/conll_format.py --split train
   year={2026},
   publisher={GitHub},
   howpublished={\url{https://github.com/subhash-holla/pii-anon-eval-data}},
-  note={575,604 records, 63 entity types, 60 languages, 4 anonymized variants per record,
+  note={782,677 records, 66 entity types, 60 languages, 4 anonymized variants per record,
         behavioral signal annotations for Tier 3 LLM re-identification resistance evaluation}
 }
 ```
@@ -417,7 +434,7 @@ PYTHONPATH=. python integrations/conll_format.py --split train
 
 ## Version History
 
-- **v2.0.0** (2026-05-28) -- **Schema clean-up + running scorers**: consolidated the scattered Tier-3 signal into a single `tier3_evaluation` wrapper; deterministic content-addressed `record_id`; canonical 63-type entity registry (`pii_anon_datasets.taxonomy`) reconciling prior 48/65/80 doc drift; new Hexagonal scoring harness (`pii_anon_datasets.scoring` + `stats`) that *scores a system's output* (detection P/R/F1/F2 with Wilson CIs; non-strippable anti-anonymity caveat on RRS); first real test suite (pytest, ~95% cov on scorer modules) + CI config. Back-compat via `compat.to_v1_record()`; v1.3.0 pinned at git tag `v1.3.0`.
+- **v2.0.0** (2026-05-28) -- **Schema clean-up + running scorers**: consolidated the scattered Tier-3 signal into a single `tier3_evaluation` wrapper; deterministic content-addressed `record_id`; canonical 63-type entity registry (`pii_anon_datasets.taxonomy`) reconciling prior 48/65/80 doc drift; new Hexagonal scoring harness (`pii_anon_datasets.scoring` + `stats`) that *scores a system's output* (detection P/R/F1/F2 with Wilson CIs; non-strippable anti-anonymity caveat on RRS); first real test suite (pytest, ~95% cov on scorer modules) + CI config. Back-compat via `compat.to_v1_record()`; v1.3.0 pinned at git tag `v1.3.0`. (Note: canonical type count raised to 66 in v2.2-dev.)
 - **v1.3.0** (2026-04-15) -- **Tier 3 evaluation infrastructure**: behavioral signal annotations on all records (6 categories), Re-identification Resistance Score (RRS), 4th anonymized variant (LLM-sanitized), 5K paired profile records (2.5K personas), 2K ESRC-attack records, 4 stylometric adversarial categories. Directly enables PII-Rate-Elo paper Tier 3 framework (addresses Lermen et al. 2026)
 - **v1.2.0** (2026-03-27) -- Context preservation USP, 31 document formats, 13+ adversarial categories, AI-era test cases, nested entities, LLM baselines, 70/10/20 splits
 - **v1.1.0** (2026-03-21) -- Unified schema, 117K records, 60 languages, statistical coverage guarantee, ambiguous entity tracking, regulatory tagging

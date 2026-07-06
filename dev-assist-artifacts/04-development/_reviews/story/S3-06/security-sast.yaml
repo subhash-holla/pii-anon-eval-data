@@ -1,0 +1,133 @@
+# Canonical reviewer output — security-sast @ STORY gate
+reviewer: security-sast
+gate: story
+story_id: S3-06
+iteration: 1
+audit_tagged: true
+mode: read-only
+reviewed_at: "2026-05-29"
+model: claude-opus-4-8[1m]
+
+verdict: APPROVE          # APPROVE iff zero MAJOR+ ; this review found zero MAJOR+
+finding_count: 2          # 0 SHOWSTOPPER/CATASTROPHIC/MAJOR/MINOR + 2 OBSERVATION
+severity_tally:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 2
+
+scope:
+  owned_files:
+    - src/pii_anon_datasets/scoring/anonymization.py
+    - src/pii_anon_datasets/scoring/__init__.py
+    - tests/test_anonymization.py
+  note: >-
+    Orchestrator dispatch listed bare paths scoring/anonymization.py etc.; the actual owned
+    files live under src/pii_anon_datasets/scoring/ per story S3-06 §8 and the test imports
+    (from pii_anon_datasets.scoring import anonymization). Reviewed the real files at that
+    location. reidentification.py (S3-04, reused for the privacy axis) was read for contract
+    verification only — NOT owned, NOT in scope for findings.
+  domain_packs_active: []   # developer-assistant.yaml: domain_packs == [] → no pack-extension patterns merged; no source_pack findings
+  sensitive_data_scan: advisory   # security.sensitive_data_scan.enforcement == advisory
+
+# ── PRIMARY: the [AUDIT] privacy-correctness controls ─────────────────────────────────
+primary_controls:
+
+  - id: NFR-005_AX-004_no_merge
+    requirement: "NFR-005 / AX-004 — privacy & utility are an unmergeable Pareto point; no single de-id scalar"
+    status: PASS
+    severity_if_breached: SHOWSTOPPER
+    evidence:
+      - "ParetoPoint declares ONLY fields {residual_risk, utility, variant, note} and methods {__post_init__, as_dict} (AST + runtime introspection)."
+      - "No numeric-coercion dunder on the class: __float__/__int__/__index__/__complex__/__round__/__trunc__ all absent; float(ParetoPoint) raises TypeError (verified at runtime)."
+      - "No forbidden merged-metric name {combined, overall, overall_score, deid, de_identification_score, deidentification_score, score} (plus probed extras merged/fused/aggregate/fitness/de_id) is DEFINED anywhere in anonymization.py (ast.FunctionDef/AnnAssign/Assign walk) NOR present as a class/instance attribute (hasattr)."
+      - "as_dict() returns exactly {privacy, utility, variant, note}; d['privacy'] and d['utility'] are two SEPARATE dict objects (is-not), and there are NO root-level numeric scalars fusing the axes."
+      - "The two axes are nested objects of DIFFERENT types (MeasuredRRS vs UtilityScore) — no arithmetic field combines them; the frozen weights inside UtilityScore combine utility COMPONENTS only (explicitly permitted by §8b)."
+      - "UtilityScore likewise exposes no numeric-coercion dunder; its as_dict() keys are {utility, components, probe}."
+    notes: >-
+      The substring 'combined' that appears once in the serialized as_dict output is the
+      PARETO_SEPARATION_NOTE disclaimer prose ('...are NEVER combined into a single
+      de-identification score...'), confirmed to live only in d['note'] and not in any key or
+      metric value. This is the separation guarantee being asserted, not a fused metric — not a finding.
+
+  - id: FR-009_caveat_non_strippable
+    requirement: "FR-009 — residual-risk axis (MeasuredRRS) carries the anti-anonymity caveat non-strippably through ParetoPoint.as_dict()"
+    status: PASS
+    severity_if_breached: SHOWSTOPPER
+    evidence:
+      - "ParetoPoint.as_dict()['privacy'] nests MeasuredRRS.as_dict(), which nests RRSResult.as_dict() whose 'caveat' key is always serialized."
+      - "Runtime: as_dict()['privacy']['rrs']['caveat'] contains the 'MUST NOT be cited ... anonymized under GDPR/HIPAA' text."
+      - "Non-strippability is STRUCTURAL upstream: RRSResult.caveat is a MANDATORY no-default field whose __post_init__ rejects empty/blank — a MeasuredRRS cannot be constructed without it, so anonymization.py cannot emit a Pareto point lacking the caveat. anonymization.py adds no code path that strips or overrides it."
+      - "score_anonymization REUSES score_reidentification (S3-04) for the privacy axis — RRS is not reimplemented; reidentification.py is unmodified."
+
+# ── SECONDARY checks ──────────────────────────────────────────────────────────────────
+secondary_controls:
+  pure_stdlib: PASS                 # imports: re, dataclasses, collections.abc + intra-package (.adversary, .reidentification); no third-party
+  inert: PASS                       # no eval/exec/compile/__import__/subprocess/os.system/os.popen/pickle/marshal/shelve/dill/yaml/socket/urllib/requests/httpx/secrets in owned files
+  no_file_io_in_source: PASS        # anonymization.py performs no open()/write; test file only read_text(__file__) for the AST guards (read-only)
+  ax_001_synthetic_test_data: PASS  # inline corpus (Jane Doe / 42 Beacon Street / acct 1234 / Beacon Hill) is synthetic placeholder; grep found no real-PII-shaped patterns (SSN/email/phone/credit-card)
+  ast_import_purity_guard: PASS     # test_fr_006_nfr004_* walks BOTH ast.Import and ast.ImportFrom over the real module __file__; banned {random,time,uuid,datetime,secrets} ∩ imports == EMPTY (NFR-004)
+  no_secrets_committed: PASS        # no hard-coded credential/API-key shapes; git-tracked owned files carry only synthetic placeholders
+  owned_tests: PASS                 # tests/test_anonymization.py — 7/7 passed (re-run during this review)
+
+# ── ReDoS triage on the utility-probe placeholder regex over anonymized_text ──────────
+redos_triage:
+  patterns:
+    placeholder: '\[[^\]]*\]|<[^>]*>|\*{2,}|█+|x{3,}'
+    word: '\w+'
+  finding: >-
+    Neither pattern has nested/overlapping quantifiers; no exponential catastrophic
+    backtracking. The placeholder alternation exhibits O(n^2) worst-case on a long run of
+    UNBALANCED '[' or '<' (unanchored alternation restarts the [^\]]*/[^>]* scan at each
+    position): doubling input ~quadruples time (32k→64k: ~0.49s→~2.0s), i.e. quadratic and
+    BOUNDED by input length — not a ReDoS amplification. On realistic anonymized documents
+    (balanced [NAME]/[REDACTED] tags, ≤10k chars) it runs <0.2 ms. anonymized_text is a
+    scoring input (a candidate system's redacted doc); the version-pinned offline adversary —
+    not the document author — is the in-boundary attacker in this threat model.
+  severity: OBSERVATION
+  matched_pattern_catalog: "#9-adjacent (regex over a gated path) — informational, no injection/DoS breach"
+
+# ── Findings ──────────────────────────────────────────────────────────────────────────
+findings:
+  - id: S3-06-SEC-OBS-01
+    severity: OBSERVATION
+    title: "Placeholder regex is O(n^2) worst-case on unbalanced-bracket input (quadratic, not exponential)"
+    file: src/pii_anon_datasets/scoring/anonymization.py
+    line: 53
+    detail: >-
+      _PLACEHOLDER's unanchored alternation with negated char classes ([^\]]*, [^>]*) restarts
+      at each position, giving quadratic worst-case time on a long contiguous run of unmatched
+      '[' or '<' (measured ~2s at 64k such chars). It is NOT exponential and is bounded by
+      input length; realistic anonymized docs score in well under 1 ms. anonymized_text is a
+      scoring input, not an in-trust-boundary adversary surface. No current breach.
+    recommendation: >-
+      Optional hardening if very large untrusted documents ever reach this probe: cap
+      anonymized_text length before scoring, or anchor/atomic-ize the placeholder alternation
+      (e.g. restrict each branch's negated class with an explicit upper bound). Not blocking.
+    pattern_ref: "catalog #9 (regex on a gated path) — advisory variant"
+
+  - id: S3-06-SEC-OBS-02
+    severity: OBSERVATION
+    title: "No-merge guarantee rests on absence; recommend keeping the grep+introspection audit as a permanent regression fence"
+    file: tests/test_anonymization.py
+    line: 145
+    detail: >-
+      NFR-005/AX-004 is enforced by the ABSENCE of a merge path (no __float__, no fused field).
+      The current code is clean. Because 'absence' invariants are easy to erode in later
+      refactors (a convenience .overall property, a __float__ for sorting), the existing
+      test_nfr005_pareto_point_cannot_merge [AUDIT] (hasattr + float() + as_dict + AST-grep,
+      incl. its (D) empty-note rejection) is load-bearing and should remain a hard gate on this
+      module. No change required this story.
+    recommendation: "Keep the [AUDIT] guard; consider extending the forbidden-name set / coercion-dunder set if the de-id verdict surface grows."
+
+out_of_scope_deferred:
+  - "Code style / ruff / mypy --strict cleanliness → code-quality (story evidence asserts clean)."
+  - "Whether the token-preservation-v1 probe's frozen weights are well-calibrated → requirements-coverage / SME, not security."
+  - "Pre-existing [type-arg] on reidentification.py:69 (RRSResult.as_dict bare dict) — NOT-OWNED reused S3-04 file; out of this story's scope."
+
+self_attestation:
+  context_bounds_respected: true
+  independence: "Bounded to S3-06 owned files + read-only contract check of reused S3-04 reidentification.py. No shared state; no cross-story coupling; verdict derived solely from this story's diff and the controls in the dispatch."
+  reused_files_read_not_owned:
+    - src/pii_anon_datasets/scoring/reidentification.py

@@ -1,0 +1,109 @@
+reviewer: dev-assist-development-traceability
+
+scope_id: S3-01
+
+gate: story
+
+iteration: 2
+
+verdict: APPROVE
+
+findings:
+  - id: traceability-S3-01-02
+    severity: MINOR
+    location: dev-assist-artifacts/04-development/02-stories/sprint-3/S3-01.md:52-61
+    description: |
+      The §6 "Test-first plan" still references the OLD (pre-amendment) test node-ids
+      (e.g. `::test_persona_target_guess_are_frozen`, `::test_assemble_paired_set_deterministic`,
+      `::test_target_observed_signals_reextracted_not_gold`). After the iteration-2 rename in
+      e5a35d4, the live function names are `test_fr_010_*` / `test_fr_007_*` / `test_fr_008_*`,
+      so the §6 illustrative node-ids no longer match the source. This is a stale optional
+      cross-link, NOT a back-link failure: the machine-checkable Test->FR link is satisfied by
+      the FUNCTION NAMES (verified below), and §10 DoD already states the rule in token terms.
+      Non-blocking (MINOR, Common-Finding-13-adjacent doc drift). Also cosmetic: test #7's
+      section comment reads `test_fr_007_reidx01_...` while the actual def is
+      `test_fr_007_reidx_01_...` (one underscore) — comment-only, the def is correct.
+    suggested_resolution: |
+      In a future docs-touch (need not block this gate), refresh the §6 node-ids to the
+      renamed functions (prefix each with its `test_fr_NNN_` token) and fix the test #7
+      section comment to `reidx_01` so the comment matches the def. No code/assertion change.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-01.md#section-6
+      - tests/test_adversary_port.py:193
+
+notes: |
+  ITERATION-2 RE-REVIEW — iteration-1 verdict was REQUEST_CHANGES on ONE MAJOR
+  (traceability-S3-01-01: no test FUNCTION NAME carried a canonical fr_NNN token; the
+  fr_010/fr_007/fr_008 tokens lived only in module docstrings). Amendment commit e5a35d4.
+
+  >>> MAJOR traceability-S3-01-01 RESOLVED. All 12 test functions across the two owned
+  files now embed a canonical `fr_NNN` token IN THE FUNCTION NAME (grep `^\s*def test_`
+  shows ZERO functions without an `fr_[0-9]{3}` token):
+    tests/test_adversary_port.py
+      test_fr_010_persona_target_guess_are_frozen            (#1, port value objects)
+      test_fr_010_guess_abstain_is_none_not_wrong            (#2, abstain sentinel)
+      test_fr_010_adversary_protocol_is_runtime_checkable    (#3, Protocol isinstance both ways)
+      test_fr_007_assemble_paired_set_deterministic          (#4, paired-set FR-007 consumes)
+      test_fr_007_assemble_filters_to_tier3_substrate        (#5, substrate filter)
+      test_fr_007_candidate_set_size_is_first_class          (#6, |C| honored)
+      test_fr_007_reidx_01_observed_signals_reextracted_not_gold (#7, de-circ, LOAD-BEARING)
+    tests/test_signals.py
+      test_fr_008_uniqueness_weight_table_matches_source     (#8)
+      test_fr_008_compute_signal_density_golden              (#9)
+      test_fr_008_detect_signals_pure_and_deterministic      (#10)
+      test_fr_008_nfr004_signals_imports_no_nondeterminism   (#10b, new AST purity guard)
+      test_fr_008_signal_extractor_version_pinned            (version pin)
+
+  >>> MACHINE-SELECTABILITY CONFIRMED (real pytest 9.0.2, Python 3.10.6, this working tree):
+    `pytest tests/test_adversary_port.py -k fr_010`  -> 3 passed, 4 deselected   (== expected 3)
+    `pytest tests/test_signals.py        -k fr_008`  -> 5 passed                 (== expected 5)
+    `pytest tests/test_adversary_port.py -k fr_007`  -> 4 passed, 3 deselected   (assembler/FR-007)
+    `pytest <both files>`                            -> 12 passed                (was 11 + 1 new guard)
+  The Test->FR back-link is now grep-able from the test-node id for every test in the story.
+
+  TEST<->FR SEMANTIC ALIGNMENT (Common Finding #9 re-checked post-rename): the fr_010 tests
+  pin the PORT CONTRACT (frozen value objects, runtime_checkable Protocol isinstance both ways,
+  ADVERSARY_PORT_VERSION) — the primary FR-010 surface this story establishes. The fr_007 tests
+  pin `assemble_paired_set` — the paired pseudonymous<->real substrate that supporting FR-007
+  (measured-attack RRS, §3) consumes; defensible Test->FR mapping, no name-embeds-X-asserts-Y
+  mismatch. The fr_008 tests pin the signals/UNIQUENESS_WEIGHT/density substrate that supporting
+  FR-008 (exposure-index pre-screen, §3) consumes. The new `test_fr_008_nfr004_*` AST guard
+  asserts signals.py imports none of {random,time,uuid,datetime,secrets} — its name (fr_008 +
+  nfr004) matches its assertion.
+
+  ITERATION-1 PASS ITEMS RE-VERIFIED (all still hold):
+  - FR ID existence: FR-010 (functional-requirements.md:20, SHOULD), FR-007 (:17, MUST-headline),
+    FR-008 (:18, MUST) all present. No phantom/renamed FR (Common Findings #2/#13 clear).
+  - Module docstrings cite FR/DC: adversary/base.py:1 (FR-010; DC-07; reidx-01),
+    adversary/__init__.py:1 (FR-010; DC-07; reidx-01), signals.py:1 (FR-008; DC-07) — all intact.
+  - FR-010 contract genuinely realized: ADVERSARY_PORT_VERSION="adversary-port-v1" (base.py:28) +
+    @runtime_checkable Adversary Protocol with adversary_id:str (base.py:70-81) actualize the
+    consumer-named, version-pinned "vs adversary@version" contract; assemble_paired_set delivers
+    the deterministic paired-set plumbing. (e5a35d4 added an attack() method docstring — no
+    contract/signature change.)
+  - Source-DC cascade (§4): DC-07 = AGENT_SIMULATED, NOT DIVERGED; story §1+§4 show
+    AGENT_SIMULATED; §4 correctly states no Pass-2 commitment attaches. DIVERGED-cascade rule
+    N/A (Common Finding #15 clear).
+  - §5 deps valid: "Must be DONE before start: none (first story of S3)" correct; "Blocks:
+    S3-02/03/04/06/07" are forward edges this story unblocks, not inbound deps — no
+    dependency-on-not-DONE defect (Common Finding #6 clear).
+  - traceability-matrix.md is UC->FR/NFR level at this stage (per-story rows deferred by design);
+    FR-010 present under UC-05. Absence of an S3-01 row is not a defect (Common Finding #4 N/A).
+  - domain_packs: [] (developer-assistant.yaml) — no reviewer pack extensions to merge.
+
+  NET: zero SHOWSTOPPER / CATASTROPHIC / MAJOR. One residual MINOR (stale §6 node-ids +
+  one cosmetic comment typo), non-blocking. Verdict APPROVE.
+
+  OBSERVATION (carried from iteration 1, still informational): §5 "Blocks" IDs S3-02..S3-07
+  cannot be cross-verified at the story gate (no S3 backlog enumerates them yet); internally
+  consistent with the §1 parent epic. A one-line S3 backlog stub would make those forward edges
+  machine-verifiable at the SPRINT gate.
+
+  OUT OF SCOPE (sibling reviewers): signals.py port faithfulness + detect_professional_domain
+  default-arg deviation -> requirements-coverage/code-quality; determinism/purity AX-002/NFR-004
+  (incl. whether the new AST guard is the right warrant) -> axiom-compliance; residual mypy
+  [type-arg] + ruff-format deviation -> code-quality.
+
+review_time_seconds: 268
+
+context_bounds_respected: true

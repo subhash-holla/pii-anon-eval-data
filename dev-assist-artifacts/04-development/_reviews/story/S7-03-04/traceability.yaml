@@ -1,0 +1,112 @@
+reviewer: dev-assist-development-traceability
+scope_id: S7-03-04
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: traceability-S7-03-04-01
+    severity: MINOR
+    location: dev-assist-artifacts/04-development/02-stories/sprint-7/S7-03.md:85
+    description: |
+      Both stories deliberately DEFERRED the OPTIONAL §8 `pyproject.toml`
+      `[tool.coverage.run] source +=` edit (S7-03: `pii_anon_datasets.validation`;
+      S7-04: `pii_anon_datasets.subsets`) to the S7 sprint-close coverage step to
+      avoid a concurrent-edit conflict on the shared file. The two new packages are
+      therefore not yet in the coverage `source` set, so the forward FR -> Story ->
+      Test -> coverage-measurement linkage is incomplete until sprint close. Both
+      §12 evidence blocks flag this as an explicit ACTION FOR SPRINT CLOSE, so it is
+      a tracked, non-blocking deferral at the story gate — not an orphan.
+    suggested_resolution: |
+      At S7 sprint-close, add `"pii_anon_datasets.validation"` and
+      `"pii_anon_datasets.subsets"` to `[tool.coverage.run] source` in
+      `pyproject.toml` in a single edit, then re-run the coverage step so the new
+      FR-027 / FR-015 / FR-016 packages are measured. Confirm the sprint-gate
+      61-MUST/coverage-delta step picks both up.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-03.md#8
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-04.md#8
+
+  - id: traceability-S7-03-04-02
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:20
+    description: |
+      The traceability matrix lists FR-027 under UC-13 with NFR-003 (not NFR-004)
+      as the associated NFR, while both stories trace NFR-004 (pure-stdlib / local
+      seeded RNG) as the supporting NFR for the harness purity invariant. This is
+      not a conflict — NFR-003 is the UC-level real-data-correlation NFR and NFR-004
+      is the implementation-purity NFR the seam satisfies — but the matrix row does
+      not surface the NFR-004 linkage that the story tests (`test_nfr004_*`) verify.
+    suggested_resolution: |
+      Optionally annotate the UC-13 / (N1) matrix rows to also reference NFR-004
+      (pure-stdlib determinism) alongside NFR-003, so the test-level `nfr004`
+      evidence is discoverable from the matrix. Non-blocking.
+    references:
+      - dev-assist-artifacts/02-requirements/traceability-matrix.md
+      - dev-assist-artifacts/02-requirements/requirements-document.md#NFR-004
+
+notes: |
+  COMBINED STORY gate — S7-03 (FR-027; DC-14) + S7-04 (FR-015/016; DC-01), iteration 1.
+
+  FORWARD-TRACE VERDICT: the FR/NFR -> Story -> Test -> DC chain is intact for both
+  stories. APPROVE — zero SHOWSTOPPER / CATASTROPHIC / MAJOR.
+
+  Test-name token counts (read-only grep, verified):
+    - tests/test_correlation.py: fr_027 = 4 (lines 25,46,77,115), nfr004 = 1 (line 151)
+      -> meets fr_027 >= 4 and nfr004 >= 1.
+    - tests/test_slices.py: fr_015 = 2 (lines 40,79), fr_016 = 1 (line 59),
+      nfr004 = 1 (line 96) -> meets fr_015 >= 1, fr_016 >= 1, nfr004 >= 1.
+
+  Semantic-alignment audit (finding-pattern #9 — token vs. body):
+    - fr_027 bodies assert RealDataAbsent sentinel + never-fabricate (CONTRACT),
+      Kendall-tau/Spearman in [-1,1] + concordant~+1/discordant~-1 (UNIT), byte-identical
+      seeded bootstrap CI + global-RNG-insensitivity (PROPERTY), non-strippable caveat
+      naming "external validity"+"FR-027" (UNIT). All semantically on-topic for FR-027.
+    - fr_015 bodies assert non-empty-coreference-chain filtering + the v1.1 low-power
+      caveat non-strippability; fr_016 body asserts >= min_qids quasi-identifier filtering
+      with min_qids tightening. nfr004 bodies are AST import-purity guards. No mismatch.
+
+  ID existence (no SHOWSTOPPER pattern #2): FR-027, FR-015, FR-016, NFR-004, AX-002 all
+  present in requirements-document.md (FR line 23, NFR/AX/persona lines 20/39).
+
+  Sole ownership (patterns #3, #12, #5-orphan): `grep -rl` across all stories shows FR-027
+  ONLY in S7-03 and FR-015/016 ONLY in S7-04. No double-claim, no competing `pub` owners,
+  no orphaned declared ID.
+
+  DC linkage: S7-03 §4 binds DC-14 (real-data validation harness, SHOULD/v1.1/Pass-2);
+  S7-04 §4 binds DC-01 (corpus & slices, v1.1 coreference/quasi-id extensions). These are
+  v1.1 SEAM stories, not `surface/` stories, so the dc_to_module 1:1 surface audit (pattern
+  #5) is not triggered.
+
+  Status + SHA + scope: both stories Status==REVIEW. All six SHAs resolve on
+  feat/v2-scoring-harness with strict per-story RED->GREEN->REFACTOR ordering
+  (S7-03: 3525a5d -> a17726d -> 4d8611f; S7-04: bbcf838 -> cc496b0 -> 7200ee0; the two
+  RED/GREEN/REFACTOR triplets interleave on the shared branch but each commit's diff is
+  scoped to its owned files). S7-03 diff touches only validation/{__init__,correlation}.py
+  + tests/test_correlation.py (+ its own story doc in the RED commit, expected); S7-04 diff
+  touches only subsets/{__init__,slices}.py + tests/test_slices.py (+ its own story doc in
+  the RED commit). Zero cross-contamination between the validation/ and subsets/ surfaces.
+
+  provisional_status (patterns #7, #15 / DIVERGED cascade): both stories show
+  provisional_status: AGENT_SIMULATED, matching their source DCs (DC-14, DC-01 — both
+  AGENT_SIMULATED, NOT DIVERGED), so no DIVERGED cascade / Pass-2-commitment-in-§10 check
+  applies. The PERSONA-CONDITIONAL (academics MUST-for-citation, v1.1/Pass-2) status on
+  FR-027/015/016 is consistent across requirements-document.md (line 39), the traceability
+  matrix (lines 20,23,44), and both stories' §4. The real-data correlation (FR-027) is a
+  declared Pass-2 gap that correlate(...) refuses to fabricate (RealDataAbsent sentinel) —
+  honesty preserved end-to-end.
+
+  Dependencies (pattern #6): both stories declare "Must be DONE: none" (standalone seams);
+  no unmet IN_PROGRESS dependency.
+
+  traceability.md row (pattern #4): the requirements traceability-matrix.md carries the
+  FR-027 (UC-13) and FR-015/016 ((N1)) rows with matching PERSONA-CONDITIONAL /
+  AGENT_SIMULATED status and a 2026-05-28 Status-Change-Log entry. No new mismatch
+  introduced by these stories; the only open item is the deferred coverage-source edit
+  (finding -01), which is a sprint-close action, not a story-gate blocker.
+
+  No active domain_packs traceability extension was found applicable to this PII/eval-data
+  context (financial pack not active), so no pack-sourced findings.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

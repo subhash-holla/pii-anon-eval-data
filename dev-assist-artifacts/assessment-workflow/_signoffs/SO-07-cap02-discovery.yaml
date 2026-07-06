@@ -1,0 +1,45 @@
+signoff_id: SO-07-cap02-discovery
+date: 2026-06-01
+type: stage-close
+stage: 01-discovery
+capability: CAP-02
+scope: >
+  CAP-02 (Powered Assessment Workflow) Discovery — second PDLC cycle. 8 Evaluation Scenarios
+  (UC-16..UC-23; 6 MUST / 2 SHOULD); 5-SME panel (3 CATASTROPHIC + 15 unique MAJOR resolved in place,
+  0 new UC IDs). 6 personas carried from cycle-1 (3 HIGH / 3 MEDIUM) + 2 folded sub-archetypes
+  (P-tool-vendor, P-complreviewer). Refined POV adopted: delegate tournament/convergence/significance to
+  the mature pii-rate-elo engine; contribute the NIST-powered lattice-stratified sampler + per-cell
+  epistemic instrumentation + dataset-seam reconciliation. Concept validated-with-caveats (n=5/6, median 7/10).
+signer: AGENT_SIMULATED (developer-assistant); real-user Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/assessment-workflow/01-discovery/00-pov-stress-test.md
+  - dev-assist-artifacts/assessment-workflow/01-discovery/01-motivation-background.md
+  - dev-assist-artifacts/assessment-workflow/01-discovery/personas.md
+  - dev-assist-artifacts/assessment-workflow/01-discovery/workflow-maps.md
+  - dev-assist-artifacts/assessment-workflow/01-discovery/03-market-research.md
+  - dev-assist-artifacts/assessment-workflow/01-discovery/04-use-cases.md
+  - dev-assist-artifacts/assessment-workflow/01-discovery/08-use-case-review-synthesis.md
+  - dev-assist-artifacts/assessment-workflow/01-discovery/06-concept-value-study-synthesis.md
+  - dev-assist-artifacts/assessment-workflow/01-discovery/discovery-report.md
+
+decisions_acknowledged:
+  - "Architecture locked: eval-data OWNS sampling + observability + reporting; pii-rate-elo CONSUMES (extend, do NOT rebuild engine/metrics/significance)."
+  - "Code-verified drift: converters/pii_anon_eval.py num_records=159891 (L93), license CC-BY-4.0 (L221), citation v1.3.0 (L222); schema.py version='1.3.0' (L137). Row parser already tolerates `annotations` (schema.py:349) — the hard drift is the declared provenance pins, not field-reading. UC-21 = fix pins + versioned crosswalk + regression contract."
+  - "SHOWSTOPPER precondition: pii-rate-elo analysis/significance.py is statistically FABRICATED (bootstrap se=metric*(1-metric)/100 + Gaussian noise, L205-206; McNemar n_approx=100 / pooled_sd=0.1, L271-281). The run path MUST route through the audited eval-data/stats (paired.py + intervals.py); significance.py quarantined off the run path."
+  - "Powered-sampler precondition: emit the PowerMatrix verdict + per-cell named shortfall against REALIZED positive counts (not target_n labels); reuse stats/power.py + stats/lattice.py + scripts/lattice_audit.py."
+  - "Default-mode reconciliation: powered-representative remains the CLI DEFAULT (locked brief); FULL = citable leaderboard; the representative run is ALWAYS labelled with its power verdict (SMALL/ADEQUATE/LARGE) + named shortfall (never silently LARGE)."
+  - "Candidate axiom AX-pii-anon-005 (pre-registered/reproducible assessment; no metric without CI + paired test + convergence + provenance + non-strippable caveat) forwarded to Requirements for confirmation."
+
+evidence:
+  - "30 agents: 3 POV critics (all REFINE) / 5 persona researchers / JTBD+Kano+Pugh market synthesis / 5-SME UC panel (all REQUEST_CHANGES) / 6-member CVS cohort (5 completed + 1 honest refusal). Pugh: CAP-02 4.84 vs HELM-style 2.96 vs run-full-as-is 2.45."
+  - "Guardrails confirmed green at baseline (pre-mutation): lattice --check OK (730 cells @ 47c3a8f); doc-drift NFR-013 7 tests pass."
+  - "No code mutated in Discovery; all artifacts are NEW under assessment-workflow/01-discovery/."
+
+findings_waived_to_pass2:
+  - "P-dpo / assurance concept-value lens UN-SAMPLED (CM-05 refused) — its priority NOT re-confirmed; carry to Pass-2."
+  - "Real-data correlation slice (cycle-1 UC-13, vs i2b2-2014/TAB) — the citation unlock; out-of-band, NOT v0.1-blocking; Pass-2."
+  - "All Discovery research AGENT_SIMULATED — real-user validation across the persona roster owed at Pass-2."
+
+next: "Stage 2 Requirements (R0-R10): UC<->PGO bridge (18 PGOs) -> FR-030+ / NFR-019+ (encode the 3 preconditions + academic-soundness bar + AX-005 + no-regression guardrails) -> prioritization -> canonical requirements-document + traceability-matrix -> R9 strengthen -> R10 threshold validation. Run: /dev-assist-requirements"

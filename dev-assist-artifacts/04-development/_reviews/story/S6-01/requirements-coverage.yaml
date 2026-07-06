@@ -1,0 +1,112 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S6-01
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S6-01-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-6/S6-01.md:35
+    description: |
+      FR-023 (MUST, UC-11 neutral leaderboard) is a MULTI-PART requirement
+      (functional-requirements.md:43): "held-out labels stay undistributed; a
+      published submission policy + anti-gaming control (rate-limit / held-out
+      rotation / contamination check) + opt-in publish + private dry-run pre-score
+      + config/version attestation + per-slice strengths." S6-01 deliberately
+      implements only the held-out STORE slice (gold-undistributed + provenance/
+      attestation logged + tamper-evidence). It correctly does NOT claim FR-023
+      fully closed (story §3 "Primary: FR-023 ... the gold stays undistributed";
+      §5 names S6-02 = policy/anti-gaming/opt-in-publish, S6-03 = CoI). The
+      deferred sub-parts are therefore deferred-WITH-named-successor — the bar at
+      a STORY gate. NOTE for the epic/sprint gate: the named successors S6-02 and
+      S6-03 currently exist ONLY as in-prose references inside S6-01 (§3 gov-03
+      seam, §5 Blocks). No S6-02.md / S6-03.md story file exists yet
+      (sprint-6/ holds only S6-01.md) and the dev-log S6 row is still "TODO"
+      (development-log.md:16). So the *residual FR-023 sub-parts are not yet
+      tracked on any board outside this single story*. Acceptable at the narrow
+      story gate (successor is named); flagged so the epic/sprint coverage gate
+      authors the successor stories and records the FR-023 deferral delta before
+      S6 closes. This is the standard finding-pattern #1 ("a planned bar has no
+      story claiming it") raised proactively one gate early — NOT a blocker here.
+    suggested_resolution: |
+      No change required in S6-01. At the S6 epic/sprint gate: create the
+      S6-02 (anti-gaming control: rate-limit / held-out rotation / contamination
+      check + opt-in publish + private dry-run pre-score) and S6-03 (CoI /
+      affiliation recusal) story files, and record in the traceability matrix /
+      dev-log that FR-023's leaderboard-STORE slice closed in S6-01 while the
+      policy + CoI slices remain OPEN against those named successors. FR-023 must
+      not be marked DONE until S6-02 + S6-03 verify the anti-gaming + CoI halves.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-023
+      - dev-assist-artifacts/02-requirements/traceability-matrix.md#UC-11
+
+notes: |
+  STORY-gate coverage scope = "are there gaps in the slice S6-01 claims?" — and
+  for the two FR-023 slices + the NFR-014 attribute S6-01 owns, there are none.
+  Verified verbatim against the bounded context:
+
+  RAN: python3 -m pytest tests/test_leaderboard_store.py
+       -k "fr_023 or nfr_014 or nfr004" -q  ->  12 passed in 0.12s
+  (token selection fr_023 / nfr_014 / nfr004 selects exactly the 7 logical
+  tests; test #2 test_fr_023_store_rejects_held_out_gold is parametrized over the
+  6 forbidden gold keys -> 6 cases, so 7 functions = 12 collected cases. Matches
+  story §12 "12 passed".)
+
+  Slice-by-slice coverage map (each claim -> verifying test, confirmed passing):
+   1. "held-out labels stay undistributed" (FR-023 store half)
+      -> test_fr_023_store_rejects_held_out_gold [CONTRACT] — append() raises
+         ValueError on any of {gold, gold_labels, held_out, held_out_labels,
+         answers, ground_truth}; rejected append leaves NO trace
+         (store.events()==[] and no/empty file). Source guard confirmed:
+         store.py:56-57 _FORBIDDEN_PAYLOAD_KEYS frozenset; store.py:143-145
+         `bad = _FORBIDDEN_PAYLOAD_KEYS & set(payload); raise ValueError(...)`.
+         6/6 parametrized cases pass.
+   2. "submission provenance + attestation logged" (FR-023 store half)
+      -> test_fr_023_store_records_scores_not_gold [PROPERTY] — a `scored`
+         event round-trips scores + config_version + attestation via events();
+         serialized log asserted to contain NONE of the 6 gold keys; AND
+         deterministic (re-append same event to fresh log -> identical
+         content_hash, prev_hash == GENESIS). Passes.
+   3. tamper-evidence (NFR-014 governance auditable)
+      -> test_nfr_014_hash_chain_links_events [PROPERTY] (prev_hash links each
+         event; events[0].prev_hash == GENESIS_HASH == "0"*64; seq 0..N-1
+         monotonic) + test_nfr_014_verify_chain_detects_tampering [PROPERTY]
+         (verify_chain() True intact; False after one persisted JSONL line is
+         mutated — the scores.f1 0.9->0.99 gaming attack) + the CLI proof
+         test_fr_023_leaderboard_cli_verify (main(["verify",log]) -> 0 intact /
+         non-zero tampered). All pass.
+   Supporting (not in -k token but in the same suite, story §6): NFR-004 pure-
+   stdlib AST guard (test_nfr004_leaderboard_store_pure_stdlib — bans random/
+   time/uuid/datetime/secrets) and append-only introspection
+   (test_fr_023_store_is_append_only — no update/delete/__setitem__; second
+   append grows file, line-1 bytes unchanged). Both pass.
+
+  NFR-014 is broader than S6-01 too (it bundles GOVERNANCE.md + advisory roster
+  + CoI statement + active anti-gaming control alongside "submission provenance
+  logged"). S6-01 satisfies the "submission provenance logged" + tamper-evident-
+  store portion; the GOVERNANCE.md / roster / CoI / active-anti-gaming portions
+  ride the same named successors (S6-03 CoI + S6-02 anti-gaming + later S6
+  governance docs). Consistent with the FR-023 split above — recorded under
+  finding coverage-S6-01-01, not double-logged.
+
+  EXPLICIT, per dispatch instruction: FR-023 is NOT fully closed by S6-01. The
+  anti-gaming control (rate-limit / held-out rotation / contamination check) +
+  opt-in publish are the named successor S6-02; the CoI is S6-03. This review
+  does NOT mark FR-023 closed. No silently-missing slice WITHIN S6-01's own
+  claimed scope. No orphaned requirement introduced. Zero SHOWSTOPPER/
+  CATASTROPHIC/MAJOR.
+
+  DIVERGED / Pass-2 cross-check: FR-023 + NFR-014 carry provisional_status
+  AGENT_SIMULATED (traceability-matrix.md:18), NOT DIVERGED — so no Pass-2
+  divergence-confirmation gate applies to this story's verification. Story §12
+  does schedule an AGENT_SIMULATED -> real-CI Pass-2 (faithful, since the store
+  is a pure-stdlib value object over a tmp_path JSONL file: no clock/RNG/network/
+  real-PII path) — that is an evidence-grade upgrade, tracked by code-quality,
+  not a coverage blocker.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

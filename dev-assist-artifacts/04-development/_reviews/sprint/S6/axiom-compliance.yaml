@@ -1,0 +1,97 @@
+reviewer: dev-assist-development-axiom-compliance
+scope_id: S6
+gate: sprint
+verdict: APPROVE
+
+findings:
+  - id: axiom-S6-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/00-axioms/project-axioms.yaml:AX-pii-anon-001..004
+    description: |
+      ID-vocabulary drift (non-blocking). The sprint mandate names the axioms
+      AX-001 (synthetic-only) and AX-002 (determinism), but the canonical
+      registry (project-axioms.yaml) uses the IDs AX-pii-anon-001 (synthetic-
+      only-no-real-pii) and AX-pii-anon-002 (deterministic-reproducible-
+      generation). These map to the same invariants and both are upheld; the
+      short forms AX-001/AX-002 are used in story headers and source docstrings
+      as informal aliases. No semantic divergence — flagged only so the alias
+      does not later be mistaken for a missing axiom.
+    suggested_resolution: |
+      Optional: add an `aliases: [AX-001]` field to AX-pii-anon-001 and
+      `aliases: [AX-002]` to AX-pii-anon-002 in project-axioms.yaml so the
+      short forms used across S6 stories/docstrings resolve to the registry.
+
+notes: |
+  SPRINT S6 (Leaderboard & governance, DC-13) — full axiom scorecard. Every
+  S6 invariant verified true-of-code by direct behavioral assertion + test pin,
+  not merely by docstring/spec claim. Reviewed the S6 commit range only
+  (703c3e3 [S5 close] .. HEAD); the broader branch diff carries earlier-epoch
+  distribution/compliance work which is out of this gate's axiom scope.
+
+  GOVERNANCE-INTEGRITY (DC-13 neutrality invariants) — ALL HOLD:
+    * Held-out gold NEVER stored (FR-023): LeaderboardStore.append rejects all 6
+      _FORBIDDEN_PAYLOAD_KEYS (gold/gold_labels/held_out/held_out_labels/
+      answers/ground_truth) with ValueError. Verified all 6 reject.
+    * Tamper-evident hash chain (NFR-014): prev_hash chains to prior
+      content_hash; genesis == GENESIS_HASH ("0"*64); verify_chain() returns
+      True on a clean log and False after a single-byte mutation. Verified.
+    * Opt-in publish (S6-02): evaluate_submission publishes ONLY when allowed
+      AND publish_opt_in; a disallowed (stale_epoch) submission is NEVER
+      published even with opt-in. Verified.
+    * Anti-gaming active (S6-02): rate-limit (>= max_per_epoch), held-out
+      rotation epoch (stale_epoch), contamination/duplicate (re-used
+      submission_hash) each fire as a distinct reason. Verified; policy is a
+      pure READ over the store (no append — caller is the single writer).
+    * Non-strippable no-pre-pub attestation (S6-03): CoIRecord.__post_init__
+      raises on empty/whitespace attestation; default == NO_PREPUB_ATTESTATION.
+      Verified. as_dict() carries no held-out-gold key (store accepts it).
+    * Recusal (S6-03): requires_recusal True for `maintainer` and any
+      `pii-anon-core` affiliation (exact token + substring, case-insensitive),
+      False for external (MIT). Verified.
+
+  EPISTEMIC HONESTY (S6-04 GOVERNANCE.md) — HOLDS, no over-claim:
+    * Advisory roster explicitly flagged ASPIRATIONAL / AGENT_SIMULATED; lists
+      only ROLES, names ZERO fictitious members ("naming fictitious advisors
+      would itself be a governance failure"). Honesty note at the top.
+    * Bus-factor = 1 stated plainly as a real, un-hidden risk; succession is
+      structural (CC0 data / Apache-2.0 code / pinned tags / pure-stdlib).
+    * Every CoI/neutrality claim maps to REAL code: verify_chain, opt-in
+      publish (leaderboard.policy), anti-gaming, CoIRecord.requires_recusal,
+      NO_PREPUB_ATTESTATION, forbidden-key reject. Doc claims are TRUE-of-code,
+      not asserted-only. test_governance.py pins the AGENT_SIMULATED flag, the
+      pii-anon-core CoI naming, the recusal reference, and the bus-factor note.
+
+  AX-001 (synthetic-only / no-real-PII): CONTRIBUTING.md (S6-05) requires
+    synthetic-only + provenance + "no real PII" and rejects even "anonymized"
+    real data; cites AX-001; pinned by test_contributing.py. Real-PII heuristic
+    scan (Luhn-valid cards / SSN shape / real API keys) over all 11 S6-added
+    text surfaces (leaderboard/*.py, GOVERNANCE.md, CONTRIBUTING.md, the 5 S6
+    test files): ZERO hits.
+
+  NFR-004 (pure-stdlib): AST scan of all 4 leaderboard modules — imports are
+    json/hashlib/enum/dataclasses/pathlib/collections.abc/sys/__future__ +
+    intra-package only; ZERO forbidden imports {random,time,uuid,datetime,
+    secrets}. `import pii_anon_datasets.leaderboard` pulls NO heavy dep
+    (numpy/scipy/pandas/pyarrow/torch/sklearn/spacy/datasets: none).
+
+  AX-002 (determinism): store orders by monotonic seq (no clock), hashes over
+    canonical JSON (sort_keys); policy + coi are pure functions. Same inputs to
+    two fresh logs yield byte-identical content_hash. Verified.
+
+  GUARDRAILS (frozen artifacts UNTOUCHED across S6): git diff --name-only over
+    703c3e3..HEAD for corpus (pii_anon.jsonl.gz), eval_lattice.json,
+    pii_anon.metadata.json, MANIFEST.sha256, and tags = EMPTY. Both pinned tags
+    (v1.3.0, pre-lattice-enrichment) present. The corpus/lattice/metadata
+    (v1.3.0, pre-lattice-enrichment) were not modified by this sprint.
+
+  TEST EVIDENCE: full suite 325 passed / 1 skipped / 0 failed; S6 slice
+    (test_leaderboard_store / test_leaderboard_policy / test_coi /
+    test_governance / test_contributing) all green. RED-before-GREEN visible in
+    the S6 commit history for every story.
+
+  No SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR. One OBSERVATION (axiom-ID
+  alias hygiene). APPROVE.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

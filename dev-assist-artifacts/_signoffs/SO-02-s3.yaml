@@ -1,0 +1,45 @@
+signoff_id: SO-02-s3
+date: 2026-05-29
+type: work-stream-close
+stage: 04-development
+scope: >
+  Sprint S3 — Scorer trio (DC-06 anonymization Pareto / DC-08 pseudonymization-integrity moat /
+  DC-07 measured-attack RRS) + the adversary port (offline deterministic headline + LLM secondary),
+  exposure-index prior, and the re-id-operating-point power seam (NFR-018 §5). 8 stories S3-01..S3-08,
+  strict TDD (RED→GREEN→REFACTOR), every story gate + the S3 sprint gate APPROVE. Closes M6: all four
+  privacy directions (detection/anonymization/pseudonymization/re-identification) now have RUNNING
+  scorers rather than precomputed signals.
+signer: AGENT_SIMULATED (developer-assistant); real-user / real-CI Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-01.md ... S3-08.md (8 story contracts)
+  - src/pii_anon_datasets/scoring/adversary/{base,__init__,offline_adversary,llm_adversary}.py
+  - src/pii_anon_datasets/scoring/{signals,reidentification,anonymization,pseudonymization}.py
+  - src/pii_anon_datasets/stats/power.py (reid ladder: reid_required_n, ReidTier, ReidProvenance)
+  - dev-assist-artifacts/04-development/_reviews/story/S3-0{1..8}/ (40 story-gate reviewer YAMLs + synthesis)
+  - dev-assist-artifacts/04-development/_reviews/sprint/S3/ (sprint-gate reviewer YAMLs + synthesis)
+  - dev-assist-artifacts/00-validation/validation-report-2026-05-29-S3-close.md
+
+decisions_acknowledged:
+  - "reidx-01: the RRS HEADLINE is the deterministic OFFLINE adversary + exposure-index; the LLM adversary is a version-stamped SECONDARY (deterministic=False), behind the [llm] extra, never the headline."
+  - "The '2,500 paired personas' did not exist as a file — they are deterministically ASSEMBLED from the ~159,891 tier3 substrate records (assemble_paired_set); |C| is a first-class parameter (default 2500)."
+  - "De-circularization (reidx-01): Target.observed_signals are RE-EXTRACTED from the anonymized text via scoring/signals.py, never copied from gold — so RRS never collapses into the precomputed heuristic."
+  - "FR-012 moat guarantee: intended-linkage vs unintended-crypto collisions are SEPARATE integers, never summed; a correct deterministic pseudonymizer is never penalized. FR-013 EDPB Art 4(5): the bare-md5 PseudonymGenerator is correctly flagged self-rejoinable (fails separation) — a finding EXPRESSED, not hidden."
+  - "NFR-005/AX-004: anonymization, pseudonymization, RRS, and detection metric families are NEVER merged into a combined de-id score — enforced structurally (no __float__/combined field) and mutation-tested (4 fusion vectors rejected)."
+  - "NFR-018 reid seam: anon/pseudo/RRS get a parallel re-id-operating-point power ladder (897/385) in stats/power.py — NOT a rebuild of the FROZEN detection eval_lattice.json."
+
+evidence:
+  - "pytest 169 passed / 1 skipped (the anthropic-absent contract skip); 0 regressions from the S-PWR baseline; 93% aggregate line coverage on scoring+stats; every new scorer module >= 85% (NFR-016)."
+  - "All 8 story gates APPROVE (40 reviewer YAMLs); S3 sprint gate APPROVE (requirements-coverage iter-2 after the anonymization.py 72%->97% fix; performance + axiom-compliance APPROVE)."
+  - "S-PWR guardrail HELD: eval_lattice.json (730 cells) untouched (last commit 47c3a8f); tags v1.3.0 + pre-lattice-enrichment intact; no corpus regeneration; reid ladder is a parallel CODE seam."
+  - "Cross-artifact validation APPROVE (00-validation/validation-report-2026-05-29-S3-close.md): FR=29/NFR=18/DC=15 consistent; entity=63 canonical; S3 8/8 DONE consistent across MANIFEST/dev-log/stories."
+  - "Sprint-gate amendment bea79ba: anonymization.py coverage lift + 2 advisory perf fixes (pseudonymization O(n^2)->O(n); offline-adversary target-signal hoist), behavior-preserving."
+
+findings_waived_to_pass2:
+  - "All S3 work is AGENT_SIMULATED — the execution-environment real-CI run on a clean checkout is owed before any S3 MUST counts RELEASE-verified. No DIVERGED DC, so no statistical Pass-2 attaches."
+  - "Pre-existing lint baseline (power.py UP035/E702/type-arg; reidentification.py UP037/type-arg; scoring/__init__ I001) deferred to a Stage-5 lint-hardening pass."
+  - "Known doc-drift (NFR-013): README/DATASHEET/COMPARISON/MIGRATION/CHANGELOG/__init__ stale counts — scheduled for S5-07."
+  - "LLM-adversary live path unexercised here (anthropic absent → skip-if-absent); runs only in an env with the [llm] extra."
+
+next: "S4 — stats/reporting completion (Clopper-Pearson, paired McNemar/bootstrap, ECE/Brier, per-language power table, viz)."

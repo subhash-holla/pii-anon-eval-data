@@ -6,9 +6,9 @@ Pins the dataset-card builder that ships the CC0 corpus with a HF README:
 * body counts pulled from the packaged ``pii_anon.metadata.json`` so they cannot drift — the
   ``entity_types`` count equals BOTH ``metadata["entity_types"]`` AND ``taxonomy.ENTITY_TYPE_COUNT``,
   and the stale v1.x strings ``"150K"`` / ``"65 "`` / ``"57 "`` are forbidden (``nfr_013``);
-* the load-bearing caveats: the train-vs-eval substrate note (159,891 = 27.8% tier3 EVALUATION), the
-  ~72% ``synthetic_lattice_enrichment`` disclosure, the §7 authoritative power sentence, and the
-  CC0-data / Apache-2.0-code split (``fr_024``);
+* the load-bearing caveats: the train-vs-eval substrate note (the frozen 159,891 tier3 EVALUATION
+  records against the LIVE corpus total, no stale ratio), the 79.2% ``synthetic_lattice_enrichment``
+  disclosure, the §7 authoritative power sentence, and the CC0-data / Apache-2.0-code split (``fr_024``);
 * pure-stdlib (AST guard banning {random, time, uuid, datetime, secrets} — ``nfr004``).
 """
 
@@ -42,7 +42,7 @@ def test_fr_024_dataset_card_has_yaml_frontmatter() -> None:
 
 def test_nfr_013_dataset_card_counts_match_metadata() -> None:
     """[PROPERTY-TEST] Counts cannot drift: the card body contains the canonical ``total_records``
-    (575,604) and ``total_annotations`` (2,486,438) and the ``entity_types`` count, which equals
+    (782,677) and ``total_annotations`` (3,107,240) and the ``entity_types`` count, which equals
     BOTH ``metadata["entity_types"]`` AND ``taxonomy.ENTITY_TYPE_COUNT``; it contains NONE of the
     stale strings ``"150K"`` / ``"65 "`` / ``"57 "``."""
     md = load_metadata()
@@ -62,18 +62,22 @@ def test_nfr_013_dataset_card_counts_match_metadata() -> None:
 
 
 def test_fr_024_dataset_card_embeds_caveats() -> None:
-    """[UNIT-TEST] The card embeds (a) the train-vs-eval note (159,891 = the 27.8% tier3 EVALUATION
-    substrate), (b) the ~72% ``synthetic_lattice_enrichment`` disclosure, (c) the §7 authoritative
-    power sentence, and (d) the CC0-data / Apache-2.0-code split."""
+    """[UNIT-TEST] The card embeds (a) the train-vs-eval note (the frozen 159,891 tier3 EVALUATION
+    records against the LIVE corpus total, no stale ratio/denominator), (b) the 79.2%
+    ``synthetic_lattice_enrichment`` disclosure, (c) the §7 authoritative power sentence, and (d) the
+    CC0-data / Apache-2.0-code split."""
+    md = load_metadata()
     card = build_dataset_card()
 
-    # (a) train-vs-eval substrate (the 159,891 tier3 EVALUATION records, ~27.8%).
+    # (a) train-vs-eval substrate: the frozen 159,891 tier3 EVALUATION records stated against the LIVE
+    #     corpus total (no hardcoded fraction/denominator, so the pre-2.2.0 575,604 total must be absent).
     assert "159,891" in card, "card must state the 159,891 tier3 EVALUATION substrate size"
-    assert "27.8%" in card, "card must state the ~27.8% EVALUATION fraction"
+    assert f"{md['total_records']:,}-record corpus" in card, "substrate note must use the live corpus total"
+    assert "575,604" not in card, "card must not carry the stale pre-2.2.0 corpus total"
     assert "EVALUATION" in card, "card must distinguish the EVALUATION substrate from the whole corpus"
 
-    # (b) the ~72% synthetic_lattice_enrichment disclosure.
-    assert "72%" in card, "card must disclose the ~72% enrichment fraction"
+    # (b) the 79.2% synthetic_lattice_enrichment disclosure.
+    assert "79.2%" in card, "card must disclose the 79.2% enrichment fraction"
     assert "synthetic_lattice_enrichment" in card, "card must name synthetic_lattice_enrichment"
 
     # (c) the §7 authoritative power sentence (embedded verbatim, non-strippable).

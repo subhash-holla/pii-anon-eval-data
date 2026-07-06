@@ -167,7 +167,7 @@ def test_coverage_disclosure_present_per_detector() -> None:
     res = _run(_good_fake()).detectors["good"]
     cov = res["coverage"]
     assert cov["reachable"] == 2  # PERSON_NAME + EMAIL_ADDRESS
-    assert cov["of_total"] == 63
+    assert cov["of_total"] == 66
     assert "EMAIL_ADDRESS" in cov["reachable_types"]
 
 

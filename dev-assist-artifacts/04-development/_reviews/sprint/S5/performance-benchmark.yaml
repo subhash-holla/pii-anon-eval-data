@@ -1,0 +1,116 @@
+# Canonical Reviewer Output (YAML) — developer-assistant Development
+# Reviewer: performance-benchmark | Gate: SPRINT (S5) | Mode: ADVISORY (no hard perf NFR on exports)
+
+reviewer: dev-assist-development-performance-benchmark
+
+scope_id: S5
+
+gate: sprint
+
+verdict: APPROVE
+
+findings:
+  - id: performance-S5-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/distribution/parquet_export.py:96
+    description: |
+      Real-runtime / throughput of the 575,604-record Parquet stream is NOT measured here.
+      The streaming CONTRACT is confirmed correct by static review (one-pass `for record in records`,
+      batched `pyarrow.parquet.ParquetWriter` at batch_size=10,000, no `list(records)`/`len(records)`/
+      indexing — the only `list(records)` token in the module is the docstring DISCLAIMING the
+      anti-pattern), so peak memory is bounded by one batch (~10K rows) regardless of the 210MB-gzipped
+      corpus. But absolute wall-clock throughput (rec/sec) of the full pyarrow stream is unmeasured.
+      This maps directly to NFR-010b (lightweight runtime path ≥5,000 rec/sec on 8-core; report
+      p50/p95/p99), which the requirements set marks `real_user_needed: true` ("Pass-2 the number")
+      and R10 PERSONA-STRATIFIED — i.e. a Stage-5 real-host measurement, deliberately out of scope for
+      this advisory sprint gate.
+    suggested_resolution: |
+      No code change. Defer to the Stage-5 NFR-010b real-host benchmark (real_user_needed): measure
+      end-to-end rec/sec + p50/p95/p99 for the full-corpus Parquet export on the reference 8-core box
+      and record it in the run-record. No regression is implied by leaving it unmeasured here.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-010
+      - src/pii_anon_datasets/distribution/parquet_export.py
+
+  - id: performance-S5-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/distribution/spacy_export.py:84
+    description: |
+      `export_spacy_docbin` streams its INPUT one-pass (no `list(records)`/`len`/indexing — confirmed),
+      but its OUTPUT accumulator, `spacy.tokens.DocBin`, holds every built `Doc` in memory until the
+      single terminal `db.to_disk(out_path)`. This is an inherent spaCy DocBin constraint (a DocBin is
+      a serialize-at-end container — there is no per-record streaming sink in the spaCy API), NOT a
+      coding defect, and it is distinct from the Parquet/CoNLL paths which DO stream to disk
+      incrementally. Over the full 575K corpus the resident DocBin is the dominant memory term for the
+      spaCy export specifically. Per-record CPU work is cheap (one reused `spacy.blank` pipeline,
+      `make_doc` + bounded char_span/filter_spans over a mean of ~4 annotations).
+    suggested_resolution: |
+      No code change required for S5 (advisory; spaCy export is opt-in behind the [baselines] extra and
+      not under a hard memory NFR). If full-corpus spaCy DocBin memory is later flagged on a constrained
+      host, shard the export into multiple DocBin files (e.g. per language/domain) at the call site —
+      the streaming input signature already supports feeding bounded sub-iterators.
+    references:
+      - src/pii_anon_datasets/distribution/spacy_export.py
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-004
+
+  - id: performance-S5-03
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/integrations/conll_format.py:51
+    description: |
+      `_assign_bio_tags` is O(annotations x tokens) per record: it re-scans every token for each
+      annotation. Empirically this is NOT a quadratic blowup — over a 60,000-record sample the
+      per-record factors are tiny and bounded (tokens: mean 19 / p50 11 / p99 132 / max 179;
+      annotations: mean 4.3 / p50 3 / p99 15 / max 32), so the worst observed inner-loop work is
+      tokens x annotations = ~5,248 ops on a single record, and per-record cost is effectively constant.
+      Across the corpus the CoNLL export is therefore linear in record count (O(tokens) amortized per
+      record), with no path that scales with corpus size inside a record. Logic was ported verbatim
+      from the proven brownfield CLI.
+    suggested_resolution: |
+      No change needed — the complexity is bounded by small per-record entity/token counts and meets
+      the (advisory) intent. Only if a future record schema admitted pathologically large
+      annotation/token counts per record would an interval/sweep-line tagging pass be worth considering.
+    references:
+      - src/pii_anon_datasets/integrations/conll_format.py
+      - src/pii_anon_datasets/distribution/conll_export.py
+
+notes: |
+  ADVISORY sprint gate (S5: Exports/CLI + Compliance + doc-drift) — no hard performance NFR governs the
+  export surface, so this is APPROVE-unless-MAJOR-regression. No MAJOR+ finding exists. Static streaming
+  + complexity review of all six perf-relevant surfaces:
+
+  STREAMING / BOUNDED MEMORY — confirmed on every export path:
+   * parquet_export.export_parquet — one-pass `for record in records`, batched ParquetWriter
+     (batch_size=10,000, batch dropped after each `_flush`), schema fixed from first batch; NO
+     `list(records)`/`len(records)`/indexing. Supersedes the v1.3.0 scripts/export_parquet.py blowup.
+     Peak memory bounded by one batch, independent of the 575,604-record / 210MB-gz corpus.
+   * conll_export.export_conll — one-pass, writes each record's CoNLL string to disk immediately
+     (record-by-record), no accumulation.
+   * spacy_export.export_spacy_docbin — one-pass INPUT; output DocBin is an inherent serialize-at-end
+     spaCy container (see performance-S5-02), not an accidental materialization.
+   * cli._iter_jsonl — yields one parsed dict per line via gzip streaming reader (`for line in f`),
+     never `.readlines()`/`list()`; export dispatch is O(1) (subprocess/lazy-import passthrough).
+   * Grep for `list(records)` / `len(records)` / `records[` / `.readlines()` across the distribution,
+     cli, and compliance surfaces found ZERO real occurrences (only the parquet docstring disclaiming it).
+
+  PER-RECORD COMPLEXITY — O(1) / O(tokens), no corpus-scaling work inside a record:
+   * compliance/crosswalk.py (crosswalk_record / as_columns) — iterates a record's small
+     regulatory_domains tag list into a set; emits exactly 5 typed reg_* columns. O(tags) ~ O(1).
+   * compliance/end_state_bundle.py — composes per-record value objects (crosswalk + optional
+     anon/pseudo evidence) with no fusion/scan. O(1).
+   * integrations/conll_format BIO/BILOU tagging — linear in record size; empirically bounded
+     (see performance-S5-03), not quadratic.
+   * distribution/croissant.py + dataset_card.py — build small metadata structures from the 5.3KB
+     packaged pii_anon.metadata.json (the single counts source stats/lattice.py also reads); they NEVER
+     open or scan the corpus. O(1) w.r.t. corpus size.
+   * distribution/__init__.py imports symbols only — no module-level corpus load.
+
+  All three findings are OBSERVATION-level real-runtime caveats explicitly deferred to the Stage-5
+  NFR-010 real-host benchmark (real_user_needed: true). No determinism, RNG-seeding, or
+  --release-equivalent concern applies (exporters are pure-stdlib/deterministic with sort_keys-stable
+  encodings; no benchmark harness is in scope for an advisory exports sprint). No regression vs main:
+  S5 ADDS exporters that fix the v1.3.0 full-materialization bug — it strictly improves the memory
+  profile of the corpus-export path.
+
+review_time_seconds: 520
+
+context_bounds_respected: true

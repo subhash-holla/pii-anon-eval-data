@@ -1,0 +1,123 @@
+reviewer: requirements-coverage
+gate: story
+story_id: S5-01
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+independence_attestation: >-
+  Findings derived solely from the S5-01 story file, the owned source/test files,
+  and independent re-runs of pytest + coverage. No other reviewer's output was
+  consulted. Verdict reflects only requirements-coverage scope (every §7 acceptance
+  clause + §6 test maps to a passing test); test-quality, semantic-FR, and
+  should-this-requirement-exist judgements are explicitly out of scope.
+self_attestation:
+  read_story: true
+  read_owned_source: true
+  reran_tests: true
+  reran_coverage: true
+
+scope_summary: >-
+  S5-01 delivers FR-022 (legally-distinct regulatory crosswalk, gov-02). All six
+  §6 fr_022-tokened tests in tests/test_crosswalk.py PASS on independent re-run
+  (6 passed in <1s). Full suite 217 passed, 1 skipped — 0 regressions, matching the
+  §12 claim (211 prior + 6 new; pre-existing skip unchanged). Coverage on
+  pii_anon_datasets.compliance.crosswalk independently measured at 95% line
+  (53 stmts, 1 miss) — exceeds the ≥85% bar. Each §7 G/W/T clause + negative clause
+  maps to a passing assertion. FR-022 MUST is now covered (closes part of DC-11).
+
+coverage_evidence:
+  fr_022:
+    requirement: "FR-022 — legally-distinct regulatory crosswalk (gov-02: N typed columns, no equivalence)"
+    status: verified
+    test_file: tests/test_crosswalk.py
+    coverage_module: pii_anon_datasets.compliance.crosswalk
+    coverage_line_pct: 95
+    coverage_threshold_pct: 85
+    tests:
+      - name: test_fr_022_five_legally_distinct_columns
+        type: UNIT-TEST
+        result: pass
+        maps_to: "§7 G/W/T (5 typed columns emitted); §6 test #1; CRITICAL(a)"
+      - name: test_fr_022_hipaa_is_two_distinct_columns
+        type: AUDIT
+        result: pass
+        maps_to: "§7 (HIPAA legally distinct); §6 test #2; CRITICAL(a) HIPAA-as-2"
+      - name: test_fr_022_no_merged_or_equivalence_column
+        type: AUDIT
+        result: pass
+        maps_to: "§7 Negative (no compliant/deidentified/equivalent merged column); §6 test #3; CRITICAL(b) gov-02 fix"
+      - name: test_fr_022_presence_to_status_conservative
+        type: UNIT-TEST
+        result: pass
+        maps_to: "§7 (informs-not-determines; tag presence never a determination); §6 test #4; CRITICAL(c) honesty control"
+      - name: test_fr_022_corpus_tag_mapping
+        type: UNIT-TEST
+        result: pass
+        maps_to: "§6 test #5 (corpus tags map; sox/lgpd/pipa surfaced not folded)"
+      - name: test_fr_022_nfr004_crosswalk_pure_stdlib
+        type: PROPERTY-TEST
+        result: pass
+        maps_to: "§6 test #6 (NFR-004 pure-stdlib AST guard)"
+
+critical_controls:
+  - id: a_five_columns_hipaa_two
+    description: "5 legally-distinct typed columns with HIPAA as 2"
+    satisfied: true
+    evidence: >-
+      REGIMES (crosswalk.py:41-47) = exactly 5; as_columns emits reg_<regime> x5;
+      structural assert (crosswalk.py:170) pins dataclass field order to REGIMES;
+      test #1 asserts exactly 5 ordered keys; test #2 asserts reg_hipaa_safe_harbor
+      + reg_hipaa_expert_determination both present and no collapsed reg_hipaa.
+  - id: b_no_merged_equivalence_flattened
+    description: "NO merged/equivalence/flattened column (gov-02 fix of export_parquet.py:54 blob)"
+    satisfied: true
+    evidence: >-
+      Dataclass (crosswalk.py:89-96) carries no merged-verdict field; test #3 checks
+      column keys, dataclass fields, and source-greps for compliant/overall/equivalent
+      and reg_regulatory_domains. Independent grep of crosswalk.py confirms no bare
+      merged-verdict symbol survives (only the regime-scoped ccpa_deidentified).
+  - id: c_conservative_signal_not_determination
+    description: "conservative presence -> in-scope SIGNAL, not a compliance determination (honesty control)"
+    satisfied: true
+    evidence: >-
+      RegimeStatus.OUT_OF_SCOPE = "out_of_scope_of_dataset" (explicitly not a verdict);
+      CROSSWALK_DISCLAIMER states "INFORMS but does NOT MAKE a compliance determination";
+      __post_init__ rejects empty disclaimer; test #4 asserts True not in values,
+      disclaimer non-empty + contains inform/determination, empty/missing tags -> all
+      out-of-scope without raising.
+  - id: d_coverage_threshold
+    description: "coverage on compliance/crosswalk.py >= 85% line"
+    satisfied: true
+    evidence: "Independently measured 95% line coverage (53 stmts, 1 miss: line 118 + branch 122->120, both peripheral defensive guards outside the FR-022 requirement surface)."
+
+reproduction:
+  pytest_crosswalk: "python3 -m pytest tests/test_crosswalk.py -q -> 6 passed"
+  pytest_full_suite: "python3 -m pytest -> 217 passed, 1 skipped (0 regressions)"
+  coverage: "python3 -m pytest tests/test_crosswalk.py --cov=pii_anon_datasets.compliance.crosswalk -> 95% line"
+  scope_check: "git diff --name-only fdc3b45~1 HEAD -- src tests = only compliance/__init__.py, compliance/crosswalk.py, tests/test_crosswalk.py"
+
+diverged_cross_check:
+  applicable: false
+  note: >-
+    DC-11 provisional_status AGENT_SIMULATED, NOT DIVERGED (story §4). No DIVERGED
+    MUST FR/NFR in this story's scope, so no Pass-2 DIVERGED commitment is required by
+    this reviewer. Separately, story §12 declares execution AGENT_SIMULATED with a
+    Pass-2 (real CI on real hardware) scheduled at the sprint gate; the module is
+    pure-stdlib + deterministic so Pass-2 is expected to reproduce identically. This is
+    an execution-environment caveat, not a DIVERGED-threshold obligation.
+
+findings: []
+
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+
+sprint_gate_note: >-
+  FR-022 MUST is now covered by passing test evidence (6/6 fr_022-tokened tests,
+  95% line coverage) and closes part of DC-11. Carry forward to the S5 sprint-gate
+  Tier coverage snapshot. NOTE for sprint gate: S5-01 execution is AGENT_SIMULATED;
+  Pass-2 real-CI confirmation is owed at the sprint gate before FR-022 counts as
+  release-verified.

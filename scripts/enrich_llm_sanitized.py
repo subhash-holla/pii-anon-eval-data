@@ -200,6 +200,7 @@ def main():
                     "coherence_preserved_generalized": True,
                     "coherence_preserved_llm_sanitized": True,
                 },
+                "coherence_assumed": True,  # B-6 honest marker: coherence_preserved_* is an assumed constant
             }
             # Make sure dimensions list includes context_preservation
             rec["dimensions"] = sorted(set(rec.get("dimensions", [])) | {"context_preservation"})
@@ -209,6 +210,7 @@ def main():
             metrics["semantic_similarity_llm_sanitized"] = sim_sanitized
             metrics["behavioral_signal_residual"] = residual
             metrics["coherence_preserved_llm_sanitized"] = True
+            cp["coherence_assumed"] = True  # B-6 honest marker: coherence_preserved_* is an assumed constant
         enriched_count += 1
 
     print(f"  Enriched {enriched_count} records with LLM-sanitized variant")

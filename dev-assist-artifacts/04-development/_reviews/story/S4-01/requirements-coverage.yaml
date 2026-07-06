@@ -1,0 +1,114 @@
+# Canonical reviewer output — requirements-coverage
+reviewer: requirements-coverage
+gate: story
+scope_id: S4-01
+iteration: 1
+verdict: APPROVE
+mode: read-only
+context_bounds_respected: true
+independence_attestation: >
+  Findings derived solely from the S4-01 story, tests/test_clopper_pearson.py,
+  src/pii_anon_datasets/stats/intervals.py, stats/__init__.py, pyproject.toml,
+  and independently re-run pytest + coverage + recomputed textbook values. No
+  other reviewer's output was consulted.
+
+summary:
+  story: "S4-01 — Clopper-Pearson exact interval (FR-004 2nd CI method; NFR-002 method-named)"
+  acceptance_clauses_total: 6        # §7 G/W/T: method-named, Beta-bounded, integer-guarded, conservative-vs-Wilson, neg→TypeError, no-bare-float
+  acceptance_clauses_verified: 6
+  section6_tests_total: 7
+  section6_tests_passing: 7
+  musts_in_scope: ["FR-004", "NFR-002"]
+  musts_verified: ["FR-004", "NFR-002"]   # both fully verified for this story's slice
+  musts_deferred_with_successor: []
+  musts_silently_missing: []
+
+evidence:
+  pytest_rerun: "PYTHONPATH=src python3 -m pytest tests/test_clopper_pearson.py -q  →  7 passed"
+  tokens: "all 7 tests carry fr_004 / nfr_002 tokens (collect-only confirmed 7)"
+  textbook_4dp_independent:
+    method: "recomputed via clopper_pearson_interval; compared to brief table, not to the test's own asserts"
+    "(0,10)":  { low: 0.000000, high: 0.308497, expected: "[0.0, 0.3085]",     match_4dp: true }
+    "(1,10)":  { low: 0.002529, high: 0.445016, expected: "[0.0025, 0.4450]",  match_4dp: true }
+    "(10,10)": { low: 0.691503, high: 1.000000, expected: "[0.6915, 1.0]",     match_4dp: true }
+    max_abs_delta: 2.9e-5
+  conservative_cp_superset_wilson:
+    holds: true
+    cells: ["(1,10)", "(3,10)", "(5,10)", "(13,20)", "(49,100)"]
+  edges: { n0_sentinel: true, k0_low_exact_0: true, kn_high_exact_1: true }
+  determinism: { in_process_byte_identical: true, cross_process_byte_identical: true }
+  coverage:
+    target_clause: "≥85% line on stats.intervals (brief)"
+    project_canonical_bar: "branch=true (pyproject [tool.coverage.run]; NFR-016, R10 ACCEPTED-WITH-CAVEATS); no fail_under gate set"
+    measured:
+      branch_cp_plus_wilson_tests: "83%"
+      line_only_cp_plus_wilson_tests: "83%"
+      line_only_cp_tests_only: "81%"
+    meets_85_line: false
+    uncovered_lines_classification:
+      pre_existing_S1_not_S4_01_owned: ["L58-62 (_z Winitzki branch)", "L69 (wilson n=0 sentinel)"]
+      defensive_numerical_guards_unreachable_in_normal_CP: ["L97/L106/L109/L116/L119 (_betacf tiny-guards)", "L131/L133 (_betainc x<=0 / x>=1)", "L157/L159 (_inv_betainc p<=0 / p>=1)"]
+    note: >
+      The S4-01-owned CP behavior (inverse-beta happy path, all bounds, edges, integer guard)
+      is fully exercised. The ~2pt shortfall vs 85% is entirely pre-existing-S1 code (which §8
+      instructs to PRESERVE) plus dependency-free numerical-stability guards. The project's own
+      configured bar is branch coverage (NFR-016) with no enforced fail_under threshold.
+
+findings:
+  - id: RC-S4-01-001
+    severity: MINOR
+    title: "intervals.py coverage 83% (branch / project-canonical) — below brief's 85% line target"
+    detail: >
+      Re-run line-only coverage on pii_anon_datasets.stats.intervals is 81% (CP tests alone)
+      / 83% (with Wilson tests); project-canonical branch coverage is 83%. None reach the
+      brief's '≥85% line'. The deficit is NOT in S4-01's claimed behavior: every uncovered
+      line is either pre-existing S1 Wilson code (_z Winitzki L58-62, wilson n=0 sentinel L69
+      — §8 says PRESERVE) or a defensive numerical guard in _betacf/_betainc/_inv_betainc that
+      is unreachable on the normal CP path. No MUST behavior is unverified.
+    must_refs: []
+    location: "src/pii_anon_datasets/stats/intervals.py"
+    recommendation: >
+      Either (a) add 2 micro-tests hitting the _betainc x<=0 / x>=1 and _inv_betainc p<=0/p>=1
+      guards (cheap, pushes line coverage past 85), or (b) reconcile the story/brief to state the
+      threshold is project-canonical branch coverage (83%, no fail_under gate) rather than 85% line.
+      Non-blocking at a story gate.
+  - id: RC-S4-01-002
+    severity: MINOR
+    title: "Story does not name the coverage mode backing its threshold"
+    detail: >
+      §10 DoD and §12 evidence cite coverage qualitatively but do not state line-vs-branch.
+      The brief asks for '85% line'; pyproject sets branch=true. Naming the mode would remove the
+      apparent (but immaterial) mismatch.
+    must_refs: []
+    location: "dev-assist-artifacts/04-development/02-stories/sprint-4/S4-01.md §10/§12"
+    recommendation: "State 'branch coverage (NFR-016), no fail_under gate' explicitly."
+
+coverage_delta:
+  new_musts_entering_done_state: []   # story gate: too narrow to advance a MUST to DONE; FR-004/NFR-002 advance at epic/sprint gate
+  note: "Coverage snapshot deferred to epic/sprint gate per gate-participation contract."
+
+provisional_status_cross_check:
+  story_tag: AGENT_SIMULATED
+  diverged_musts: []                  # FR-004/NFR-002 not DIVERGED (DC-09 not DIVERGED per §4)
+  pass2_required: true                # AGENT_SIMULATED — real-CI Pass 2 must clear the tag before release verification
+  pass2_scheduled: false
+  pass2_note: >
+    Tests executed under agent simulation (Python 3.10.6, pytest 9.0.2), not a real CI runner.
+    Pass 2 (real CI on hardware) is acknowledged-pending in §12 but not yet scheduled with a date.
+    This does not block the story gate; flagged so the AGENT_SIMULATED tag is cleared before the
+    MUSTs are counted as release-verified.
+
+verdict_rationale: >
+  All 6 §7 acceptance clauses and all 7 §6 tests map to passing tests (re-run: 7 passed). All
+  CRITICAL math checks pass under independent recomputation: textbook 4-d.p. values match
+  (max Δ 2.9e-5), CP ⊇ Wilson on every sampled cell, edges + determinism hold. The only
+  deviation is the coverage figure (83% vs 85% asked), which is MINOR: it lands on pre-existing
+  S1 lines and unreachable defensive guards, the project's canonical bar is branch coverage with
+  no enforced threshold, and no MUST's claimed behavior is unverified or silently missing.
+  Zero MAJOR or above → APPROVE.
+
+self_attestation:
+  read_only_confirmed: true
+  reran_tests: true
+  recomputed_critical_math_independently: true
+  consulted_other_reviewer_outputs: false

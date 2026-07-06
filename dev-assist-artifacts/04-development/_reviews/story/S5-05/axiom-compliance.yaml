@@ -1,0 +1,73 @@
+reviewer: dev-assist-development-axiom-compliance
+scope_id: S5-05
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY-GATE axiom slice for S5-05 (pii-anon CLI — 5 thin dispatch verbs). The diff
+  touches exactly 4 files (src/pii_anon_datasets/cli.py [NEW], tests/test_cli.py [NEW],
+  pyproject.toml [+project.scripts], the story doc) — confirmed via
+  `git diff --name-only c003174~1 HEAD`. scripts/validate.py, scripts/generate_records.py,
+  baselines/evaluate.py, and the corpus/lattice/tags are UNTOUCHED. No domain packs active
+  (developer-assistant.yaml domain_packs: []), so no pack reviewer-extensions merged.
+  Project axiom registry dev-assist-artifacts/00-axioms/project-axioms.yaml read and applied.
+
+  Axioms triggered by this diff and their disposition — ALL UPHELD:
+
+  (1) NFR-018 power-gate-on (guardrail / AX-pii-anon-003 stated-statistical-power).
+      _cmd_validate (cli.py:70-73) forwards args.rest verbatim to scripts/validate.py and
+      appends NOTHING. STATIC: `grep -n -- --no-power-gate src/pii_anon_datasets/cli.py`
+      returns ONLY lines 14, 71, 72 — all docstring/comment; ZERO occurrences in executable
+      code. DYNAMIC (independent argv capture, monkeypatched subprocess.run):
+      main(["validate"]) -> argv = [python, .../scripts/validate.py]; validate.py PRESENT,
+      `--no-power-gate` ABSENT. main(["validate","--summary-only"]) forwards --summary-only
+      verbatim, still no injected --no-power-gate. Cross-checked validate.py:198/253 — the
+      flag is action="store_true" (default False) gating `if not args.no_power_gate:`, so the
+      committed-cell power gate runs by DEFAULT and only a user passing the flag through `rest`
+      can opt out. test_nfr_018_cli_validate_keeps_power_gate_on captures the spawned argv and
+      asserts validate.py present AND --no-power-gate absent: `pytest -k nfr_018` -> 1 passed.
+
+  (2) no-corpus-regeneration (guardrail / supports AX-pii-anon-001 synthetic-only).
+      _cmd_generate (cli.py:62-63) passes only args.rest; it injects NO --output. The
+      delegate's own default is generate_records.py:35
+      DEFAULT_OUTPUT = .../data/pii_anon_generated.jsonl — never the frozen
+      data/pii_anon.jsonl.gz. DYNAMIC: main(["generate"]) -> argv =
+      [python, .../scripts/generate_records.py]; "--output" absent AND "pii_anon.jsonl.gz"
+      absent from the joined argv. test_nfr004_cli_generate_never_targets_frozen_corpus
+      asserts the CLI passes neither --output nor the frozen-corpus path. The CLI cannot point
+      the seeded generator at the shipped corpus, so it cannot overwrite/regenerate synthetic-
+      frozen records.
+
+  (3) NFR-004 thin / pure-stdlib (+ AX-pii-anon-004 anon/pseudo separation, structurally).
+      Independent AST of cli.py top-level imports: roots are exactly
+      {__future__, argparse, collections, gzip, json, pathlib, subprocess, sys} (pure-stdlib).
+      Banned-nondeterministic {random,time,uuid,datetime,secrets} INTERSECT top-level = EMPTY.
+      Banned-business {scoring,stats,baselines} INTERSECT top-level = EMPTY. Heavy
+      {pyarrow,spacy,mlcroissant,numpy,scipy} INTERSECT top-level = EMPTY. Verb handlers
+      only parse+delegate: generate/score/validate -> _run_script (subprocess to a fixed repo
+      script); export -> LAZY distribution import inside _cmd_export (cli.py:79-105);
+      leaderboard -> lazy S6 seam. `import pii_anon_datasets.cli` succeeds with
+      pyarrow/spacy/mlcroissant blocked. Holding no scoring/metric module at top level, the
+      CLI structurally cannot collapse anonymization+pseudonymization metric families (AX-004
+      not-applicable-but-protected). `pytest -k nfr004` -> 2 passed.
+
+  (4) AX-002 / AX-pii-anon-002 deterministic dispatch. cli.py imports no clock/RNG/identifier
+      module (AST above); dispatch is pure argparse via build_parser()/parse_known_args; no
+      time/random/uuid call sites. The AX-pii-anon-002 reviewer_hook is owned by code-quality
+      (generator seeding); at this gate the dispatcher introduces no non-determinism. UPHELD.
+
+  Graceful-degradation + console_scripts contract (sanity, not an axiom):
+  leaderboard package genuinely absent (importlib.util.find_spec is None) -> main(["leaderboard"])
+  returns 2, prints an "S6" message to stderr, leaks no Traceback; main([]) and main(["leaderboard"])
+  both return int. Full CLI suite: `pytest tests/test_cli.py` -> 8 passed.
+
+  No reasoning-visibility / coverage-self-awareness / correction-loop / content-lint axioms are
+  triggered: cli.py renders no AI-generated output, no narrative/list surface, no build-time prose
+  claims. Out-of-scope by design (executor's dispatch correctness, security-sast's subprocess-safety
+  audit, code-quality's generator-seeding hook) — deferred to the owning reviewers.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

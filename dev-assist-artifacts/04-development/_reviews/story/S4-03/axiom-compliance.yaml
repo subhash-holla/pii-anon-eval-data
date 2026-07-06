@@ -1,0 +1,115 @@
+# Story-gate axiom-compliance review — canonical YAML
+schema: dev-assist.review.v1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S4-03
+iteration: 1
+date: 2026-05-29
+mode: read-only
+verdict: APPROVE
+summary: >
+  S4-03 (calibration: ECE + Brier + per-bin reliability, per entity class) upholds every
+  axiom in scope. The NFR-008 epistemic/honesty guarantee is correctly realized: ECE<=0.05
+  is surfaced ONLY as a reported `meets_reference` boolean property; `calibrate`,
+  `expected_calibration_error`, and `brier_score` never raise/block on a high ECE (verified
+  by independent execution: ECE 0.29375 returns normally, meets_reference=False). ECE/Brier
+  are correctly computed under a PINNED equal-width binning convention; the worked reference
+  values were recomputed independently and match to 1e-12. Reliability bins partition [0,1]
+  contiguously and sum to n. Pure stdlib (statistics only) with an AST guard; no RNG/clock.
+  Calibration is a standalone detection-quality diagnostic and is NOT fused into any combined
+  de-identification score (referenced only by its own module + the stats __init__ export).
+  Zero MAJOR+ findings. APPROVE.
+
+context_bounds_respected: true
+
+axioms_in_scope:
+  - id: AX-pii-anon-003
+    alias: AX-003 (stated-statistical-power / statistical rigor)
+    status: upheld
+  - id: AX-pii-anon-002
+    alias: AX-002 (deterministic-reproducible-generation) + NFR-004 purity
+    status: upheld
+  - id: AX-pii-anon-001
+    alias: AX-001 (synthetic-only-no-real-pii)
+    status: upheld
+  - id: AX-pii-anon-004
+    alias: AX-004 (anonymization-pseudonymization-separation)
+    status: upheld
+  - id: NFR-008
+    alias: epistemic/honesty guarantee — ECE reference, NOT a submitter gate
+    status: upheld
+
+verification_performed:
+  - axiom: NFR-008 (honesty / no-covert-fail)
+    method: code-read + independent execution
+    evidence: >
+      `meets_reference` is a read-only @property returning `self.ece <= self.reference_ece`
+      (calibration.py:78-85) — the ONLY place the 0.05 reference surfaces. The sole raising
+      path in the module is the length-mismatch guard `_check_lengths` (calibration.py:100-105);
+      `calibrate`/`expected_calibration_error`/`brier_score` contain no branch that raises,
+      asserts, or returns a sentinel on a high ECE. Executed directly: a mis-calibrated input
+      (ECE 0.29375) returns a CalibrationResult normally with meets_reference=False; a badly
+      mis-calibrated EMAIL class (ECE 0.9) also returns normally. The benchmark therefore
+      cannot covertly fail a submitter on calibration. PINNED.
+  - axiom: AX-003 (statistical rigor — ECE/Brier correctness, binning, partition)
+    method: independent recomputation (did NOT trust impl or story values)
+    evidence: >
+      Reference reimplementation of ECE (equal-width, idx=min(n_bins-1,int(conf*n_bins))) and
+      Brier (mean((conf-correct)^2)) computed from scratch. Worked values match impl AND story
+      to 1e-12: ECE=0.29375, Brier=0.2171875; perfect-calibration ECE=0.0; PERSON ECE=0.0 /
+      Brier=0.1875; EMAIL ECE=0.9 / Brier=0.81. Reliability bins: len==n_bins, bin m spans
+      [m/n_bins,(m+1)/n_bins], reliability[0].lo==0.0, reliability[-1].hi==1.0, contiguous,
+      and sum(bin.count)==n (every prediction in exactly one bin) — confirmed by execution.
+      Empty-input edge returns 0.0 (no div-by-zero). Binning convention pinned in docstring +
+      `_bin_index` + a fixed-input test, so the ECE value is reproducible, not drift-dependent.
+  - axiom: AX-002 / NFR-004 (determinism / purity)
+    method: AST walk over calibration.py imports
+    evidence: >
+      Imports = {__future__, collections, dataclasses, statistics, typing} only. Banned set
+      {random, time, uuid, datetime, secrets} (and os/socket) disjoint. No RNG/clock/IO. The
+      shipped test `test_fr_005_nfr004_calibration_imports_no_nondeterminism` encodes the same
+      guard. `calibration_by_entity_class` iteration is first-appearance insertion-ordered →
+      deterministic.
+  - axiom: AX-001 (synthetic-only)
+    method: fixture inspection
+    evidence: >
+      Test fixtures are abstract numeric (confidences/correct arrays) and synthetic entity_type
+      labels (PERSON/EMAIL) with no real PII content. No corpus records, names, or contact data
+      introduced. Out-of-scope for security-sast's corpus scan; nothing in this diff implicates it.
+  - axiom: AX-004 (anon/pseudo separation — not fused into combined de-id score)
+    method: cross-module reference grep
+    evidence: >
+      `calibration` / `ece` / `brier` are referenced ONLY inside stats/calibration.py and the
+      stats/__init__.py re-export. No scoring path imports calibration; scoring/anonymization.py
+      and scoring/pseudonymization.py explicitly forbid a merged combined/overall/deid headline
+      (AX-004 enforced upstream). Calibration is a standalone detection-quality diagnostic and is
+      not averaged/merged into a de-identification or redaction score.
+
+findings: []
+
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+  total: 0
+
+observations: >
+  None required for approval. (Optional, non-blocking: `calibrate`'s `n_bins` is unconstrained;
+  n_bins<=0 would raise an unrelated error rather than ValueError, but this is outside the axiom
+  scope and the §7 negative contract — noted for executor/code-quality awareness only, not a
+  finding.)
+
+self_attestation:
+  independent: true
+  read_only_respected: true
+  scope_adhered: true
+  recomputed_worked_value: true
+  statement: >
+    I reviewed only the axiom slice for S4-03 against the project axiom registry and NFR-008.
+    I independently recomputed the worked ECE/Brier reference values (did not trust the
+    implementation or the story's stated values), executed the honesty (no-covert-fail) and
+    partition guarantees directly, and ran the AST purity guard. No files were modified. I did
+    not assess correctness of detector confidences, provenance-chip styling, performance, or
+    a11y (out of scope). Verdict reached independently of other reviewers.

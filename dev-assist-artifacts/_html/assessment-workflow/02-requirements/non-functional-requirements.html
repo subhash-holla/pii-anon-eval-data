@@ -1,0 +1,1305 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 Non-Functional Requirements (Quality Attributes) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 Non-Functional Requirements (Quality Attributes)</h1>
+<p><strong>Capability</strong>: CAP-02 — academically-sound, repeatable, reportable assessment <strong>workflow</strong> that runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0 / 575,604 records / CC0 / <code>annotations</code></strong> over a <strong>powered, lattice-stratified sample (default)</strong> / <strong>full corpus (opt-in, citable)</strong> / <strong>smoke (fast)</strong> — with statistical/epistemic observability + reporting at every spine stage (<code>load → sample → run → score → rate → report</code>).
+<strong>Stage</strong>: assessment-workflow / 02-Requirements · R4 (NFR authoring)
+<strong>Date</strong>: 2026-06-01
+<strong>Vocabulary remap</strong>: NFR = <strong>Quality Attribute</strong>; FR = Benchmark/Assessment Capability; UC = Evaluation Scenario; DC = Benchmark Component; Persona = assessment consumer.
+<strong>ID discipline</strong>: global numbering <strong>continued, never reused</strong>. Cycle-1 ended at <strong><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></strong>; CAP-02 runs <strong><a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> … <a class="trace-link" href="audit-report.html#nfr-043" data-trace-id="NFR-043" aria-label="Trace NFR-043 — — PASS">NFR-043</a></strong> (25 new Quality Attributes). Inherited cycle-1 <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a>…<a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> remain binding (the no-regression guardrails below pin the load-bearing ones: <a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>, <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a>, <a class="trace-link" href="../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a>, <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>).
+<strong>provisional_status</strong>: AGENT_SIMULATED — thresholds are agent-authored and (where flagged) carry <code>real_user_needed: true</code> for Pass-2; the <strong>code/version/line evidence is direct file read at HEAD on 2026-06-01</strong> (paths cited inline). Agent-simulated research is NOT a substitute for real users.</p>
+<blockquote>
+<p><strong>Architecture (locked).</strong> eval-data <strong>OWNS</strong> sampling + observability + reporting; <code>pii-rate-elo</code> <strong>CONSUMES</strong> (extend, do NOT rebuild the engine/metrics). Every NFR below is authored to that boundary: the <em>machinery</em> (Glicko engine, convergence checker, span-metric bridge) is consumed; the <em>statistical/epistemic guarantees</em> (CIs, paired tests, power verdicts, provenance, caveats) are contributed by eval-data and are what these NFRs gate.</p>
+</blockquote>
+<blockquote>
+<p><strong>Each NFR carries:</strong> <code>id</code> · <code>title</code> · a <strong>QUANTIFIED threshold (number + unit) OR a boolean-auditable criterion</strong> · a <strong>measurement method</strong> · the <strong>axiom / precondition</strong> it serves. &quot;Boolean-auditable&quot; = a single predicate a CI job (or a named reviewer) can assert true/false. Where a number is grounded in code, the file + symbol is cited so Design/Dev can re-confirm.</p>
+</blockquote>
+<hr>
+<h2>Proposed axiom — AX-pii-anon-005 (recorded here for PO confirmation)</h2>
+<blockquote>
+<p><strong>AX-pii-anon-005 (Pre-registered / reproducible assessment).</strong> <strong>No published metric ships without all of:</strong> (1) a <strong>confidence interval</strong> with the interval-selection method named; (2) a <strong>paired test</strong> backing every system-vs-system claim, under an <strong>explicitly declared multiplicity family</strong> — <em>two</em> inference families: <strong>exploratory</strong> per-cell uncorrected (labelled, never a headline) vs <strong>confirmatory</strong> pairwise <strong>Holm-Bonferroni with the family size stated</strong> (declaration is in the <strong>axiom/report text, not only in code</strong> — &quot;reviewers will ask&quot;; INT-01/INT-02); (3) a <strong>convergence statement</strong> reported as <strong>achieved max-RD ± 2RD (95%) with the rounds/stopping rule stated</strong>, never an extrapolated round count (G4; INT-02); (4) <strong>provenance</strong> sufficient to reproduce the run from the manifest (<code>{dataset_version, record_count, schema_fingerprint, seed, stage, code_commit, toolchain}</code> + file-level provenance); (5) a <strong>non-strippable synthetic-only / anti-anonymity caveat</strong> on every metric (AX-001/003); and — for leaderboard/published entries — (6) <strong>contamination disclosure</strong>: a per-system <code>contamination_status</code> with <strong><code>unknown</code> rejected/flagged</strong>, plus a <strong>signed attestation that held-out labels were not exposed</strong> (INT-03&#39;s 6th element).</p>
+<p><strong>Enforcement scope is run-type-bound</strong> (the §4 universality tension, resolved): the <strong>full</strong> AX-005 bar binds the <code>leaderboard-submission</code> / <code>filing-grade</code> run-types; <code>smoke</code> / <code>dev</code> runs <strong>suppress CI + p-value emission entirely</strong> (<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-20" data-trace-id="UC-20" aria-label="Trace UC-20 — — Smoke run for fast iteration (CI / local dev) · SAMPLE /…">UC-20</a>) — there is no un-rigorous number to mis-cite because there is <em>no number</em> — which satisfies both &quot;the exploratory run is where people get sloppy&quot; (INT-02) and &quot;universal enforcement makes teams avoid the formal mode&quot; (INT-05).</p>
+<p><strong>Status:</strong> PROPOSED — confirmed as &quot;the right bar&quot; by all interviewees who reached probe #17, with the two sharpenings above (multiplicity-family-in-text; 6th contamination element) and run-type-scoped enforcement. The NFRs in this document are the testable operationalization of this axiom. <strong>Inherited binding axioms unchanged:</strong> AX-001 (synthetic-only) · AX-002 (deterministic/seeded/byte-reproducible) · AX-003 (stated power — n + CI) · AX-004 (anon vs pseudo, separate metric families).</p>
+</blockquote>
+<hr>
+<h2>A. Statistics-core integrity (the SHOWSTOPPER precondition P1)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> — Run path uses ONLY the audited eval-data statistics core; <code>significance.py</code> quarantined.</strong> <em>Threshold (boolean-auditable):</em> <strong>zero</strong> statistical quantities on the assessment run path are produced by <code>pii-rate-elo/analysis/significance.py::SignificanceTester</code>; every CI and every paired test is computed by eval-data <code>stats/intervals.py</code> (<code>wilson_interval</code> / <code>clopper_pearson_interval</code>) and <code>stats/paired.py</code> (<code>mcnemar_exact</code> / <code>mcnemar_chi2</code> / <code>paired_bootstrap_recall_delta</code>). The assessment preset sets <code>analysis.run_significance_tests: false</code> (it is read at <code>cli.py:240</code>, which instantiates <code>SignificanceTester()</code> at <code>cli.py:242</code>); a CI guard asserts the assessment code path never imports/instantiates <code>SignificanceTester</code>. <em>Measure:</em> <strong>CI gate (blocking):</strong> import-graph / call-graph static check on the assessment entrypoint asserting <code>SignificanceTester</code> is <strong>unreachable</strong> AND a config assertion <code>run_significance_tests == False</code> — these two CI predicates ARE the gate (green requires no human). Reviewer audit is a <strong>secondary, non-gating</strong> corroboration only. <em>Serves:</em> <strong>P1 (SHOWSTOPPER)</strong>; AX-pii-anon-005 (CI + paired test).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-020" data-trace-id="NFR-020" aria-label="Trace NFR-020 — — STRENGTHENED (sole-oracle drift on the human diff)">NFR-020</a> — Zero approximated statistics on the run path (fabrication ban).</strong> <em>Threshold (boolean-auditable):</em> <strong>zero</strong> occurrences on the run path of the fabricated forms verified at HEAD — <code>se = metric_value*(1-metric_value)/100</code> + <code>np.random.normal(...)</code> (<code>significance.py:205-206</code>), <code>n_approx = 100</code> / <code>pooled_sd = 0.1</code> / <code>z_stat = difference*sqrt(n_approx)/0.05</code> (<code>significance.py:271-281</code>) — i.e. <strong>no</strong> standard error from a hardcoded constant instead of <code>n</code>, <strong>no</strong> Gaussian noise as a substitute for resampling, <strong>no</strong> McNemar that never sees a discordant-pair <code>(b, c)</code> count. Every paired test on the run path consumes <strong>real discordant-pair counts</strong>; every bootstrap <strong>resamples pair indices</strong>. <em>Measure:</em> <strong>CI gate (blocking):</strong> grep-based forbidden-pattern lint over the <strong>declared run-path module set</strong> against a <strong>committed regex list</strong> — the three verified fabrication signatures <code>{ *(1-*)/100 , np.random.normal , (n_approx | pooled_sd\s*=\s*0\.1 | sqrt\(n_approx\)/0\.05) }</code> — pass condition = <strong>zero matches</strong>. Reviewer diff of the two implementations is a <strong>secondary, non-gating</strong> corroboration. <em>Serves:</em> <strong>P1</strong>; AX-pii-anon-005.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-021" data-trace-id="NFR-021" aria-label="Trace NFR-021 — — PASS">NFR-021</a> — Seeded LOCAL-RNG determinism for all resampling (no global RNG on the run path).</strong> <em>Threshold (boolean-auditable):</em> every bootstrap / resample on the run path drives a <strong>local <code>random.Random(seed)</code></strong> instance and <strong>never</strong> the module-global RNG or <code>numpy</code> global RNG; two runs with the same seed are <strong>byte-identical</strong> in their resampled outputs regardless of ambient <code>random.seed(...)</code>. (<code>stats/paired.py::paired_bootstrap_recall_delta</code> already owns a local <code>random.Random(seed)</code> at L140; the fabricated <code>significance.py</code> path uses <code>np.random</code> global RNG — banned by <a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/020.) <em>Measure:</em> same-seed re-run byte-equality test for every resampled statistic + static check for <code>np.random.</code> / bare <code>random.</code> global calls on the run path. <em>Serves:</em> <strong>P1</strong>; AX-002; AX-pii-anon-005.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-022" data-trace-id="NFR-022" aria-label="Trace NFR-022 — — PASS">NFR-022</a> — Integer-guarded interval inputs (no fractional Bernoulli counts).</strong> <em>Threshold (boolean-auditable):</em> every CI on the run path is computed from <strong>honest integer <code>(k, n)</code> Bernoulli counts</strong> with <code>0 ≤ k ≤ n</code>; fractional/partial counts and <code>bool</code> inputs are <strong>rejected with <code>TypeError</code>/<code>ValueError</code></strong> (the reidx-02 guard <code>stats/intervals.py::_require_int_counts</code>, L39-51, shared by <code>wilson_interval</code> and <code>clopper_pearson_interval</code>). No interval is ever derived from a smoothed/blended/partial count. <em>Measure:</em> the existing reidx-02 guard tests stay green + a run-path assertion that interval inputs are <code>int</code>. <em>Serves:</em> <strong>P1</strong>; AX-003.</p>
+</li>
+</ul>
+<h2>B. Confidence intervals on every metric (AX-003 / AX-005 element 1)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-023" data-trace-id="NFR-023" aria-label="Trace NFR-023 — — CI on 100% of metrics + deterministic interval-selection…">NFR-023</a> — CI on 100% of published metrics, with a deterministic interval-selection rule.</strong> <em>Threshold:</em> <strong>100%</strong> of published metrics carry <code>{n, ci_low, ci_high, method}</code>; <strong>zero</strong> bare point estimates. The <code>method</code> is assigned by a <strong>deterministic, pre-registered selection rule</strong>: proportions → <strong>Wilson</strong> (default); <strong>boundary</strong> (point estimate at 0 or 1, i.e. <code>k ∈ {0, n}</code>) → <strong>Clopper-Pearson</strong> (this boundary clause is the load-bearing, statistically-mandated branch — it fixes Wilson&#39;s degenerate behaviour at <code>p̂ = 0|1</code>); small-n (<code>n &lt; small_n_cutoff</code>, where <strong><code>small_n_cutoff</code> is a single integer RECORDED in the manifest + pre-registration</strong>, committed default <strong><code>small_n_cutoff = 15</code></strong> — <em>R10 DIVERGED edit: lowered from 30 → 15 toward the Wilson-robust-to-n≈10 zone, since both the cited binomial-CI literature [Brown/Cai/DasGupta 2001; Wikipedia] AND both R10 personas agree the n-based Clopper-Pearson switch is over-conservative and that the literature endorses <strong>no</strong> specific integer; the value remains R10-DIRECTIONAL / <code>real_user_needed: true</code> pending a real ACL/PETS/de-id reviewer in Pass-2, never a silent constant</em>) → <strong>Clopper-Pearson</strong>; paired differences → <strong>paired-bootstrap</strong>. <em>Measure:</em> report linter asserts every metric row has a non-null CI with <code>method ∈ {wilson, clopper-pearson, paired-bootstrap}</code> whose value <strong>equals the method the recorded <code>small_n_cutoff</code> prescribes for that row&#39;s <code>(k, n)</code> class</strong> — a <code>method</code> inconsistent with the recorded cutoff fails (CI-blocking). <em>Serves:</em> AX-003; AX-pii-anon-005 (element 1); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>(a), <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(a). <em>(<code>real_user_needed: true</code> on the <code>small_n_cutoff</code> integer — the boundary clause and the determinism/manifest-recording contract are firm; only the n-switch integer awaits a real reviewer.)</em></p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a> — CI scope is conditional-on-this-sample; corpus-draw variance declared.</strong> <em>Threshold (boolean-auditable):</em> every reported CI is labelled <strong><code>scope: conditional-on-this-sample</code></strong>; corpus-draw (seed-to-seed) variance is <strong>either</strong> measured (<strong><code>len(seeds) ≥ MIN_SEEDS</code>, committed <code>MIN_SEEDS = 3</code></strong> — reconciled with <a class="trace-link" href="audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a>&#39;s INT-02 3-seed floor; <em>R10 may relax to 2 with recorded rationale</em> — with <strong>Kendall-τ rank stability</strong> reported) <strong>or</strong> explicitly flagged <code>seed_variance_scope: single-seed</code> → carried to the report as <strong><code>rank-volatility: UNMEASURED</code></strong>. No CI is presented as if it captured resampling variance it did not measure. <em>Measure:</em> presence of <code>scope</code> on every CI + presence of either the <code>len(seeds) ≥ MIN_SEEDS (==3)</code> + Kendall-τ block or the single-seed flag, asserted by the report linter (CI-blocking). <em>Serves:</em> AX-003; AX-pii-anon-005; <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>(e), <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(d).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-025" data-trace-id="NFR-025" aria-label="Trace NFR-025 — — PASS">NFR-025</a> — Census runs are descriptive (no CI) unless a super-population target is declared.</strong> <em>Threshold (boolean-auditable):</em> a <strong>full-corpus</strong> run (<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-19" data-trace-id="UC-19" aria-label="Trace UC-19 — — Full-corpus opt-in run (the “no sampling, score everythin…">UC-19</a>) labels its metrics <strong>exact-on-corpus / descriptive-census with NO CI by default</strong>; CIs are retained <strong>only</strong> when the report <strong>explicitly declares the inferential target is a super-population</strong> (future inputs), not the fixed corpus. <em>Measure:</em> run-record <code>inferential_target ∈ {exact-on-corpus, super-population}</code> + linter (census + no declaration ⇒ CI fields must be absent). <em>Serves:</em> AX-003 (honest n-semantics); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-19" data-trace-id="UC-19" aria-label="Trace UC-19 — — Full-corpus opt-in run (the “no sampling, score everythin…">UC-19</a>.</p>
+</li>
+</ul>
+<h2>C. Paired tests + multiplicity (AX-005 element 2)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a> — Paired test required for every system-vs-system claim.</strong> <em>Threshold (boolean-auditable):</em> <strong>every</strong> confirmatory pairwise system claim carries a <strong>McNemar verdict</strong> (exact binomial / Edwards continuity-corrected χ², <code>stats/paired.py</code>) <strong>AND</strong> a <strong>paired-bootstrap</strong> recall-delta CI. A directional claim with no paired test is <strong>rejected</strong> (not merely warned). <em>Measure:</em> report linter — every pairwise row has a McNemar p-value + a paired-bootstrap delta CI (CI-blocking). <em>Serves:</em> AX-pii-anon-005 (element 2); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>(b), <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(b); closes the &quot;delta within noise, no significance test&quot; rejection vector (INT-01/02).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a> — Two declared inference families with Holm-Bonferroni and stated family size.</strong> <em>Threshold (boolean-auditable):</em> the report declares <strong>exactly two inference families</strong> — <strong>exploratory</strong> (per-cell, uncorrected, <strong>labelled as such and never a headline claim</strong>) vs <strong>confirmatory</strong> (pairwise, <strong>Holm-Bonferroni</strong> corrected, with the <strong>family size = #pairs × #metrics in the confirmatory set printed</strong>). The family declaration is carried as a <strong>structured <code>inference_families</code> block</strong> (the report prose renders from it) present in <strong>both</strong> the report payload and the pre-reg payload. <em>Measure:</em> linter asserts the <code>inference_families</code> block carries exactly the two labels <code>{exploratory, confirmatory}</code>, every confirmatory claim carries a Holm-adjusted decision, and <code>confirmatory.family_size</code> is an integer <strong><code>== #pairs × #metrics in the confirmatory set</code></strong> (computed, not free-typed); a missing block in either payload, only-one-family, or <code>family_size ≠</code> the product fails; pre-reg↔report parity check (<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a>) (CI-blocking). <em>Serves:</em> AX-pii-anon-005 (element 2, sharpening a); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>(a), <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(b).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a> — Ranks gated by the paired-test verdict (ties greyed).</strong> <em>Threshold (boolean-auditable):</em> in the leaderboard, any system pair whose difference is <strong>not significant post-Holm-Bonferroni</strong> is <strong>grouped/greyed as a statistical tie</strong>; <strong>no rank out-runs its paired evidence</strong>. <em>Measure:</em> report linter — for every adjacent rank pair, a significant Holm decision exists OR the pair is rendered as a tie (CI-blocking). <em>Serves:</em> AX-pii-anon-005 (element 2); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(b); STATS-07.</p>
+</li>
+</ul>
+<h2>D. Convergence statement (AX-005 element 3)</h2>
+<ul>
+<li><strong><a class="trace-link" href="audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a> — RD-convergence reported as achieved max-RD ± 2RD with the stopping rule stated.</strong> <em>Threshold (boolean-auditable):</em> the report states the consumed <code>ConvergenceChecker</code> verdict as <strong><code>{is_converged, max_rd, rd_threshold}</code> PLUS the achieved max-RD with its ±2RD (95%) interval PLUS the stopping rule (max rounds / seed budget)</strong>; convergence is <strong>NEVER</strong> expressed as an extrapolated round count (G4). A <strong>NOT-converged</strong> verdict <strong>propagates as a blocking honesty flag into the report</strong> (<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>). <em>Measure:</em> linter asserts the convergence block has all four fields + the ±2RD interval + the stopping rule, and that a <code>NOT-converged</code> verdict appears on the headline; reuses <code>pii-rate-elo/tournament/convergence.py::ConvergenceChecker</code> (Glicko RD, default threshold 100). <em>Serves:</em> AX-pii-anon-005 (element 3); G4; <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>(c), <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(d).</li>
+</ul>
+<h2>E. Reproducibility — manifest, pre-registration, run-type (AX-002 / AX-005 elements 4 &amp; enforcement scope)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> — Byte-reproducibility of sample + run from the manifest (UNIVERSAL).</strong> <em>Threshold (boolean-auditable):</em> re-running the sampler and the run from the recorded manifest reproduces the <strong>sample manifest under canonical-form equality</strong> (sorted keys + fixed float repr) <strong>AND</strong> reproduces every seeded artifact <strong>byte-identically</strong>, given the <strong>same seed AND the same recorded environment/RNG fingerprint (RNG algorithm + seed-derivation, not just the seed integer) AND the same sampler version (commit/hash of <code>subsets/slices.py</code> + <code>stats/power.py</code> pinned in the manifest)</strong>. This is the <strong>universal</strong> commitment (pre-registration is opt-in; manifest-reproducibility is not). <em>Measure:</em> CI re-run of sampler → canonical-form manifest diff empty; re-run of seeded run-record → byte diff empty (pattern grounded in <code>scripts/benchmark_throughput.py</code>, byte-reproducible under <code>SEED_BENCHMARK=20260531</code>). <em>Serves:</em> AX-002; AX-pii-anon-005 (element 4); <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a> acceptance signal.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a> — Pre-registration completeness (opt-in rigor), commit-anchored + hash-chained.</strong> <em>Threshold (boolean-auditable):</em> when pre-registration is enabled (run-type-scoped — see <a class="trace-link" href="audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>), the pre-reg is bound to a <strong>git commit SHA pushed to remote</strong> and <strong>chained into the first run-record</strong>, is <strong>immutable</strong>, and its equality set covers <strong>all</strong> of: <code>{dataset_version, sample-manifest hash, seed, system list, metric set, rd_stopping_rule, interval-selection rule, multiplicity family + size, power design point, span-match mode, scoring family, tie/exclusion rules}</code>; the final report embeds the pre-reg <code>{hash, commit_sha}</code> and a <code>pre_registration_matches: true</code> check, and states the <strong>run-lineage count</strong> (# prior pre-registered runs for the same system set, so re-roll-until-favorable is visible). Ordering is <strong>tamper-evident only via the commit anchor</strong> (a back-datable local timestamp is at most a secondary check). <em>Measure:</em> pre-reg artifact field-completeness check + <strong>commit-on-remote oracle (<code>git branch -r --contains &lt;sha&gt;</code> non-empty against the configured origin, or a remote-API equivalent — a local-only SHA fails)</strong> + hash-chain assertion + report-embeds-hash + lineage-count present (CI-blocking when the run-type requires pre-reg). <em>Serves:</em> AX-pii-anon-005 (element 4); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a>, <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-19" data-trace-id="UC-19" aria-label="Trace UC-19 — — Full-corpus opt-in run (the “no sampling, score everythin…">UC-19</a> (parity).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-032" data-trace-id="NFR-032" aria-label="Trace NFR-032 — — PASS">NFR-032</a> — Pre-registration parity for full-corpus (census) runs.</strong> <em>Threshold (boolean-auditable):</em> a full-corpus run, when its run-type requires pre-registration, <strong>freezes systems / metrics / analysis plan before scoring exactly as a sampled run does</strong> (a census still has researcher degrees of freedom). <em>Measure:</em> a pre-reg exists for the full-corpus run and passes <a class="trace-link" href="audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>&#39;s equality set. <em>Serves:</em> AX-pii-anon-005; <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a>/<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-19" data-trace-id="UC-19" aria-label="Trace UC-19 — — Full-corpus opt-in run (the “no sampling, score everythin…">UC-19</a> parity (REPRO-04).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a> — Run-type designation scopes the enforced rigor bar.</strong> <em>Threshold (boolean-auditable):</em> the workflow exposes a <strong>declared run-type</strong> (e.g. <code>smoke</code> / <code>dev</code> / <code>leaderboard-submission</code> / <code>filing-grade</code>) as a <strong>CLI flag/preset</strong> that deterministically selects (a) the enforced AX-005 bar, (b) the backing sample mode, and (c) the pre-registration gate. The mapping is <strong>fixed and auditable</strong>: <code>leaderboard-submission</code> + <code>filing-grade</code> ⇒ <strong>full</strong> AX-005 bar + pre-reg required; <code>smoke</code>/<code>dev</code> ⇒ <strong>CI + p-value emission suppressed</strong> (no number to mis-cite). Pre-registration is <strong>never a single global on/off</strong>. <em>Measure:</em> <strong>CI gate (blocking):</strong> a table-driven test reads the <strong>committed run-type→profile enum/fixture</strong> and asserts every member maps to a <strong>total</strong> triple <code>{rigor_bar ∈ {full-AX005, suppressed}, sample_mode ∈ {full, sample}, prereg ∈ {enforced, opt-in, off}}</code> with <strong>no field unset</strong>, AND the behavioral invariants hold (a <code>full-AX005</code> member omitting any AX-005 element fails; a <code>suppressed</code> member emitting any non-null CI/p-value fails). Reviewer audit of the preset table is <strong>secondary, non-gating</strong>. <em>Serves:</em> AX-pii-anon-005 (enforcement scope); DF-1/DF-2; resolves the §4 universality tension (INT-02 vs INT-05).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-034" data-trace-id="NFR-034" aria-label="Trace NFR-034 — — PASS">NFR-034</a> — Smoke runs are statistically inert (suppress all CI + p-value fields).</strong> <em>Threshold (boolean-auditable):</em> a <code>smoke</code> artifact carries <code>preset == &quot;smoke&quot;</code> + a <strong>non-strippable</strong> <code>not_statistically_valid: true</code> caveat <strong>AND every CI field and every p-value field is suppressed/null</strong> — a smoke output can never <em>look</em> inferential. <em>Measure:</em> linter asserts smoke artifacts contain zero non-null CI/p-value fields + the non-strippable flag (CI-blocking). <em>Serves:</em> AX-002; AX-pii-anon-005 (enforcement scope); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-20" data-trace-id="UC-20" aria-label="Trace UC-20 — — Smoke run for fast iteration (CI / local dev) · SAMPLE /…">UC-20</a> (STATS-09).</p>
+</li>
+</ul>
+<h2>F. Powered, lattice-stratified sampling (the precondition P3)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a> — Powered-tier compliance OR explicit UNDER-POWERED with a named shortfall (never silently LARGE).</strong> <em>Threshold (boolean-auditable):</em> every committed lattice cell is classified <strong>against its REALIZED positive count</strong> (not a <code>target_n</code> label) into <strong><code>WELL_POWERED</code> / <code>UNDER_SAMPLED</code> / <code>CORPUS_LIMITED</code> / <code>EMPTY</code></strong> (+ <strong><code>NOT_ASSESSED</code></strong> for critical types outside the coverage envelope), each <code>target_n</code> <strong>reproduced from its design-point triple</strong> <code>(p_ref, half_width, α)</code> via <code>required_n</code> per <code>stats/power.py::TIER_SPECS</code> — <strong>CRITICAL 1,522</strong> <code>(0.99, 0.005)</code>, <strong>STANDARD 753</strong> <code>(0.98, 0.010)</code>, <strong>LONG_TAIL 200</strong> <code>(0.95, 0.03025)</code>; targets <strong>derived, never hand-typed</strong>. The run is labelled with the <code>PowerMatrix.verdict()</code> — <strong>SMALL / ADEQUATE / LARGE</strong> (LARGE iff well-powered fraction <code>≥ 0.999</code>; ADEQUATE iff <code>≥ 0.80</code>; else SMALL — verified <code>stats/power.py::PowerMatrix.verdict</code> L351-361) — and the <strong>representative default is never silently reported as LARGE</strong>: an under-tier run reads ADEQUATE/SMALL with its named shortfall. <em>Measure:</em> every cell carries a <code>power_class</code> with <code>target_n</code> reproduced from its triple + a named shortfall on every under-tier cell; <code>PowerMatrix.verdict()</code> present in the manifest; no cell unclassified or silently under-tier. <em>Serves:</em> <strong>P3</strong>; AX-003; <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-036" data-trace-id="NFR-036" aria-label="Trace NFR-036 — — PASS">NFR-036</a> — Shortfall expressed in REALIZED positive counts, per (entity-type × language) cell.</strong> <em>Threshold:</em> every under-tier cell names its shortfall as <strong>&quot;short by N realized positives vs the {WELL_POWERED|ADEQUATE} threshold&quot;</strong> (an integer count), per <code>(entity_type × language)</code> cell — <strong>not</strong> a <code>target_n</code> label and <strong>not</strong> prose like &quot;needs more data&quot;. The shortfall is <strong>structurally part of the number / non-strippable</strong> (&quot;the stamp gets lost in the filing&quot;, INT-04). <em>Measure:</em> linter asserts each under-tier cell has an integer <code>realized_positive_shortfall</code> + the non-strippable binding; reuses <code>scripts/lattice_audit.py::deficits</code> (returns <code>observed</code> + <code>deficit</code> per committed cell). <em>Serves:</em> <strong>P3</strong>; AX-003; <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>/<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(d); DF-3.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-037" data-trace-id="NFR-037" aria-label="Trace NFR-037 — — PASS">NFR-037</a> — UNDER_SAMPLED vs CORPUS_LIMITED vs EMPTY distinction surfaced (fixable vs irreducible).</strong> <em>Threshold (boolean-auditable):</em> the manifest and report distinguish <strong><code>UNDER_SAMPLED</code></strong> (the full corpus has enough positives — fixable by drawing more) from <strong><code>CORPUS_LIMITED</code></strong> (the full corpus itself has fewer positives than <code>target_n</code> — irreducible) from <strong><code>EMPTY</code></strong> (n == 0, structural). A <code>CORPUS_LIMITED</code> cell is <strong>never</strong> labelled as merely under-sampled. <em>Measure:</em> classification check that compares cell realized positives to both the sample draw and the full-corpus positive total (<code>lattice_audit.audit_positives</code> over the full corpus) (CI-blocking). <em>Serves:</em> <strong>P3</strong>; AX-003; <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a> (MEI-03); INT-03/INT-06.</p>
+</li>
+<li><p><strong><a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a> — Sampler performance: single streaming pass, bounded memory, deterministic.</strong> <em>Threshold (number + unit):</em> the sampler counts committed-cell positives in <strong>exactly ONE streaming pass</strong> over the corpus (generator-based, <strong>never</strong> materializing the full corpus); working-set memory is <strong>bounded by the number of committed cells (730 @ <code>47c3a8f</code>), NOT the corpus cross-product</strong> — i.e. <strong>O(#committed-cells) ≈ O(730) keys, O(1) per-annotation candidate-key lookups</strong>, independent of the 575,604 record count; and the selection is <strong>byte-reproducible</strong> under a fixed seed (Algorithm-R reservoir). <em>Measure:</em> <strong>primary gate (deterministic, RSS-noise-immune):</strong> a <strong>data-structure-size assertion</strong> that the sampler&#39;s candidate-key working set satisfies <strong><code>len(keys) ≤ 730</code></strong> (the committed-cell count, the true O-bound) and that this holds across corpus sizes (10k vs 100k vs full) — an integer assertion, not raw RSS; <strong>plus</strong> a pass-count assertion (corpus opened <strong>exactly once</strong>). <strong>Secondary signal (non-gating):</strong> peak-RSS growth between a 10k-record and a 100k-record run stays <strong>within a stated tolerance <code>≤ 1.10×</code></strong> (replacing the flaky &quot;constant&quot;). Grounded in <code>scripts/lattice_audit.py::audit_positives</code> (&quot;single streaming pass… key set bounded by #committed-cells, not the cross-product&quot;) and <code>scripts/benchmark_throughput.py::reservoir_sample</code> (Algorithm-R single-pass, seeded under <code>SEED_BENCHMARK</code>). <em>Serves:</em> <strong>P3</strong>; AX-002. <em>(<code>real_user_needed: false</code> — this is a code-structural bound, not a wall-clock floor.)</em></p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-039" data-trace-id="NFR-039" aria-label="Trace NFR-039 — — PASS">NFR-039</a> — Design point + coverage envelope written into the sample manifest.</strong> <em>Threshold (boolean-auditable):</em> the sample manifest records the <strong>power design-point triple</strong> <code>(p_ref, half_width, α)</code> per tier <strong>AND</strong> the <strong>entity-type coverage envelope</strong> (which of the 63 types × 60 languages × 5 domains are committed), so uncovered critical types (e.g. MRN, IBAN) surface as <strong><code>NOT_ASSESSED</code></strong> rather than being implicitly claimed as powered. <em>Measure:</em> manifest field-completeness check (design point present + coverage envelope present + every uncovered critical type listed <code>NOT_ASSESSED</code>). <em>Serves:</em> <strong>P3</strong>; AX-003; <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a> (DOM-03/C10).</p>
+</li>
+</ul>
+<h2>G. Dataset-seam reconciliation + regression contract (the precondition P2)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a> — Dataset seam reconciled to v2.0.0 via a versioned, validated crosswalk (lossless OR explicit-lossy).</strong> <em>Threshold (boolean-auditable):</em> <code>pii-rate-elo</code> loads PII-Anon <strong>v2.0.0</strong> — &quot;correctly&quot; defined operationally as the conjunction <strong><code>version == &quot;2.0.0&quot;</code> AND <code>license ∈ {CC0-1.0, CC0}</code> AND <code>record_count == dataset.record_count(&quot;2.0.0&quot;)</code> (== 575,604 for the full corpus) AND the citation string references v2.0.0 AND the crosswalk lossless/explicit-lossy test is green</strong> — the metadata pins corrected from the values verified at HEAD: converter <code>num_records=159891</code> (<code>pii_anon_eval.py:93</code>) → <strong>575,604</strong>, <code>license=&quot;CC-BY-4.0&quot;</code> (L221) → <strong>CC0</strong>, <code>citation=&quot;…v1.3.0&quot;</code> (L222) → <strong>v2.0.0</strong>, and <code>schema.py</code> <code>version=&quot;1.3.0&quot;</code> → <strong>2.0.0</strong> — through a <strong>versioned crosswalk artifact</strong> carrying a <strong>lossless test OR an explicit-lossy test</strong> (no silent field loss). <em>(Verified nuance: the row parser already tolerates <code>annotations</code> with a <code>labels</code> fallback — <code>schema.py</code>/L349-style normalizer — so this is <strong>metadata-provenance reconciliation, not field-reading</strong>.)</em> <em>Measure:</em> load-through-<code>pii-rate-elo</code> reports <code>version == &quot;2.0.0&quot;</code> and yields 575,604 (full corpus); crosswalk lossless/explicit-lossy test green. <em>Serves:</em> <strong>P2</strong>; <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a>.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a> — Regression contract pins the seam (5-tuple) and fails red on drift.</strong> <em>Threshold (boolean-auditable):</em> a committed regression test turns <strong>red</strong> if <strong>any</strong> of <code>{version pin, record-count pin (575,604), entity-type count = 63, schema fingerprint (annotation keys), dataset content hash}</code> reverts/mutates from the v2.0.0 values — guarding <strong>both</strong> a regression to v1.3.0 / 159,891 <strong>and</strong> a same-count corpus with a mutated annotation schema or <strong>silently swapped content</strong>. Pins are the canonical values from eval-data <code>tests/test_doc_drift.py</code>: <code>CANONICAL_RECORDS=&quot;575,604&quot;</code>, <code>CANONICAL_ANNOTATIONS=&quot;2,486,438&quot;</code>, <code>CANONICAL_VERSION=&quot;2.0.0&quot;</code>, <code>CANONICAL_ENTITY_COUNT=63</code> (<strong>derived</strong> from <code>taxonomy.ENTITY_TYPE_COUNT</code>, never hardcoded), plus schema fingerprint + dataset content hash. <em>Measure:</em> the regression test mutates each pin in turn and asserts red (CI-blocking). <em>Serves:</em> <strong>P2</strong>; <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a> (REPRO-05/DOM-06/GAME-07).</p>
+</li>
+</ul>
+<h2>H. Observability — run-record + file-level provenance (AX-005 element 4)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a> — One provenance-complete run-record per spine stage, chained by a shared run id.</strong> <em>Threshold (boolean-auditable):</em> a single end-to-end run emits <strong>one run-record per spine stage</strong> (<code>load</code>, <code>sample</code>, <code>run</code>, <code>score</code>, <code>rate</code>, <code>report</code> = <strong>6 records</strong>), each stamped with <strong><code>{dataset_version, record_count, schema_fingerprint, seed, stage, code_commit}</code> + a toolchain fingerprint</strong>, all sharing <strong>one run id</strong> so the chain is traversable. A missing stage record, an unlinked record, or an absent <code>code_commit</code> fails the check. This realizes INT-05&#39;s &quot;first-six hard send-back&quot; provenance floor (dataset version + count + schema fingerprint; seed + code_commit + toolchain). <em>Measure:</em> run emits exactly 6 stage records, each field-complete, sharing one run id (CI-blocking); reuses the <code>scripts/benchmark_throughput.py</code> run-record schema + <code>scripts/write_manifest.py</code> pattern. <em>Serves:</em> AX-002; AX-pii-anon-005 (element 4); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a> (REPRO-06).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-043" data-trace-id="NFR-043" aria-label="Trace NFR-043 — — PASS">NFR-043</a> — File-level provenance on every emitted artifact.</strong> <em>Threshold (boolean-auditable):</em> <strong>every</strong> emitted artifact (manifest, sample, results, leaderboard, figures, pre-reg) carries <strong>file-level provenance</strong> — the producing <code>{run id, stage, code_commit, content hash}</code> — so any artifact can be traced to the exact run + executable that produced it. <em>Measure:</em> artifact-field presence check across all emitted files + a <code>MANIFEST.sha256</code>-style content-hash index (<code>scripts/write_manifest.py</code>). <em>Serves:</em> AX-pii-anon-005 (element 4); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a> (C5); INT-05/N-04.</p>
+</li>
+</ul>
+<h2>I. Honest reporting — caveat, operating point, anti-over-claim (AX-001/003/005 elements 5 &amp; 6)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a> — Non-strippable synthetic-only / anti-anonymity caveat on EVERY published metric and figure.</strong> <em>Threshold (boolean-auditable):</em> the <strong>synthetic-only / anti-anonymity caveat rides every emitted metric and every emitted figure and CANNOT be serialized away</strong> — enforced <strong>by construction</strong> (the <code>scoring/detection.py::DesignProvenance</code> non-strippable pattern; <code>__post_init__</code> raises on an empty caveat). Stripping the caveat from any artifact makes that artifact <strong>invalid</strong>. <em>Measure:</em> round-trip serialize/deserialize test asserts the caveat survives on every artifact; attempt-to-empty raises (CI-blocking). <em>Serves:</em> AX-001/003; AX-pii-anon-005 (element 5); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(c); the SPY/NAACL-SRW-2025 synthetic-over-estimation peer-review precondition.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a> — Anon vs pseudo scored by SEPARATE metric families; pseudo never scored by bare span-F1.</strong> <em>Threshold (boolean-auditable):</em> the run <strong>declares <code>scoring_family ∈ {anonymization, pseudonymization}</code></strong> (AX-004); <strong>zero</strong> code paths merge the two families into one headline score (inherits cycle-1 <strong><a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></strong>); pseudonymization is scored by consistency / reversibility / linkage metrics and <strong>never</strong> by bare span-F1. <em>Measure:</em> static check (no merge path) + run-record asserts <code>scoring_family</code> declared and pseudo runs carry no bare-F1 headline (CI-blocking). <em>Serves:</em> AX-004; AX-pii-anon-005; <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> (DOM-01); <a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> (no-regression).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-046" data-trace-id="NFR-046" aria-label="Trace NFR-046 — — STRENGTHENED (unbounded β; un-pinned operating point; mir…">NFR-046</a> — Operating-point reporting: recall-priority Fβ (β≥2, recorded) / FN:FP cost + AUPRC at the pre-registered operating point.</strong> <em>Threshold (boolean-auditable):</em> the report shows, <strong>instead of a lone F1</strong>, (a) a <strong>recall-priority Fβ with <code>β</code> RECORDED in the manifest/pre-reg and <code>β ≥ 2</code></strong> (committed default <strong><code>β = 2</code></strong> — <em>R10-to-confirm</em>) <strong>OR a stated integer FN:FP cost ratio</strong> (naming the de-id asymmetry — a missed SSN is a breach, a false positive is over-redaction / the false-positive tax) <strong>AND</strong> (b) a <strong>threshold-free AUPRC</strong> alongside the <strong>pre-registered operating point</strong> whose <strong>recall target is RECORDED in the pre-reg</strong> (committed default <strong><code>recall = 0.90</code></strong> within INT-04&#39;s 0.90–0.93 band — <em>R10-to-confirm</em>; threshold rule fixed pre-scoring per <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a>, so the curve is not one point post-hoc-tuned to the eval set). <em>Measure:</em> linter asserts {Fβ with <code>β</code> recorded and <code>β ≥ 2</code>} OR a stated integer FN:FP cost present + AUPRC present + the emitted operating point equals the pre-reg-recorded recall target — a free/undeclared <code>β</code> or a post-hoc point fails (CI-blocking). <em>Serves:</em> AX-pii-anon-005; <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(a); DOM-02 / N-03 (the false-positive-tax driver, P-priv-eng).</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a> — Honesty flags travel with the artifact; report is self-verifying (embeds pre-reg hash + run id).</strong> <em>Threshold (boolean-auditable):</em> the rendered report carries <strong>all</strong> applicable honesty flags from this <strong>closed, enumerated set</strong> — <strong>RD-NOT-CONVERGED</strong> (from <a class="trace-link" href="audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a>), <strong>UNDER-POWERED / UNDER-SAMPLED / CORPUS-LIMITED</strong> per cell (<a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/037), <strong>contamination-uncontrolled</strong> per non-<code>disclosed-unseen</code> system (<a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>), <strong>rank-volatility: UNMEASURED</strong> if single-seed (<a class="trace-link" href="audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a>), <strong>worst-language recall</strong> = <code>argmin over the languages in the run&#39;s coverage envelope of per-language recall</code> reported <strong>with the language label realizing the min</strong> (computable), and <strong>low-resource recall</strong> = recall restricted to the <strong>enumerable committed set of languages with realized positives <code>&lt; 200</code></strong> (the LONG_TAIL target) — both replacing the prior undefined &quot;worst-language / low-resource&quot; prose so cross-lingual collapse is not masked by the aggregate — <strong>AND embeds the pre-registration <code>{hash, commit_sha}</code> + run id</strong> so it is reproducible-from-manifest end-to-end. <strong>Stripping any signal from the enumerated honesty set, un-gating a rank from its paired test, omitting the AUPRC/Fβ asymmetry view, or dropping the pre-reg-hash + run-id binding makes the artifact invalid.</strong> <em>Measure:</em> report linter asserts each applicable enumerated flag present (incl. the worst-language <code>argmin</code>+label and the <code>&lt;200</code>-set low-resource recall) + the pre-reg/run-id binding present, and that removing any flag fails validation (CI-blocking). <em>Serves:</em> AX-pii-anon-005; <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(d/e); REPRO-07/DOM-07.</p>
+</li>
+</ul>
+<h2>J. Leaderboard hygiene + anti-gaming / contamination (AX-005 element 6)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a> — Contamination disclosure per system; <code>unknown</code> rejected; held-out non-exposure attested.</strong> <em>Threshold (boolean-auditable):</em> every system carries <strong><code>contamination_status ∈ {disclosed-unseen, disclosed-trained-on-corpus, undisclosed}</code></strong>; a leaderboard entry with <code>contamination_status: unknown</code> is <strong>rejected/flagged</strong> (not silently accepted — &quot;a leaderboard that accepts unknown is not trustworthy&quot;, INT-02); leaderboard/published entries additionally require a <strong>signed attestation that held-out labels were not exposed</strong> (INT-03&#39;s 6th AX-005 element); any non-<code>disclosed-unseen</code> rating is flagged <strong>contamination-uncontrolled</strong> downstream. <em>Measure:</em> submission validator rejects <code>unknown</code>; attestation-presence check for leaderboard run-types; downstream flag propagation asserted (CI-blocking). <em>Serves:</em> AX-pii-anon-005 (element 6); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>(d)/<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>(d); the <code>P-tool-vendor</code> gaming threat-model.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-049" data-trace-id="NFR-049" aria-label="Trace NFR-049 — — STRENGTHENED (sole oracle is &quot;governance checklist audit&quot;)">NFR-049</a> — Leaderboard submission hygiene: held-out labels protected + provenance-stamped/blind submission.</strong> <em>Threshold (boolean-auditable):</em> leaderboard submission keeps <strong>held-out labels protected</strong> (not exposed by the scoring API) and is <strong>provenance-stamped / blind</strong> (submitter cannot leak the held-out set or read it back). <em>Measure:</em> <strong>CI gate (blocking):</strong> <strong>(i)</strong> an <strong>API-surface test</strong> — a call sequence to the scoring endpoint returns a response whose schema <strong>excludes the held-out label field</strong> (labels never returned), AND <strong>(ii)</strong> a <strong>submission-provenance log record present and well-formed</strong>. The governance checklist audit is a <strong>secondary, non-gating</strong> human corroboration. <em>Serves:</em> AX-pii-anon-005; <a class="trace-link" href="../../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a> (cycle-1 governance neutrality, extended); <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>/<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>; Open Item 9.</p>
+</li>
+</ul>
+<h2>K. Engineering integrity — pure-stdlib cores, lazy heavy-dep guards, gates green</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a> — Pure-stdlib statistical cores with lazy heavy-dependency guards.</strong> <em>Threshold (boolean-auditable):</em> the statistical cores on the run path (<code>stats/intervals.py</code>, <code>stats/paired.py</code>, <code>stats/power.py</code>, <code>stats/lattice.py</code>) import <strong>only the Python standard library</strong> (<code>math</code>, <code>random</code>, etc. — <strong>no</strong> <code>numpy</code> / <code>scipy</code> on the CI/paired/power path); any heavy dependency (spaCy/Presidio/transformers) sits behind a <strong>lazy guard</strong> so importing the assessment modules never imports it (the <code>benchmark_throughput.py::_spacy_ner_detector</code> pattern — import inside the function, clear <code>[baselines]</code> install error). <em>Measure:</em> import-graph test asserts the cores import no third-party numeric lib + a &quot;module import triggers no heavy import&quot; test (CI-blocking). <em>Serves:</em> AX-002 (determinism — no global-RNG numeric libs); <a class="trace-link" href="../../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a> pattern; no-regression guardrail.</p>
+</li>
+<li><p><strong><a class="trace-link" href="../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a> — <code>pii-rate-elo</code> consumer gates stay green (pytest + ruff + mypy).</strong> <em>Threshold (boolean-auditable):</em> after the seam reconciliation + run-path rewiring, <code>pii-rate-elo</code>&#39;s <strong>own</strong> gates remain green — <code>pytest</code>, <code>ruff</code>, <code>mypy</code> (declared in its <code>pyproject.toml</code>). <em>Measure:</em> run the three gates in the <code>pii-rate-elo-pipeline</code> venv; all pass. <em>Serves:</em> OWNS/CONSUMES boundary (do-not-break-the-consumer); no-regression guardrail.</p>
+</li>
+</ul>
+<h2>L. Cycle-1 no-regression guardrails (encoded as binding CAP-02 NFRs)</h2>
+<ul>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a> — Lattice frozen: 730 cells @ <code>47c3a8f</code> (<code>lattice --check</code> green).</strong> <em>Threshold (number, boolean-auditable):</em> <code>python -m pii_anon_datasets.stats.lattice --check</code> reports <strong>exactly 730 cells</strong> matching <code>build_committed_lattice()</code> at commit <strong><code>47c3a8f</code></strong> (verified green this session: &quot;OK … 730 cells&quot;). <em>Measure:</em> the <code>--check</code> round-trip in CI (exits non-zero on any cell-count or content drift). <em>Serves:</em> <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> anti-drift (inherited); no-regression guardrail; <strong>no corpus regeneration</strong>.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a> — <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> committed-lattice power gate stays ON.</strong> <em>Threshold (boolean-auditable):</em> <code>scripts/validate.py --lattice</code> keeps auditing positives per committed cell in <strong>one streaming pass</strong> and <strong>exits non-zero on any shortfall</strong> (CI-blocking); the inherited cycle-1 <strong><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></strong> gate is <strong>not</strong> weakened, disabled, or scoped away by CAP-02. <em>Measure:</em> <code>validate.py --lattice</code> green in CI + a test that re-enables it if disabled. <em>Serves:</em> <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> (inherited, hard gate); <strong>P3</strong> (power floor); no-regression guardrail.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-054" data-trace-id="NFR-054" aria-label="Trace NFR-054 — — PASS">NFR-054</a> — Documentation drift = 0 (<a class="trace-link" href="../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> stays green).</strong> <em>Threshold (number):</em> record count (575,604), annotation count (2,486,438), entity-type count (63), and version (2.0.0) are <strong>identical across all canonical docs (zero drift)</strong>; <code>pytest -k nfr_013</code> (the <code>test_doc_drift.py</code> suite) stays green; tags <code>v1.3.0</code> + <code>pre-lattice-enrichment</code> intact. <em>Measure:</em> the doc-drift cross-doc consistency suite in CI. <em>Serves:</em> <a class="trace-link" href="../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> (inherited); no-regression guardrail.</p>
+</li>
+<li><p><strong><a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a> — Four metric families never merged (<a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> invariant holds across CAP-02).</strong> <em>Threshold (boolean-auditable):</em> <strong>zero</strong> code paths added by CAP-02 merge the four metric families (detection / anonymization / pseudonymization / re-id) into one headline score; the inherited <strong><a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></strong> boolean invariant holds. <em>Measure:</em> <strong>CI gate (blocking):</strong> a <strong>static check over the CAP-02-added module set</strong> asserting <strong>zero</strong> code paths merge the four metric families into one headline score (the <a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> boolean invariant). Reviewer audit is a <strong>secondary, non-gating</strong> corroboration. <em>Serves:</em> AX-004; <a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> (inherited); no-regression guardrail.</p>
+</li>
+</ul>
+<hr>
+<h2>Coverage — every brief-mandated NFR theme maps to ≥1 NFR</h2>
+<table>
+<thead>
+<tr>
+<th>Brief-mandated quality attribute</th>
+<th>NFR(s)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Byte-reproducibility of sample + run from manifest</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a></strong></td>
+</tr>
+<tr>
+<td>Powered-tier compliance OR explicit UNDER-POWERED + named shortfall (realized positives)</td>
+<td><strong><a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>, <a class="trace-link" href="audit-report.html#nfr-036" data-trace-id="NFR-036" aria-label="Trace NFR-036 — — PASS">NFR-036</a>, <a class="trace-link" href="audit-report.html#nfr-037" data-trace-id="NFR-037" aria-label="Trace NFR-037 — — PASS">NFR-037</a></strong></td>
+</tr>
+<tr>
+<td>Every metric carries a CI (interval-selection rule)</td>
+<td><strong><a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-023" data-trace-id="NFR-023" aria-label="Trace NFR-023 — — CI on 100% of metrics + deterministic interval-selection…">NFR-023</a></strong> (+ <a class="trace-link" href="audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a>/025 scope)</td>
+</tr>
+<tr>
+<td>Paired test for system-vs-system (Holm-Bonferroni + 2 inference families)</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>, <a class="trace-link" href="audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>, <a class="trace-link" href="audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a></strong></td>
+</tr>
+<tr>
+<td>RD reported as achieved max-RD ± 2RD</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a></strong></td>
+</tr>
+<tr>
+<td>Pre-registration completeness (opt-in) + universal manifest-reproducibility</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>, <a class="trace-link" href="audit-report.html#nfr-032" data-trace-id="NFR-032" aria-label="Trace NFR-032 — — PASS">NFR-032</a>, <a class="trace-link" href="audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a></strong> (opt-in/run-type) + <strong><a class="trace-link" href="audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a></strong> (universal)</td>
+</tr>
+<tr>
+<td>Run-record provenance completeness + file-level provenance</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>, <a class="trace-link" href="audit-report.html#nfr-043" data-trace-id="NFR-043" aria-label="Trace NFR-043 — — PASS">NFR-043</a></strong></td>
+</tr>
+<tr>
+<td>Non-strippable synthetic-only caveat on every metric</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a></strong></td>
+</tr>
+<tr>
+<td>Statistics-core integrity (audited only; significance.py quarantined; zero approximated stats on run path)</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>, <a class="trace-link" href="audit-report.html#nfr-020" data-trace-id="NFR-020" aria-label="Trace NFR-020 — — STRENGTHENED (sole-oracle drift on the human diff)">NFR-020</a>, <a class="trace-link" href="audit-report.html#nfr-021" data-trace-id="NFR-021" aria-label="Trace NFR-021 — — PASS">NFR-021</a>, <a class="trace-link" href="audit-report.html#nfr-022" data-trace-id="NFR-022" aria-label="Trace NFR-022 — — PASS">NFR-022</a></strong></td>
+</tr>
+<tr>
+<td>Sampling performance (single streaming pass; bounded memory; deterministic)</td>
+<td><strong><a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a></strong></td>
+</tr>
+<tr>
+<td>Pure-stdlib cores + lazy heavy-dep guards</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a></strong></td>
+</tr>
+<tr>
+<td>Cycle-1 guardrail no-regression (lattice 730@47c3a8f, <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> gate, doc-drift 0, four families separate, no corpus regen)</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a>, <a class="trace-link" href="audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>, <a class="trace-link" href="audit-report.html#nfr-054" data-trace-id="NFR-054" aria-label="Trace NFR-054 — — PASS">NFR-054</a>, <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a></strong></td>
+</tr>
+<tr>
+<td><code>pii-rate-elo</code> gates green</td>
+<td><strong><a class="trace-link" href="../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a></strong></td>
+</tr>
+<tr>
+<td>Anon vs pseudo separate families (AX-004)</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a></strong> (+ <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a>)</td>
+</tr>
+<tr>
+<td>Operating-point reporting / false-positive tax</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-046" data-trace-id="NFR-046" aria-label="Trace NFR-046 — — STRENGTHENED (unbounded β; un-pinned operating point; mir…">NFR-046</a></strong></td>
+</tr>
+<tr>
+<td>Honest verdicts ride the artifact (self-verifying report)</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a></strong></td>
+</tr>
+<tr>
+<td>Leaderboard hygiene + contamination disclosure</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>, <a class="trace-link" href="audit-report.html#nfr-049" data-trace-id="NFR-049" aria-label="Trace NFR-049 — — STRENGTHENED (sole oracle is &quot;governance checklist audit&quot;)">NFR-049</a></strong></td>
+</tr>
+</tbody></table>
+<h2>Precondition → NFR map (the 3 hard preconditions, fully covered)</h2>
+<table>
+<thead>
+<tr>
+<th>Precondition</th>
+<th>NFR(s)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P1 (SHOWSTOPPER)</strong> — audited stats core only; <code>significance.py</code> quarantined; zero approximated stats on run path</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>, <a class="trace-link" href="audit-report.html#nfr-020" data-trace-id="NFR-020" aria-label="Trace NFR-020 — — STRENGTHENED (sole-oracle drift on the human diff)">NFR-020</a>, <a class="trace-link" href="audit-report.html#nfr-021" data-trace-id="NFR-021" aria-label="Trace NFR-021 — — PASS">NFR-021</a>, <a class="trace-link" href="audit-report.html#nfr-022" data-trace-id="NFR-022" aria-label="Trace NFR-022 — — PASS">NFR-022</a></strong></td>
+</tr>
+<tr>
+<td><strong>P2</strong> — dataset seam → v2.0.0 via versioned crosswalk + regression contract</td>
+<td><strong><a class="trace-link" href="audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a>, <a class="trace-link" href="audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a></strong></td>
+</tr>
+<tr>
+<td><strong>P3</strong> — powered lattice-stratified sampler emitting PowerMatrix verdict + per-cell named shortfall vs realized positives</td>
+<td><strong><a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>, <a class="trace-link" href="audit-report.html#nfr-036" data-trace-id="NFR-036" aria-label="Trace NFR-036 — — PASS">NFR-036</a>, <a class="trace-link" href="audit-report.html#nfr-037" data-trace-id="NFR-037" aria-label="Trace NFR-037 — — PASS">NFR-037</a>, <a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a>, <a class="trace-link" href="audit-report.html#nfr-039" data-trace-id="NFR-039" aria-label="Trace NFR-039 — — PASS">NFR-039</a></strong> (+ <a class="trace-link" href="audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a> power gate)</td>
+</tr>
+</tbody></table>
+<h2>Axiom → NFR map (AX-pii-anon-005 elements)</h2>
+<table>
+<thead>
+<tr>
+<th>AX-005 element</th>
+<th>NFR(s)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(1) CI with method named</td>
+<td><a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-023" data-trace-id="NFR-023" aria-label="Trace NFR-023 — — CI on 100% of metrics + deterministic interval-selection…">NFR-023</a>, <a class="trace-link" href="audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a>, <a class="trace-link" href="audit-report.html#nfr-025" data-trace-id="NFR-025" aria-label="Trace NFR-025 — — PASS">NFR-025</a></td>
+</tr>
+<tr>
+<td>(2) Paired test + declared multiplicity family (Holm-Bonferroni, 2 families, family size in text)</td>
+<td><a class="trace-link" href="audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>, <a class="trace-link" href="audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>, <a class="trace-link" href="audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a></td>
+</tr>
+<tr>
+<td>(3) Convergence as achieved max-RD ± 2RD + rounds</td>
+<td><a class="trace-link" href="audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a></td>
+</tr>
+<tr>
+<td>(4) Provenance reproducible-from-manifest</td>
+<td><a class="trace-link" href="audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>, <a class="trace-link" href="audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>, <a class="trace-link" href="audit-report.html#nfr-032" data-trace-id="NFR-032" aria-label="Trace NFR-032 — — PASS">NFR-032</a>, <a class="trace-link" href="audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>, <a class="trace-link" href="audit-report.html#nfr-043" data-trace-id="NFR-043" aria-label="Trace NFR-043 — — PASS">NFR-043</a></td>
+</tr>
+<tr>
+<td>(5) Non-strippable synthetic-only caveat</td>
+<td><a class="trace-link" href="audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a></td>
+</tr>
+<tr>
+<td>(6) Contamination disclosure + held-out non-exposure attestation</td>
+<td><a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>, <a class="trace-link" href="audit-report.html#nfr-049" data-trace-id="NFR-049" aria-label="Trace NFR-049 — — STRENGTHENED (sole oracle is &quot;governance checklist audit&quot;)">NFR-049</a></td>
+</tr>
+<tr>
+<td>Enforcement scope (run-type-bound)</td>
+<td><a class="trace-link" href="audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>, <a class="trace-link" href="audit-report.html#nfr-034" data-trace-id="NFR-034" aria-label="Trace NFR-034 — — PASS">NFR-034</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Count + methodology</h2>
+<p><strong>Count: 37 new NFRs (<a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> … <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a>).</strong> Cumulative with cycle-1: <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a> … <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a> (<a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a>…018 inherited, still binding).</p>
+<ul>
+<li><strong>Threshold-grounding (direct file read at HEAD, 2026-06-01):</strong> <code>stats/power.py</code> (<code>TIER_SPECS</code> 1522/753/200, <code>REID_TIER_SPECS</code> 897/385, <code>PowerClass</code> WELL/UNDER/EMPTY, <code>PowerMatrix.verdict()</code> LARGE≥0.999 / ADEQUATE≥0.80 at L351-361); <code>stats/intervals.py</code> (<code>_require_int_counts</code> reidx-02 guard L39-51; Wilson/Clopper-Pearson); <code>stats/paired.py</code> (<code>mcnemar_exact</code>/<code>mcnemar_chi2</code>/<code>paired_bootstrap_recall_delta</code> with LOCAL <code>random.Random(seed)</code> L140); <code>scripts/lattice_audit.py</code> (single streaming pass; key set bounded by #committed-cells; <code>deficits</code> observed+deficit); <code>scripts/benchmark_throughput.py</code> (<code>reservoir_sample</code> Algorithm-R single-pass; <code>SEED_BENCHMARK=20260531</code>; run-record schema; <code>CANONICAL_RECORDS=575604</code>); <code>stats/lattice.py --check</code> (730 cells @ <code>47c3a8f</code>, run green this session); <code>tests/test_doc_drift.py</code> (CANONICAL pins 575,604 / 2,486,438 / 2.0.0 / 63-derived); <code>pii-rate-elo/analysis/significance.py</code> (fabricated <code>se=…/100</code>+<code>np.random.normal</code> L205-206; <code>n_approx=100</code>/<code>pooled_sd=0.1</code>/<code>z_stat</code> L271-281; instantiated <code>cli.py:242</code> behind <code>run_significance_tests</code> <code>cli.py:240</code>); <code>pii-rate-elo/datasets/converters/pii_anon_eval.py</code> (<code>num_records=159891</code> L93, <code>license=&quot;CC-BY-4.0&quot;</code> L221, <code>citation=&quot;…v1.3.0&quot;</code> L222, <code>max_samples</code> head-truncation L82); <code>pii-rate-elo/pyproject.toml</code> (pytest/ruff/mypy gates).</li>
+<li><strong>Interview-grounding (R3 synthesis, AGENT_SIMULATED):</strong> the AX-005 sharpenings (multiplicity-family-in-text; 6th contamination element; achieved max-RD ± 2RD + rounds; run-type-scoped enforcement) and the run-type designation mechanism are carried verbatim from <code>interview-synthesis.md</code> (INT-01…INT-06; the §4 universality adjudication; INT-05&#39;s first-six send-back floor → <a class="trace-link" href="audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>/043).</li>
+<li><strong><code>real_user_needed</code> flags (Pass-2):</strong> <a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a> is a code-structural bound (no real-user number needed). Inherited <strong>NFR-010b</strong> (≥5,000 rec/sec lightweight-detection floor on an 8-core reference host) remains <code>real_user_needed: true</code> / canonical verdict <strong>INSUFFICIENT_EVIDENCE</strong> until a real reference-host run lands out-of-band (per <code>benchmark_throughput.py</code> protocol §2) — CAP-02 does not re-pin it; it inherits it unchanged.</li>
+<li><strong>provisional_status: AGENT_SIMULATED.</strong> Thresholds are agent-authored; the code/line evidence is firsthand. Real-user validation of these thresholds is a Pass-2 follow-up. <strong>R10 threshold-validation</strong> of the quantified NFRs (esp. <a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a> memory bound, the CI/paired-test linter thresholds) to be recorded in <code>_threshold-validation/</code>.</li>
+</ul>
+<p>✅ <strong>R4 NFR authoring complete (2026-06-01).</strong> 37 new Quality Attributes (<a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>…<a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a>), each with a quantified/boolean-auditable threshold + measurement method + the axiom/precondition it serves; the full academic-soundness bar + the 3 hard preconditions (P1/P2/P3) + the no-regression guardrails encoded as testable NFRs; <strong>AX-pii-anon-005 PROPOSED and recorded for confirmation</strong> with the two cohort-demanded sharpenings + run-type-scoped enforcement, with every NFR wired to it. Offsets honored (NFR→019, continued global numbering, none reused). <code>provisional_status: AGENT_SIMULATED</code>.</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/02-requirements/non-functional-requirements.md</code> ·
+  content-hash <code>2cfc0c6a3e1a</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

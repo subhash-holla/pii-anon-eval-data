@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Discovery Report — CAP-02 Powered Assessment Workflow (canonical) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>Discovery Report — CAP-02 Powered Assessment Workflow (canonical)</h1>
+<p><strong>Capability</strong>: CAP-02 — second PDLC cycle of <code>pii-anon-eval-data</code>. An academically-sound, repeatable, reportable assessment <strong>workflow</strong> that runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0</strong> over a <strong>powered, lattice-stratified sample (default)</strong> / <strong>full corpus (opt-in)</strong> / <strong>smoke (fast)</strong> — with <strong>epistemic instrumentation + reporting at every stage</strong> (<code>load → sample → run systems → score → rate → report</code>).
+<strong>Stage</strong>: assessment-workflow / 01-Discovery · Section 7 (canonical synthesis of §0–§6)
+<strong>Date</strong>: 2026-06-01
+<strong>Architecture (locked)</strong>: eval-data <strong>OWNS</strong> sampling + observability + reporting; <code>pii-rate-elo</code> <strong>CONSUMES</strong> — extend it, do <strong>NOT</strong> rebuild the engine/metrics/significance.
+<strong>provisional_status</strong>: AGENT_SIMULATED — all critics, personas, market lenses, SME reviews, and the concept-value cohort are agent-simulated single-session research; the <em>code/version/line evidence</em> is direct file reads at HEAD on 2026-06-01. Agent-simulated research is <strong>NOT</strong> a substitute for real users; real-user validation is a Pass-2 follow-up (§9).</p>
+<blockquote>
+<p><strong>Vocabulary remap (project framing — synthetic PII benchmark).</strong> Persona = assessment/benchmark <strong>consumer</strong>; UC = <strong>Evaluation Scenario</strong>; FR = <strong>Benchmark/Assessment Capability</strong>; NFR = <strong>Quality Attribute</strong>; DC = <strong>Benchmark Component</strong>. This is a synthetic benchmark assessed at <strong>representative scale</strong> in a <strong>single session</strong>; that limit is documented, not hidden (§8).</p>
+</blockquote>
+<blockquote>
+<p><strong>Cycle-2 framing.</strong> Cycle-1 built the <strong>dataset + scoring/stats cores</strong> (Stage-5 verdict: SHIP-WITH-CAVEATS). CAP-02 builds the <strong>assessment <em>workflow</em></strong> that wires the mature <code>pii-rate-elo</code> tournament to the v2.0.0 corpus through a powered, lattice-stratified sampler with per-cell epistemic instrumentation. The load-bearing distinction is <strong>consumed-vs-contributed</strong>: CAP-02 <strong>delegates</strong> ranking, Glicko-RD convergence, and paired-significance <em>machinery</em> to <code>pii-rate-elo</code>; it <strong>contributes</strong> (a) a NIST-powered, lattice-stratified <strong>sampler</strong>, (b) <strong>epistemic instrumentation</strong> (per-cell CIs + power class with named shortfall + non-strippable synthetic-only caveat), and (c) <strong>reconciliation of the drifted dataset seam</strong>.</p>
+</blockquote>
+<hr>
+<h2>1. Point of View (refined &amp; validated — §0)</h2>
+<p>All three POV stress-test critics (Adjacent-Product Skeptic / Persona Realist / OSS-Methodology Strategist) returned <strong>REFINE</strong>: no SHOWSTOPPER on the <em>concept</em>, but a SHOWSTOPPER + CATASTROPHIC on the <em>as-wired implementation</em>, addressed as hard preconditions. The refined POV (adopted):</p>
+<blockquote>
+<p><strong>CAP-02</strong> is a seeded, byte-reproducible assessment <strong>workflow</strong> that <strong>delegates</strong> tournament ranking, Glicko convergence, and paired-significance testing to the mature <strong>pii-rate-elo</strong> engine — it does <strong>not</strong> re-implement them. Its net-new contributions are three: (1) a <strong>NIST-powered, lattice-stratified sampler</strong> over the <strong>v2.0.0 / 575,604-record</strong> corpus (pii-rate-elo&#39;s only knob is naive <code>max_samples</code> head-truncation, with no concept of power); (2) <strong>per-cell epistemic instrumentation</strong> — Wilson/Clopper-Pearson CIs on every rating/metric, a WELL/UNDER/EMPTY power class with the named shortfall, and a non-strippable synthetic-only / anti-anonymity caveat; and (3) <strong>reconciliation of the drifted dataset seam</strong> (pii-rate-elo is pinned to v1.3.0 / 159,891 / <code>labels</code>; the live corpus is v2.0.0 / 575,604 / <code>annotations</code> / CC0). All statistical claims are computed by a <strong>single audited statistics core</strong> (<code>eval-data/stats</code>) with <strong>no approximated statistics on the run path</strong>. <strong>Detection runs the FULL corpus by default</strong> (compute-cheap, owned); the <strong>LLM-adversary-bound tracks</strong> default to a powered, lattice-stratified <strong>sample</strong> with FULL opt-in and a fast SMOKE preset. The <strong>citable leaderboard is the FULL-corpus run</strong>; the representative default is a fast pre-screen, always labelled with its power verdict (SMALL/ADEQUATE/LARGE) and named shortfall. <strong>RD convergence is reported as achieved max-RD with its ±2RD (95%) interval</strong>, never as an extrapolated round count. Powered stratified sampling is an established method (StratPPI; &quot;With Little Power&quot;); the contribution is its <strong>integration</strong> with a frozen 730-cell risk lattice and this synthetic corpus. <strong>Pre-registration is opt-in rigor</strong>; the universal commitment is <strong>manifest-reproducibility</strong>.</p>
+</blockquote>
+<p><strong>Cross-critic consensus — what survives</strong> (the spine of CAP-02): (1) the powered, lattice-stratified sampler is unambiguously net-new — pii-rate-elo&#39;s <code>max_samples</code> head-truncation is a <em>category</em> gap; (2) per-slice / per-metric CIs are persona-universal and the cheapest credibility a distrust-of-single-scores benchmark can buy; (3) the v1.3.0→v2.0.0 seam reconciliation is net-new <strong>correctness</strong> value (the sister tool literally cannot read the current corpus today); (4) the non-strippable synthetic-only caveat is the strongest-built guarantee (enforced by construction); (5) the honest UNDER-POWERED shortfall path is exactly what the academics need to defend subgroup gaps in review; (6) the OWNS/CONSUMES boundary is sound.</p>
+<p><strong>Earned-vs-committed split (the honesty hinge).</strong> As wired today, the two headline guarantees are computed by <em>fabricated arithmetic</em> in the consumer (verified §2). The POV must never be stated in the present tense before the preconditions land. Until then, stated-confidence outputs are PROVISIONAL.</p>
+<h2>2. Motivation (§1) — why NOW, verified against code (2026-06-01)</h2>
+<p>The gap CAP-02 closes is the <strong>wiring</strong> between a v2.0.0 corpus and a mature engine, done to an academic-soundness bar — and that wiring is not merely missing, it is <strong>actively wrong</strong> in three independent, code-verified ways:</p>
+<ol>
+<li><strong>Drift — <code>pii-rate-elo</code> cannot honestly read the current corpus.</strong> The converter <code>datasets/converters/pii_anon_eval.py</code> hard-pins <code>num_records=159891</code> (L93), <code>license=&quot;CC-BY-4.0&quot;</code> (L221), <code>citation=&quot;…v1.3.0&quot;</code> (L222); <code>schema.py</code> self-identifies <code>version: str = &quot;1.3.0&quot;</code> (L137). The live artifact is <strong>v2.0.0 / 575,604 / CC0 / <code>annotations</code></strong>. A consumer reproducing from this metadata gets the wrong version, ~3.6× the wrong record count, the wrong license, a stale citation. <em>Verified nuance:</em> the row parser already tolerates <code>annotations</code> with a <code>labels</code> fallback (<code>schema.py:349</code>) — so the hard, uncaveated drift is the <strong>declared provenance (count + version pins)</strong>, not field-reading. (Verified this session: pins present at the cited lines.)</li>
+<li><strong>No powered / pre-registered / reproducible path.</strong> pii-rate-elo&#39;s only subsetting knob is naive head-truncation — <code>if max_samples is not None and count &gt;= max_samples: break</code> (converter L82–84; loader L73; threaded through <code>cli.py</code>). That returns the first N rows in file order — it cannot hit a per-cell target, cannot stratify by (language × entity_type × domain), and cannot report a shortfall. eval-data&#39;s <code>stats/power.py</code> is a different species: NIST/SEMATECH §7.2.4.2 <code>required_n()</code> with tier targets <strong>derived, not hand-typed</strong> (verified this session: <code>CRITICAL (0.99, 0.005)→1522</code>, <code>STANDARD (0.98, 0.010)→753</code>, <code>LONG_TAIL (0.95, 0.03025)→200</code>), a parallel re-id ladder (<code>reid_required_n(0.30,0.030)→897</code>, <code>(0.10,0.030)→385</code> pairs), and <code>PowerClass ∈ {WELL_POWERED, UNDER_POWERED, EMPTY}</code> feeding a <code>PowerMatrix.verdict()</code> SMALL/ADEQUATE/LARGE. None of this is reachable through pii-rate-elo&#39;s seam. The frozen 730-cell lattice the sample targets is committed at <code>47c3a8f</code>.</li>
+<li><strong>Fabricated statistics on the run path.</strong> <code>cli.py:242</code> instantiates <code>SignificanceTester()</code>. Its &quot;bootstrap&quot; CI adds Gaussian noise to a point estimate — <code>se = metric_value*(1-metric_value)/100</code> with a hardcoded <code>100</code> (not n), then <code>np.random.normal(0, se)</code> (verified this session: <code>significance.py:205-206</code>); its &quot;McNemar&quot; never sees a discordant-pair count — <code>n_approx = 100</code>, <code>z_stat = difference*sqrt(n_approx)/0.05</code>, <code>pooled_sd = 0.1</code> (verified: L271-281). Meanwhile <code>eval-data/stats/paired.py</code> implements the <em>correct</em> paired stack (exact binomial McNemar, Edwards continuity-corrected χ², a real paired bootstrap resampling pair indices with a seeded RNG) and <code>stats/intervals.py</code> the integer-guarded Wilson/Clopper-Pearson CIs — <strong>one repo over and bypassed</strong>. A single reviewer who diffs the two files rejects the methodology outright.</li>
+</ol>
+<p><strong>Macro context (why the bar is non-negotiable).</strong> (a) The 2026 leaderboard consensus is &quot;read the CI column, not the rank&quot; — a benchmark whose thesis is <em>distrust of single numbers</em> cannot ship a number without a CI. (b) Synthetic benchmarks demonstrably <strong>over-estimate</strong> de-identification (SPY, NAACL SRW 2025; Tonic.ai 2026) — the non-strippable synthetic-only caveat is a peer-review precondition (enforced by construction: <code>ReidProvenance.__post_init__</code> raises on empty caveat; AX-001/003). (c) <strong>Reproducibility, not pre-registration, is the active NLP norm</strong> (ReproNLP&#39;26; REFORMS) — CAP-02 treats seeded/byte-reproducible-from-manifest as table stakes and pre-registration as opt-in rigor for the one citation-chasing persona.</p>
+<p><strong>Hard preconditions CAP-02 commits to (all currently open):</strong> (1) route the run path through the audited <code>eval-data/stats</code> core (quarantine <code>analysis/significance.py</code>); (2) reconcile the dataset seam to v2.0.0 / 575,604 / CC0 / <code>annotations</code>; (3) add the powered, lattice-stratified sampler emitting the <code>PowerMatrix</code> verdict + per-cell shortfall as a <em>report artifact</em>; (4) bind &quot;sample&quot; to the cost-bound tracks, detection full-corpus-audited by default, FULL = citable.</p>
+<h2>3. Personas (priority-classified — §2)</h2>
+<p>Roster carried forward intact from cycle-1 (IDs stable). Two near-neighbor lenses were <strong>folded as sub-archetypes</strong> per the research agents&#39; own recommendations (not new gating consumers). <strong>3 HIGH / 3 MEDIUM.</strong></p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Persona</th>
+<th>Priority</th>
+<th>One-line</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P-acad-deid</strong></td>
+<td>Academic De-identification Researcher</td>
+<td><strong>HIGH</strong> (credibility — gates citation legitimacy)</td>
+<td>Clinical/legal/education NLP researchers who benchmark &amp; <em>publish</em> PHI/PII de-id (i2b2/n2c2, TAB, OpenDeID lineage)</td>
+</tr>
+<tr>
+<td><strong>P-mlnlp-researcher</strong></td>
+<td>ML/NLP Privacy Researcher</td>
+<td><strong>HIGH</strong> (gates v1)</td>
+<td>Scientists publishing PII-detection / anonymization / re-id methods at ACL/EMNLP/NeurIPS-D&amp;B/PETS — primary workflow consumer</td>
+</tr>
+<tr>
+<td><strong>P-tool-builder</strong></td>
+<td>Privacy-Tool Builder / OSS Maintainer</td>
+<td><strong>HIGH</strong> (gates v1)</td>
+<td>Maintainers of PII detectors/anonymizers (Presidio, GLiNER-PII, Piiranha) needing an external reproducible CI/publication harness</td>
+</tr>
+<tr>
+<td><strong>P-agentic-redteam</strong></td>
+<td>Agentic-Security Red-Teamer</td>
+<td><strong>MEDIUM</strong></td>
+<td>AI red-teamers testing live agents for per-channel leakage; CAP-02 = recognition oracle + payload seed + RRS-on-transcripts, <strong>not</strong> a live agent-leakage benchmark</td>
+</tr>
+<tr>
+<td><strong>P-priv-eng</strong></td>
+<td>Enterprise Privacy / Platform-Security Engineer</td>
+<td><strong>MEDIUM</strong> (downstream)</td>
+<td>Engineers using CAP-02 output to <strong>pre-screen</strong> finalists + borrow the harness design for an own-data POC</td>
+</tr>
+<tr>
+<td><strong>P-dpo</strong></td>
+<td>Compliance / Privacy Counsel / DPO</td>
+<td><strong>MEDIUM</strong></td>
+<td>DPOs certifying lawful end-states (anon vs pseudo); consume CAP-02 <em>evidence artifacts</em> (manifest + CIs + caveat) via technical teams</td>
+</tr>
+</tbody></table>
+<p><strong>Sub-archetypes (folded, carried as drivers — not gating consumers):</strong> <code>P-tool-vendor</code> (commercial leaderboard submitter — its gaming incentive is the <strong>forcing function</strong> for leaderboard hygiene: held-out labels, blind/provenance-stamped submission) under <code>P-tool-builder</code>; <code>P-complreviewer</code> (audit/assurance reader — the <strong>EU AI Act Art. 10/11 bulk-effect Aug-2026</strong> driver for Article-11-fileable evidence) under <code>P-dpo</code>.</p>
+<p>The <strong>3 HIGH personas are the acceptance + credibility cohort</strong> — the academic-soundness bar is built <em>for their standards</em>. The 3 MEDIUM are real but downstream. <strong>Non-persona stakeholder:</strong> the neutral benchmark host / governance body (created by the arms-length-neutral governance decision; carried to Design, not the consumer roster).</p>
+<h2>4. Workflow Maps (P/G/O — §2)</h2>
+<p>The CAP-02 spine, with academic-soundness controls bound at every stage:</p>
+<blockquote>
+<p><code>load → sample → run systems → score → rate → report</code></p>
+</blockquote>
+<p>Per-stage <strong>desired</strong> state (vs each persona&#39;s hand-rolled status quo): <strong>load</strong> v2.0.0 via the reconciled seam (no IRB/DUA), manifest stamps source version + count + schema fingerprint → <strong>sample</strong> powered-representative (default) / full (opt-in) / smoke, seeded + byte-reproducible, under-tier cells flagged with named shortfall → <strong>run systems</strong> through the existing <code>PIIRateEloEngine</code> (no rebuild) → <strong>score</strong> via <code>compute_span_metrics</code>, CI on every metric, anon vs pseudo in separate families → <strong>rate</strong> Glicko ratings with RD-convergence reported, paired test on every system-vs-system claim → <strong>report</strong> pre-registered, reproducible-from-manifest, carrying per-slice power + CIs + paired verdicts + the non-strippable synthetic-only caveat.</p>
+<p><strong>18 PGO triples</strong> anchor the bridge to Requirements (R0 UC↔PGO): <code>PGO-acaddeid-01..03</code>, <code>PGO-researcher-01..03</code>, <code>PGO-builder-01..03</code> (HIGH); <code>PGO-redteam-01..03</code>, <code>PGO-priveng-01..03</code>, <code>PGO-dpo-01..03</code> (MEDIUM); plus sub-archetype drivers <code>PGO-tool-vendor-01/02</code> and <code>PGO-complreviewer-01/02</code>. Recurring <strong>outcome → capability themes</strong> (preview of Requirements): powered sampling with tiered presets; CI on every metric; paired test + RD-convergence; dataset-seam reconciliation; observability + reporting at every stage; reproducible-from-manifest run; leaderboard hygiene + blind/provenance submission; anon-vs-pseudo separation + regulatory crosswalk; non-strippable synthetic-only caveat; real-data validation slice (top open item); agentic recognition-oracle (honestly bounded).</p>
+<h2>5. Market Position (§3 — JTBD + Kano + Pugh)</h2>
+<p><strong>Core JTBD.</strong> <em>When</em> I need a defensible, reportable claim about how PII systems rank on v2.0.0, <em>I want to</em> run the existing tournament over a right-sized, pre-registered, seeded sample with a CI on every number, <em>so I can</em> publish/cite a result that survives peer + regulator review without burning a full-corpus run each time. The 3 HIGH personas hire it for the <em>same</em> job: <strong>powered + reproducible + reportable, without full-corpus cost.</strong></p>
+<p><strong>Kano (T1 = the 3 HIGH gating personas).</strong> Must-haves: seam reconciliation, per-metric CIs, paired tests, pre-registration/byte-reproducible manifest, honest UNDER-POWERED verdicts. Performance backbone: powered sample, per-stage observability, leaderboard/figures. <strong>Delighters to land in v0.1:</strong> (1) honest UNDER-POWERED / INSUFFICIENT_EVIDENCE verdicts (near-zero build cost; disarms the synthetic-citation-ceiling objection); (2) SMOKE preset (CI/DX win for the contribute-recognizers cohort). <strong>Reverse-features (presence dissatisfies — cut):</strong> certification / paid private eval (re-introduces neutrality CoI); a &quot;live agentic-leakage benchmark&quot; headline from static records (category mismatch); bespoke per-domain scoring beyond the frozen 730-cell lattice.</p>
+<p><strong>Pugh (baseline = Alt A, run pii-rate-elo full-corpus as-is).</strong> Criteria from the soundness bar: academic soundness (28%), reproducibility (22%), cost/runtime (15%), fairness/anti-gaming (15%), engine-reuse/drift-fix (12%), observability (8%). <strong>CAP-02 = 4.84</strong>; Alt D (HELM-style harness) = 2.96 (only structural rival, loses decisively on reuse + PII-specific rigor); Alt A = 2.45; Alt B (ad-hoc subsample) = 1.83; Alt C (Presidio-style scripts) = 1.74. CAP-02 is the unique maximum on academic soundness, anti-gaming, and engine-reuse — do <strong>not</strong> trade those for cost. <strong>Alternate switch-points:</strong> if per-run budget binds, lean on SMOKE / shrink the powered sample (only with the shortfall named); if a third party demands a HELM surface, wrap CAP-02 reporting in a HELM adapter rather than adopting Alt D wholesale.</p>
+<p><strong>Reachability.</strong> Post-Papers-with-Code shutdown (Jul 2025), HF leaderboards are the canonical discovery surface; a CC0 HF-distributed harness reaches all three HIGH personas at zero cost. <strong>WTP ≈ $0</strong> across the roster — the &quot;payment&quot; is attention + citation; CIs + per-slice power are what convert attention into citation.</p>
+<h2>6. Use Cases (§4 — <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a> … <a class="trace-link" href="04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>, SME-reviewed)</h2>
+<p>Global numbering <strong>continued, never reused</strong>: cycle-1 ended at <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-15" data-trace-id="UC-15" aria-label="Trace UC-15 — — Benchmark governance &amp; contribution lifecycle · X (NEW in…">UC-15</a>; CAP-02 runs <strong><a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a> … <a class="trace-link" href="04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (8 Evaluation Scenarios)</strong>. Each carries a single boolean-testable acceptance signal. <strong>Priority split: 6 MUST · 2 SHOULD.</strong></p>
+<table>
+<thead>
+<tr>
+<th>UC</th>
+<th>Title</th>
+<th>Stage</th>
+<th>Persona (primary)</th>
+<th>Priority</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong><a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a></strong></td>
+<td>Draw a powered, lattice-stratified sample meeting committed-lattice tiers (seeded; per-cell <code>WELL_POWERED / UNDER_SAMPLED / CORPUS_LIMITED / EMPTY</code> + <code>NOT_ASSESSED</code> for uncovered critical types)</td>
+<td>SAMPLE</td>
+<td>P-mlnlp-researcher</td>
+<td><strong>MUST</strong></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a></strong></td>
+<td>Run the Elo/Glicko assessment with per-metric CIs, paired tests, RD-convergence (declared <code>scoring_family</code>; deterministic interval-selection rule; exploratory per-cell vs confirmatory Holm–Bonferroni pairwise w/ family size; <code>contamination_status</code>; <code>seed_variance_scope</code>)</td>
+<td>RUN/SCORE/RATE</td>
+<td>P-mlnlp-researcher</td>
+<td><strong>MUST</strong></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a></strong></td>
+<td>Pre-register the run BEFORE any system is scored (git-commit-anchored + hash-chained into the first run-record; full analysis plan in the match set; immutable; run-lineage disclosed)</td>
+<td>X/REPORT</td>
+<td>P-acad-deid</td>
+<td><strong>MUST</strong></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="04-use-cases.html#uc-19" data-trace-id="UC-19" aria-label="Trace UC-19 — — Full-corpus opt-in run (the “no sampling, score everythin…">UC-19</a></strong></td>
+<td>Full-corpus opt-in run (<code>records_scored == dataset.record_count(version)</code>, not a magic constant; pre-reg parity; descriptive-census vs super-population inferential target)</td>
+<td>SAMPLE/RUN</td>
+<td>P-acad-deid</td>
+<td><strong>SHOULD</strong></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="04-use-cases.html#uc-20" data-trace-id="UC-20" aria-label="Trace UC-20 — — Smoke run for fast iteration (CI / local dev) · SAMPLE /…">UC-20</a></strong></td>
+<td>Smoke run for fast CI/dev iteration (fixed seeded slice; <code>not_statistically_valid: true</code>; <strong>all CI + p-value fields suppressed/null</strong>)</td>
+<td>SAMPLE/RUN</td>
+<td>P-tool-builder</td>
+<td><strong>SHOULD</strong></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a></strong></td>
+<td>Reconcile the <code>pii-rate-elo</code> dataset seam to v2.0.0 + pin a regression contract (version + record-count + 63-type count + schema fingerprint + dataset content hash)</td>
+<td>LOAD/X</td>
+<td>P-mlnlp-researcher</td>
+<td><strong>MUST</strong></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a></strong></td>
+<td>Emit an observability run-record at every spine stage (<code>{dataset_version, record_count, schema_fingerprint, seed, stage, code_commit}</code> + toolchain fingerprint; shared run id)</td>
+<td>X/REPORT</td>
+<td>P-priv-eng</td>
+<td><strong>MUST</strong></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a></strong></td>
+<td>Produce a reportable leaderboard + figures with HONEST verdicts (ranks gated by paired test / ties greyed; recall-priority Fβ + AUPRC at pre-registered operating point; under-power / contamination / rank-volatility / worst-language flags; non-strippable synthetic-only caveat; embeds pre-reg hash + run id)</td>
+<td>REPORT/X</td>
+<td>P-mlnlp-researcher</td>
+<td><strong>MUST</strong></td>
+</tr>
+</tbody></table>
+<p>All eight of the brief&#39;s required coverage points (a)–(h) map to exactly one UC. <strong>SME pass:</strong> 5 reviewers, all REQUEST_CHANGES; <strong>3 CATASTROPHIC + 15 unique MAJOR + 10 MINOR + 7 OBS/SUGG resolved in place</strong>, no UC&#39;s <em>intent</em> found unsound. <strong>Zero new UC IDs</strong> — the one genuine coverage gap (re-identification power) is closed by an <strong>explicit out-of-scope boundary</strong> (re-id power uses the distinct <code>REID_TIER_SPECS</code> ladder; RRS scenarios live in cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-08" data-trace-id="UC-08" aria-label="Trace UC-08 — — PII-recognition oracle + injection-payload seeds for live…">UC-08</a>/09; named roadmap item), not a new scenario.</p>
+<p><strong>Explicit scope boundaries (honest bounds, post-SME).</strong> (1) CAP-02 v0.1 scores <strong>detection/anonymization power only</strong>; re-identification power is OUT (roadmap). (2) Per-cell CIs are <strong>conditional-on-this-sample</strong>; seed-to-seed rank volatility is either measured (≥2 seeds, Kendall-τ) or flagged <code>rank-volatility: UNMEASURED</code>. (3) Anti-contamination in v0.1 = per-system <code>contamination_status</code> disclosure + leaderboard flag; rotating held-out folds are roadmap (the corpus is public synthetic). (4) The agentic track is a recognition oracle + payload seed + RRS-on-transcripts — <strong>not</strong> an agent-leakage benchmark; a live-harness adapter is roadmap.</p>
+<h2>7. Concept Value Findings (§6 — representative cohort, validated-with-caveats)</h2>
+<p>6 simulated concept-value interviewers (4B representative cohort); <strong>5 of 6 completed; CM-05 refused</strong> (the orchestrator did not pass the full structured parameter set — the interviewer correctly declined rather than fabricate a transcript). Completed-member scores <strong>7–8, median 7</strong>, enthusiasm medium→high. The ceiling is <strong>consistent with cycle-1</strong>: the <strong>synthetic-only citation/claim ceiling caps at 7–8</strong>, and every academic-leaning member names the <strong>real-data correlation slice (cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a>) as the unlock to 8.5–9</strong>.</p>
+<p><strong>Convergent confirmations (validate the locked direction):</strong> seeded/byte-reproducible/pre-registered manifest is the universal academic delighter; lattice power-tiers with named under-powered shortfalls force honest reporting &quot;and that is the point&quot;; paired significance replaces indefensible ad-hoc F1; the non-strippable synthetic-only caveat is honest and usable (&quot;don&#39;t hide it&quot;); the schema seam is recognized as load-bearing <strong>but currently a validity threat, not a delivered feature</strong> (sharpens <a class="trace-link" href="04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a> to <em>documented + tested + lossless-or-explicit-lossy</em>); CAP-02 is honestly bounded vs the agentic track (re-derived by the red-teamer himself).</p>
+<p><strong>10 new signals forward-deferred to Requirements (C1–C10, additive — no backward iteration of §0–§5):</strong> C1 versioned + validated schema-seam crosswalk artifact (sharpen <a class="trace-link" href="04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a>); C2 citable/DOI-able release (Zenodo); C3 pre-written synthetic-only scope/limitations template; C4 CI smoke-diff with reference output (&lt;10 min, no quota burn — sharpen <a class="trace-link" href="04-use-cases.html#uc-20" data-trace-id="UC-20" aria-label="Trace UC-20 — — Smoke run for fast iteration (CI / local dev) · SAMPLE /…">UC-20</a>); C5 file-level provenance tagging (sharpen <a class="trace-link" href="04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a>); C6 incremental / extend-the-lattice re-run semantics (open question for <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>/21); C7 artifact-first reporting register (LaTeX/CSV, academic verdict vocabulary — <em>not</em> product &quot;SHIP-WITH-CAVEATS&quot; language — sharpen <a class="trace-link" href="04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>); C8 adversary-pluggability + |C| candidate-set disclosure (routes to cycle-1 re-id track, out of CAP-02 v0.1); C9 callable oracle API with p95 latency/throughput (routes to cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-08" data-trace-id="UC-08" aria-label="Trace UC-08 — — PII-recognition oracle + injection-payload seeds for live…">UC-08</a> oracle track; make <code>benchmark_throughput.py</code> output machine-readable in <a class="trace-link" href="04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>); C10 visible LONG_TAIL power derivation in/alongside the report.</p>
+<p><strong>Decision.</strong> No HIGH persona or value-prop change forces backward iteration. The completed cohort <strong>validates the locked CAP-02 direction</strong>. Strongest CAP-02-native new items: <strong>C1 (versioned/validated seam)</strong>, <strong>C4 (CI smoke-diff)</strong>, <strong>C7 (artifact-first register)</strong>, plus the carried-forward credibility unlock (cycle-1 <strong><a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a> real-data correlation</strong>) and <strong>C2 (citable release)</strong>.</p>
+<h2>8. Open Items for Requirements</h2>
+<ol>
+<li><strong>Route the run path through the audited statistics core</strong> (precondition 1; closes the SHOWSTOPPER): quarantine <code>pii-rate-elo/analysis/significance.py</code>, call <code>eval-data/stats/paired.py</code> + <code>intervals.py</code>. <em>Until closed, all stated-confidence outputs are PROVISIONAL.</em> (<a class="trace-link" href="04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>)</li>
+<li><strong>Reconcile the dataset seam</strong> to v2.0.0 / 575,604 / CC0 / <code>annotations</code> (precondition 2; closes the CATASTROPHIC) — as a <strong>versioned + validated crosswalk artifact</strong> with a lossless/explicit-lossy test, plus a regression contract pinning {version, record-count, 63-type count, schema fingerprint, dataset content hash}. (<a class="trace-link" href="04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a>; C1)</li>
+<li><strong>Add the powered, lattice-stratified sampler</strong> as a first-class stage emitting the <code>PowerMatrix</code> verdict + per-cell shortfall (<code>WELL_POWERED / UNDER_SAMPLED / CORPUS_LIMITED / EMPTY</code> + <code>NOT_ASSESSED</code>) as a report artifact, against <strong>realized positive counts</strong> (not target_n labels), with the design-point triple + coverage envelope in the manifest. (<a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>)</li>
+<li><strong>Bind &quot;sample&quot; to the LLM-cost-bound tracks; detection full-corpus-audited by default; declare FULL = citable.</strong> State which mode backs the citable leaderboard; the representative default reads ADEQUATE/SMALL with a named shortfall, never silently LARGE. (<a class="trace-link" href="04-use-cases.html#uc-19" data-trace-id="UC-19" aria-label="Trace UC-19 — — Full-corpus opt-in run (the “no sampling, score everythin…">UC-19</a>; POV G2/G3)</li>
+<li><strong>Per-metric CIs + paired test + RD-convergence</strong> with a deterministic interval-selection rule (Wilson default / Clopper-Pearson small-n / paired-bootstrap differences), <strong>two declared inference families</strong> (exploratory per-cell uncorrected vs confirmatory Holm–Bonferroni with family size), and RD reported as <strong>achieved max-RD + ±2RD</strong>, never extrapolated rounds. (<a class="trace-link" href="04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>/23; AX-003)</li>
+<li><strong>Pre-registration (opt-in rigor) before scoring</strong>, git-commit-anchored + hash-chained, full analysis plan in the match set, immutable, run-lineage disclosed; <strong>universal commitment is manifest-reproducibility</strong>. (<a class="trace-link" href="04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a>)</li>
+<li><strong>Observability run-record at every stage</strong> with <code>code_commit</code> + toolchain fingerprint, and <strong>file-level provenance</strong> on every emitted artifact. (<a class="trace-link" href="04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a>; C5)</li>
+<li><strong>Honest reportable leaderboard</strong>: ranks gated by paired test (ties greyed), recall-priority Fβ + AUPRC at the pre-registered operating point, all honesty flags + non-strippable synthetic-only caveat riding the headline, <strong>artifact-first register</strong> (LaTeX/CSV, academic vocabulary). (<a class="trace-link" href="04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>; C7)</li>
+<li><strong>Leaderboard hygiene + anti-gaming</strong> as governance NFRs (justified by the <code>P-tool-vendor</code> threat-model sub-archetype): held-out labels, blind/provenance-stamped submission, <code>contamination_status</code>. (<a class="trace-link" href="04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>/23)</li>
+<li><strong>Anon-vs-pseudo separation + regulatory crosswalk</strong> (AX-004) sharpened by the EU-AI-Act Art. 10/11 Aug-2026 driver (Article-11-fileable evidence; <code>P-complreviewer</code> lens). (<a class="trace-link" href="04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a>/23)</li>
+<li><strong>Real-data validation slice</strong> (correlation vs i2b2-2014/TAB) — the single highest-leverage credibility unlock; gated on external DUA, out-of-band, <strong>not v0.1-blocking</strong>; carry to Requirements + Testing Pass-2.</li>
+<li><strong>Citable/DOI-able release + scope-statement template + CI smoke-diff reference output</strong>; define <strong>incremental-resample semantics</strong> for <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>/21 or explicitly defer with rationale. (C2/C3/C4/C6)</li>
+<li><strong>Carry the cross-cycle / roadmap notes</strong> (re-id power + <code>REID_TIER_SPECS</code>, adversary-pluggability + |C|, callable-oracle latency/throughput) as named out-of-CAP-02-v0.1 items so the bounds are honest, not silent. (C8/C9; MEI-06)</li>
+</ol>
+<p><strong>ID offsets (global, never renumber/reuse):</strong> UC → <strong>16</strong>, FR → <strong>030</strong>, NFR → <strong>019</strong>, DC → <strong>16</strong> (per <code>assessment-workflow/MANIFEST-capability.md</code>). <strong>Inherited binding axioms:</strong> AX-pii-anon-001 (synthetic-only) · -002 (deterministic/seeded/byte-reproducible) · -003 (stated power: every metric declares n + CI) · -004 (anon vs pseudo, separate metric families). <strong>Frozen guardrails (do NOT regress):</strong> 730 cells @ <code>47c3a8f</code>; <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power gate; no corpus regeneration; four metric families never merged.</p>
+<p><strong>POV guardrails to carry as anti-over-claim rails (G1–G7):</strong> G1 credit the tournament/significance machinery as <em>consumed</em> (not new); G2 detection = full by default, sample = cost mode for LLM tracks; G3 the default representative mode is ADEQUATE/SMALL with named shortfall (FULL = citable); G4 RD = achieved max-RD + ±2RD, not round counts; G5 &quot;observability&quot; = statistical/epistemic instrumentation (not generic logging); G6 claim <strong>integration</strong> novelty, not method novelty (StratPPI prior art); G7 say <strong>&quot;lattice-stratified,&quot;</strong> not &quot;representative of population.&quot;</p>
+<h2>9. Methodology &amp; Epistemic Honesty</h2>
+<ul>
+<li><strong>Agent dispatches, all simulated:</strong> 3 POV critics + 6 persona researchers + JTBD/Kano/Pugh market synthesis + 5-SME UC panel + 6-member concept-value cohort (5 completed, 1 refused). All carry <code>provisional_status: AGENT_SIMULATED</code>. The <em>code/version/field/line evidence</em> in §1–§2 is <strong>direct file read at HEAD on 2026-06-01</strong> (re-verified this session: the fabricated bootstrap <code>/100</code> + Gaussian-noise and McNemar <code>n_approx=100</code>/<code>pooled_sd=0.1</code> in <code>pii-rate-elo/analysis/significance.py</code>; <code>num_records=159891</code> / <code>v1.3.0</code> / <code>CC-BY-4.0</code> pins in <code>converters/pii_anon_eval.py</code>; the derived <code>TIER_SPECS</code> 1522/753/200 and <code>REID_TIER_SPECS</code> 897/385 and three-state <code>PowerClass</code> in <code>eval-data/stats/power.py</code>).</li>
+<li><strong>Representative-scale, single-session limit.</strong> This is a synthetic benchmark assessed by small simulated cohorts in one session — directional, not confirmatory or saturated. Agent-simulated research is <strong>NOT</strong> a substitute for real users; the dev-assist-testing pass2-coordinator will refuse substitution.</li>
+<li><strong>Named Pass-2 gaps:</strong> (1) real-user validation across the whole roster (ACL/PETS authors, Presidio/GLiNER maintainers, i2b2/n2c2 participants, red-teamers, privacy engineers, DPOs); (2) the <strong><code>P-dpo</code> / assurance lens is UN-SAMPLED</strong> in the concept-value cohort (CM-05 refused) — do <strong>not</strong> treat its priority as re-confirmed; (3) the <strong>real-data correlation slice</strong> (vs i2b2-2014/TAB) is the citation unlock and remains out-of-band.</li>
+<li><strong>No corpus regeneration</strong> is implied; the lattice stays frozen at <code>47c3a8f</code>. <strong>WTP ≈ $0</strong> (CC0) — priority rests on academic credibility + strategic centrality, not revenue.</li>
+<li><strong>Source artifacts synthesized (this report):</strong> <code>00-pov-stress-test.md</code>, <code>01-motivation-background.md</code>, <code>personas.md</code>, <code>workflow-maps.md</code>, <code>03-market-research.md</code>, <code>04-use-cases.md</code>, <code>08-use-case-review-synthesis.md</code>, <code>06-concept-value-study-synthesis.md</code> (all in <code>assessment-workflow/01-discovery/</code>), grounded against cycle-1 <code>01-discovery/</code> artifacts and both repos.</li>
+</ul>
+<hr>
+<h3>Handoff signal to Requirements (post-Discovery)</h3>
+<blockquote>
+<p>CAP-02 Discovery complete (2026-06-01) — second PDLC cycle, the <em>assessment workflow</em>. <strong>8 Evaluation Scenarios (<a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a> … <a class="trace-link" href="04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a>; 6 MUST / 2 SHOULD)</strong>, all SME-reviewed (3 CATASTROPHIC + 15 MAJOR resolved in place, 0 new UC IDs); <strong>6 personas carried forward (3 HIGH / 3 MEDIUM)</strong> with <code>P-tool-vendor</code> + <code>P-complreviewer</code> folded as governance/assurance sub-archetypes; refined POV adopted (delegates tournament/convergence/significance to mature <code>pii-rate-elo</code>; contributes the powered lattice-stratified sampler + per-cell epistemic instrumentation + dataset-seam reconciliation); concept validated-with-caveats (median 7/10, capped by the synthetic ceiling; DPO lens un-sampled — CM-05 refused). Architecture locked: eval-data OWNS sampling + observability + reporting; <code>pii-rate-elo</code> CONSUMES (extend, do NOT rebuild). <strong>Top Requirements priorities, in order: (1) reconcile the drifted dataset seam to v2.0.0 / 575,604 / <code>annotations</code> / CC0 with a versioned crosswalk + regression contract (<a class="trace-link" href="04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a>) — nothing downstream is correct until this lands; (2) the NIST-powered, lattice-stratified sampler emitting the PowerMatrix verdict + per-cell named shortfall against realized positives (<a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>); (3) per-stage observability run-records with <code>code_commit</code> + file-level provenance across the load→…→report spine (<a class="trace-link" href="04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a>); (4) the pii-rate-elo assessment preset trio — powered-representative (default) / full-corpus (opt-in, citable) / smoke (CI) — wired to the audited <code>eval-data/stats</code> core with the run path quarantined from the fabricated <code>analysis/significance.py</code> (<a class="trace-link" href="04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>/19/20); (5) the academic-soundness NFRs — per-metric Wilson/Clopper-Pearson CIs, McNemar + paired-bootstrap with Holm–Bonferroni and declared inference families, RD reported as achieved max-RD ± 2RD, seeded/byte-reproducible-from-manifest (pre-registration opt-in), and the non-strippable synthetic-only / anti-anonymity caveat (AX-001/003) riding every report.</strong> Carry guardrails G1–G7 (anti-over-claim) and concept-value items C1–C10 forward. ID offsets: UC→16, FR→030, NFR→019, DC→16. <code>provisional_status: AGENT_SIMULATED</code>; real-user validation + the real-data correlation slice are Pass-2. Ready for Requirements. Run: <code>/dev-assist-requirements</code></p>
+</blockquote>
+<p>✅ <strong>Section 7 — Canonical CAP-02 Discovery Report synthesized (2026-06-01).</strong> Synthesizes §0–§6; ready for Stage-2 Requirements.</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/01-discovery/discovery-report.md</code> ·
+  content-hash <code>3a4e78c79aed</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

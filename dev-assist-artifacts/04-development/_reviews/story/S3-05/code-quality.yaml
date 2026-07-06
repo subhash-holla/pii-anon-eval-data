@@ -1,0 +1,94 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S3-05
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S3-05-01
+    severity: MINOR
+    location: tests/test_exposure_index.py:36,66,87,120,140,150
+    description: |
+      All six test functions lack an explicit `-> None` return type annotation.
+      Under `mypy --strict`, this fires `no-untyped-def` on each test function.
+      The same omission is present in the pre-existing test files (verified:
+      `test_reidentification_measured.py` has the identical pattern and the same
+      mypy finding). It is therefore a REPO-WIDE pre-existing style choice, not a
+      new regression introduced by S3-05; the executor's static-analysis claim
+      ("added/touched lines clean") is accurate relative to the project's established
+      test-file convention. Flagged as MINOR for awareness; no block.
+    suggested_resolution: |
+      Add `-> None` to each test function signature:
+        def test_fr_008_...(self) -> None:
+      This aligns with strict mypy and is the Python testing community's convention.
+      Because the same gap exists repo-wide, a single follow-on task to sweep all
+      test files would be cleaner than patching only S3-05's tests.
+    references:
+      - "https://mypy.readthedocs.io/en/stable/command_line.html#cmdoption-mypy-strict"
+
+notes: |
+  Pre-existing static nits confirmed out-of-scope (per story §12 executor disclosure,
+  verified against git show 2fda0ef~1):
+  - `src/pii_anon_datasets/scoring/reidentification.py:60` — ruff UP037 (quoted forward-ref
+    `"RRSResult"` on `from_attack` return type). Present before S3-05; belongs to the original
+    `RRSResult` code. Not fixed by S3-05 under scope-discipline / preserve-existing policy.
+  - `src/pii_anon_datasets/scoring/reidentification.py:71` — mypy `type-arg` on bare `dict`
+    return type of `as_dict`. Same: pre-existing, original `RRSResult.as_dict`. Not S3-05's line.
+  - `src/pii_anon_datasets/scoring/__init__.py:6` — ruff I001 cross-group import order
+    (`anonymization` before `adversary`). Pre-dates S3-05; the REFACTOR commit notes this
+    explicitly. Not fixed under scope discipline.
+  All three correctly left untouched.
+
+  TDD chain verified at full-SHA resolution:
+  - RED  `2fda0ef44b9541e163e577a61019ba0a45e0bac4`: adds `tests/test_exposure_index.py` +
+    story file ONLY; NO production symbols present; git show confirms production
+    `reidentification.py` is unchanged. Commit message states "5 fail, 1 passes" consistent
+    with AST import-purity guard passing on an already-clean file.
+  - GREEN `88bc2c44c3da220705eb00ac3d934703227512ee`: appends all five FR-008 symbols to
+    `reidentification.py` + exports in `__init__.py`; no existing lines modified.
+  - REFACTOR `650df0ec8ce3dbaba73947e71dd5c8732c0e3d9f`: cleans only the newly added lines
+    (`zip strict=True`, parameterized `dict[str, object]`, import order within the new import
+    block); no pre-existing lines touched.
+
+  Scope discipline confirmed clean: `git diff 2fda0ef~1 650df0e --name-only` produces exactly
+  the four story-§8 paths — `dev-assist-artifacts/.../S3-05.md` (story file update),
+  `src/pii_anon_datasets/scoring/reidentification.py`, `scoring/__init__.py`,
+  `tests/test_exposure_index.py`. Zero out-of-scope edits.
+
+  Append-only discipline on `reidentification.py` confirmed: every pre-existing line in
+  the pre-S3-05 file (`RRSResult`, `ANTI_ANONYMITY_CAVEAT`, `MeasuredRRS`,
+  `score_reidentification`) is byte-for-byte preserved in the post-REFACTOR HEAD.
+
+  Full-suite result: `156 passed in 6.25s` (150 prior + 6 new, 0 regressions) — live re-run
+  confirmed.
+
+  Test-name FR/NFR discipline: all six function names carry the `fr_008` token; test 6
+  additionally carries `nfr004`. Matches story §6 and §9.
+
+  Public API docs: all four new public symbols carry module-level docstrings
+  (`ExposureIndex`, `exposure_index`, `IndexRRSCorrelation`, `correlate_index_vs_rrs`);
+  `EXPOSURE_INDEX_NOTE` is a constant. Private helpers `_pearson_r` and `_rank` carry
+  one-line docstrings (above MINOR threshold but noted positively). `as_dict` on
+  `ExposureIndex` carries an inline comment explaining the serialization discipline.
+  Full-docs requirement satisfied on all public surfaces.
+
+  Frozen dataclasses: both `ExposureIndex` and `IndexRRSCorrelation` are `@dataclass(frozen=True)`.
+
+  Determinism (AX-002 / NFR-004): no `random`, `time`, `uuid`, `datetime`, `secrets`,
+  `numpy`, `scipy`, or `pandas` imports — statically verified by the test-suite's own
+  AST guard (test 6) and independently confirmed by reading the module.
+
+  No `unwrap()`/`expect()`/non-null-assertion patterns in the added Python code.
+  The only exception path is `__post_init__` raising `ValueError` on empty note, which is
+  the correct and intentional guard (not a panic on a production path).
+
+  n=0 graceful path: `correlate_index_vs_rrs([])` returns `IndexRRSCorrelation(nan, nan, 0)`
+  without raising — confirmed by test 5 and code inspection of the early-return branch.
+
+  Domain-pack extensions: `developer-assistant.yaml.domain_packs == []` — no active packs;
+  no pack-extension finding patterns merged.
+
+review_time_seconds: 312
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

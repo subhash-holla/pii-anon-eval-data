@@ -1,0 +1,144 @@
+# Canonical reviewer output — security-sast
+reviewer: security-sast
+gate: story
+story_id: S3-03
+iteration: 1
+mode: read-only
+verdict: APPROVE
+context_bounds_respected: true
+independence_attestation: "Bounded context; no shared state with other reviewers; reviewed only the four owned files + their direct dependencies (adversary/base.py, reidentification.py) as evidence."
+
+scope:
+  story_title: "LLM adversary (version-stamped secondary, behind the [llm] extra) — FR-010 secondary / reidx-01"
+  owned_files:
+    - src/pii_anon_datasets/scoring/adversary/llm_adversary.py
+    - src/pii_anon_datasets/scoring/adversary/__init__.py
+    - src/pii_anon_datasets/scoring/__init__.py
+    - tests/test_llm_adversary.py
+  note: >
+    Task referenced paths under scoring/...; actual repo layout places them under
+    src/pii_anon_datasets/scoring/... (resolved before review). This is the ONLY
+    network-egress path in the scoring package and was scrutinized as such.
+
+domain_packs:
+  configured: []          # developer-assistant.yaml -> domain_packs: [] (neither financial nor agentic-runtime selected for a benchmark dataset)
+  active_extensions: []   # no reviewer-extensions/security-sast.md to merge; no source_pack tags apply
+  sensitive_data_scan: true   # project invariant honored; real-PII pattern set authored in development — owned files carry no corpus data
+
+summary:
+  finding_count: 0
+  by_severity:
+    SHOWSTOPPER: 0
+    CATASTROPHIC: 0
+    MAJOR: 0
+    MINOR: 0
+    OBSERVATION: 2
+  major_plus: 0   # APPROVE iff zero MAJOR+ : satisfied
+
+primary_assertions:
+  - id: PA-1-only-egress-optin-not-headline
+    statement: >
+      The LLM/anthropic path is the ONLY network egress in the scoring package, is OPT-IN
+      (lazy import; package works without it), and is NOT wired into any default/headline
+      scoring path (headline is the offline deterministic adversary S3-02).
+    status: CONFIRMED
+    evidence:
+      - "grep across src/ for `import anthropic|anthropic.Anthropic|.messages.create`: llm_adversary.py is the SOLE egress site (zero other matches)."
+      - "LLMAdversary referenced only in its own module + the two owned export __init__.py files; no consumer/default code instantiates it."
+      - "reidentification.py (the RRS scorer / headline) contains NO reference to LLMAdversary or llm_adversary — headline path stays offline-deterministic."
+      - "Runtime: `import pii_anon_datasets.scoring; from ... import LLMAdversary` succeeds with anthropic absent and 'anthropic' NOT in sys.modules (no eager import)."
+  - id: PA-2-no-hardcoded-secret
+    statement: "No API key/secret hardcoded; the client reads creds from the anthropic SDK's own env mechanism, not source."
+    status: CONFIRMED
+    evidence:
+      - "No credential-shaped literals (sk-..., api_key=..., secret=..., bearer ..., ANTHROPIC_API_KEY) in any owned file."
+      - "Source never references api_key / os.environ / getenv — _require_anthropic().Anthropic() lets the SDK resolve creds from its own env (ANTHROPIC_API_KEY) outside source."
+  - id: PA-3-lazy-import-ast-verified
+    statement: "The anthropic import is genuinely lazy (no `import anthropic` at module top) — AST-verified."
+    status: CONFIRMED
+    evidence:
+      - "AST of llm_adversary.py: top-level imports = __future__.annotations, collections.abc.Sequence, typing.Any, .base.{Guess,Persona,Target}. anthropic at top level: False."
+      - "The ONLY `import anthropic` node is at line 50, lexically inside function `_require_anthropic` (never module top)."
+      - "Owned test test_fr_010_package_imports_without_anthropic independently AST-asserts the same; passes."
+  - id: PA-4-inert-otherwise
+    statement: "Inert otherwise — no eval/exec/subprocess/pickle/yaml; the only egress is the explicit anthropic client."
+    status: CONFIRMED
+    evidence:
+      - "No eval/exec/compile/__import__/subprocess/os.system/os.popen/pickle/marshal/shelve/yaml.load/input() in any owned file."
+      - "No direct network/io libs (socket/requests/httpx/urllib/aiohttp/os) imported at any scope; egress is solely client.messages.create via the injected/SDK anthropic client."
+      - "No weak-hash primitives (md5/sha1/hashlib)."
+  - id: PA-5-measuredrrs-nondeterministic
+    statement: "A MeasuredRRS produced by this adversary is flagged deterministic=False."
+    status: CONFIRMED
+    evidence:
+      - "LLMAdversary.deterministic = False (class attribute)."
+      - "reidentification.score_reidentification copies adversary.deterministic into MeasuredRRS.deterministic (line 176)."
+      - "Runtime: score_reidentification(stub-LLM adversary,...) -> MeasuredRRS.deterministic is False; adversary_id 'llm:claude-x@v1' pinned. Asserted."
+  - id: PA-env-egress-unreachable
+    statement: "anthropic absent -> the live egress path is unreachable in this env."
+    status: CONFIRMED
+    evidence:
+      - "importlib.util.find_spec('anthropic') is None."
+      - "Live-attack test (test 5) SKIPPED via pytest.importorskip('anthropic') at line 234: 'could not import anthropic: No module named anthropic'. Owned suite: 4 passed, 1 skipped."
+
+findings:
+  - id: S3-03-SAST-OBS-1
+    severity: OBSERVATION
+    title: "Real candidate source_text is the substantive content crossing the egress boundary (inherent to the adversary's purpose)"
+    file: src/pii_anon_datasets/scoring/adversary/llm_adversary.py
+    lines: "66-86, 159-164"
+    description: >
+      When the live path runs, _build_prompt sends each candidate's real (gold) source_text
+      and the target's anonymized_text to the anthropic API (messages.create). This is the
+      intended mechanic of a re-identification adversary (it must compare the pseudonymous
+      target against REAL candidates), and in this repo the corpus is SYNTHETIC (no real PII).
+      No breach. Recorded only so the data egress is documented: the live LLM path transmits
+      real-side corpus text to a third-party API; operators enabling the [llm] extra against a
+      non-synthetic corpus should treat that as an explicit data-egress decision.
+    breach: false
+    recommendation: "No change required for this synthetic-corpus benchmark. If a future egress-manifest is introduced, declare this route there."
+  - id: S3-03-SAST-OBS-2
+    severity: OBSERVATION
+    title: "Egress payload is unbounded by row count under default |C| (cost/exposure surface, not a security defect)"
+    file: src/pii_anon_datasets/scoring/adversary/llm_adversary.py
+    lines: "153-164"
+    description: >
+      attack() issues one messages.create per target, each prompt embedding up to
+      candidate_set_size candidates' source_text. With the package default
+      DEFAULT_CANDIDATE_SET_SIZE = 2500 this is a large outbound surface if invoked at scale.
+      Opt-in and never on the headline path, so no current breach; monitor if/when a CLI or
+      default wiring ever exposes it.
+    breach: false
+    recommendation: "Monitor; ensure any future default wiring keeps |C| explicit and the path opt-in."
+
+common_findings_checklist:   # 15-pattern catalog applicability for this Python scoring story
+  composition_root_ban: N/A           # no Rust crate/composition-root in this Python package
+  capability_outside_registry: N/A    # no capability registry in scope for this story
+  trust_boundary_mediator_bypass: N/A
+  unsafe_without_safety_comment: N/A  # Python; no `unsafe`
+  cve_in_new_dep: PASS                # no new dep added/pinned by this story; anthropic is an OPTIONAL [llm] extra, not vendored/pinned-by-git here
+  hsm_signing_contract: N/A
+  egress_not_declared: OBSERVATION    # no egress-manifest exists in repo; egress documented in OBS-1
+  hardcoded_credential: PASS
+  sql_nosql_injection: N/A            # no DB access; prompt string is LLM input, not a query
+  git_pinned_dep: PASS               # no git = "..." dep introduced
+  denied_license_dep: PASS           # no dep introduced
+  wildcard_capability_scope: N/A
+  tokio_spawn_across_boundary: N/A   # Python; no tokio
+  architectural_egress_import: PASS  # no cross-package illegal import; llm adversary depends only on .base
+  weak_hash_primitive: PASS
+
+out_of_scope_deferred:
+  - "Code style / formatting -> code-quality"
+  - "Performance/cost of the egress at scale -> performance-benchmark (noted as OBS-2 only as a surface, not measured)"
+  - "Threat-model completeness -> SME concern, not per-story"
+
+verification_log:
+  - "AST scan: anthropic import only inside _require_anthropic (line 50); zero top-level."
+  - "grep: zero eval/exec/subprocess/pickle/yaml/socket/requests/httpx/urllib in owned files."
+  - "grep: zero credential-shaped literals; zero api_key/getenv/os.environ refs in source."
+  - "grep: anthropic egress is sole in src/; LLMAdversary not wired into reidentification/headline."
+  - "runtime: scoring + LLMAdversary import with anthropic absent, no eager import; instantiate w/o extra raises clear RuntimeError naming pii-anon-datasets[llm]."
+  - "runtime: MeasuredRRS via LLM adversary -> deterministic=False (propagated from adversary.deterministic)."
+  - "pytest tests/test_llm_adversary.py: 4 passed, 1 skipped (live egress test importorskip-skipped, anthropic absent)."
+  - "sensitive_data: zero SSN/ABA/card/email/phone/real-PII shapes in owned files (synthetic fixtures only); domain_packs empty so no pack patterns merged."

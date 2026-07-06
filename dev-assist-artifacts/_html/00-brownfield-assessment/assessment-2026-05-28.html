@@ -1,0 +1,1596 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Brownfield Assessment — pii-anon-eval-data — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="00-brownfield-assessment">
+<h1>Brownfield Assessment — pii-anon-eval-data</h1>
+<p><strong>Date</strong>: 2026-05-28
+<strong>Assessment by</strong>: developer-assistant v0.1.0, <code>dev-assist-brownfield-assessment</code> skill
+<strong>Project root</strong>: /Users/subhashholla/Development/pii_anonymize_pseudonymize/pii-anon-core/pii-anon-eval-data</p>
+<blockquote>
+<p><strong>Framing note.</strong> This project is a <strong>synthetic PII benchmark dataset + Python evaluation harness</strong>, not a product with an end-user UI. The PDLC rubric is applied with the benchmark-dataset vocabulary remap recorded in <code>developer-assistant.yaml</code> and <code>MANIFEST.md</code>. &quot;Personas&quot; = benchmark consumers; &quot;UI metaphor&quot; = consumer surface (Python API / CLI / dataset card); accessibility is N/A by design. Ratings call the <em>methodology rigor</em> of the existing artifacts — not the quality of the data, which is substantial.</p>
+</blockquote>
+<hr>
+<h2>1. Project Profile</h2>
+<h3>Identity</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Name</td>
+<td>pii-anon-eval-data (<code>pii-anon-datasets</code>)</td>
+</tr>
+<tr>
+<td>Description</td>
+<td>Multilingual 3-tier benchmark for PII detection, anonymization quality, and LLM re-identification resistance</td>
+</tr>
+<tr>
+<td>Primary language</td>
+<td>Python (<code>requires-python &gt;=3.10</code>, <code>pyproject.toml:14</code>)</td>
+</tr>
+<tr>
+<td>Framework</td>
+<td>None (data package + scripts)</td>
+</tr>
+<tr>
+<td>Runtime category</td>
+<td>library + dataset + evaluation harness</td>
+</tr>
+</tbody></table>
+<h3>Scope</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>File count</td>
+<td>~30 source/doc files + 24 <code>.jsonl.gz</code> data files</td>
+</tr>
+<tr>
+<td>Top-level dirs</td>
+<td><code>src/</code>, <code>scripts/</code>, <code>baselines/</code>, <code>integrations/</code>, <code>docs/</code></td>
+</tr>
+<tr>
+<td>Data scale</td>
+<td>159,891 records, ~1.24M annotations (<code>README.md:14-16</code>)</td>
+</tr>
+<tr>
+<td>Scope class</td>
+<td><strong>single-user / solo-maintainer</strong> (1 git author; self-funded, <code>DATASHEET.md:14</code>)</td>
+</tr>
+</tbody></table>
+<h3>Maturity</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Git commits</td>
+<td>8 (<code>git rev-list --count</code>)</td>
+</tr>
+<tr>
+<td>Unique contributors</td>
+<td>1 (solo)</td>
+</tr>
+<tr>
+<td>Version</td>
+<td>1.3.0 (<code>pyproject.toml:6</code>, README/CHANGELOG)</td>
+</tr>
+<tr>
+<td>Last commit</td>
+<td><code>19ce769 v1.3.0: Tier 3 evaluation infrastructure</code></td>
+</tr>
+<tr>
+<td>Dependency-lock style</td>
+<td>none (no lockfile; no declared deps)</td>
+</tr>
+<tr>
+<td>History note</td>
+<td>a <code>v2.0.0</code> commit already exists out-of-sequence in history (<code>70fa172</code>, between v1.0.0 and v1.1.0) — a prior aborted/renamed v2.0.0. <strong>Relevant because this effort also targets v2.0.0; reconcile the version narrative.</strong></td>
+</tr>
+</tbody></table>
+<h3>Tooling</h3>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Linter</td>
+<td><strong>none</strong> (no ruff/flake8 config)</td>
+</tr>
+<tr>
+<td>Formatter</td>
+<td><strong>none</strong> (no black/ruff-format config)</td>
+</tr>
+<tr>
+<td>Type-checker</td>
+<td><strong>none</strong> (no mypy config)</td>
+</tr>
+<tr>
+<td>Test framework</td>
+<td><strong>none</strong> (no <code>tests/</code>, no <code>test_*.py</code>, no <code>conftest.py</code>, no pytest config)</td>
+</tr>
+<tr>
+<td>CI</td>
+<td><strong>none</strong> (no <code>.github/workflows</code>, no pre-commit)</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>Single-user scope override is <strong>active and documented</strong>: cohort/tiering steps in downstream stages may be run at the user&#39;s chosen depth (the user elected <strong>full rigor</strong>, so the simulated cohorts will run rather than collapse). The accountability matrix reflects a solo maintainer.</p>
+</blockquote>
+<hr>
+<h2>2. Per-Stage Signal Extraction</h2>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Signal dimension</th>
+<th>Rating</th>
+<th>Top evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Discovery</td>
+<td>Personas (benchmark consumers)</td>
+<td>WEAK</td>
+<td>Implied by <code>DATASHEET.md:104-110</code> (&quot;Uses&quot;: NER, multilingual NER, coreference, adversarial robustness, privacy-risk research) and <code>README.md:5-8</code>; no named persona docs</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>Use cases (eval scenarios)</td>
+<td>PARTIAL</td>
+<td><code>DATASHEET.md:104-110</code> + <code>README.md:243-277</code> enumerate consumer tasks; not in <span class="trace-def" id="uc-nn" data-trace-id="UC-NN">UC-NN</span> situation/intent/outcome form</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>Workflow maps</td>
+<td>WEAK</td>
+<td>Consumer flow visible in <code>README.md:42-67</code> (Quick Start) + <code>:297-333</code> (Scripts); no P/G/O-annotated maps</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>Market context</td>
+<td><strong>STRONG</strong></td>
+<td><code>COMPARISON.md</code> (head-to-head vs 9 benchmarks, full feature matrix) + <code>docs/PUGH_CHART_ANALYSIS.md</code> (8 weighted criteria)</td>
+</tr>
+<tr>
+<td>Discovery</td>
+<td>Concept value</td>
+<td>MISSING</td>
+<td>No user study, NPS, or cohort feedback anywhere</td>
+</tr>
+<tr>
+<td>Requirements</td>
+<td>Functional reqs (capabilities)</td>
+<td>PARTIAL</td>
+<td>Capabilities richly described (<code>README.md:69-197</code>, <code>CHANGELOG.md</code>); <code>scripts/validate.py</code> 8 checks ≈ acceptance criteria; no <span class="trace-def" id="fr-nn" data-trace-id="FR-NN">FR-NN</span> with Given/When/Then</td>
+</tr>
+<tr>
+<td>Requirements</td>
+<td>Quantified NFRs (quality attrs)</td>
+<td>WEAK</td>
+<td>DATASHEET claims &quot;0 errors&quot; + coverage guarantee (<code>DATASHEET.md:49-50</code>); no NFR doc with thresholds/measurement/percentiles; <strong>no statistical-power methodology</strong></td>
+</tr>
+<tr>
+<td>Requirements</td>
+<td>Traceability</td>
+<td>MISSING</td>
+<td>No UC↔FR↔test matrix</td>
+</tr>
+<tr>
+<td>Requirements</td>
+<td>Prioritization</td>
+<td>MISSING</td>
+<td>CHANGELOG records what shipped, not prioritized MUST/SHOULD/OUT</td>
+</tr>
+<tr>
+<td>Requirements</td>
+<td>Threshold validation</td>
+<td>MISSING</td>
+<td>No R10-style validation</td>
+</tr>
+<tr>
+<td>Design</td>
+<td>Design cases (components)</td>
+<td>WEAK</td>
+<td>Module/<code>scripts/</code> boundaries imply components; no <span class="trace-def" id="dc-nn" data-trace-id="DC-NN">DC-NN</span> with FR→DC mapping</td>
+</tr>
+<tr>
+<td>Design</td>
+<td>Workflow shape</td>
+<td>PARTIAL</td>
+<td>Clear linear batch pipeline: generate→enrich→merge→validate→split→export (<code>README.md:297-333</code>, <code>DATASHEET.md:66-71</code>)</td>
+</tr>
+<tr>
+<td>Design</td>
+<td>UI metaphor</td>
+<td>N/A</td>
+<td>No UI; consumer surface is Python API + CLI + files</td>
+</tr>
+<tr>
+<td>Design</td>
+<td>System archetype</td>
+<td>PARTIAL</td>
+<td>Implicit modular batch system (generators / enrichers / baselines / integrations); undocumented as an archetype</td>
+</tr>
+<tr>
+<td>Design</td>
+<td>Architecture pattern</td>
+<td>WEAK</td>
+<td><code>scripts/</code> import from <code>src/</code>; loose coupling, undocumented dependency direction</td>
+</tr>
+<tr>
+<td>Design</td>
+<td>Cross-cutting axioms</td>
+<td>MISSING</td>
+<td>No determinism / no-real-PII / privacy axiom checklist existed (now seeded at <code>00-axioms/project-axioms.yaml</code>)</td>
+</tr>
+<tr>
+<td>Development</td>
+<td>TDD discipline</td>
+<td>MISSING</td>
+<td>0 tests; commits are version bumps, no RED→GREEN pattern</td>
+</tr>
+<tr>
+<td>Development</td>
+<td>Story discipline</td>
+<td>WEAK</td>
+<td>Coarse version-bump commits (&quot;v1.3.0: …&quot;); no stories/epics/DoD</td>
+</tr>
+<tr>
+<td>Development</td>
+<td>Review gates</td>
+<td>MISSING</td>
+<td>Solo; no CODEOWNERS, branch protection, or PR process</td>
+</tr>
+<tr>
+<td>Development</td>
+<td>Reviewer specialization</td>
+<td>MISSING</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Development</td>
+<td>CI quality</td>
+<td>MISSING</td>
+<td>No CI, linter, formatter, or type-checker</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Test type coverage</td>
+<td>WEAK</td>
+<td><code>scripts/validate.py</code> (8 schema checks) + <code>baselines/evaluate.py</code> (eval harness) exist; <strong>no unit/integration test suite</strong></td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Benchmark harness</td>
+<td>PARTIAL</td>
+<td><code>baselines/evaluate.py</code> computes strict/partial/F2 + per-type/domain (<code>README.md:286</code>); only <strong>regex</strong> scored on <strong>500</strong> records (<code>baselines/results/regex_test.json</code>); Presidio/LLM unrun</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Accessibility tests</td>
+<td>N/A</td>
+<td>No UI surface</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Examples + tests pairs</td>
+<td>WEAK</td>
+<td>README examples exist; no example↔test pairing</td>
+</tr>
+</tbody></table>
+<h3>Aggregate per-stage rating</h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Rating</th>
+<th>Strongest dimension</th>
+<th>Weakest dimension</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Discovery</td>
+<td><strong>PARTIAL</strong></td>
+<td>Market context (STRONG)</td>
+<td>Concept value (MISSING)</td>
+</tr>
+<tr>
+<td>Requirements</td>
+<td><strong>PARTIAL</strong></td>
+<td>Functional capabilities</td>
+<td>Traceability / prioritization / threshold-validation (MISSING)</td>
+</tr>
+<tr>
+<td>Design</td>
+<td><strong>WEAK</strong></td>
+<td>Workflow shape (PARTIAL)</td>
+<td>Cross-cutting axioms (MISSING)</td>
+</tr>
+<tr>
+<td>Development</td>
+<td><strong>WEAK</strong></td>
+<td>(functional code exists &amp; runs)</td>
+<td>TDD / CI / review gates (MISSING)</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td><strong>WEAK→PARTIAL</strong></td>
+<td>Benchmark harness (PARTIAL)</td>
+<td>Test-type coverage (WEAK)</td>
+</tr>
+</tbody></table>
+<p><strong>Headline:</strong> the <em>content/data</em> is mature and differentiated; the <em>engineering and verification discipline</em> is the gap. This is a strong dataset wrapped in an unverified, undocumented-as-requirements pipeline.</p>
+<hr>
+<h2>3. Findings (5-Severity Taxonomy)</h2>
+<table>
+<thead>
+<tr>
+<th>Severity</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SHOWSTOPPER</td>
+<td>0</td>
+</tr>
+<tr>
+<td>CATASTROPHIC</td>
+<td>1</td>
+</tr>
+<tr>
+<td>MAJOR</td>
+<td>6</td>
+</tr>
+<tr>
+<td>MINOR</td>
+<td>5</td>
+</tr>
+<tr>
+<td>OBSERVATION</td>
+<td>5</td>
+</tr>
+</tbody></table>
+<h3>SHOWSTOPPER</h3>
+<ul>
+<li>(none) — working source, rich README, real data and harness present.</li>
+</ul>
+<h3>CATASTROPHIC</h3>
+<ul>
+<li><strong>C1 — Zero automated tests; the scoring harness itself is unverified.</strong> No <code>tests/</code>, no <code>test_*.py</code>, no CI (<code>find</code> + CI scan returned nothing). Every headline claim (annotation correctness, F1/F2 math, k-anonymity/RRS scoring) rests on <code>baselines/evaluate.py</code> + <code>scripts/enrich_*.py</code> that have no regression protection. For a benchmark whose <em>value is measurement correctness</em>, this is the critical gap. <strong>Resolution:</strong> Stage 4 builds a pytest suite (strict TDD) around the eval harness, validators, and a sample of generators before any v2.0.0 schema change.</li>
+</ul>
+<h3>MAJOR</h3>
+<ul>
+<li><strong>M1 — Documentation/data version drift undermines credibility.</strong> Record count, entity-type count, and version disagree across docs: <code>DATASHEET.md:1,22</code> (v1.1.0 / 117,752 / 57 types), <code>TAXONOMY.md:1</code> (v1.2.0, lists ~80 type rows but claims 65), <code>README.md:3,18</code> (v1.3.0 / 159,891 / 65), <code>COMPARISON.md</code> (mixes v1.2/v1.3, &quot;117K/151K/150K&quot;). README&#39;s own schema example still shows <code>&quot;version&quot;: &quot;1.2.0&quot;</code> (<code>README.md:205</code>). <strong>Resolution:</strong> single source of truth for counts/version; regenerate docs from data.</li>
+<li><strong>M2 — No quantified NFRs and no statistical-power methodology.</strong> Both research briefs make per-slice statistical power the difference between &quot;a big dataset&quot; and &quot;a credible benchmark&quot; (<code>pii_eval_may26.md</code> §&quot;Recommended evaluation program&quot;: ≥753 positives for recall≈0.98 ±1pp; stratified enrichment for rare classes). The project has coverage prose but no sample-size-per-slice, per-metric CIs, or calibration. <strong>Resolution:</strong> Stage 2 NFRs quantify these; encoded as axiom AX-pii-anon-003.</li>
+<li><strong>M3 — No traceability</strong> between claimed capabilities and any verification artifact. <strong>Resolution:</strong> Stage 2 traceability matrix; Stage 4 ties tests to FR/NFR IDs.</li>
+<li><strong>M4 — Benchmark is largely unrun: only one partial baseline.</strong> <code>baselines/results/</code> contains only <code>regex_test.json</code> (500 records; strict F1 0.5335, recall 0.3846). Presidio + LLM baselines are coded but unscored; there is no leaderboard. A benchmark with one partial baseline cannot yet substantiate comparative claims. <strong>Resolution:</strong> run/score Presidio + Claude on the full test set; publish a leaderboard surface (HF).</li>
+<li><strong>M5 — Reproducibility/installability gaps in <code>pyproject.toml</code>.</strong> No <code>[project.dependencies]</code>; baselines import <code>presidio</code>, <code>openai</code>, <code>anthropic</code> (<code>README.md:284-286</code>) with nothing declaring them; no dev-deps (pytest); no entry points; classifier asserts <code>Development Status :: 5 - Production/Stable</code> (<code>pyproject.toml:11</code>) despite 0 tests/CI. <strong>Resolution:</strong> declare runtime + optional <code>[baselines]</code>/<code>[dev]</code> extras; downgrade status until tests land.</li>
+<li><strong>M6 — Anonymization and pseudonymization are not actually <em>scored</em>.</strong> <code>evaluate.py</code> scores detection (span F1) only. Tier-2/Tier-3 fields are <strong>precomputed annotations on records</strong>, not a harness that ingests a <em>system&#39;s</em> anonymized/pseudonymized output and scores residual re-id risk, utility, reversal integrity, or collision. This is the core thesis of the effort and is currently absent as scoring capability. <strong>Resolution:</strong> Stage 3 designs separate anon/pseudo scoring APIs (axiom AX-pii-anon-004); Stage 4 builds them.</li>
+</ul>
+<h3>MINOR</h3>
+<ul>
+<li><strong>m1 — Personas implicit, not formalized</strong> (<code>DATASHEET.md:104-110</code>). Formalize 6 consumer personas in Discovery.</li>
+<li><strong>m2 — Use cases described as prose &quot;uses,&quot; not <a class="trace-link" href="#uc-nn" data-trace-id="UC-NN">UC-NN</a></strong> form. Convert in Discovery §4.</li>
+<li><strong>m3 — Partial-overlap scoring may be inert.</strong> <code>regex_test.json</code> shows <code>partial_f1 == strict_f1 == 0.5335</code> and <code>partial_matches: 0</code> overall — partial-credit path looks unexercised/untested. Verify in Stage 4.</li>
+<li><strong>m4 — Version-history confusion.</strong> Stale <code>v2.0.0</code> commit (<code>70fa172</code>) predates v1.1.0. Document the version narrative before re-using v2.0.0.</li>
+<li><strong>m5 — No design artifacts</strong> (DC roster, architecture pattern, axioms) — system shape is implicit only.</li>
+</ul>
+<h3>OBSERVATION</h3>
+<ul>
+<li><strong>o1 — <code>COMPARISON.md</code> + <code>docs/PUGH_CHART_ANALYSIS.md</code> are near-methodology-grade market research</strong> → extract directly into Discovery §3 (KEEP_AS_IS / MERGE), refresh competitor data with 2025-26 web research.</li>
+<li><strong>o2 — <code>DATASHEET.md</code> (Gebru framework) is a strong base</strong> → extract into Requirements + distribution; refresh to v2.0.0 and resolve the training-vs-evaluation contradiction below.</li>
+<li><strong>o3 — <code>TAXONOMY.md</code> is a strong entity spec</strong> → extract into Requirements; reconcile the 57/65/~80 type-count discrepancy first.</li>
+<li><strong>o4 — The <code>scripts/</code> pipeline (15 scripts) + <code>baselines/</code> + <code>integrations/</code> are reusable</strong> → WRAP, don&#39;t rebuild; layer tests + new metrics on top.</li>
+<li><strong>o5 — Intended-use contradiction.</strong> <code>DATASHEET.md:116</code> says &quot;should not be used for training,&quot; yet the project ships 70/10/20 <strong>train</strong> splits (<code>README.md:55-57</code>) and a CoNLL exporter that emits <code>label2id.json</code> for HF <strong>training</strong> (<code>integrations/conll_format.py</code>). Resolve the dataset&#39;s intended-use statement.</li>
+</ul>
+<hr>
+<h2>4. Bring-Forward Plan (Impact × Effort)</h2>
+<h3>High impact / Low effort (do first)</h3>
+<ol>
+<li><strong>Reconcile version/count drift</strong> (M1) — one source of truth; regenerate docs. Effort: S.</li>
+<li><strong>Declare deps + dev/baseline extras; fix status classifier</strong> (M5) — installable + reproducible. Effort: S.</li>
+<li><strong>Add a minimal CI workflow</strong> (lint + validate + pytest) so every later change is gated. Effort: S.</li>
+<li><strong>Run + score Presidio + Claude baselines on the full test set</strong> (M4) — first real leaderboard rows. Effort: M.</li>
+</ol>
+<h3>High impact / High effort (plan into Development)</h3>
+<ol>
+<li><strong>pytest suite around the eval/enrich/validate code</strong> (C1), strict TDD. Effort: M-L.</li>
+<li><strong>Separate anonymization &amp; pseudonymization scoring harnesses</strong> (M6) — residual re-id + utility; reversal/collision/referential-integrity. Effort: L.</li>
+<li><strong>Statistical-power layer</strong> (M2) — stratified enrichment + sample-size planner + per-slice CIs. Effort: L.</li>
+<li><strong>Calibration (ECE/Brier) + reliability + abstention</strong>, and <strong>agentic-leakage scored suite</strong>. Effort: M-L each.</li>
+</ol>
+<h3>Low impact / Low effort (polish)</h3>
+<ol>
+<li>Formalize personas (m1) + UCs (m2); tag examples↔tests.</li>
+<li>Verify/repair partial-overlap scoring (m3).</li>
+</ol>
+<h3>Low impact / High effort (defer)</h3>
+<ol>
+<li><strong>Real-user Pass-2 study</strong> with benchmark consumers — defer to a post-v2.0.0 follow-up (cannot be agent-simulated; see §6).</li>
+</ol>
+<hr>
+<h2>5. Retroactive Artifact Proposals</h2>
+<h3>Discovery (retroactive)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Extractable</th>
+<th>Gaps to fill</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>personas.md</code></td>
+<td>~6 consumer personas inferable from DATASHEET Uses</td>
+<td>tier-of-care, sub-archetypes, adoption signal</td>
+</tr>
+<tr>
+<td><code>use-cases.md</code></td>
+<td>~8-12 eval scenarios from DATASHEET Uses + README dimensions</td>
+<td>situation/intent/outcome, acceptance, anti-cases</td>
+</tr>
+<tr>
+<td><code>market-research.md</code></td>
+<td><strong>STRONG</strong> from COMPARISON + PUGH_CHART_ANALYSIS</td>
+<td>refresh 2025-26 competitors (PIIBench, PrivaCI-Bench, AgentDojo, WebPII); JTBD + Kano</td>
+</tr>
+<tr>
+<td><code>discovery-report.md</code></td>
+<td>synthesize after above</td>
+<td>synthesis pass</td>
+</tr>
+</tbody></table>
+<h3>Requirements (retroactive)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Extractable</th>
+<th>Gaps to fill</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>functional-requirements.md</code></td>
+<td>capabilities from README/CHANGELOG/TAXONOMY</td>
+<td>Given/When/Then; boolean-testable verification</td>
+</tr>
+<tr>
+<td><code>non-functional-requirements.md</code></td>
+<td>coverage/validation guarantees from DATASHEET</td>
+<td>quantified thresholds, <strong>statistical power</strong>, calibration, determinism, ethics</td>
+</tr>
+<tr>
+<td><code>traceability-matrix.md</code></td>
+<td>(after R8)</td>
+<td>full UC↔FR/NFR↔DC↔Task↔Test</td>
+</tr>
+<tr>
+<td>threshold-validation</td>
+<td>(R10)</td>
+<td>per-NFR threshold stress-test</td>
+</tr>
+</tbody></table>
+<h3>Design (retroactive)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Extractable</th>
+<th>Gaps to fill</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>design-cases</td>
+<td>components from <code>src/</code>+<code>scripts/</code> boundaries</td>
+<td>DC roster + FR→DC map (corpus/schema/generation/eval/scoring/distribution)</td>
+</tr>
+<tr>
+<td>system/architecture</td>
+<td>apparent linear-batch + modular shape</td>
+<td>documented archetype + the <strong>v2.0.0 schema + migration</strong> decision</td>
+</tr>
+<tr>
+<td><code>D-implementation-ready-design.md</code></td>
+<td>synthesis</td>
+<td>anon/pseudo scoring APIs, calibration, statistical-power, agentic-leakage models</td>
+</tr>
+</tbody></table>
+<h3>Development / Testing (retroactive)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Extractable</th>
+<th>Gaps to fill</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>test suite</td>
+<td>validate.py checks convertible to assertions</td>
+<td>full pytest suite + fixtures + CI</td>
+</tr>
+<tr>
+<td>NFR verification matrix</td>
+<td>regex baseline row</td>
+<td>all baselines × slices, per-slice CIs, calibration</td>
+</tr>
+<tr>
+<td>examples+tests catalog</td>
+<td>README examples</td>
+<td>1:1 example↔test pairs per component</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>6. Pass-2 Recommendations (real-user/SME — not agent-simulable)</h2>
+<table>
+<thead>
+<tr>
+<th>Recommendation</th>
+<th>Reason</th>
+<th>Suggested protocol</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Benchmark-consumer interviews</td>
+<td>Personas inferred, not validated</td>
+<td>5-8 real researchers/privacy engineers</td>
+</tr>
+<tr>
+<td>Real-detector leaderboard submissions</td>
+<td>Only synthetic/own baselines exist</td>
+<td>invite external systems to score on the test set</td>
+</tr>
+<tr>
+<td>SME review of anon/pseudo scoring design</td>
+<td>New, high-stakes scoring semantics</td>
+<td>1-2 privacy-eval SMEs review the metric definitions</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>7. Methodology Block (Epistemic Honesty)</h2>
+<p><strong>What this assessment is:</strong> a structural, citation-backed pattern-match of existing project state against PDLC rigor rubrics, adapted for a benchmark-dataset project.</p>
+<p><strong>What it is not:</strong> a code review (data/annotation <em>correctness</em> is out of scope — flagged for Stage 4 testing), nor a verdict on dataset quality (the data is substantial and differentiated).</p>
+<p><strong>What it can&#39;t see:</strong> the maintainer&#39;s implicit design intent, unwritten priorities, and any real-user signal held outside the repo. The single-user override means several &quot;MISSING process&quot; findings (review gates, story discipline) reflect a solo workflow, not negligence — they become relevant precisely because the goal is now a <em>publishable, world-class</em> benchmark with external consumers.</p>
+<hr>
+<h2>8. Next Steps</h2>
+<p>Per the approved master plan, proceed to <strong>CHECKPOINT 1</strong> (this report) → <strong>Stage 1 Discovery</strong> in brownfield mode:
+<code>/dev-assist-discovery</code> — extracts the STRONG market-research + entity-spec signal, formalizes the 6 consumer personas and eval-scenario use cases, and refreshes competitor data with 2025-26 web research. Discovery will surface MISSING/WEAK signals as explicit open items rather than silently filling them.</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>00-brownfield-assessment/assessment-2026-05-28.md</code> ·
+  content-hash <code>6e4ba2e6885e</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

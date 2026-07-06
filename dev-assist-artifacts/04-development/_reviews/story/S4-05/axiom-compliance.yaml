@@ -1,0 +1,120 @@
+# Axiom-compliance review — STORY gate S4-05 (iteration 1)
+schema_version: 1
+review:
+  reviewer: dev-assist-development-axiom-compliance
+  gate: story
+  story_id: S4-05
+  iteration: 1
+  mode: read-only
+  date: 2026-05-30
+  repo: pii-anon-eval-data
+  branch: feat/v2-scoring-harness
+  axioms_source: dev-assist-artifacts/00-axioms/project-axioms.yaml
+  story_source: dev-assist-artifacts/04-development/02-stories/sprint-4/S4-05.md
+  owned_files:
+    - src/pii_anon_datasets/reporting/viz.py
+    - src/pii_anon_datasets/reporting/__init__.py
+    - pyproject.toml
+    - tests/test_viz.py
+
+verdict: APPROVE
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 2
+context_bounds_respected: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Axiom slice triggered by this diff (viz layer renders the privacy-utility
+# Pareto + calibration/coverage report artifacts; ships a new optional extra
+# and synthetic test fixtures). Relevant axioms: AX-004 (anon/pseudo separation,
+# the project's NFR-005 viz-relevant axiom), AX-002 (deterministic-reproducible),
+# AX-001 (synthetic-only). NFR-004 (core-pure / viz-optional) is the design
+# boundary the story stakes and is verified here as the carrier of AX-004's
+# "no fusion" guarantee at the module-boundary level.
+# ─────────────────────────────────────────────────────────────────────────────
+
+axiom_checks:
+
+  - axiom: AX-pii-anon-004
+    name: anonymization-pseudonymization-separation
+    aka: NFR-005 (the viz-relevant axiom — two axes, never a merged scalar)
+    status: UPHELD
+    severity: none
+    evidence:
+      - "pareto_plot(points, path) signature takes Sequence[tuple[float,float,str]] = (residual_risk, utility, label); there is NO scalar/score parameter and NO merge path — verified by inspect.signature + getsource at runtime."
+      - "Function body unpacks `for residual_risk, utility, label in points` and scatters x=float(residual_risk) (privacy axis) vs y=float(utility) (utility axis); axis labels read 'residual re-identification risk (privacy axis)' / 'downstream utility (utility axis)'. A viz fn structurally cannot fuse the axes — it receives them already separate (viz.py:105-127)."
+      - "viz.py does NOT hard-import scoring / ParetoPoint: AST of viz.py shows the only imports are __future__, collections.abc.Sequence, dataclasses.dataclass, typing.Any (module-level) + matplotlib (nested in _require_matplotlib). The two `scoring`/`ParetoPoint` string occurrences (lines 11,12,110) are docstring PROSE only — `grep '^\\s*(import|from).*(scoring|ParetoPoint)'` returns zero import statements."
+      - "Cross-check against the real type (read-only context): scoring/anonymization.py ParetoPoint DELIBERATELY exposes no combined/overall/deid/score property and no __float__; residual_risk:MeasuredRRS and utility:UtilityScore are different types; as_dict() emits two SEPARATE sub-objects. The caller-unpacks-into-two-axes contract is faithful to the source type's design intent."
+    notes: "The design's load-bearing AX-004 guarantee (privacy and utility never collapse to one de-identification number) is preserved end-to-end into the report layer: the only thing pareto_plot can do with its inputs is plot them on two orthogonal axes."
+
+  - axiom: NFR-004
+    name: core-pure-stdlib / viz-optional-extra (module-boundary carrier of AX-004)
+    status: UPHELD
+    severity: none
+    evidence:
+      - "AST guard: viz.py has ZERO module-level matplotlib imports; `import matplotlib` and `import matplotlib.pyplot` appear ONLY at lines 54/57 inside _require_matplotlib (verified by independent AST walk of tree.body + full-tree visitor). test_nfr004_viz_no_toplevel_matplotlib_import pins this in the suite."
+      - "Independent runtime proof: with builtins.__import__ sabotaged to reject 'matplotlib', `import pii_anon_datasets.reporting` SUCCEEDS, exposes pareto_plot/reliability_diagram, and matplotlib is NOT present in sys.modules afterward. The reporting/__init__ re-export (`from .viz import ...`) defines the fns without importing matplotlib."
+      - "Render-without-extra raises a clear RuntimeError naming 'pip install pii-anon-datasets[viz]' (viz.py:59-61) — not a bare ImportError leaking from deep in a render call. Verified at runtime."
+      - "pyproject.toml [project.optional-dependencies] declares `viz = [\"matplotlib\"]` (line 37). This also resolves the previously-dangling install hint at stats/power.py:405 (`pip install pii-anon-datasets[viz]`) — the latent gap the story committed to close; confirmed power.py's hint string now has a backing extra."
+    notes: "Core scoring/stats stays pure-stdlib; matplotlib is genuinely behind the [viz] extra and lazily imported. This boundary is what makes the 'viz cannot fuse the axes' property robust — viz never reaches into scoring at all."
+
+  - axiom: AX-pii-anon-002
+    name: deterministic-reproducible-generation (render-determinism facet)
+    status: UPHELD
+    severity: none
+    evidence:
+      - "Tests correctly DO NOT assert PNG byte-equality. _assert_nonempty_png asserts (a) file exists, (b) size > 0, (c) first 8 bytes == PNG magic \\x89PNG\\r\\n\\x1a\\n (test_viz.py:85-90). This is the correct contract: matplotlib embeds a creation timestamp in PNG metadata, so byte-equality would be a false-determinism trap."
+      - "Rationale is documented in BOTH the module docstring (viz.py:25-27) and the test module docstring (test_viz.py:25-26) — 'PNG byte-equality is NOT a contract … the contract is a non-empty PNG file is written'. The reviewer concurs this is the right call, not a determinism gap."
+      - "Headless determinism: matplotlib.use('Agg') is selected inside the lazy guard (and in the test header) so renders are display-independent and reproducible-enough across environments; figures are closed (plt.close) after each save."
+    notes: "AX-002 is satisfied in spirit and form for a raster-report artifact: the deterministic, assertable invariant (a real PNG is produced) is tested; the non-deterministic, non-load-bearing byte tail (timestamp) is correctly not chased."
+
+  - axiom: AX-pii-anon-001
+    name: synthetic-only-no-real-pii (fixtures)
+    status: UPHELD
+    severity: none
+    evidence:
+      - "All test fixtures are synthetic and contain no real natural-person PII: Pareto labels are tool/method names ('presidio','llm-redactor','regex-baseline'); Sankey LeakageEdge nodes are pipeline stages ('user_prompt','tool_call','log_sink','model_output'); calibration bins and confidence/correct arrays are bare floats/ints. No names+contact data, no SSNs, no cards."
+      - "No corpus records, surrogate pools, or generator outputs are touched by this story (viz is a pure rendering layer over thin typed inputs) — AX-001's primary surface (the corpus) is out of this diff's reach."
+    notes: "Security-sast owns the authoritative real-PII scan; from the axiom-compliance angle the fixtures are clean synthetic transport values."
+
+observations:
+  - id: OBS-1
+    severity: OBSERVATION
+    axiom: AX-pii-anon-004
+    file: src/pii_anon_datasets/reporting/viz.py
+    where: pareto_plot (lines 105-127)
+    note: >
+      Defense-in-depth (optional, not required for APPROVE): pareto_plot currently trusts each
+      point to be a 3-tuple. A 2-tuple (someone pre-fusing or dropping the label) would fail with
+      a generic unpack ValueError rather than an axiom-named message. Consider an explicit guard —
+      e.g. raise ValueError("pareto_plot expects (residual_risk, utility, label) — two SEPARATE
+      axes, never a fused scalar (NFR-005/AX-004)") on len(point) != 3 — to make the separation
+      contract self-documenting at the call boundary. The architecture (ParetoPoint has no
+      __float__) already makes accidental fusion hard upstream, so this is purely a clarity nicety.
+  - id: OBS-2
+    severity: OBSERVATION
+    axiom: NFR-004
+    file: src/pii_anon_datasets/reporting/viz.py
+    where: agent_leakage_sankey (lines 140-164)
+    note: >
+      Naming-vs-form nicety (spirit upheld, no action needed): the function renders a descending
+      horizontal-magnitude-bar chart rather than a flow-conserving Sankey, and the docstring
+      already explains why (arbitrary leakage edges need not balance in/out flow). The axiom set
+      makes no Sankey-topology claim, so this is fully compliant; flagged only so a later reader
+      isn't surprised the "Sankey" is a magnitude-bar rendering. Honest docstring = good.
+
+self_attestation:
+  independent_review: true
+  read_only_confirmed: true
+  no_files_modified_outside_review_dir: true
+  tests_executed_by_reviewer: true
+  test_result: "tests/test_viz.py — 9 passed (matplotlib 3.10.8 present; PNG tests ran, did not skip)"
+  ast_grep_checks_executed: true
+  scope_discipline: "Reviewed only the 4 owned files + read-only cross-checks into scoring/anonymization.py and stats/power.py for AX-004 corroboration and the install-hint gap. Did not opine on AI-output correctness (traceability's), provenance-chip styling, a11y (de-scoped per D3), or render latency (performance-benchmark's)."
+  out_of_scope_deferrals:
+    - "Whether the report numbers themselves are correct → traceability / requirements-coverage."
+    - "Real-PII heuristic scan of fixtures/corpus → security-sast (AX-001 authoritative hook)."
+    - "Static-PNG a11y → explicitly de-scoped per D3 (no [A11Y-TEST])."

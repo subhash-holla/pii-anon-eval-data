@@ -18,7 +18,7 @@ This analysis evaluates the top 11 PII detection and anonymization evaluation da
 | C2 | **Annotation Depth & Schema Quality** | 15% | Coreference, sensitivity classes, and regulatory tags enable compliance evaluation |
 | C3 | **Domain Realism & Document Diversity** | 15% | Models drop 15-20 F1 points when tested on unseen document formats |
 | C4 | **Context Preservation & Anonymization Utility** | 20% | **Highest weight** - the defining gap in the field. RAG, LLM pipelines, and agentic workflows need utility-preserving anonymization |
-| C5 | **Adversarial Robustness** | 12% | Production systems drop from 94% to 14% F1 on adversarial inputs (Roblox 2025) |
+| C5 | **Adversarial Robustness** | 12% | Off-the-shelf detectors degrade sharply on obfuscation/encoding attacks (measured, attack- and detector-specific; see `results/tier-a/adversarial_table.md`) |
 | C6 | **Evaluation Infrastructure** | 10% | Train/dev/test splits, baselines, and metrics accelerate adoption |
 | C7 | **Multilingual & Cross-Lingual** | 8% | Global compliance requires multi-jurisdiction PII handling |
 | C8 | **AI-Era Readiness** | 8% | LLM evaluation, RAG integration, prompt injection, multi-agent PII |

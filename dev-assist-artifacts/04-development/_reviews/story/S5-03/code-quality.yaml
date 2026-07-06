@@ -1,0 +1,115 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S5-03
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S5-03-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/distribution/__init__.py:28-33
+    description: |
+      `validate_with_mlcroissant` is NOT exported from the package __init__ `__all__`.
+      Story §8 MODIFIED clause lists only `build_croissant`, `validate_croissant`,
+      `build_dataset_card` as required exports — so the omission is compliant with the
+      story contract. However, the function is part of the public API of `croissant.py`
+      (has a full docstring) and callers would need to import it via its submodule path.
+      This is an observation only; no contract is broken.
+    suggested_resolution: |
+      No action required for this story. If a future story (e.g. the CLI export verb in
+      S5-05) needs `validate_with_mlcroissant` to be importable from the top-level
+      package, add it to `__all__` and the import line at that time.
+
+notes: |
+  ## Live check results
+
+  ### Lint (ruff 0.15.7)
+  Command: `ruff check src/pii_anon_datasets/distribution/ tests/test_croissant.py tests/test_dataset_card.py`
+  Result: **All checks passed!** — zero warnings, zero errors across all 5 files.
+
+  ### Type check (mypy 1.19.1, --strict --follow-imports=silent)
+  Command: `mypy --strict --follow-imports=silent src/pii_anon_datasets/distribution/croissant.py src/pii_anon_datasets/distribution/dataset_card.py`
+  Result: **Success: no issues found in 2 source files.**
+  Notes: The `# type: ignore[import-not-found]` on the lazy `mlcroissant` import is
+  correct and matches the repo's own precedent (`llm_adversary.py:50` uses
+  `# type: ignore[import-not-found]` for the absent `anthropic` dep). The §8b sketch
+  used `[import-untyped]` but that error code applies to installed-but-unstubbed deps
+  (e.g. pyarrow); for a fully absent dep mypy reports `import-not-found`. The REFACTOR
+  commit correctly updated the comment token and documents the reasoning.
+
+  ### Test suite
+  Command: `python3 -m pytest tests/test_croissant.py tests/test_dataset_card.py -v`
+  Result: **10 passed in 1.16s** — all 10 tests GREEN, 0 skipped, 0 errors.
+  Individual results:
+  - test_fr_024_croissant_has_required_jsonld_shape — PASSED
+  - test_nfr_012_croissant_declares_reg_columns — PASSED
+  - test_fr_024_croissant_counts_from_metadata_cannot_drift — PASSED
+  - test_nfr_012_croissant_describes_loadable_parquet — PASSED (NFR-012 round-trip RAN)
+  - test_nfr_012_full_validation_skips_without_mlcroissant — PASSED (absent-path exercised)
+  - test_nfr004_croissant_pure_stdlib_imports_without_mlcroissant — PASSED
+  - test_fr_024_dataset_card_has_yaml_frontmatter — PASSED
+  - test_nfr_013_dataset_card_counts_match_metadata — PASSED
+  - test_fr_024_dataset_card_embeds_caveats — PASSED
+  - test_nfr004_dataset_card_pure_stdlib — PASSED
+
+  Full suite regression check: `python3 -m pytest tests/ --tb=no -q`
+  Result: **233 passed, 1 skipped** — 223 prior + 10 new, 0 regressions.
+
+  ### TDD evidence (RED → GREEN → REFACTOR)
+  Git log 703c3e3..HEAD:
+  - bd1de34 [RED]     — tests/test_croissant.py (6) + tests/test_dataset_card.py (4) added;
+                        NO production code in this commit; fails at collection with
+                        `ImportError: cannot import name 'croissant'/'dataset_card'`.
+                        Files: S5-03.md + tests/test_croissant.py + tests/test_dataset_card.py only.
+  - 0268642 [GREEN]   — croissant.py + dataset_card.py + __init__.py + pyproject.toml added.
+                        10/10 GREEN; full suite 233 passed / 1 skipped.
+  - c5d2234 [REFACTOR] — Lint/type cleanup only (load_metadata typed local, ignore comment
+                         token corrected, ruff-format). Suite unchanged.
+  - 0d112c0 docs       — §12 evidence filled in story file. (No production code change.)
+  RED commit is strictly test-only; production code first appears in GREEN. Protocol satisfied.
+
+  ### Scope discipline
+  Files changed: dev-assist-artifacts/04-development/02-stories/sprint-5/S5-03.md,
+  pyproject.toml, src/pii_anon_datasets/distribution/__init__.py,
+  src/pii_anon_datasets/distribution/croissant.py,
+  src/pii_anon_datasets/distribution/dataset_card.py,
+  tests/test_croissant.py, tests/test_dataset_card.py.
+  All 7 are in story §8 "Files owned". Zero scope creep into scoring/stats/corpus/lattice/compliance.
+
+  ### Idiomatic style vs S5-02 (parquet_export.py) baseline
+  - Module-level docstring: matches S5-02 pattern (full module docstring with NFR cross-refs, load-bearing contract bullet points, lazy-import note, AX-001/AX-002 references).
+  - Lazy import pattern: identical to S5-02 `_require_pyarrow` — the mlcroissant guard uses the same `try/except ImportError` with `RuntimeError` re-raise naming the install command, and the `# type: ignore[import-not-found]` comment mirrors S5-02's `# type: ignore[import-untyped]` (appropriate code per dep state).
+  - `_DATA_DIR` / `load_metadata` pattern: matches `stats/lattice.py` and the §8b specification.
+  - Every public function (`load_metadata`, `build_croissant`, `validate_croissant`, `validate_with_mlcroissant`, `build_dataset_card`, `_size_category`, `_languages`, `_frontmatter`) carries a docstring. Private helpers (`_field`, `_file_object`, `_describe`) also have docstrings. Full coverage.
+  - `from __future__ import annotations` on every module; `Mapping[str, Any] | None` union syntax used correctly.
+  - `assert` in `build_dataset_card` for the drift check is appropriate (internal invariant, not input validation); mirrors the calibration.py pattern.
+  - Test names all carry `fr_024`, `nfr_012`, `nfr_013`, or `nfr004` tokens (10/10 per §6 / §10).
+
+  ### §8b deviations
+  Three deviations documented in §12; all reviewed and found reasonable:
+  1. `[import-not-found]` vs `[import-untyped]`: technically correct for this env (mlcroissant absent, not merely unstubbed). Repo precedent (llm_adversary.py:50) confirmed.
+  2. Raw integers in Croissant description: machine-discovery metadata; human-grouped form in dataset card. No contract weakened; test #3 (perturbation) continues to exercise derivation.
+  3. `load_metadata` explicit typed local: resolves `no-any-return` cleanly without casting. Consistent with calibration.py pattern cited in §12.
+
+  ### No findings from 15 common patterns
+  Pattern scan results:
+  - No `unwrap()`/`expect()` (Python: no bare `assert` on external inputs, only internal drift guard).
+  - No `Any` without justification.
+  - All public surfaces documented.
+  - RED commit precedes GREEN.
+  - All test names carry FR/NFR tokens.
+  - Tests use `tmp_path` fixture for filesystem; deterministic synthetic fixture data; no real time/network/RNG.
+  - No out-of-scope edits.
+  - No unreferenced dead code.
+  - No production module gaining dev-dependencies at runtime.
+  - No inconsistent error wrapping.
+  - All public APIs have docstring example coverage via module docstring + function docstrings.
+  - Zero lint warnings (ruff clean).
+  - Zero mypy errors.
+  - No `tsc`/`mypy` type errors (mypy clean).
+  - No language-profile violations (Python profile: lazy import, typed signatures, `from __future__ import annotations`, strict-clean).
+
+review_time_seconds: 320
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

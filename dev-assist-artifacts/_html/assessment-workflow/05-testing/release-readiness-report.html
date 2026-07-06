@@ -1,0 +1,1284 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 Powered Assessment Workflow — Release-Readiness Report (Stage 5, RE-RULED) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 Powered Assessment Workflow — Release-Readiness Report (Stage 5, RE-RULED)</h1>
+<p><strong>Date:</strong> 2026-06-01 (v2-scoring-harness close-out re-rule) · <strong>Verdict:</strong> <strong>SHIP-WITH-CAVEATS</strong> ·
+<strong>provisional_status:</strong> AGENT_SIMULATED (release-CI), but the synthetic-only ceiling is now <strong>empirically
+demonstrated on REAL detector systems</strong>, not just synthetic placeholders.</p>
+<blockquote>
+<p>This re-rule supersedes the 2026-06-01 first verdict (<code>git</code> history). It re-measures the Stage-2 NFRs against
+the close-out code shipped this session (strict TDD, both repos), incorporates two real evidence runs (E1
+real-systems, E2 full-corpus census), and <strong>classifies every caveat</strong> as permanent-by-design / pending-external
+/ closed-this-session. a11y = <strong>N/A</strong> (library + 2 CLIs, no web UI; inherited from cycle-1).</p>
+</blockquote>
+<h2>1. Verdict basis — what changed since the first rule</h2>
+<p>The academically-sound assessment spine is unchanged and still green; this session <strong>closed every
+code-achievable caveat</strong> the first verdict carried as PARTIAL / DEFERRED / roadmap, and <strong>upgraded the headline
+INDICATIVE caveat to real-systems</strong>:</p>
+<ul>
+<li><strong>Real detectors now RUN</strong> (C1 + orchestrator integration): Presidio, GLiNER, and Piiranha adapters are
+pluggable systems verified end-to-end against the real libraries (already installed in the consumer venv).
+<strong>E1 powered real-systems leaderboard</strong> (<code>runs/real-systems-powered/</code>): 1822-record powered sample → <strong>15,569
+gold positives</strong>, presidio <strong>0.616 [0.608, 0.624]</strong> &gt; gliner <strong>0.558 [0.550, 0.566]</strong> &gt; piiranha <strong>0.285
+[0.278, 0.292]</strong> (Wilson CIs), both adjacent pairs <strong>Holm-significant</strong> (paired McNemar χ²-continuity), prereg
+verified, worst-language <code>ko</code>@0.429, non-strippable synthetic-only caveat. The bundled-synthetic INDICATIVE
+caveat is <strong>retired</strong> — the run is now <strong>real-systems on SYNTHETIC data</strong> (the AX-001 ceiling still holds).</li>
+<li><strong>Full-corpus citable census</strong> (E2, <code>runs/full-corpus-census-synthetic/</code>): <code>--preset full-corpus</code> over <strong>all
+575,604 records / 2,486,438 gold positives</strong>, descriptive-census with <strong>CI + p-values SUPPRESSED at full scale
+(<a class="trace-link" href="../02-requirements/audit-report.html#nfr-025" data-trace-id="NFR-025" aria-label="Trace NFR-025 — — PASS">NFR-025</a> verified: no CI keys, empty pair-verdicts)</strong>, power verdict LARGE.</li>
+<li>A <strong>real defect the real-systems run exposed</strong> was fixed: <code>mcnemar_exact</code> overflowed at ~15k discordant pairs
+(<code>int too large to convert to float</code>); now a principled exact/χ² selector (<code>stats.paired.mcnemar</code>) — the
+synthetic fixtures never hit it; real detectors did.</li>
+<li><strong>Wave-7 adversarial review: honesty boundaries CLEAN</strong>; AX-004 separation holds; the MAJOR (AUPRC degeneracy
+not flagged) + MINOR (guard coercion gap) + OBS (tracks unused) findings are all <strong>resolved + tested</strong>.</li>
+</ul>
+<p><strong>No MUST-track failure → no DEFER.</strong> The remaining caveats are the <strong>irreducible synthetic-only invariant +
+the genuinely external (DUA / reference-host / real-user) items</strong> — minimized to exactly those.</p>
+<h2>2. NFR verification matrix (<a class="trace-link" href="../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> … <a class="trace-link" href="../02-requirements/audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a>) — re-ruled</h2>
+<table>
+<thead>
+<tr>
+<th>NFR</th>
+<th>Attribute</th>
+<th>First rule</th>
+<th><strong>Re-rule</strong></th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/020</td>
+<td>Stats-core integrity; fabrication ban; significance.py quarantined</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td><code>test_p1_runpath_guard</code>, <code>test_p1_closure</code> (import-closure intact after the new orchestrator imports — all AUDITED eval-data modules)</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-021" data-trace-id="NFR-021" aria-label="Trace NFR-021 — — PASS">NFR-021</a></td>
+<td>Seeded LOCAL-RNG; byte-identical</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>cross-process tests; E1/E2 byte-repro</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-022" data-trace-id="NFR-022" aria-label="Trace NFR-022 — — PASS">NFR-022</a></td>
+<td>Integer-guarded CI inputs</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td><code>stats/intervals._require_int_counts</code></td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-023" data-trace-id="NFR-023" aria-label="Trace NFR-023 — — CI on 100% of metrics + deterministic interval-selection…">NFR-023</a>/024</td>
+<td>CI on 100% of metrics + selection rule</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>E1 powered: Wilson CI on every row</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-025" data-trace-id="NFR-025" aria-label="Trace NFR-025 — — PASS">NFR-025</a></td>
+<td>Full-corpus descriptive-census suppresses CI</td>
+<td><strong>PARTIAL</strong></td>
+<td><strong>PASS</strong></td>
+<td>C2 enforcement; <strong>E2 proved it at 575,604 records</strong> (no CI keys, empty pairs)</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>/027/028</td>
+<td>Paired test + Holm + family + tie-gating</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>E1 both pairs Holm-significant; χ²-selector for large-n</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a></td>
+<td>RD convergence reported</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>RD-NOT-CONVERGED honestly flagged</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a></td>
+<td>Byte-reproducible from manifest</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>E1/E2 byte-repro incl. provenance index</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>/032</td>
+<td>Pre-registration + plan-hash</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>prereg verified in both runs; design_point recorded</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>/034</td>
+<td>Run-type scope; smoke inert</td>
+<td><strong>PARTIAL</strong></td>
+<td><strong>PASS</strong></td>
+<td>C2 <code>rigor_bar_for_run_type</code>; dev/smoke suppress, leaderboard-submission full</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/036/037/039</td>
+<td>Powered-tier / named shortfall / design point</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>sampler 4-state; E1 powered</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a></td>
+<td>Sampler streaming, bounded memory</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>two bounded passes; E2 sampled 575,604</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a>/041</td>
+<td>v2.0.0 seam + regression contract</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td><code>test_pii_anon_eval_v2_contract</code></td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>/043</td>
+<td>Run-record + <strong>file-level</strong> provenance</td>
+<td><strong>PARTIAL</strong> (file-level)</td>
+<td><strong>PASS</strong></td>
+<td>C8 <code>assessment/provenance.py</code> sha256 index over all artifacts; tamper-detecting; in E1/E2</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a></td>
+<td>Non-strippable synthetic-only caveat</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>rides every run incl. real-systems</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a>/055</td>
+<td>Anon/pseudo separate families (never merged)</td>
+<td>INHERITED-PASS</td>
+<td><strong>PASS</strong></td>
+<td>C10 <code>assessment/tracks.py</code> lifts AX-004 to the assessment layer; <strong>wired into the live orchestrator</strong> + mutation-tested (incl. <code>__int__</code>/<code>__index__</code> coercion)</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-046" data-trace-id="NFR-046" aria-label="Trace NFR-046 — — STRENGTHENED (unbounded β; un-pinned operating point; mir…">NFR-046</a></td>
+<td>Operating-point Fβ / AUPRC</td>
+<td><strong>DEFERRED</strong></td>
+<td><strong>PASS</strong></td>
+<td>C4 <code>build_operating_point_view</code> (rejects lone-F1 / post-hoc); <strong>AUPRC degeneracy flagged</strong> in the view + leaderboard †footnote; lazy figure</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a></td>
+<td>Honesty-set closed</td>
+<td><strong>PARTIAL</strong></td>
+<td><strong>PASS</strong></td>
+<td>C7 worst-language + rank-volatility (Kendall-τ; UNMEASURED &lt; 3 seeds) — both in E1/E2</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>/049</td>
+<td>Contamination disclosure + held-out attestation</td>
+<td><strong>DEFERRED</strong></td>
+<td><strong>PASS</strong></td>
+<td>C3 governance block on every page + contamination (<code>unknown</code> rejected) + HMAC-signed attestation + recusal + scoring-API oracle</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a></td>
+<td>Pure-stdlib cores + lazy heavy-dep</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>new cores stdlib; detectors import torch/transformers only inside factories; matplotlib lazy</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a></td>
+<td>pii-rate-elo gates green</td>
+<td>PASS (mypy not re-run)</td>
+<td><strong>PASS</strong></td>
+<td><strong>mypy clean on full src (61 files, 0 issues)</strong>; ruff clean; 296/1</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a></td>
+<td>Lattice frozen 730@47c3a8f</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td><code>lattice --check</code> green; git-verified untouched</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a></td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power gate ON</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td><code>validate.py</code> PASS on 575,604 / 0 errors</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/audit-report.html#nfr-054" data-trace-id="NFR-054" aria-label="Trace NFR-054 — — PASS">NFR-054</a></td>
+<td>Doc-drift = 0</td>
+<td>PASS</td>
+<td><strong>PASS</strong></td>
+<td>suite green</td>
+</tr>
+</tbody></table>
+<p><strong>Tally:</strong> <strong>24 PASS (+1 inherited) · 0 PARTIAL · 0 DEFERRED · 0 FAIL</strong> (was 18 PASS / 4 PARTIAL / 2 DEFERRED).
+Plus <a class="trace-link" href="../03-design/01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a> regulatory crosswalk (<a class="trace-link" href="../02-requirements/audit-report.html#fr-053" data-trace-id="FR-053" aria-label="Trace FR-053 — — PASS">FR-053</a>) and <a class="trace-link" href="../03-design/01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a> citation packaging (<a class="trace-link" href="../02-requirements/audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a>, DOI=pending sentinel) <strong>built</strong>.</p>
+<h2>3. Caveats — MINIMIZED + classified (non-strippable; never fabricated)</h2>
+<h3>3a. PERMANENT-BY-DESIGN (cannot be removed, only empirically BOUNDED)</h3>
+<ol>
+<li><strong>Synthetic-only external validity (AX-001).</strong> Every per-cell metric is precision on the SYNTHETIC
+distribution, NOT external validity, and not a standalone real-world recall claim. This rides every metric
+and figure <strong>forever</strong>; the real-data correlation slice (§3b) can BOUND it but never remove it. Even the new
+real-systems leaderboard is <strong>real-systems on synthetic data</strong>.</li>
+</ol>
+<h3>3b. PENDING-EXTERNAL (needs a real resource not available this session; code seam + handoff shipped, sentinel held)</h3>
+<ol start="2">
+<li><strong>Real-data correlation (<a class="trace-link" href="../../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a>).</strong> Bounds caveat 1. <code>correlate()</code> / <code>correlate_from_path()</code> return
+<code>RealDataAbsent</code> until a DUA-holding collaborator drops derived i2b2-2014/TAB scores at
+<code>PII_ANON_REAL_DEID_PATH</code>. Handoff: <code>05-pass2/FR-027/path-activated-ingest.md</code>.</li>
+<li><strong>Reference-host throughput (NFR-010b, inherited).</strong> <code>INSUFFICIENT_EVIDENCE</code> until a declared 8-core host
+runs <code>scripts/run_throughput_benchmark.sh --reference-host &quot;&lt;spec&gt;&quot;</code>; the agent-env can never publish a pass.
+Handoff: <code>05-pass2/NFR-010/reference-host-runbook.md</code>.</li>
+<li><strong>Real-user operating-point re-elicitation (<a class="trace-link" href="../03-design/01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a>).</strong> β=2 / recall_target=0.90 are R10-to-confirm defaults;
+real P-priv-eng + P-dpo must confirm. Instrument: <code>05-testing/05-pass2/operating-point-reelicitation/</code>.
+(Also: design real-user trial + concept-value re-confirm, inherited cycle-1.)</li>
+</ol>
+<h3>3c. CLOSED-THIS-SESSION (code-achievable; strict TDD, committed)</h3>
+<p>INDICATIVE→real-systems (C1+E1) · run-type rigor enforcement (C2/E2) · governance + contamination + attestation
+(C3) · operating-point Fβ/AUPRC/precision@recall + degeneracy flag (C4) · regulatory crosswalk 63→GDPR/HIPAA/
+CCPA/GLBA (C5) · citation/claims packaging (C6) · honesty-set worst-language + rank-volatility (C7) · per-artifact
+sha256 provenance index (C8) · OutcomeDTO port (C9) · anon/pseudo separate-family tracks (C10) · coref/qid
+scoring (C11) · throughput reference-host gate + runner (C12) · mypy green (C13) · full-corpus census (E2) ·
+McNemar-overflow fix.</p>
+<h2>4. Guardrails (held — git-verified)</h2>
+<p>lattice <code>--check</code> 730@<code>47c3a8f</code> · doc-drift <a class="trace-link" href="../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> 0 · <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power gate PASS on 575,604 / 0 errors ·
+<code>eval_lattice.json</code> + corpus untouched since <code>47c3a8f</code> · tags <code>v1.3.0</code> + <code>pre-lattice-enrichment</code> intact ·
+four metric families never merged (AX-004; now enforced at the assessment layer too) · pure-stdlib cores + lazy
+heavy-dep · both suites green (eval-data <strong>502/7</strong>, pii-rate-elo <strong>296/1</strong>, mypy 0 issues, ruff clean) ·
+<code>analysis/significance.py</code> quarantined (import-closure intact after the new orchestrator imports).</p>
+<h2>5. Verdict</h2>
+<p>✅ <strong>SHIP-WITH-CAVEATS</strong> — caveat set <strong>minimized to the irreducible synthetic-only invariant (§3a) + the
+genuinely external DUA/reference-host/real-user items (§3b)</strong>. Every code-achievable caveat is closed (§3c). The
+capability is academically sound and now <strong>demonstrated on real detector systems</strong> and <strong>over the full corpus</strong>;
+the residual caveats are permanent-by-design or human-only, with code seams + exact handoff commands shipped.
+The only path to unconditional SHIP runs through the §3b external resources — see the HUMAN-ONLY TODO
+(<code>HUMAN-ONLY-TODO.md</code>).</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/05-testing/release-readiness-report.md</code> ·
+  content-hash <code>987076614051</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

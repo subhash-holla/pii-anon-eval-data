@@ -1,0 +1,1393 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 R7 — Prioritization Analysis + Decisions — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 R7 — Prioritization Analysis + Decisions</h1>
+<p><strong>Capability</strong>: CAP-02 — academically-sound, repeatable, reportable assessment <strong>workflow</strong> that runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0 / 575,604 / CC0 / <code>annotations</code></strong> over a <strong>powered, lattice-stratified sample (default)</strong> / <strong>full corpus (opt-in, citable)</strong> / <strong>smoke (fast)</strong>, with statistical/epistemic observability + reporting at every spine stage (<code>load → sample → run → score → rate → report</code>).
+<strong>Stage</strong>: assessment-workflow / 02-Requirements · R7 (prioritization decisions) · input: 6 R6 responses aggregated in <code>survey-analysis.md</code> + the R3 <code>interview-synthesis.md</code>
+<strong>Date</strong>: 2026-06-01
+<strong>Vocabulary remap</strong>: FR = Benchmark/Assessment Capability; NFR = Quality Attribute; Persona = assessment consumer.
+<strong>provisional_status</strong>: AGENT_SIMULATED — the prioritization rests on 6 agent-simulated R6 respondents (all HIGH-cohort/sub-archetype seats) + the R3 interview synthesis. Agent-simulated research is <strong>NOT</strong> a substitute for real users; real-respondent Pass-2 is still required for load-bearing MUSTs and for every MEDIUM-owned bundle (the 3 MEDIUM personas were not seated this round). Thresholds remain directional (R9 validates).</p>
+<blockquote>
+<p><strong>Scale + sampling note (load-bearing).</strong> R6 ran at representative <strong>n=6</strong> (single-session limit) versus the ≥2-per-persona plan. <strong>All 6 seats are HIGH-cohort or its folded sub-archetypes</strong> (3× P-mlnlp-researcher, 1× P-acad-deid, 1× P-tool-builder/OSS, 1× P-tool-builder/<code>P-tool-vendor</code>); <strong>the 3 MEDIUM personas (P-priv-eng, P-dpo/<code>P-complreviewer</code>, P-agentic-redteam) were NOT seated.</strong> Where a bundle is MEDIUM-persona-owned (B12/B14/B16-governance/B17 + the T6 throughput route), the HIGH cohort&#39;s signal <strong>systematically under-weights it</strong>, and the prioritization falls back to the R3 interviews (INT-04/05/06) + the R4 FR/NFR-author&#39;s UC-mandated priority rather than letting the absent-seat vote de-scope it. Every such adjudication is flagged below and carries <code>real_user_needed: true</code> to Pass-2.</p>
+</blockquote>
+<hr>
+<h2>0. Method — how a bundle&#39;s final class is decided</h2>
+<ol>
+<li><strong>Preconditions are floor-locked to MUST.</strong> B1 (P1), B2 (P2), B3 + B4 (P3) land in MUST <strong>regardless of vote</strong> — the locked brief mandates it, and a low precondition score is a comprehension flag, not a de-scope signal (R5 reading rule). None scored low (lowest precondition credibility-impact = B4 @ 4.50). <strong>This is the explicit instruction that the 3 preconditions land in MUST — satisfied.</strong></li>
+<li><strong>Baseline gates (G-eng / G-norg) are not de-scopable</strong> ([GATE][NR]) — treated as MUST-grade engineering invariants, excluded from the feature MUST/SHOULD/COULD headline but committed.</li>
+<li><strong>Unanimous / HIGH-convergent MoSCoW → that class</strong>, unless a precondition/gate/axiom-spine override applies.</li>
+<li><strong>Persona-stratified splits (Tier-C T5/T7 + the B17/B18 MoSCoW spreads) are adjudicated explicitly</strong> — kept SHOULD/COULD <em>overall</em> with a documented persona-MUST carve-out, rather than averaged into a false universal.</li>
+<li><strong>MEDIUM-owned bundles are NOT de-scoped by the absent-seat vote</strong> — they fall back to the R3-elicited MEDIUM priority. A 6× COULD from HIGH seats on a P-priv-eng-core bundle is read as a missing-seat artifact (D5), not a verdict.</li>
+<li><strong>The R4 FR-level priority is the floor for intra-bundle granularity</strong> — a SHOULD bundle keeps its R4-MUST sub-FR as MUST (e.g. <a class="trace-link" href="audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a> held-out hygiene inside the SHOULD-leaning B17).</li>
+</ol>
+<hr>
+<h2>1. Aggregate MoSCoW (6 respondents) + bundle verdict</h2>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>M</th>
+<th>S</th>
+<th>C</th>
+<th>W</th>
+<th>Modal</th>
+<th><strong>R7 verdict</strong></th>
+<th>Decision ref</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>B1</strong> audited-stats + quarantine <strong>[P1]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>precondition floor</td>
+</tr>
+<tr>
+<td><strong>B2</strong> seam→v2.0.0 + regression contract <strong>[P2]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>precondition floor</td>
+</tr>
+<tr>
+<td><strong>B3</strong> powered seeded sampler <strong>[P3]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>precondition floor</td>
+</tr>
+<tr>
+<td><strong>B4</strong> PowerMatrix verdict + shortfall <strong>[P3]</strong></td>
+<td>5</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>precondition floor</td>
+</tr>
+<tr>
+<td><strong>B5</strong> run-type designation + AX-005 scoping</td>
+<td>2</td>
+<td>4</td>
+<td>0</td>
+<td>0</td>
+<td>S</td>
+<td><strong>MUST</strong></td>
+<td><strong>D2</strong> (mechanism MUST)</td>
+</tr>
+<tr>
+<td><strong>B6</strong> preset trio</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>unanimous</td>
+</tr>
+<tr>
+<td><strong>B7</strong> engine/convergence/bridge reuse</td>
+<td>4</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>HIGH-converge</td>
+</tr>
+<tr>
+<td><strong>B8</strong> CI on every metric <strong>[AX5-1]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>unanimous + Tier-A #1</td>
+</tr>
+<tr>
+<td><strong>B9</strong> paired test + Holm + 2 families <strong>[AX5-2]</strong></td>
+<td>4</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>HIGH-converge; AX-005 spine</td>
+</tr>
+<tr>
+<td><strong>B10</strong> anon/pseudo + contamination + seed-variance <strong>[NR]</strong></td>
+<td>0</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>S</td>
+<td><strong>SHOULD</strong></td>
+<td><strong>D6</strong> (NR core via G-norg)</td>
+</tr>
+<tr>
+<td><strong>B11</strong> pre-registration <strong>[AX5-4]</strong></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>M(tie)</td>
+<td><strong>MUST</strong></td>
+<td><strong>D3</strong> (mechanism MUST, enforcement opt-in)</td>
+</tr>
+<tr>
+<td><strong>B12</strong> observability run-records + file provenance <strong>[AX5-4]</strong></td>
+<td>0</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>S</td>
+<td><strong>SHOULD</strong></td>
+<td><strong>D4</strong> (MEDIUM-owned)</td>
+</tr>
+<tr>
+<td><strong>B13</strong> honest leaderboard</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>unanimous — the deliverable</td>
+</tr>
+<tr>
+<td><strong>B14</strong> operating-point view</td>
+<td>0</td>
+<td>0</td>
+<td>6</td>
+<td>0</td>
+<td>C</td>
+<td><strong>COULD</strong> (persona-MUST)</td>
+<td><strong>D5</strong> (MEDIUM-owned, absent seat)</td>
+</tr>
+<tr>
+<td><strong>B15</strong> convergence + honesty-flag bundle <strong>[AX5-3/5]</strong></td>
+<td>3</td>
+<td>3</td>
+<td>0</td>
+<td>0</td>
+<td>M(tie)</td>
+<td><strong>MUST</strong></td>
+<td><strong>D7</strong> (non-strippable caveat)</td>
+</tr>
+<tr>
+<td><strong>B16</strong> reproducible manifest + self-verifying report <strong>[AX5-4]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>MUST</strong></td>
+<td>unanimous — universal repro</td>
+</tr>
+<tr>
+<td><strong>B17</strong> hygiene + governance + crosswalk <strong>[AX5-6]</strong></td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>0</td>
+<td>C</td>
+<td><strong>SPLIT</strong></td>
+<td><strong>D8</strong> (hygiene MUST / governance+crosswalk SHOULD)</td>
+</tr>
+<tr>
+<td><strong>B18</strong> DOI release</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>M(tie)</td>
+<td><strong>SHOULD</strong> (acad-MUST)</td>
+<td><strong>D9</strong> (persona-stratified)</td>
+</tr>
+<tr>
+<td><strong>G-eng</strong> pure-stdlib cores <strong>[GATE][NR]</strong></td>
+<td>1</td>
+<td>5</td>
+<td>0</td>
+<td>0</td>
+<td>S</td>
+<td><strong>GATE (MUST-grade)</strong></td>
+<td><strong>D10</strong> (not de-scopable)</td>
+</tr>
+<tr>
+<td><strong>G-norg</strong> no-regression guardrails <strong>[GATE][NR]</strong></td>
+<td>5</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>M</td>
+<td><strong>GATE (MUST-grade)</strong></td>
+<td><strong>D10</strong> (not de-scopable)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>2. Forced trade-off outcomes (Tier C)</h2>
+<ul>
+<li><strong>T1 (default-mode labelling vs filing-grade-full-corpus-first):</strong> <strong>6–0 B6.</strong> Powered-representative-default-always-power-labelled is the v0.1 priority; full-corpus is the opt-in citable upgrade. <strong>Confirms DF-1&#39;s locked default holds.</strong> Both modes ship (<a class="trace-link" href="audit-report.html#fr-035" data-trace-id="FR-035" aria-label="Trace FR-035 — — STRENGTHENED (undefined &quot;results-bearing&quot; predicate)">FR-035</a>/036); the default is not flipped.</li>
+<li><strong>T2 (AX-005 universality vs run-type scoping):</strong> <strong>6–0 B5.</strong> Scope enforcement by run-type + <strong>suppress</strong> inferential outputs on smoke/dev. <strong>Resolves the §4#2 universality tension</strong> — the run-type mechanism (B5/<a class="trace-link" href="audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>) is the reconciliation. → reinforces D2.</li>
+<li><strong>T3 (audited-stats quarantine vs powered sampler — which precondition first):</strong> <strong>6–0 B1.</strong> Under sequencing pressure, fabricated statistics outrank a missing power verdict as the walk-away trigger. <strong>Both stay MUST; B1 is must-land-first</strong> → sequencing note in §5.</li>
+<li><strong>T4 (paired-test depth vs operating-point view):</strong> <strong>6–0 B9.</strong> Paired-test rigor is the reviewer-acceptance gate for the present (all-HIGH) cohort. <strong>This result is HIGH-cohort-biased</strong> — the P-priv-eng seat that owns B14 was absent; R3 (INT-04) makes B14 a real MEDIUM-MUST. → B9 MUST (confirmed), B14 NOT de-scoped on the strength of T4 (D5).</li>
+<li><strong>T5 (DOI vs leaderboard hygiene + governance):</strong> <strong>SPLIT 3–3</strong> — B18 from the publication-track seats (SRV-01 acad-deid, SRV-02/05 methods-publication), B17 from the builder/vendor/methods-depth seats (SRV-03/04/06). <strong>Clean persona-split, exactly as the instrument predicted: both are persona-stratified, neither universal.</strong> → D8 (B17) + D9 (B18).</li>
+<li><strong>T6 (provenance reproducibility vs throughput-SLA pre-gate):</strong> <strong>6–0 B12+B16.</strong> Byte-reproducible provenance is binding; the <strong>oracle throughput SLA is correctly off the CAP-02-v0.1 critical path</strong> (no red-team seat present to dissent; consistent with R3 INT-06 being the lone throughput voice). → throughput stays a named MEDIUM-persona roadmap item (D12).</li>
+<li><strong>T7 (regulatory crosswalk: author now vs defer):</strong> <strong>SPLIT 3–3</strong> — author from SRV-04 (vendor, GDPR/HIPAA defensibility) + SRV-01 (acad legal framing) + SRV-02; defer from SRV-03 (OSS) + SRV-05/06 (methods-depth). <strong>R3 had resolved this AUTHOR via INT-04/05 — the MEDIUM compliance personas that most want the crosswalk were not seated.</strong> → D8 keeps the crosswalk in-scope (SHOULD, authored-not-deferred), honoring the R3 resolution over the absent-seat tie.</li>
+</ul>
+<hr>
+<h2>3. Boundary-item + persona-stratified adjudications (rationale)</h2>
+<ul>
+<li><p><strong>D1 — Preconditions B1/B2/B3/B4 = MUST (floor-locked).</strong> B1 (P1 audited-stats + <code>significance.py</code> quarantine — the SHOWSTOPPER), B2 (P2 seam→v2.0.0 + regression contract — the CATASTROPHIC-as-wired), B3 + B4 (P3 powered sampler + PowerMatrix verdict). All four scored MUST/near-MUST and high credibility-impact (no comprehension flag). <strong>The brief&#39;s hard requirement — the 3 preconditions land in MUST — is satisfied</strong> (P1=B1, P2=B2, P3=B3+B4). T3 confirms B1 is the must-land-<strong>first</strong> of the four.</p>
+</li>
+<li><p><strong>D2 — B5 run-type designation = MUST</strong> (despite modal SHOULD, 2M/4S). The MoSCoW skew is <strong>sequencing, not de-scope</strong>: respondents rated it SHOULD as a <em>feature-ordering</em> signal while T2 went <strong>6–0</strong> for run-type-scoping as the enforcement model, and the R4 author made <a class="trace-link" href="audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a> MUST. B5 is the single mechanism that resolves <strong>DF-1 (citable-vs-pre-screen) + DF-2 (pre-reg scoping) + the AX-005 universality tension</strong> — the &quot;single highest-leverage net-new item&quot; (N-01). Locked <strong>MUST</strong>. <a class="trace-link" href="audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>/034 (run-type mapping + smoke suppression) MUST.</p>
+</li>
+<li><p><strong>D3 — B11 pre-registration = MUST (mechanism), enforcement opt-in.</strong> The 3-way MoSCoW split (2M/2S/2C) <strong>is</strong> the DF-2 opt-in-rigor stratification — publication/leaderboard seats rate it M, fast-iteration OSS/vendor seats rate it C. DF-2 resolved unanimously: opt-in for dev, enforced for high-stakes run-types, <strong>never a global on/off</strong>. So the <em>mechanism</em> (commit-anchored + hash-chained + immutable pre-reg, scoped by run-type via B5) is <strong>MUST</strong> (<a class="trace-link" href="audit-report.html#fr-044" data-trace-id="FR-044" aria-label="Trace FR-044 — — STRENGTHENED (&quot;pushed to remote&quot; needs an oracle)">FR-044</a>, <a class="trace-link" href="audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>/032); the <em>enforcement</em> is run-type-bound, not universal. Manifest-reproducibility (B16) is the universal commitment, pre-registration is not.</p>
+</li>
+<li><p><strong>D4 — B12 observability run-records = SHOULD (MEDIUM-owned).</strong> Unanimous SHOULD from the 6 HIGH seats — but B12 is <strong>P-priv-eng / P-complreviewer-owned</strong> (the per-stage run-record is audit-admissibility; INT-04/05 treat it as a &quot;first-six hard send-back&quot; floor). The HIGH cohort values it for a methods section (INT-02) but at lower urgency, which is exactly the SHOULD signal. <strong>Kept SHOULD overall, but <a class="trace-link" href="audit-report.html#fr-045" data-trace-id="FR-045" aria-label="Trace FR-045 — — PASS">FR-045</a> (per-stage run-record) is the assurance-MUST sub-part</strong> — Design must not let &quot;SHOULD&quot; weaken the 6-stage provenance floor for filing-grade consumers. <code>real_user_needed: true</code> (DPO lens first-contact + unseated this round).</p>
+</li>
+<li><p><strong>D5 — B14 operating-point view = COULD overall / MUST-for-P-priv-eng (absent-seat carve-out).</strong> <strong>6× COULD from the present seats</strong> — but R5 explicitly flagged B14 as P-priv-eng-core / HIGH-peripheral, <strong>and no P-priv-eng seat was administered.</strong> R3 (INT-04) documents the false-positive tax as a confirmed real burn (F1=0.91 → precision 0.71 @ recall 0.93 → 34k FPs/10k entities → 3× license cost in Q1), and the R4 author made <a class="trace-link" href="audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> <strong>MUST</strong>. The honest reconciliation: <strong>the bundle is COULD for the seats present, but its owning persona makes <a class="trace-link" href="audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> a MUST-for-procurement.</strong> Recorded as <strong>COULD-overall with a persona-stratified-MUST flag</strong> rather than a flat MUST (which the present votes do not support) or a flat de-scope (which the owning persona forbids). <strong>This is the bundle most distorted by the sampling gap — Pass-2 with a real P-priv-eng seat is the single highest-priority re-elicitation.</strong> <code>real_user_needed: true</code>.</p>
+</li>
+<li><p><strong>D6 — B10 anon/pseudo + contamination + seed-variance = SHOULD, NR-core preserved.</strong> Unanimous SHOULD on the <em>new</em> sub-parts (contamination_status, seed-variance scope) — affinity dragged down by the clinical/methods seats for whom pseudonymization is low-salience (the persona-stratified AX-004 finding, C-10/R3 §4#3). <strong>But B10 carries an [NR] invariant — the four metric families never merged (<a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a>, inheriting cycle-1 <a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>) — which is NOT de-scopable.</strong> Adjudication: <strong>bundle priority SHOULD; the <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a> never-merge invariant rides G-norg as a MUST-grade no-regression guardrail.</strong> AX-004 stays a binding axiom; the clinical lens&#39;s indifference does not weaken it (R3 §4#3).</p>
+</li>
+<li><p><strong>D7 — B15 convergence + honesty-flag bundle = MUST</strong> (even 3M/3S split). The bundle contains the <strong>non-strippable synthetic-only / anti-anonymity caveat (AX5-5, <a class="trace-link" href="audit-report.html#fr-049" data-trace-id="FR-049" aria-label="Trace FR-049 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">FR-049</a>/<a class="trace-link" href="audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a>)</strong> — confirmed UNANIMOUS in R3 (C-6), escalated to anxiety=strong by the assurance/procurement consumers, and a binding axiom (AX-001/003). A bundle whose core is a <em>binding-axiom non-strippable caveat</em> cannot sit below MUST. The even MoSCoW split reflects respondents weighing the <em>RD-convergence</em> sub-part (lower urgency for some) against the <em>caveat</em> sub-part (universal MUST). Locked <strong>MUST</strong>.</p>
+</li>
+<li><p><strong>D8 — B17 = SPLIT: leaderboard hygiene MUST / neutrality+crosswalk SHOULD (authored-not-deferred).</strong> Modal COULD (1M/2S/3C); only the <code>P-tool-vendor</code> seat (SRV-04 — whose gaming incentive <em>is</em> the forcing function for hygiene) rates it MUST. The bundle conflates three things with different verdicts:</p>
+<ul>
+<li><strong>Held-out-label hygiene + contamination disclosure + signed attestation (<a class="trace-link" href="audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a>, <a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>/049, AX5-6):</strong> <strong>MUST</strong> — R3 DF-5 resolved this across all threat-model personas; it is the anti-gaming floor and AX-005 element 6 (which SRV-04 wants <em>strengthened</em> to bind leaderboard-submission, not just filing-grade — adopted, see §4).</li>
+<li><strong>Neutrality/governance statement + recusal record (<a class="trace-link" href="audit-report.html#fr-052" data-trace-id="FR-052" aria-label="Trace FR-052 — — STRENGTHENED (sole oracle is structural-presence, but &quot;on…">FR-052</a>):</strong> <strong>SHOULD</strong> — inadmissibility-grade for the assurance/procurement consumers (INT-04/05) who were <strong>not seated</strong>; the v0.1 results path runs without it. R4 = SHOULD.</li>
+<li><strong>63-type → GDPR/HIPAA/CCPA/GLBA crosswalk (<a class="trace-link" href="audit-report.html#fr-053" data-trace-id="FR-053" aria-label="Trace FR-053 — — PASS">FR-053</a>):</strong> <strong>SHOULD, AUTHORED not deferred.</strong> T7 tied 3–3, but R3 resolved it <strong>AUTHOR</strong> via the two MEDIUM compliance personas (INT-04 called it &quot;more load-bearing than the pre-registration question&quot;; INT-05 &quot;author it, but auditable/updateable&quot;) — both unseated this round. The R3 resolution governs over the absent-seat tie. Honors Open Item 10&#39;s AUTHOR resolution.</li>
+<li><code>real_user_needed: true</code> (DPO/assurance lens first-contact + unseated).</li>
+</ul>
+</li>
+<li><p><strong>D9 — B18 DOI = SHOULD overall / MUST-for-P-acad-deid (persona-stratified).</strong> 3-way MoSCoW split + T5 splitting exactly on the publication-vs-tooling axis = textbook persona-stratification (R3 §4#5). A <strong>Zenodo DOI is a HARD citation gate</strong> for the academic-citation cohort (INT-01: won&#39;t cite a link-rotting SHA in JAMIA/ACL; INT-02 confirms) and <strong>silent for the CI-gate / procurement / oracle uses.</strong> R4 = SHOULD (<a class="trace-link" href="audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a>). Locked <strong>SHOULD overall with a MUST-for-the-P-acad-deid-citation-cohort flag.</strong> Cheapest bundle to ship (Tier-A effort 1.17) so the SHOULD is low-cost to honor early.</p>
+</li>
+<li><p><strong>D10 — G-eng / G-norg baseline gates = MUST-grade, not de-scopable.</strong> Scored Tier-A only (excluded from Tier-C). G-norg (no-regression: lattice 730@<code>47c3a8f</code>, <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power gate ON, doc-drift=0, four-families-never-merged) modal MUST (5M); G-eng (pure-stdlib cores + lazy heavy-dep guards) modal SHOULD (5S) <strong>but a [GATE][NR] item is not de-scopable regardless of score</strong> — a low rank flags a respondent under-weighting regression/engineering risk, per the R5 reading rule. Both committed as <strong>MUST-grade engineering invariants</strong> (<a class="trace-link" href="audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a> / <a class="trace-link" href="audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a>/053/054), held outside the feature headline count.</p>
+</li>
+<li><p><strong>D11 — Real-data correlation slice (cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a>) = named COULD-scope stub + carried open item.</strong> <strong>The strongest convergent missing-capability signal of the round</strong> — 4 of 6 respondents (SRV-01/02/05/06) independently named it as the single citation unlock absent from all 18 bundles. It is already Discovery Open Item 11 + the <a class="trace-link" href="audit-report.html#fr-049" data-trace-id="FR-049" aria-label="Trace FR-049 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">FR-049</a> &quot;named-and-pending&quot; report flag, <strong>out-of-band / gated on external DUA / explicitly NOT v0.1-blocking</strong> (DF-4, unanimous). Adjudication: <strong>carry as an explicit COULD-scope named roadmap stub</strong> (so the citation barrier is visible, not implicit) + a carried open item to Design + Testing Pass-2. Does <strong>not</strong> mint a new FR this cycle (it has no v0.1 acceptance path); recorded so R7 does not silently drop the cohort&#39;s top forward-looking ask.</p>
+</li>
+<li><p><strong>D12 — Oracle throughput SLA = roadmap (off CAP-02-v0.1 critical path).</strong> T6 confirmed 6–0 that provenance/reproducibility binds and throughput does not; R3 §4#6 routes the ≤50 ms p95 / ≥500 rps SLA to the oracle track (cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-08" data-trace-id="UC-08" aria-label="Trace UC-08 — — PII-recognition oracle + injection-payload seeds for live…">UC-08</a> / C9). Surfaced only by making <code>benchmark_throughput.py</code> output machine-readable in the report (<a class="trace-link" href="audit-report.html#fr-049" data-trace-id="FR-049" aria-label="Trace FR-049 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">FR-049</a>/050). Carried as a <strong>named MEDIUM-persona (P-agentic-redteam) roadmap item</strong>, not a v0.1 requirement. Inherited NFR-010b lightweight-detection floor stays INSUFFICIENT_EVIDENCE / <code>real_user_needed: true</code> (CAP-02 does not re-pin it).</p>
+</li>
+</ul>
+<hr>
+<h2>4. AX-pii-anon-005 — CONFIRMED as a binding CAP-02 axiom</h2>
+<p><strong>6 of 6 respondents voted Yes (one Yes-with-change).</strong> The candidate axiom moves from PROPOSED (R4) to <strong>CONFIRMED / binding</strong>, pending PO sign-off.</p>
+<blockquote>
+<p><strong>AX-pii-anon-005 (Pre-registered / reproducible assessment) — CONFIRMED.</strong> No published metric ships without (1) a <strong>confidence interval</strong> [method disclosed]; (2) a <strong>paired test</strong> for every system-vs-system claim [multiplicity family + size declared — exploratory per-cell uncorrected vs confirmatory Holm-Bonferroni]; (3) a <strong>convergence statement</strong> [achieved max-RD ± 2RD with rounds stated]; (4) <strong>provenance</strong> sufficient to reproduce from the manifest [<code>{dataset_version, record_count, schema_fingerprint, seed, stage, code_commit, toolchain}</code> + file-level]; (5) a <strong>non-strippable synthetic-only / anti-anonymity caveat</strong>; and (6) for <strong>leaderboard/published entries</strong>, a <strong>contamination disclosure</strong> [<code>contamination_status</code> with <code>unknown</code> rejected] + a <strong>signed held-out-non-exposure attestation</strong>. <strong>Enforcement scope is run-type-bound</strong> (<a class="trace-link" href="audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>): the full bar binds <code>leaderboard-submission</code> / <code>filing-grade</code>; <code>smoke</code> / <code>dev</code> suppress inferential outputs entirely. <strong>Manifest-reproducibility is UNIVERSAL</strong> (binds all run-types); <strong>pre-registration is opt-in</strong> (high-stakes run-types only).</p>
+</blockquote>
+<p><strong>Adopted sharpening (SRV-04, the gaming/threat-model seat):</strong> element <strong>(6) binds <code>leaderboard-submission</code> AND <code>filing-grade</code></strong>, not filing-grade only. Consistent with <a class="trace-link" href="audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a>/<a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a> (&quot;leaderboard/published entries&quot;); the survey confirms element 6 must not be narrowed to filing-grade. <strong>No change to the 6-element core or the run-type-bound/manifest-universal split.</strong></p>
+<p><strong>Wiring (unchanged from R4):</strong> (1)→<a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-023" data-trace-id="NFR-023" aria-label="Trace NFR-023 — — CI on 100% of metrics + deterministic interval-selection…">NFR-023</a>/024/025 (B8); (2)→<a class="trace-link" href="audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>/027/028 (B9); (3)→<a class="trace-link" href="audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a> (B15); (4)→<a class="trace-link" href="audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>/031/032/042/043 (B16/B11/B12); (5)→<a class="trace-link" href="audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a> (B15); (6)→<a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>/049 (B17 hygiene-MUST sub-part); enforcement scope→<a class="trace-link" href="audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>/034 (B5). <strong>AX-005 spine bundles (B1, B8, B9, B15, B16 + the B5 enforcement mechanism) all land in MUST</strong>, which is what makes the axiom enforceable rather than aspirational.</p>
+<p><strong>Run-type names</strong> (<code>smoke</code>/<code>dev</code>/<code>leaderboard-submission</code>/<code>filing-grade</code>): accepted directionally; aliasing (<code>leaderboard</code>) + the <code>dev</code> rename are Design-deferred (<a class="trace-link" href="audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>). No blocking objection.</p>
+<hr>
+<h2>5. Resulting FR / NFR priority assignment</h2>
+<p><strong>MUST (16 FRs):</strong> <a class="trace-link" href="audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>, <a class="trace-link" href="audit-report.html#fr-031" data-trace-id="FR-031" aria-label="Trace FR-031 — — PASS">FR-031</a>, <a class="trace-link" href="audit-report.html#fr-032" data-trace-id="FR-032" aria-label="Trace FR-032 — — STRENGTHENED (oracle for &quot;never head-truncation&quot;)">FR-032</a>, <a class="trace-link" href="audit-report.html#fr-033" data-trace-id="FR-033" aria-label="Trace FR-033 — — PASS">FR-033</a>, <a class="trace-link" href="audit-report.html#fr-034" data-trace-id="FR-034" aria-label="Trace FR-034 — — PASS">FR-034</a>, <a class="trace-link" href="audit-report.html#fr-035" data-trace-id="FR-035" aria-label="Trace FR-035 — — STRENGTHENED (undefined &quot;results-bearing&quot; predicate)">FR-035</a>, <a class="trace-link" href="audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>, <a class="trace-link" href="audit-report.html#fr-039" data-trace-id="FR-039" aria-label="Trace FR-039 — — STRENGTHENED (span-match mode value-space unpinned)">FR-039</a>, <a class="trace-link" href="audit-report.html#fr-040" data-trace-id="FR-040" aria-label="Trace FR-040 — — STRENGTHENED (un-pinned small-n threshold)">FR-040</a>, <a class="trace-link" href="audit-report.html#fr-041" data-trace-id="FR-041" aria-label="Trace FR-041 — — STRENGTHENED (prose-only &quot;stated in report text&quot; has no o…">FR-041</a>, <a class="trace-link" href="audit-report.html#fr-042" data-trace-id="FR-042" aria-label="Trace FR-042 — — PASS">FR-042</a>, <a class="trace-link" href="audit-report.html#fr-044" data-trace-id="FR-044" aria-label="Trace FR-044 — — STRENGTHENED (&quot;pushed to remote&quot; needs an oracle)">FR-044</a>, <a class="trace-link" href="audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a>, <a class="trace-link" href="audit-report.html#fr-049" data-trace-id="FR-049" aria-label="Trace FR-049 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">FR-049</a>, <a class="trace-link" href="audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a>, <a class="trace-link" href="audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a>.
+<strong>SHOULD (8 FRs):</strong> <a class="trace-link" href="audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a>, <a class="trace-link" href="audit-report.html#fr-037" data-trace-id="FR-037" aria-label="Trace FR-037 — — PASS">FR-037</a>, <a class="trace-link" href="audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a>, <a class="trace-link" href="audit-report.html#fr-045" data-trace-id="FR-045" aria-label="Trace FR-045 — — PASS">FR-045</a>, <a class="trace-link" href="audit-report.html#fr-046" data-trace-id="FR-046" aria-label="Trace FR-046 — — PASS">FR-046</a>, <a class="trace-link" href="audit-report.html#fr-052" data-trace-id="FR-052" aria-label="Trace FR-052 — — STRENGTHENED (sole oracle is structural-presence, but &quot;on…">FR-052</a>, <a class="trace-link" href="audit-report.html#fr-053" data-trace-id="FR-053" aria-label="Trace FR-053 — — PASS">FR-053</a>, <a class="trace-link" href="audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a>.
+<strong>COULD (1 FR):</strong> <a class="trace-link" href="audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> <em>(operating-point view — COULD-overall, MUST-for-P-priv-eng; D5)</em>.</p>
+<p><strong>MUST (32 NFRs):</strong> <a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>, <a class="trace-link" href="audit-report.html#nfr-020" data-trace-id="NFR-020" aria-label="Trace NFR-020 — — STRENGTHENED (sole-oracle drift on the human diff)">NFR-020</a>, <a class="trace-link" href="audit-report.html#nfr-021" data-trace-id="NFR-021" aria-label="Trace NFR-021 — — PASS">NFR-021</a>, <a class="trace-link" href="audit-report.html#nfr-022" data-trace-id="NFR-022" aria-label="Trace NFR-022 — — PASS">NFR-022</a>, <a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-023" data-trace-id="NFR-023" aria-label="Trace NFR-023 — — CI on 100% of metrics + deterministic interval-selection…">NFR-023</a>, <a class="trace-link" href="audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a>, <a class="trace-link" href="audit-report.html#nfr-025" data-trace-id="NFR-025" aria-label="Trace NFR-025 — — PASS">NFR-025</a>, <a class="trace-link" href="audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>, <a class="trace-link" href="audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>, <a class="trace-link" href="audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a>, <a class="trace-link" href="audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a>, <a class="trace-link" href="audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>, <a class="trace-link" href="audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>, <a class="trace-link" href="audit-report.html#nfr-032" data-trace-id="NFR-032" aria-label="Trace NFR-032 — — PASS">NFR-032</a>, <a class="trace-link" href="audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>, <a class="trace-link" href="audit-report.html#nfr-034" data-trace-id="NFR-034" aria-label="Trace NFR-034 — — PASS">NFR-034</a>, <a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>, <a class="trace-link" href="audit-report.html#nfr-036" data-trace-id="NFR-036" aria-label="Trace NFR-036 — — PASS">NFR-036</a>, <a class="trace-link" href="audit-report.html#nfr-037" data-trace-id="NFR-037" aria-label="Trace NFR-037 — — PASS">NFR-037</a>, <a class="trace-link" href="_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a>, <a class="trace-link" href="audit-report.html#nfr-039" data-trace-id="NFR-039" aria-label="Trace NFR-039 — — PASS">NFR-039</a>, <a class="trace-link" href="audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a>, <a class="trace-link" href="audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a>, <a class="trace-link" href="audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a>, <a class="trace-link" href="audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>, <a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>, <a class="trace-link" href="audit-report.html#nfr-049" data-trace-id="NFR-049" aria-label="Trace NFR-049 — — STRENGTHENED (sole oracle is &quot;governance checklist audit&quot;)">NFR-049</a>, <a class="trace-link" href="audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a>, <a class="trace-link" href="../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a>, <a class="trace-link" href="audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a>, <a class="trace-link" href="audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>, <a class="trace-link" href="audit-report.html#nfr-054" data-trace-id="NFR-054" aria-label="Trace NFR-054 — — PASS">NFR-054</a>.
+<strong>SHOULD (4 NFRs):</strong> <a class="trace-link" href="audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>, <a class="trace-link" href="audit-report.html#nfr-043" data-trace-id="NFR-043" aria-label="Trace NFR-043 — — PASS">NFR-043</a>, <a class="trace-link" href="audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a>, <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a>.
+<strong>COULD (1 NFR):</strong> <a class="trace-link" href="audit-report.html#nfr-046" data-trace-id="NFR-046" aria-label="Trace NFR-046 — — STRENGTHENED (unbounded β; un-pinned operating point; mir…">NFR-046</a> <em>(operating-point reporting — rides <a class="trace-link" href="audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a>; D5)</em>.</p>
+<blockquote>
+<p><strong>Note on the R4→R7 deltas (FR MUST 19→16).</strong> R7 demoted three R4-provisional MUSTs on honest persona signal: <strong><a class="trace-link" href="audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a></strong> (B10 anon/pseudo new sub-parts → SHOULD; the never-merge NR-core stays MUST via <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a>/G-norg), <strong><a class="trace-link" href="audit-report.html#fr-045" data-trace-id="FR-045" aria-label="Trace FR-045 — — PASS">FR-045</a></strong> (B12 per-stage run-record → SHOULD overall; assurance-MUST sub-part flagged, D4), and <strong><a class="trace-link" href="audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a></strong> (B14 operating-point → COULD-overall/persona-MUST, D5). All three demotions are driven by the <strong>sampling gap</strong> (the MEDIUM personas that make them MUST were unseated) and are <strong>explicitly reversible at Pass-2</strong> — they are demotions of <em>confidence in the present cohort</em>, not judgements that the capabilities are low-value. <a class="trace-link" href="audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a> was held at MUST (held-out hygiene) inside the otherwise-SHOULD B17 (D8 carve-out).</p>
+</blockquote>
+<p><strong>Bundle headline (18 feature bundles):</strong> <strong>13 MUST · 3 SHOULD · 1 SPLIT (B17) · 1 COULD (B14)</strong> + <strong>2 baseline gates (MUST-grade, <a class="trace-link" href="audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a>/052/053/054)</strong>.</p>
+<hr>
+<h2>6. Distribution check</h2>
+<p><strong>Combined 62 requirements: 48 MUST (77.4%) · 12 SHOULD (19.4%) · 2 COULD (3.2%).</strong></p>
+<p>This is <strong>MUST-heavy versus the natural ~30/55/15 shape</strong> (and versus cycle-1&#39;s healthy ~30/55/15). The deviation is <strong>structural and documented, not a prioritization failure</strong>, for three converging reasons:</p>
+<ol>
+<li><strong>The requirement set entered R6 pre-concentrated.</strong> The UCs were SME-pre-filtered (3 CATASTROPHIC + 15 MAJOR resolved in place, 0 new IDs); the R4 FRs were authored 19-MUST / 6-SHOULD / 0-COULD. The academic-soundness spine <em>is</em> the capability — there is little legitimate SHOULD/COULD tail to find.</li>
+<li><strong>3 of the 4 precondition bundles + the AX-005 enforcement spine are floor-locked MUST</strong> by the brief — they cannot populate a SHOULD/COULD tail no matter how respondents vote.</li>
+<li><strong>The round is all-HIGH-cohort.</strong> The seats that would have pushed B12/B14/B17 down (the 3 MEDIUM personas) were unseated, so the SHOULD/COULD tail is under-populated this round. The R3-fallback adjudications (D4/D5/D8) recover <em>some</em> tail (<a class="trace-link" href="audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a>→COULD, <a class="trace-link" href="audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a>/045→SHOULD, B17 split), but a real-user Pass-2 with the MEDIUM personas is expected to <strong>lengthen the SHOULD/COULD tail further</strong>.</li>
+</ol>
+<p><strong>No bundle scored majority-WON&#39;T → no OUT items</strong> (consistent with the SME-pre-filtered UC set; nothing was de-scoped to out-of-cycle). The 2 COULD items (B14/<a class="trace-link" href="audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> + <a class="trace-link" href="audit-report.html#nfr-046" data-trace-id="NFR-046" aria-label="Trace NFR-046 — — STRENGTHENED (unbounded β; un-pinned operating point; mir…">NFR-046</a>) are the operating-point view, honestly parked as persona-stratified-MUST-pending-its-seat. <strong>The MUST-skew is the honest shape of a precondition-heavy, all-gating-cohort round — flagged here rather than smoothed by artificially demoting preconditions.</strong></p>
+<hr>
+<h2>7. Persona-stratification register (do not mistake for universal demand)</h2>
+<table>
+<thead>
+<tr>
+<th>Bundle / FR</th>
+<th>Universal verdict</th>
+<th>Persona-stratified reality</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>B18 / <a class="trace-link" href="audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a></strong> DOI</td>
+<td>SHOULD</td>
+<td><strong>MUST</strong> for P-acad-deid citation cohort; silent for CI-gate/procurement/oracle (D9)</td>
+</tr>
+<tr>
+<td><strong>B14 / <a class="trace-link" href="audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a></strong> operating-point</td>
+<td>COULD</td>
+<td><strong>MUST</strong> for P-priv-eng (false-positive tax — INT-04); peripheral for HIGH cohort (D5)</td>
+</tr>
+<tr>
+<td><strong>B17 / <a class="trace-link" href="audit-report.html#fr-052" data-trace-id="FR-052" aria-label="Trace FR-052 — — STRENGTHENED (sole oracle is structural-presence, but &quot;on…">FR-052</a>/053</strong> governance + crosswalk</td>
+<td>SHOULD</td>
+<td><strong>inadmissibility-grade</strong> for P-dpo/<code>P-complreviewer</code> + P-priv-eng procurement (INT-04/05); <a class="trace-link" href="audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a> hygiene MUST universally (D8)</td>
+</tr>
+<tr>
+<td><strong>B12 / <a class="trace-link" href="audit-report.html#fr-045" data-trace-id="FR-045" aria-label="Trace FR-045 — — PASS">FR-045</a></strong> per-stage run-record</td>
+<td>SHOULD</td>
+<td><strong>audit-MUST</strong> for P-complreviewer (Art-11 send-back floor — INT-05); methods-section-nice for HIGH cohort (D4)</td>
+</tr>
+<tr>
+<td><strong>B10 / <a class="trace-link" href="audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a></strong> anon/pseudo separation</td>
+<td>SHOULD</td>
+<td><strong>legally load-bearing</strong> for P-dpo (AX-004); low-salience for clinical-de-id (irreversible removal) — but <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a> never-merge invariant is MUST-grade universally (D6)</td>
+</tr>
+<tr>
+<td>Throughput SLA (D12)</td>
+<td>roadmap</td>
+<td><strong>HARD pre-gate</strong> for P-agentic-redteam (≤50 ms p95 / ≥500 rps — INT-06); absent for everyone else</td>
+</tr>
+</tbody></table>
+<p>This register exists so Design + Pass-2 do not read a SHOULD/COULD as &quot;low-value universally&quot; — five of these six are MUST-grade for a <em>specific</em> (mostly unseated) persona.</p>
+<hr>
+<h2>8. Methodology &amp; Epistemic Honesty</h2>
+<ul>
+<li><strong>Decisions rest on 6 agent-simulated R6 respondents</strong> (all HIGH-cohort/sub-archetype seats) + the R3 interview synthesis (INT-01…06). <strong>Representative-scale, single-session, AGENT_SIMULATED</strong> — directional, not confirmatory.</li>
+<li><strong>The sampling gap is the dominant caveat and shapes the adjudication method:</strong> the 3 MEDIUM personas were unseated, so MEDIUM-owned bundles (B12/B14/B17 + throughput) are adjudicated against the R3-elicited MEDIUM priority + the R4 UC-mandated FR priority, never de-scoped on the absent-seat vote. D4/D5/D8/D12 carry <code>real_user_needed: true</code>; the <strong>P-dpo/assurance lens remains first-contact</strong> (compounded flag).</li>
+<li><strong>The 3 hard preconditions land in MUST</strong> (P1=B1, P2=B2, P3=B3+B4) — floor-locked per the locked brief, and independently MUST-voted (no comprehension flag). <strong>AX-pii-anon-005 CONFIRMED</strong> (6/6, one adopted sharpening) with its spine bundles (B1/B5/B8/B9/B15/B16) all in MUST so the axiom is enforceable.</li>
+<li><strong>No FR/NFR IDs minted or renumbered.</strong> R7 prioritizes the existing <a class="trace-link" href="audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>…054 / <a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>…055 set verbatim. R4→R7 deltas (3 FR demotions) are documented + reversible at Pass-2. The real-data correlation slice (D11) is carried as a named COULD-scope stub + open item, not a new FR.</li>
+<li><strong>Thresholds remain directional</strong> (R9 threshold-validator). The MUST-heavy distribution (77%) is documented as a structural property of a precondition-heavy, all-gating-cohort round, with the natural-shape deviation explained rather than smoothed.</li>
+<li><strong>Source artifacts:</strong> <code>survey-analysis.md</code> (this round&#39;s aggregate), R3 <code>interview-synthesis.md</code> (DF-1…5, INT-01…06, N-01…15), R4 <code>functional-requirements.md</code> (<a class="trace-link" href="audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>…054) + <code>non-functional-requirements.md</code> (<a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>…055), R5 <code>survey-instrument.md</code> (18 bundles + 2 gates + coverage table), canonical Discovery (<code>discovery-report.md</code> §8 / <code>04-use-cases.md</code> / <code>personas.md</code>). Cycle-1 <code>02-requirements/prioritization-decisions.md</code> provided the format + boundary-adjudication + distribution-check convention.</li>
+</ul>
+<p>✅ <strong>R7 prioritization decisions complete (2026-06-01).</strong> Final committed split: <strong>FR 16 MUST / 8 SHOULD / 1 COULD · NFR 32 MUST / 4 SHOULD / 1 COULD · combined 62 = 48 MUST / 12 SHOULD / 2 COULD</strong> (+ 2 MUST-grade baseline gates). Bundle headline: 13 MUST / 3 SHOULD / 1 SPLIT / 1 COULD + 2 gates. <strong>All 3 preconditions in MUST</strong> (P1/P2/P3); <strong>AX-pii-anon-005 CONFIRMED binding</strong> (one adopted sharpening); 12 boundary/persona-stratified adjudications (D1–D12) with rationale; sampling gap (3 MEDIUM personas unseated) documented as the dominant caveat with R3-fallback + Pass-2 carry; real-data correlation slice carried as a named COULD-scope stub. <code>provisional_status: AGENT_SIMULATED</code>. Ready for R8/R9 (verification-criteria strengthening + threshold validation).</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/02-requirements/prioritization-decisions.md</code> ·
+  content-hash <code>586a2d54826e</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

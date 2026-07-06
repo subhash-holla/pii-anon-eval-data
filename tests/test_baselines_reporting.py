@@ -104,7 +104,7 @@ def test_leaderboard_surfaces_precision_recall_coverage_and_f2() -> None:
     # The headline must show PRECISION (the false-positive tax) next to recall + F2, not recall alone.
     for col in ("Precision", "Recall", "F1", "F2"):
         assert col in md, f"leaderboard must show the {col} column"
-    assert "2/63" in md, "per-detector label-map coverage (reachable/63) must appear"
+    assert "2/66" in md, "per-detector label-map coverage (reachable/66) must appear"
 
 
 def test_leaderboard_embeds_caveat_and_span_matching_disclosure() -> None:

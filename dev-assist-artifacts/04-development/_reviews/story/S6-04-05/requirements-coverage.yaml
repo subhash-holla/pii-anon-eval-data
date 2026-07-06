@@ -1,0 +1,85 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S6-04-05
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  COMBINED STORY GATE — S6-04 (GOVERNANCE.md · FR-026 / NFR-014) + S6-05 (CONTRIBUTING.md · FR-025),
+  iteration 1. Read-only. Bounded context honored (GOVERNANCE.md, CONTRIBUTING.md, the two test files,
+  FR-025/FR-026 in functional-requirements.md, NFR-014 in non-functional-requirements.md, stories
+  S6-04.md + S6-05.md, plus a read-only roll-up touch of the S6-01/02/03 leaderboard suites to ground
+  the sprint-gate NFR-014 claim).
+
+  ── Per-clause coverage (every claimed clause maps to a NAMED PASSING test) ──
+  FR-026 (governance charter — MUST · functional-requirements.md:46):
+    • charter/mission + decision-process + advisory-body roster flagged aspirational/AGENT_SIMULATED
+        -> test_fr_026_governance_md_has_charter_and_roster .......... PASS
+        (GOVERNANCE.md: "Charter & mission", "Decision-making process", "Advisory body" w/
+         "Status: ASPIRATIONAL / AGENT_SIMULATED" — no fabricated members; roster is roles-only.)
+    • CoI re: pii-anon-core (+ recusal) + bus-factor/succession (=1, single maintainer)
+        -> test_fr_026_governance_md_has_coi_and_bus_factor .......... PASS
+        (GOVERNANCE.md: "Conflict of interest" names pii-anon-core + requires_recusal control;
+         "Bus factor & succession" states bus factor = 1, single maintainer, CC0/Apache fork path.)
+    • NFR-014 governance-checklist presence (GOVERNANCE.md + advisory + CoI + neutrality controls)
+        -> test_nfr_014_governance_md_present ........................ PASS
+        ("# Governance" + advisory + conflict-of-interest + held-out/leaderboard controls referenced.)
+  FR-025 (contribution pipeline — MUST · functional-requirements.md:45):
+    • PR template + CC0 license-compatibility (data-CC0 / code-Apache-2.0 split)
+        -> test_fr_025_contributing_has_pr_template_and_cc0 ......... PASS
+        (CONTRIBUTING.md: "Pull-request template" checklist + "License compatibility (CC0)" w/ Apache-2.0.)
+    • provenance + synthetic-only / no-real-PII (AX-001)
+        -> test_fr_025_contributing_has_provenance_and_synthetic_only  PASS
+        (CONTRIBUTING.md: "Provenance & synthetic-only" — generator/seed/source_type + "No real PII".)
+    • deprecation/erratum policy + semver dated releases
+        -> test_fr_025_contributing_has_deprecation_and_semver ...... PASS
+        (CONTRIBUTING.md: "Deprecation & erratum policy" + "Versioning & releases" semver + dated.)
+
+  ── Targeted run (as dispatched) ──
+  `python3 -m pytest tests/test_governance.py tests/test_contributing.py -k "fr_025 or fr_026 or nfr_014" -q`
+    => 6 passed in 0.12s (expected 6 — MATCH). Node-id roll call (-rA): all 6 PASSED, none missing/xfail.
+  Orphaned-clause scan: every G/W/T clause of FR-025 and FR-026 binds to exactly one of the six tests;
+  no FR-025/FR-026 clause is left without a test (zero silently-missing clauses). No DIVERGED provisional
+  threshold is in scope — NFR-014 is a boolean/auditable checklist (not in the R10 threshold-stress set
+  NFR-001/008/009/010/016/018), so no Pass-2 cross-check is owed here.
+
+  ── S6 SPRINT ROLL-UP (the IMPORTANT ask) ──
+  With S6-04 (GOVERNANCE) + S6-05 (CONTRIBUTING) landing on S6-01/02/03, all three can now be marked
+  VERIFIED at the S6 sprint gate:
+    • FR-026 (governance charter)      — VERIFIABLE: 3/3 tests green; charter+roster+CoI+bus-factor present.
+    • FR-025 (contribution pipeline)   — VERIFIABLE: 3/3 tests green; PR-template+CC0+provenance+
+                                          deprecation/erratum+semver present.
+    • NFR-014 (governance neutrality, auditable) — VERIFIABLE: its sub-claims are now fully evidenced —
+        GOVERNANCE.md + advisory roster + CoI  -> test_nfr_014_governance_md_present (this gate);
+        leaderboard ANTI-GAMING control active -> S6-02 tests/test_leaderboard_policy.py
+                                                  (rate-limit / rotation-epoch / contamination), green;
+        submission PROVENANCE logged           -> S6-01 tests/test_leaderboard_store.py (append-only,
+                                                  hash-chained, verify_chain, forbidden-key reject) +
+                                                  S6-03 tests/test_coi.py (CoIRecord.requires_recusal /
+                                                  NO_PREPUB_ATTESTATION), green.
+        Independent re-run of those three S6-01/02/03 suites this gate: 29 passed, 0 failed — so the
+        NFR-014 measure ("governance checklist audit": GOVERNANCE.md + roster + CoI + anti-gaming +
+        provenance-logged) is satisfied end-to-end, not asserted. GOVERNANCE.md "Neutrality controls"
+        section explicitly points to verify_chain / opt-in publish / anti-gaming policy / CoI recusal,
+        so the doc and the code-pinned controls are consistent.
+
+  ── Regression guard for the roll-up ──
+  Full suite: 325 passed, 1 skipped (the one pre-existing expected skip) — zero regressions; matches the
+  S6-05 DoD target (~325 / 1 skip). No competing/duplicate test claims for any FR-025/FR-026 clause.
+
+  ── Honesty / scope-edge observation (non-blocking) ──
+  Per-clause coverage is at the documentary-presence (property-test) bar appropriate for doc stories:
+  the advisory roster is correctly AGENT_SIMULATED/aspirational and the CoI's enforcement is delegated
+  to S6-03 code (CoIRecord.requires_recusal) rather than re-tested here. That delegation is the right
+  design (no duplication) and is covered upstream; flagged only so the sprint-gate reader sees that the
+  NFR-014 *enforcement* warrant lives in S6-01/02/03, with this gate supplying the *documentation*
+  warrant. Whether the docs are well-written / link-correct is code-quality/traceability's call;
+  whether the requirements should exist is out of scope.
+
+review_time_seconds: 360
+
+context_bounds_respected: true

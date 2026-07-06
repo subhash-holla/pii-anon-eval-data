@@ -1,0 +1,90 @@
+reviewer: dev-assist-development-traceability
+scope_id: S7-01
+gate: story
+verdict: APPROVE
+findings:
+  - id: traceability-S7-01-01
+    severity: MINOR
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:15
+    description: |
+      The traceability matrix is not yet annotated for S7-01's FR-017 claim. The
+      forward row "UC-08 agentic oracle | FR-017, FR-018, FR-020" (line 15) still
+      shows a bare `AGENT_SIMULATED` with no "verified-by S7-01" marker, and the
+      Status Change Log (lines 44-54) has no S7-01 / FR-017 / Sprint-7 entry. This
+      is the canonical "traceability.md missing the row for this story's claim"
+      pattern. Held at MINOR (not MAJOR) because this repo's established convention
+      is that matrix Status-Change-Log rows are appended at story-gate APPROVE /
+      sprint close (see the S5-* and S6-* entries on lines 47-54, all added on
+      gate APPROVE), not while a story sits in REVIEW. The row is therefore
+      legitimately pending this gate's outcome rather than missing-in-error.
+    suggested_resolution: |
+      On S7-01 story-gate APPROVE (and at the S7 sprint gate), append a Status
+      Change Log row for FR-017 noting the oracle half is verified-by S7-01
+      (provisional_status AGENT_SIMULATED; DC-10 bounded/COULD; Pass-2 CI re-run
+      due at the sprint gate per §12), and note the oracle/payload partition
+      (S7-01 = recognition oracle; S7-02 = injection payloads). FR-017 stays open
+      until S7-02 lands the payload half.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-017
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-01.md#12
+  - id: traceability-S7-01-02
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-7/S7-01.md:35
+    description: |
+      §3 traces NFR-004 and AX-002 to the same pure-stdlib/deterministic test
+      (test_nfr004_oracle_pure_stdlib, the AST banned-import guard). The matrix
+      axiom linkage (traceability-matrix.md:30) confirms AX-pii-anon-002 -> NFR-004,
+      so the AX-002 claim is correctly a transitive restatement of the NFR-004
+      claim, not an independent unbacked axiom claim. Noted only so the gate reader
+      knows AX-002 has no separate dedicated test (by design — it is the axiom
+      behind NFR-004).
+    suggested_resolution: |
+      No action required. Optionally, when the matrix row is added on close, state
+      explicitly that the AX-002 evidence is the NFR-004 stdlib AST guard.
+    references:
+      - dev-assist-artifacts/02-requirements/traceability-matrix.md#axiom-nfr-linkage
+notes: |
+  Forward FR/NFR -> Story -> Test -> DC chain for S7-01 is sound.
+
+  IDs exist (authoritative sources, not the summary requirements-document.md which
+  is an index): FR-017 functional-requirements.md:33 ("PII-recognition oracle +
+  payload library … never marketed as agent-leakage scoring", UC-08, COULD);
+  NFR-004 non-functional-requirements.md:13 (deterministic generation, AX-002);
+  AX-001/AX-002 project axioms (matrix lines 29-32); DC-10
+  D-implementation-ready-design.md:27 ("Agentic oracle + payload library (bounded)"
+  -> FR-017/018/019/020, COULD). No phantom ID -> no SHOWSTOPPER.
+
+  Test tokens verified by `grep -nE "def test_(fr_017|nfr004)"`: fr_017 = 3 (>=3),
+  nfr004 = 1 (>=1). Bodies are semantically on-target (not name-only): labeled
+  verdicts, non-strippable disclaimer, recognize_span point query, AST stdlib guard.
+
+  FR-017 partition (no double-claim): FR-017 bundles TWO deliverables — oracle API
+  + injection-payload library. S7-01 claims ONLY the oracle half (§2/§3/§8b ship
+  recognize/recognize_span; the only "payload/injection/agent-leakage" strings in
+  oracle.py are inside the OUT-OF-SCOPE disclaimer, lines 5/10-12/22/25-26).
+  S7-02 (payloads) is not yet written — S7-01 §5 declares it BLOCKS S7-02 — so
+  there is no competing claim. Partition is clean and consistent with FR-017's
+  structure. The non-strippable "never agent-leakage scoring" guard correctly
+  fences off roadmap FR-018/019/020.
+
+  provisional_status cascade: DC-10 is COULD / AGENT_SIMULATED and explicitly NOT
+  DIVERGED (§4); story metadata shows provisional_status: AGENT_SIMULATED (§1, §4,
+  §12). No DIVERGED cascade obligation -> no §10 Pass-2-commitment requirement
+  triggered. Source matches story. (Note: §12 does schedule a Pass-2 CI re-run on
+  the canonical runner at the sprint gate — that is the AGENT_SIMULATED->verified
+  promotion path, distinct from a DIVERGED pivot.)
+
+  Status == REVIEW (§1). SHAs 132f760 / 9269943 / 19a4dfc all exist, all on
+  feat/v2-scoring-harness, in strict RED->GREEN->REFACTOR order (HEAD = 8a1bb56
+  docs(story) REVIEW commit). Diff scope 132f760^..HEAD = exactly the four §8
+  owned files (oracle.py +83, test_oracle.py +106, adversary/__init__.py +17
+  additive exports, S7-01.md), +376 lines, no out-of-scope files.
+
+  Not a surface story (no surface/ paths in the diff) -> DC<->module 1:1 audit N/A;
+  no dc_to_module_audit finding applicable. Dependencies: §5 "Must be DONE: none"
+  — no unmet-dependency risk.
+
+  Only gap is the matrix row not yet landed (finding 01, MINOR — convention is to
+  add it on gate APPROVE). Zero SHOWSTOPPER / CATASTROPHIC / MAJOR.
+review_time_seconds: 300
+context_bounds_respected: true

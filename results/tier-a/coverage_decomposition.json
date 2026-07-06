@@ -1,0 +1,419 @@
+{
+  "by_crosswalk": {
+    "XW-BROAD": {
+      "crosswalk": "XW-BROAD",
+      "drop": 0.6625098908433525,
+      "drop_bootstrap_ci": [
+        0.2526433466031318,
+        1.00701262645566
+      ],
+      "loo_max_abs_within": 0.2284044561275708,
+      "max_within_reach_skill": 0.9357077334184182,
+      "mean_within_reach_skill": 0.7380960712094357,
+      "min_within_reach_skill": 0.28387150535394357,
+      "n_detectors": 11,
+      "r_overall": 0.8053299072066928,
+      "r_overall_bootstrap_ci": [
+        0.5971634050656494,
+        0.9694059620594826
+      ],
+      "r_overall_fisher_ci": [
+        0.3974730432929753,
+        0.9474799335086628
+      ],
+      "r_overall_loo": [
+        0.7629758304784848,
+        0.8158703183876733,
+        0.800221570273971,
+        0.807574331422698,
+        0.7694912720483819,
+        0.8493360554629398,
+        0.8076662459332524,
+        0.7976491237062672,
+        0.8692769520844652,
+        0.7894449641411124,
+        0.7943693876173215
+      ],
+      "r_within": 0.14282001636334027,
+      "r_within_bootstrap_ci": [
+        -0.2948035511187308,
+        0.6407167416371891
+      ],
+      "r_within_fisher_ci": [
+        -0.49988196424251324,
+        0.6840864946653293
+      ],
+      "r_within_loo": [
+        0.012920512695435933,
+        0.12012946975631004,
+        0.2095136870051334,
+        0.10650726567891447,
+        0.07717154054646878,
+        0.2157165823619242,
+        0.1764106109292849,
+        0.2284044561275708,
+        0.12000647837351393,
+        0.14210518841764436,
+        0.16611636346715944
+      ],
+      "rows": [
+        {
+          "coverage": 0.38095238095238093,
+          "detector": "aws",
+          "micro_recall": 0.7281900138696256,
+          "reachable_count": 24,
+          "within_reach_recall": 0.9227152899824254
+        },
+        {
+          "coverage": 0.2698412698412698,
+          "detector": "azure",
+          "micro_recall": 0.6881910045571626,
+          "reachable_count": 17,
+          "within_reach_recall": 0.8570705917915373
+        },
+        {
+          "coverage": 0.047619047619047616,
+          "detector": "flair",
+          "micro_recall": 0.29515553794333266,
+          "reachable_count": 3,
+          "within_reach_recall": 0.7905273631840796
+        },
+        {
+          "coverage": 0.2857142857142857,
+          "detector": "gcp",
+          "micro_recall": 0.6995541906082822,
+          "reachable_count": 18,
+          "within_reach_recall": 0.8790474174955496
+        },
+        {
+          "coverage": 0.36507936507936506,
+          "detector": "gliner",
+          "micro_recall": 0.7162869031107588,
+          "reachable_count": 23,
+          "within_reach_recall": 0.8520401850160564
+        },
+        {
+          "coverage": 0.25396825396825395,
+          "detector": "piiranha",
+          "micro_recall": 0.32737765008916186,
+          "reachable_count": 16,
+          "within_reach_recall": 0.4355685899759449
+        },
+        {
+          "coverage": 0.3333333333333333,
+          "detector": "presidio",
+          "micro_recall": 0.5621012482662968,
+          "reachable_count": 21,
+          "within_reach_recall": 0.6896117944479556
+        },
+        {
+          "coverage": 0.14285714285714285,
+          "detector": "regex",
+          "micro_recall": 0.3486378046364177,
+          "reachable_count": 9,
+          "within_reach_recall": 0.9357077334184182
+        },
+        {
+          "coverage": 0.19047619047619047,
+          "detector": "scrubadub",
+          "micro_recall": 0.1687438082028928,
+          "reachable_count": 12,
+          "within_reach_recall": 0.28387150535394357
+        },
+        {
+          "coverage": 0.07936507936507936,
+          "detector": "spacy",
+          "micro_recall": 0.29377848226669306,
+          "reachable_count": 5,
+          "within_reach_recall": 0.7189022764188223
+        },
+        {
+          "coverage": 0.07936507936507936,
+          "detector": "stanza",
+          "micro_recall": 0.30811868436695067,
+          "reachable_count": 5,
+          "within_reach_recall": 0.7539940362190598
+        }
+      ]
+    },
+    "XW-BROAD-PRIME": {
+      "crosswalk": "XW-BROAD-PRIME",
+      "drop": 0.6608707984417497,
+      "drop_bootstrap_ci": [
+        0.2569144155211808,
+        0.991302368460834
+      ],
+      "loo_max_abs_within": 0.2220079408168454,
+      "max_within_reach_skill": 0.9357077334184182,
+      "mean_within_reach_skill": 0.7381943225551805,
+      "min_within_reach_skill": 0.28387150535394357,
+      "n_detectors": 11,
+      "r_overall": 0.8036400701885713,
+      "r_overall_bootstrap_ci": [
+        0.5882453032999472,
+        0.9731765224764365
+      ],
+      "r_overall_fisher_ci": [
+        0.39343232965935987,
+        0.9469877985617393
+      ],
+      "r_overall_loo": [
+        0.76068788820218,
+        0.8117437625563768,
+        0.7947650371724131,
+        0.8037438934172604,
+        0.767133523849145,
+        0.8506388196824561,
+        0.8021221961402754,
+        0.7962072062991091,
+        0.8735474868286727,
+        0.7892181063760291,
+        0.7948515587601857
+      ],
+      "r_within": 0.14276927174682158,
+      "r_within_bootstrap_ci": [
+        -0.28620545970067934,
+        0.6650932416065416
+      ],
+      "r_within_fisher_ci": [
+        -0.4999208199889518,
+        0.6840589343058496
+      ],
+      "r_within_loo": [
+        0.011971957223009849,
+        0.11847336393590423,
+        0.2046727462787939,
+        0.104715777245592,
+        0.07656011472654342,
+        0.2214596282855823,
+        0.17114286205135973,
+        0.2220079408168454,
+        0.1342682775299371,
+        0.14310181617038842,
+        0.1688621177514665
+      ],
+      "rows": [
+        {
+          "coverage": 0.38095238095238093,
+          "detector": "aws",
+          "micro_recall": 0.7281900138696256,
+          "reachable_count": 24,
+          "within_reach_recall": 0.9227152899824254
+        },
+        {
+          "coverage": 0.2698412698412698,
+          "detector": "azure",
+          "micro_recall": 0.6881910045571626,
+          "reachable_count": 17,
+          "within_reach_recall": 0.8570705917915373
+        },
+        {
+          "coverage": 0.047619047619047616,
+          "detector": "flair",
+          "micro_recall": 0.29515553794333266,
+          "reachable_count": 3,
+          "within_reach_recall": 0.7905273631840796
+        },
+        {
+          "coverage": 0.2857142857142857,
+          "detector": "gcp",
+          "micro_recall": 0.6995541906082822,
+          "reachable_count": 18,
+          "within_reach_recall": 0.8790474174955496
+        },
+        {
+          "coverage": 0.36507936507936506,
+          "detector": "gliner",
+          "micro_recall": 0.7162869031107588,
+          "reachable_count": 23,
+          "within_reach_recall": 0.8520401850160564
+        },
+        {
+          "coverage": 0.25396825396825395,
+          "detector": "piiranha",
+          "micro_recall": 0.32737765008916186,
+          "reachable_count": 16,
+          "within_reach_recall": 0.4355685899759449
+        },
+        {
+          "coverage": 0.31746031746031744,
+          "detector": "presidio",
+          "micro_recall": 0.5621012482662968,
+          "reachable_count": 20,
+          "within_reach_recall": 0.6898172069810277
+        },
+        {
+          "coverage": 0.14285714285714285,
+          "detector": "regex",
+          "micro_recall": 0.3486378046364177,
+          "reachable_count": 9,
+          "within_reach_recall": 0.9357077334184182
+        },
+        {
+          "coverage": 0.19047619047619047,
+          "detector": "scrubadub",
+          "micro_recall": 0.1687438082028928,
+          "reachable_count": 12,
+          "within_reach_recall": 0.28387150535394357
+        },
+        {
+          "coverage": 0.06349206349206349,
+          "detector": "spacy",
+          "micro_recall": 0.29377848226669306,
+          "reachable_count": 4,
+          "within_reach_recall": 0.7193295249184344
+        },
+        {
+          "coverage": 0.06349206349206349,
+          "detector": "stanza",
+          "micro_recall": 0.30811868436695067,
+          "reachable_count": 4,
+          "within_reach_recall": 0.7544421399895693
+        }
+      ]
+    },
+    "XW-EXACT": {
+      "crosswalk": "XW-EXACT",
+      "drop": 0.7477203989707629,
+      "drop_bootstrap_ci": [
+        0.32544310047314823,
+        1.1144448178773692
+      ],
+      "loo_max_abs_within": 0.11994760068857747,
+      "max_within_reach_skill": 0.9357077334184182,
+      "mean_within_reach_skill": 0.7507683744262003,
+      "min_within_reach_skill": 0.28387150535394357,
+      "n_detectors": 11,
+      "r_overall": 0.7974354206705756,
+      "r_overall_bootstrap_ci": [
+        0.5780415531148123,
+        0.9730035696851781
+      ],
+      "r_overall_fisher_ci": [
+        0.3787305553972738,
+        0.9451750164246319
+      ],
+      "r_overall_loo": [
+        0.7536679977544964,
+        0.8043235523971163,
+        0.7847000751817785,
+        0.7965915631412812,
+        0.7603113610040947,
+        0.8455954628345349,
+        0.7955016704048066,
+        0.7902391628986294,
+        0.8711496545497605,
+        0.7841102975554236,
+        0.7904225355578978
+      ],
+      "r_within": 0.049715021699812664,
+      "r_within_bootstrap_ci": [
+        -0.3628308712672799,
+        0.5331892251188468
+      ],
+      "r_within_fisher_ci": [
+        -0.567071656090208,
+        0.6307784559845272
+      ],
+      "r_within_loo": [
+        -0.0819961347678788,
+        0.02529767428444181,
+        0.08608768580822794,
+        0.011391386478875037,
+        -0.016073067539695948,
+        0.11994760068857747,
+        0.07961600761570797,
+        0.11129668143213228,
+        0.006861147349098599,
+        0.08320473129522159,
+        0.11352444793365032
+      ],
+      "rows": [
+        {
+          "coverage": 0.38095238095238093,
+          "detector": "aws",
+          "micro_recall": 0.7281900138696256,
+          "reachable_count": 24,
+          "within_reach_recall": 0.9227152899824254
+        },
+        {
+          "coverage": 0.2698412698412698,
+          "detector": "azure",
+          "micro_recall": 0.6881910045571626,
+          "reachable_count": 17,
+          "within_reach_recall": 0.8570705917915373
+        },
+        {
+          "coverage": 0.047619047619047616,
+          "detector": "flair",
+          "micro_recall": 0.29515553794333266,
+          "reachable_count": 3,
+          "within_reach_recall": 0.7905273631840796
+        },
+        {
+          "coverage": 0.2857142857142857,
+          "detector": "gcp",
+          "micro_recall": 0.6995541906082822,
+          "reachable_count": 18,
+          "within_reach_recall": 0.8790474174955496
+        },
+        {
+          "coverage": 0.36507936507936506,
+          "detector": "gliner",
+          "micro_recall": 0.7162869031107588,
+          "reachable_count": 23,
+          "within_reach_recall": 0.8520401850160564
+        },
+        {
+          "coverage": 0.25396825396825395,
+          "detector": "piiranha",
+          "micro_recall": 0.32737765008916186,
+          "reachable_count": 16,
+          "within_reach_recall": 0.4355685899759449
+        },
+        {
+          "coverage": 0.31746031746031744,
+          "detector": "presidio",
+          "micro_recall": 0.5621012482662968,
+          "reachable_count": 20,
+          "within_reach_recall": 0.6898172069810277
+        },
+        {
+          "coverage": 0.14285714285714285,
+          "detector": "regex",
+          "micro_recall": 0.3486378046364177,
+          "reachable_count": 9,
+          "within_reach_recall": 0.9357077334184182
+        },
+        {
+          "coverage": 0.19047619047619047,
+          "detector": "scrubadub",
+          "micro_recall": 0.1687438082028928,
+          "reachable_count": 12,
+          "within_reach_recall": 0.28387150535394357
+        },
+        {
+          "coverage": 0.047619047619047616,
+          "detector": "spacy",
+          "micro_recall": 0.29377848226669306,
+          "reachable_count": 3,
+          "within_reach_recall": 0.7868391376451078
+        },
+        {
+          "coverage": 0.047619047619047616,
+          "detector": "stanza",
+          "micro_recall": 0.30811868436695067,
+          "reachable_count": 3,
+          "within_reach_recall": 0.8252470978441128
+        }
+      ]
+    }
+  },
+  "verdict": {
+    "drop_bootstrap_ci_excludes_zero_all_crosswalks": true,
+    "drop_sign_holds_all_crosswalks": true,
+    "headline_reproduced": true,
+    "loo_within_reach_stable_all_crosswalks": true,
+    "mean_skill_ge_0_6_all_crosswalks": true
+  }
+}

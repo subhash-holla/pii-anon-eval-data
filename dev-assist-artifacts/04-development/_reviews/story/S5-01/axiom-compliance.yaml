@@ -1,0 +1,125 @@
+# Axiom-compliance review — STORY gate S5-01 (iteration 1)
+schema: dev-assist/reviewer-finding/v1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S5-01
+iteration: 1
+mode: read-only
+verdict: APPROVE
+context_bounds_respected: true
+
+scope_reviewed:
+  owned_files:
+    - src/pii_anon_datasets/compliance/crosswalk.py
+    - src/pii_anon_datasets/compliance/__init__.py
+    - tests/test_crosswalk.py
+  axioms_in_slice:
+    - id: gov-02 / epistemic-honesty
+      role: load-bearing
+      note: >
+        Crosswalk INFORMS, does NOT MAKE, a compliance determination; tag presence is an
+        in-scope SIGNAL, never a compliant=true verdict; regimes legally distinct (HIPAA's two
+        §164.514(b) methods are separate columns). Honesty control against over-claiming legal
+        compliance from synthetic tags.
+    - id: AX-pii-anon-004 (adjacent) / NFR-005
+      role: no-fusion discipline — no merged regime verdict
+    - id: AX-pii-anon-002 / NFR-004
+      role: determinism + pure-stdlib (AST guard)
+    - id: AX-pii-anon-001
+      role: synthetic-only test data
+
+domain_packs_active: []          # developer-assistant.yaml -> domain_packs: [] — no pack extensions merged
+project_axiom_registry: dev-assist-artifacts/00-axioms/project-axioms.yaml   # 4 axioms; reviewer_hooks honored
+
+verification_performed:
+  - id: V1
+    axiom: gov-02 / epistemic-honesty
+    method: code+runtime
+    result: PASS
+    evidence: >
+      RegimeStatus enum is {in_scope, out_of_scope_of_dataset} — no boolean/compliant verdict.
+      CROSSWALK_DISCLAIMER text = "INFORMS but does NOT MAKE a compliance determination";
+      RegulatoryCrosswalk.__post_init__ raises ValueError on empty/whitespace disclaimer
+      (non-bypassable, confirmed at runtime); as_dict() always emits a non-empty disclaimer.
+      50x repeat: no True/bool ever appears in column values; out-of-scope is explicitly
+      "out_of_scope_of_dataset", not pass/fail.
+  - id: V2
+    axiom: gov-02 — HIPAA legally distinct
+    method: code+runtime
+    result: PASS
+    evidence: >
+      reg_hipaa_safe_harbor (§164.514(b)(2)) and reg_hipaa_expert_determination (§164.514(b)(1))
+      are two separate columns; no reg_hipaa collapsed column; corpus tag "hipaa" fans out to
+      BOTH. REGIMES tuple holds each method exactly once.
+  - id: V3
+    axiom: AX-pii-anon-004-adjacent / NFR-005 — no merged regime verdict
+    method: AST-identifier-scan + runtime + grep
+    result: PASS
+    evidence: >
+      AST identifier scan (Name.id / Attribute.attr / field names / args) finds ZERO of
+      {compliant, overall, equivalent, merged, fusion, redaction} as code identifiers — stronger
+      than the test's regex. as_dict keys carry none of {compliant, deidentified, overall,
+      equivalent, regulatory_domains}. The sole "deidentified" token is the regime-scoped
+      ccpa_deidentified (the CCPA "deidentified" legal criterion, NOT a cross-regime roll-up).
+      sox/lgpd/pipa surfaced via other_regimes, never folded into a named regime; other_regimes
+      provably never holds an FR-022 tag.
+  - id: V4
+    axiom: AX-pii-anon-002 / NFR-004 — determinism + pure-stdlib
+    method: AST-guard + 50x-repeat + lint/type
+    result: PASS
+    evidence: >
+      crosswalk.py top-level imports = {__future__, collections, dataclasses, enum}; intersection
+      with {random,time,uuid,datetime,secrets} = empty. crosswalk_record().as_dict() and
+      as_columns() byte-identical across 50 runs. ruff check -> All checks passed!; mypy --strict
+      --follow-imports=silent -> Success: no issues found in 2 source files.
+  - id: V5
+    axiom: AX-pii-anon-001 — synthetic-only
+    method: code-read + corpus-existence
+    result: PASS
+    evidence: >
+      Tests use only synthetic regime-tag string literals; no real PII present. regulatory_domains
+      is a real schema field (pii_anon.schema.json: array<string>) and tags
+      gdpr/hipaa/ccpa/pci_dss/sox/lgpd/pipa exist in generators — so the crosswalk maps genuine
+      corpus tags, not invented regimes (no over-reach).
+  - id: V6
+    axiom: cross-cutting — TDD honesty + scope discipline
+    method: pytest + git-scope + self-attestation
+    result: PASS
+    evidence: >
+      tests/test_crosswalk.py -> 6 passed (re-run independently). Diff range = only the 3 owned
+      files + the story doc (no lattice/corpus/scoring touched). provisional_status:
+      AGENT_SIMULATED declared in §1 metadata and §12 — honest about simulated execution.
+
+findings: []          # zero findings at any severity
+
+severity_counts:
+  SHOWSTOPPER: 0
+  CATASTROPHIC: 0
+  MAJOR: 0
+  MINOR: 0
+  OBSERVATION: 0
+
+decision_rationale: >
+  APPROVE. The load-bearing gov-02 / epistemic-honesty axiom is upheld with defense in depth: a
+  non-bypassable disclaimer (__post_init__ guard), a status vocabulary that cannot express a
+  compliance verdict (in_scope / out_of_scope_of_dataset, never true/compliant), and the deliberate
+  absence of any merged / equivalence / flattened field — verified by AST identifier scan beyond the
+  test's regex. HIPAA's two §164.514(b) legal methods stay as two distinct columns. NFR-005's
+  no-fusion discipline holds (the same separation the scorer families enforce). Determinism/purity
+  (AX-002/NFR-004) confirmed by AST guard + 50x repeat + clean ruff/mypy --strict. Synthetic-only
+  (AX-001) holds. No domain packs active, so no pack-extension patterns apply. Zero MAJOR+ findings.
+
+self_attestation:
+  independent: true
+  read_only_honored: true                 # no files mutated except this review artifact
+  no_owned_code_modified: true
+  bounds:
+    reviewed_only_assigned_axiom_slice: true
+    deferred_out_of_scope:
+      - "Whether a record's de-id is actually adequate per a regime — out of scope (executor/traceability)"
+      - "Statistical-power per-slice (AX-003) — not triggered by this structural crosswalk story"
+      - "ruff/mypy stylistic judgment beyond pass/fail — code-quality reviewer's"
+  attestation: >
+    Findings are my own, derived from reading the owned files + project-axioms.yaml and from
+    independently re-running tests, an AST guard, an AST identifier scan, a 50x determinism check,
+    and ruff/mypy. I did not defer to the story's self-reported evidence; I reproduced it.

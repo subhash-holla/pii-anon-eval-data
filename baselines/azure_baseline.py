@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib.util
 import os
 
+from pii_anon_datasets.baselines import cloud_languages
 from pii_anon_datasets.baselines.contract import AdapterSpan, coverage_of
 
 _ENDPOINT = os.environ.get("AZURE_LANGUAGE_ENDPOINT", "")
@@ -45,6 +46,12 @@ class _AzureAdapter:
     model_id = "azure-ai-language-pii"
     label_map = LABEL_MAP
     deterministic = False
+    # The dataset language code for the current run (the orchestrator sets this per shard before build());
+    # ``detect`` maps it to Azure's locale string (e.g. 'pt' -> 'pt-PT', 'zh' -> 'zh-hans').
+    language = "en"
+
+    def supports_language(self, language: str) -> bool:
+        return cloud_languages.is_supported(self.name, language)
 
     def available(self) -> bool:
         try:  # find_spec on a dotted name imports the parent; absent azure raises
@@ -67,7 +74,9 @@ class _AzureAdapter:
     def detect(self, text: str, model: object) -> list[AdapterSpan]:
         if not text:
             return []
-        response = model.recognize_pii_entities([text], language="en", string_index_type="UnicodeCodePoint")
+        response = model.recognize_pii_entities(
+            [text], language=cloud_languages.api_code(self.name, self.language), string_index_type="UnicodeCodePoint"
+        )
         out: list[AdapterSpan] = []
         for doc in response:
             if getattr(doc, "is_error", False):

@@ -1,0 +1,166 @@
+# Axiom-compliance story-gate review — S4-01 (iteration 1)
+schema_version: 1
+review:
+  reviewer: dev-assist-development-axiom-compliance
+  gate: story
+  story_id: S4-01
+  iteration: 1
+  date: 2026-05-29
+  verdict: APPROVE
+  read_only: true
+  context_bounds_respected: true
+  independence_attestation: >
+    Findings derived solely from independent inspection of the owned diff
+    (src/pii_anon_datasets/stats/intervals.py, stats/__init__.py,
+    tests/test_clopper_pearson.py), the project axiom registry, and my own
+    re-execution of the test suites + a recomputation of the textbook CP
+    bounds. I did not defer to the story's §12 self-evidence: every numeric
+    claim below was re-derived in-process. No other reviewer's output was
+    consulted. No file was modified.
+
+  scope:
+    owned_files:
+      - src/pii_anon_datasets/stats/intervals.py    # ADDED clopper_pearson_interval + _betacf/_betainc/_inv_betainc + shared _require_int_counts
+      - src/pii_anon_datasets/stats/__init__.py      # export clopper_pearson_interval
+      - tests/test_clopper_pearson.py                # NEW (7 fr_004/nfr_002-tokened tests)
+    note: >
+      Story §8 owns src/pii_anon_datasets/stats/* (not the top-level stats/ path
+      named in the dispatch line — top-level stats/ does not exist in the repo).
+      Reviewed the actual owned package.
+
+  axioms_triggered:
+    - AX-pii-anon-003   # stated-statistical-power / statistical rigor (AX-003)
+    - AX-pii-anon-002   # deterministic-reproducible-generation (AX-002) / NFR-004 purity
+
+  axiom_findings:
+
+    - axiom: AX-pii-anon-003
+      alias: AX-003 statistical rigor
+      status: UPHELD
+      verification: |
+        Clopper-Pearson is a NAMED exact method on INTEGER counts, the correct
+        exact-coverage complement to Wilson — confirmed by inspection + re-run:
+          * NAMED method: Interval.method == "clopper-pearson", surfaced via
+            as_dict()["method"]. Re-run confirms the literal string on every path
+            including the n=0 sentinel and both k=0 / k=n edges. NFR-002 satisfied;
+            the function returns an Interval, never a bare float (no bare point
+            score can escape).
+          * INTEGER guard (reidx-02): routed through the shared _require_int_counts,
+            which rejects non-int via isinstance AND rejects bool explicitly
+            (isinstance(k,bool)/isinstance(n,bool)) BEFORE the value check. Re-ran
+            test_fr_004_reidx02_clopper_pearson_integer_guard — 1.0/10, 1/10.0,
+            True/10, 1/True all raise TypeError; 11/10 and -1/10 raise ValueError.
+            bool is an int subclass but is correctly excluded as a dishonest count.
+          * EXACT-COVERAGE COMPLEMENT TO WILSON: low = B^-1(alpha/2; k, n-k+1),
+            high = B^-1(1-alpha/2; k+1, n-k) — the standard Beta-quantile form of
+            the exact interval. The conservatism property (CP contains Wilson) is a
+            genuine correctness check, re-run green on (1,10)(3,10)(5,10)(7,20)
+            (13,20)(2,8)(49,100): cp.low <= w.low and cp.high >= w.high on every
+            cell. This is the structurally-correct "guaranteed-coverage" sibling of
+            Wilson used for small-n credential cells per the story goal.
+        AX-003's lattice/per-cell-CI obligation is an integration concern for the
+        scoring surfaces that CONSUME this primitive (S4-04 / Stage-5); S4-01 adds
+        the CI primitive only and does not render any per-slice metric, so no
+        Coverage-Block / per-cell-provenance obligation attaches to this diff.
+
+    - axiom: AX-pii-anon-002
+      alias: AX-002 determinism / NFR-004 purity
+      status: UPHELD
+      verification: |
+        Byte-reproducible, pure-stdlib, no nondeterminism source:
+          * PURITY: import scan of intervals.py shows only `from __future__`,
+            `import math`, `from dataclasses import dataclass`. Grep for
+            random|uuid|time.|datetime|numpy|scipy|os.|open(|input( returns only a
+            COMMENT match ("No scipy/numpy") — zero code references. math.lgamma /
+            math.log / math.exp are stdlib. NFR-004 (pure-stdlib) satisfied.
+          * FIXED ITERATION COUNTS: _BETACF_MAXIT = 200 (continued fraction, with a
+            tol-break that can only TERMINATE EARLIER — never extends past 200, so the
+            bound is platform-independent), _INV_BETAINC_ITERS = 60 (bisection, an
+            unconditional fixed-count for-loop with NO convergence-dependent early
+            exit). No while-loop, no epsilon-driven termination that could vary by FP
+            unit. This is the determinism-critical design choice and it is correct.
+          * BYTE-REPRODUCIBLE (independently verified, NOT trusting §12): ran
+            clopper_pearson_interval(7,23,.95), (0,10), (10,10) in TWO separate
+            Python processes — as_dict() output byte-identical across both
+            (low=0.13210287969809958 / high=0.5291916660085068 for 7/23, etc.).
+            test_fr_004_clopper_pearson_deterministic re-run green (5 in-process
+            repeats at 0.95 + 3 at 0.99).
+          * No RNG / no clock / no I/O anywhere in the module.
+
+    - axiom: math-honesty (cross-cutting)
+      status: UPHELD
+      verification: |
+        The validation suite tests genuine correctness, not a curve-fit to the
+        implementation's own output:
+          * TEXTBOOK CROSS-CHECK is against EXTERNAL known values, independently
+            re-derived here: I recomputed CP(1,10)@95% in-process -> low=0.0025,
+            high=0.4450, matching the standard Clopper-Pearson table to 4 d.p. As an
+            external oracle, scipy.stats.beta.ppf (available in this shell, NOT a
+            repo dependency) gives 0.002529 / 0.445016 — agreeing with the
+            hand-rolled inverse-beta to <1e-5. The test pins literals from the table,
+            so it would FAIL a wrong implementation; it is not self-referential.
+          * CP-contains-Wilson is a structural property of the two methods (exact
+            >= score-interval width), independent of either implementation's
+            internals — a real falsifiable correctness check, re-run green.
+          * Edges asserted as EXACT (k=0 -> low == 0.0; k=n -> high == 1.0; n=0
+            sentinel point=nan,low=0,high=1) bypass the inverse-beta entirely, so
+            they pin true mathematical boundary values, not approximations.
+
+  byte_preservation:
+    claim: "Interval / wilson_interval / _z preserved exactly; Wilson tests 6/6."
+    status: VERIFIED_WITH_INTENTIONAL_GUARD_STRENGTHENING
+    detail: |
+      `git diff 75e9eed(pre-S4-01)..HEAD` on intervals.py shows exactly two
+      changes, both additive/refactor with no behavior regression:
+        1. NEW _require_int_counts helper + wilson_interval's inline guard REPLACED
+           by a call to it. The Interval dataclass, _Z table, _z(), and the Wilson
+           score math (center/half/return) are byte-identical to S1.
+        2. The shared guard WIDENS bool rejection from k-only
+           (old: `or isinstance(k, bool)`) to k-OR-n
+           (`or isinstance(k, bool) or isinstance(n, bool)`). This is a strict
+           SUPERSET of the old reject set: every input the old guard rejected is
+           still rejected; it ADDITIONALLY rejects wilson_interval(k, n=True),
+           which was a latent reidx-02 hole (bool n is also a dishonest count).
+      Behavioral impact on Wilson: none observable by the existing suite — no
+      Wilson test passes a bool n, and none asserts on the TypeError message text
+      (no match= regex), so the message-string change ("wilson_interval requires…"
+      now interpolated via {fname}) is invisible to assertions. Independently
+      re-ran tests/test_intervals.py: 6/6 PASS (full 13 with CP). This is a
+      reidx-02 STRENGTHENING consistent with AX-003's intent, not a regression. I
+      record it explicitly so the "byte-identical wilson_interval" phrasing in §10
+      is read precisely: the Wilson *function body* changed (guard now delegated)
+      while Wilson *behavior on all valid + previously-rejected inputs* is
+      preserved and one additional invalid input is now correctly rejected.
+
+  independent_test_execution:
+    ran: "PYTHONPATH=src pytest tests/test_intervals.py tests/test_clopper_pearson.py -q"
+    result: "13 passed (6 Wilson + 7 CP)"
+    cross_process_determinism: "byte-identical CP bounds across 2 independent processes"
+    external_oracle: "scipy beta.ppf agrees with hand-rolled inverse-beta to <1e-5 on (1,10)@95%"
+
+  findings: []   # zero SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR / OBSERVATION
+
+  finding_counts:
+    showstopper: 0
+    catastrophic: 0
+    major: 0
+    minor: 0
+    observation: 0
+    total: 0
+
+  out_of_scope_noted:
+    - "Numerical-accuracy beyond the asserted 4 d.p. / FP-unit reproducibility on exotic platforms — performance-benchmark / executor numerical judgment."
+    - "AX-003 per-lattice-cell n + CI + design-provenance emission — belongs to the scoring SURFACES that consume this primitive (S4-04 / Stage-5), not this CI-primitive story; flagged for requirements-coverage at those gates."
+    - "Pre-existing S1 typing residual (Interval.as_dict -> dict, line 28) — out of this story's owned-change scope; correctly left untouched per §8. code-quality/mypy concern, not an axiom matter."
+
+  decision_rationale: >
+    Both triggered axioms (AX-003 statistical rigor, AX-002 determinism/NFR-004
+    purity) are upheld, independently verified by re-execution and recomputation
+    rather than by trusting the story's self-attestation. Clopper-Pearson is a
+    correctly-named exact CI on integer counts with a strengthened reidx-02 guard,
+    the conservatism property and textbook cross-check are genuine (external-oracle-
+    confirmed) correctness checks, the implementation is pure `math` with fixed
+    iteration counts and is byte-reproducible across processes, and the
+    Interval/_z/Wilson-math surface is preserved (the only Wilson delta is an
+    additive, superset, regression-free guard strengthening). Zero MAJOR+ findings.
+    Verdict: APPROVE.

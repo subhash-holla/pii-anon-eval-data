@@ -462,6 +462,7 @@ def main():
                 "coherence_preserved_pseudonymized": True,  # Pseudonymized text preserves grammar
                 "coherence_preserved_generalized": True,
             },
+            "coherence_assumed": True,  # B-6 honest marker: coherence_preserved_* is an assumed constant
         }
 
         # Step 3: Add "context_preservation" to dimensions if not already present

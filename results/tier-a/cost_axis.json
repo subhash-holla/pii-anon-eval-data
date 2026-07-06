@@ -1,0 +1,57 @@
+{
+  "aws": {
+    "usd_total": 25.6156,
+    "usd_per_1k": 0.8250322081937645,
+    "cloud": true
+  },
+  "gliner": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": false
+  },
+  "gcp": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": true
+  },
+  "azure": {
+    "usd_total": 62.952,
+    "usd_per_1k": 2.0275702138624068,
+    "cloud": true
+  },
+  "presidio": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": false
+  },
+  "regex": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": false
+  },
+  "piiranha": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": false
+  },
+  "stanza": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": false
+  },
+  "flair": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": false
+  },
+  "spacy": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": false
+  },
+  "scrubadub": {
+    "usd_total": 0.0,
+    "usd_per_1k": 0.0,
+    "cloud": false
+  }
+}

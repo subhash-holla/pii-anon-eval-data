@@ -1,0 +1,99 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S6-03
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S6-03-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/functional-requirements.md:46
+    description: |
+      FR-026 (Governance charter) is a four-part MUST: GOVERNANCE.md + advisory-body
+      roster + a CoI statement re: `pii-anon-core` + a bus-factor/succession note.
+      S6-03 verifies ONLY the CoI-statement DATA STRUCTURE (the CoIRecord value object:
+      attestation + recusal + embeddable provenance). The GOVERNANCE.md prose CoI
+      statement, advisory roster, and bus-factor note are NOT in this story's scope.
+      S6-03 §3 scopes itself correctly and §5 names S6-04 (GOVERNANCE.md) as the
+      successor for the prose half; S6-05 (CONTRIBUTING.md) completes the charter.
+      FR-026 therefore MUST NOT be marked `verified` on S6-03 alone — it is a clean
+      deferral-with-successor (S6-04 + S6-05), not a silent miss. Flagged so the
+      sprint/epic gate does not over-claim FR-026 closure from this story.
+    suggested_resolution: |
+      No change required for the S6-03 story gate. At the S6 sprint gate, keep FR-026
+      in a `partially-verified` / `deferred-to-S6-04+S6-05` state; only mark FR-026
+      `verified` once S6-04 (GOVERNANCE.md + roster + bus-factor) and S6-05
+      (CONTRIBUTING.md) land and the governance-checklist audit (NFR-014 Measure) passes.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-026
+      - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-03.md#5
+
+  - id: coverage-S6-03-02
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/functional-requirements.md:43
+    description: |
+      FR-023 (Neutral leaderboard) CoI half — "held-out store records submitter
+      affiliation + no-pre-publication-access attestation" — is now exercised by
+      test_nfr_014_coi_as_dict_embeddable_in_store (CoIRecord.as_dict() rides as the
+      provenance payload of a SUBMITTED event, round-trips, and verify_chain() holds).
+      Together with S6-01 (LeaderboardStore — DONE) and S6-02 (submission policy:
+      opt-in publish + anti-gaming — DONE), the FR-023 slices (held-out labels
+      undistributed, submission policy, anti-gaming, opt-in publish, attestation
+      provenance) now appear collectively covered. Whether FR-023 can be marked
+      `verified` is a SPRINT-gate determination (full-tier coverage snapshot across
+      S6-01/02/03), out of scope for this story gate. Recorded so the sprint gate
+      picks up the candidate-closed signal.
+    suggested_resolution: |
+      No action at the story gate. At the S6 sprint gate, run the FR-023 coverage
+      snapshot across S6-01 + S6-02 + S6-03; if every FR-023 sub-clause has a named
+      passing test and all three stories are DONE, FR-023 may be marked verified.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-023
+      - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-01.md
+      - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-02.md
+
+notes: |
+  Story-gate coverage check for S6-03 (gov-03 CoIRecord, iteration 1). Every clause
+  in this story's declared scope has a named passing test — zero clauses without a test.
+
+  Clause -> named test (all PASS):
+    * non-strippable attestation (gov-03 / FR-026 CoI-statement data structure)
+        -> test_fr_026_attestation_is_non_strippable  [UNIT]  (4 empty/whitespace cases
+           + default constant asserts "pre-publication"+"access" / "held-out" / train|tune)
+    * recusal for maintainer / pii-anon-core-affiliated submitter (gov-03 / FR-026)
+        -> test_fr_026_recusal_for_maintainer_and_affiliated  [UNIT]  (5 positive
+           case-insensitive+substring cases; 2 external negatives -> requires_recusal False)
+    * embeddable provenance into the S6-01 store (NFR-014 governance neutrality/auditable)
+        -> test_nfr_014_coi_as_dict_embeddable_in_store  [INTEGRATION]  (as_dict keys +
+           LeaderboardStore.append(SUBMITTED) round-trip + verify_chain() True; not a
+           forbidden held-out-gold key)
+    * pure-stdlib + deterministic (NFR-004 / AX-002)
+        -> test_nfr004_coi_pure_stdlib  [PROPERTY]  (AST guard bans random/time/uuid/
+           datetime/secrets)
+
+  Targeted run executed by this reviewer:
+    python3 -m pytest tests/test_coi.py -k "fr_026 or nfr_014 or nfr004" -q
+    -> 11 passed in 0.11s, 0 failed, 0 error
+  (4 logical tests; 11 nodes because invariant-1 is parametrized x4 and invariant-2 x5.)
+  Three named clause tests confirmed individually green (10 passed: 4 + 5 + 1).
+
+  Coverage verdict: in-scope MUST slices fully verified. FR-026 charter is NOT fully
+  satisfied by S6-03 (CoI-statement DATA STRUCTURE only) — its prose/roster/bus-factor
+  remainder is deferred-with-successor to S6-04 (+ S6-05); both successors are named in
+  S6-03 §5 but do not yet exist as story files (expected — later in the sprint). No
+  orphaned / silently-missing MUST clause in this story's scope.
+
+  Out of scope for this reviewer (handled elsewhere): test quality + token->req mapping
+  (code-quality, traceability); semantic FR/governance-neutrality correctness
+  (axiom-compliance); gold-leak / recusal-bypass (security-sast).
+
+  DIVERGED / Pass-2: provisional_status = AGENT_SIMULATED (NOT DIVERGED) per S6-03 §4 —
+  no DIVERGED MUST, so no Pass-2 sample-size commitment is owed at this gate. The §12
+  "Pass 2 = real CI at sprint close" note is the standard AGENT_SIMULATED real-hardware
+  re-run, not a DIVERGED-threshold Pass 2.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

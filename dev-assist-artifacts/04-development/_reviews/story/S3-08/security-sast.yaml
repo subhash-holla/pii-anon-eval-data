@@ -1,0 +1,102 @@
+# security-sast reviewer — STORY gate (conditional fire: trust-boundary/privacy-integrity control touched)
+reviewer: security-sast
+gate: story
+story_id: S3-08
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+independence:
+  bounded_context: true
+  shared_state: none
+  self_attested: true
+
+scope_reviewed:
+  owned_files:
+    - src/pii_anon_datasets/stats/power.py          # reid seam ADDED (reid_required_n, ReidTier(Spec), REID_TIER_SPECS, ReidProvenance)
+    - src/pii_anon_datasets/stats/__init__.py        # exports the 5 new symbols
+    - tests/test_reid_power.py                        # 5 nfr_018 tests (incl. the frozen-lattice regression guard #5)
+    - tests/test_nfr005_separation.py                # the [AUDIT] control: tests #6/#7
+  audited_surface_read_only:
+    - src/pii_anon_datasets/scoring/anonymization.py     # ParetoPoint (audit target)
+    - src/pii_anon_datasets/scoring/pseudonymization.py  # PseudonymizationReport (audit target)
+    - src/pii_anon_datasets/scoring/reidentification.py  # ANTI_ANONYMITY_CAVEAT source + MeasuredRRS seam
+    - src/pii_anon_datasets/scoring/__init__.py          # scoring.__all__ public API
+  diff_range: d9bcecb~1..HEAD
+  story_diff_is_code_only: true   # only the 5 owned files + story docs changed; no data/corpus/snapshot/tag
+
+primary_control:
+  name: "NFR-005 / AX-004 cross-module no-merge audit ([AUDIT]; tests #6/#7)"
+  classification: privacy-integrity control
+  proves_separation: true
+  teeth_independently_verified: true   # sandboxed mutation testing on temp copies; real tree never edited
+  teeth_evidence:
+    - vector: "merged field/property `combined` (+ __float__) on ParetoPoint"
+      result: "test_nfr_005_anon_and_pseudo_are_separate_modules FAILS — assert not {'combined'} (line 83; AST source-grep + live-namespace catch)"
+    - vector: "fused callable combined_deid_score()->float exported in scoring.__all__"
+      result: "test_nfr_005_no_combined_deid_callable_in_scoring_public_api FAILS — 'scoring.__all__ exports a fused-de-id-named symbol' (line 115)"
+    - vector: "summed `total_collisions` property on PseudonymizationReport"
+      result: "FAILS — assert not {'total_collisions'} (line 83; field/hasattr guard at lines 97/104)"
+    - vector: "anon imports the other family's result type (PseudonymizationReport) — cross-module fusion"
+      result: "FAILS — assert not hasattr(anon, 'PseudonymizationReport') (line 74)"
+  prose_tolerance_correct: true   # forbidden names in disclaimer docstrings/comments are ALLOWED (AST-anchored, not naive substring) — verified: 12 such prose mentions across the 2 modules, audit ignores them
+  structural_unmergeability_confirmed:
+    - "ParetoPoint axes are different types (MeasuredRRS vs UtilityScore); no __float__; no merged field/property"
+    - "PseudonymizationReport keeps intended_linkage_collisions / unintended_crypto_collisions SEPARATE; no total_collisions"
+    - "neither module re-exports the other's result type; scoring.__all__ has no fused-token export; score_anonymization vs score_pseudonymization return distinct types"
+
+secondary_controls:
+  data_integrity_seam_is_code_only:
+    confirmed: true
+    reid_seam_reads_writes_lattice: false   # power.py has NO Path/open/write/json/lattice I/O — pure compute
+    frozen_lattice_unchanged: true          # real eval_lattice.json cell_count == 730 == len(cells); test #5 pins 730 honestly
+    git_proof: "d9bcecb~1..HEAD touched NO file under data/, no lattice_freq_snapshot.json, no git tag"
+  seam_inert:
+    confirmed: true
+    files_opened_on_import_and_construct: 0   # builtins.open tracer: [] across import stats.power + construct ReidProvenance
+  import_cycle_resolution_safe:
+    confirmed: true
+    mechanism: "lazy default_factory _anti_anonymity_caveat() with a STATIC `from ..scoring.reidentification import ANTI_ANONYMITY_CAVEAT`"
+    dynamic_import_or_eval_risk: none   # no importlib / __import__ / eval / exec / compile / string-target import
+  reid_provenance_caveat_non_strippable:
+    confirmed: true   # field default_factory + __post_init__ rejects empty; caveat is canonical constant; rides through as_dict() (FR-009)
+  ax_001_no_real_pii:
+    confirmed: true   # no SSN/PAN/real-email/private-key/API-key literal in owned files; only synthetic ids (offline-deterministic-v1, reidx-01)
+  pure_stdlib_no_new_dependency:
+    confirmed: true   # power.py: io/math/dataclasses/enum/typing + intra-package only; tests: ast/inspect/json/pathlib/pytest — no third-party, no git-pinned dep
+
+catalog_pattern_scan:
+  danger_apis_eval_exec_dynimport_subprocess_network_filewrite: none
+  weak_hash_md5_sha1: none
+  sql_nosql_string_interpolation: none
+  wildcard_scope: none
+  tokio_spawn_or_thread_or_fork_crossing_boundary: none
+  hardcoded_credential_shape: none
+  new_egress_route: none
+  git_pinned_dependency: none
+
+test_execution:
+  owned_suite: "7 passed (tests/test_reid_power.py 5 + tests/test_nfr005_separation.py 2)"
+  broad_scoring_stats_run: "70 passed (power/reid/nfr005/pseudonym/anonymiz/intervals selection); 0 regressions"
+  note: "AGENT_SIMULATED env per story §12; this reviewer re-ran the owned + adjacent suites locally (Python 3.10, PYTHONPATH=src)"
+
+findings: []   # zero findings at any severity
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+
+summary: >
+  The [AUDIT]-tagged NFR-005/AX-004 cross-module no-merge control genuinely proves the
+  anonymization and pseudonymization metric families are never fused into a combined de-id
+  score, and it has real TEETH: independent sandboxed mutation across four fusion vectors
+  (merged field, merged property+__float__, fused public callable, cross-module type pull)
+  each made the audit FAIL, while disclaimer prose mentioning the forbidden names correctly
+  passes (AST-anchored, not substring). The reid power-ladder seam is code-only and inert —
+  zero file I/O on import/construct, the FROZEN eval_lattice.json (730 cells) is untouched in
+  code and in git, and the import-cycle resolution uses a static lazy `from ... import` with no
+  eval/exec/dynamic-import surface. The ReidProvenance anti-anonymity caveat is non-strippable
+  (FR-009) and pure-stdlib (NFR-004) holds with no new dependency. No real PII (AX-001). Zero
+  MAJOR+ findings → APPROVE.

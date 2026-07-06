@@ -1,0 +1,105 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S5-03
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: security-S5-03-01
+    severity: OBSERVATION
+    location: pyproject.toml:37
+    description: |
+      The new `croissant = ["mlcroissant"]` optional extra adds the `mlcroissant`
+      dependency. It is NOT a core dependency and is NOT installed in this env
+      (`importlib.util.find_spec('mlcroissant') -> None`), so no transitive
+      dependency tree enters the default install path and there is no new CVE
+      surface to scan at story scope. `mlcroissant` is consumed only behind a
+      lazy import inside `croissant.validate_with_mlcroissant`; the package and
+      both new modules import on a pure-stdlib box. No supply-chain action is
+      required now — record for the epic/sprint `pip-audit`/`pnpm audit`-equivalent
+      pass once the extra is installed on the Pass-2 CI image.
+    suggested_resolution: |
+      No change required at story gate. When the `[croissant]` extra is installed
+      on the Pass-2 CI image, run the standard `pip-audit` over the resolved
+      `mlcroissant` transitive set as part of the epic/sprint CVE scan and pin/
+      record the resolved versions in the lockfile/SBOM diff.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-03.md#5
+      - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-03.md#8b
+
+notes: |
+  STORY-gate security review of the S5-03 data-distribution emitters
+  (`distribution/croissant.py`, `distribution/dataset_card.py`). The two new
+  modules read packaged metadata and return a JSON-LD dict / Markdown string;
+  they perform no network egress, no HF upload, and no file writes. Verdict
+  APPROVE — zero SHOWSTOPPER / CATASTROPHIC / MAJOR; one OBSERVATION (optional
+  uninstalled dep extra). Story-gate signals tripped: none of {capability
+  registry, trust boundary, HSM port, event-signing, network egress added,
+  `unsafe` block} — this is a pure data-emitter diff; security-sast ran here only
+  on the story's explicit §11 request (no-egress / no-HF-upload / no-real-PII
+  assertion).
+
+  Evidence gathered (read-only; diff `703c3e3..HEAD`; only the 7 §8-owned files
+  changed; `compliance/crosswalk.py` and `taxonomy.py` imported READ-ONLY, not
+  modified):
+
+  1. No network egress / no HF upload / no auto-publish (AX-001).
+     grep `requests|urllib|http|socket|upload|push_to_hub|HfApi|huggingface_hub|
+     hf_hub|boto3` over both modules returns ONLY: (a) docstring/comment lines
+     ASSERTING the absence, (b) URI string-literals (the CC0 `DATA_LICENSE`, the
+     `conformsTo` URL, and the schema.org/mlcommons/dct namespace URIs in the
+     fixed `_CROISSANT_CONTEXT`), and (c) the relative-filename `contentUrl` in
+     `_file_object` (a local artifact path, not a fetch). No `requests`/`urllib`/
+     `socket` client, no `huggingface_hub`/`HfApi`/`push_to_hub`, no `boto3`. No
+     file writes either: grep `open(|.write(|write_text|write_bytes|json.dump(|
+     to_parquet` -> none (exit 1). Smoke-run confirms `build_croissant()` returns
+     a `dict` and `build_dataset_card()` returns a `str` (starts with `---`) with
+     no side effects. Building a card / Croissant does NOT publish.
+
+  2. No real-PII path (AX-001). The sole data source is the packaged
+     `data/pii_anon.metadata.json`, loaded via `croissant.load_metadata` (the
+     same `_DATA_DIR` single source `stats/lattice.py` uses). That file is
+     AGGREGATE metadata only — top-level keys {distributions, entity_categories,
+     entity_types, evaluation_dimensions, languages, tier3_evaluation,
+     total_annotations, total_records, version, writing_scripts}; it contains NO
+     per-record `records`/`samples`/`examples`/`data`/`rows` array (verified).
+     The emitted JSON-LD `description` and the card body interpolate only the
+     canonical integer counts (total_records=575604, total_annotations=2486438,
+     entity_types=63, languages=60) + version + the static class-level caveats
+     (POWER_SENTENCE / ENRICHMENT_DISCLOSURE / TRAIN_VS_EVAL) + the `reg_*` field
+     names. No record text reaches the output. The `reg_*` field names derive
+     from `crosswalk.REGIMES` (single source) — not re-listed in `croissant.py`.
+
+  3. Lazy optional-dep import safety. AST of module-level imports:
+     croissant.py = {__future__, collections, json, pathlib, pii_anon_datasets,
+     typing}; dataset_card.py = {__future__, collections, pii_anon_datasets,
+     typing}. `import mlcroissant` appears ONLY inside `validate_with_mlcroissant`
+     (never at module top); importing either module / the `distribution` package
+     with `mlcroissant` absent succeeds. No `eval`/`exec`/`compile`/`__import__`/
+     `pickle`/`marshal`/`subprocess`/`os.system`/`yaml.unsafe_load` anywhere
+     (grep exit 1). `mlc.Dataset(jsonld=dict(jsonld))` is constructed from OUR
+     OWN `build_croissant` dict — no untrusted/external deserialization. The
+     absent-path raises a clear `RuntimeError` naming
+     `pip install pii-anon-datasets[croissant]`.
+
+  4. Secrets. No hardcoded credentials/tokens/keys. The only credential-shape
+     grep hit is the literal HF task tag `task_categories: token-classification`
+     (the substring "token") — not a secret.
+
+  5. Weak crypto. No `hashlib` import and no hashing call. The `"md5": "cr:md5"`
+     line is a JSON-LD `@context` TERM MAPPING key in the standard published
+     Croissant 1.0 context (vocabulary alias), not a use of the MD5 primitive.
+
+  6. Capability boundary / composition-root / `unsafe` / egress-manifest. N/A to
+     this Python data-emitter diff — no capability registry, trust-boundary
+     mediator, HSM port, signing path, `tokio::spawn`, `unsafe` block, `git = "..."`
+     dep, or denied-license dep is in scope. No architectural-egress rule applies.
+
+  Determinism (AX-002) and counts-cannot-drift (NFR-013) are axiom-compliance's
+  lane, not flagged here; noting only that they have no security implication.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

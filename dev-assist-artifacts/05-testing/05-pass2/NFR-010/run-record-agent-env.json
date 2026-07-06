@@ -1,0 +1,160 @@
+{
+  "schema": "pii-anon-nfr010-runrecord/v1",
+  "harness_version": "1.0.0",
+  "timestamp": "2026-05-31T20:29:28Z",
+  "seed": 20260531,
+  "host": {
+    "cpu": "arm",
+    "machine": "arm64",
+    "cores_logical": 10,
+    "ram_bytes": 34359738368,
+    "os": "Darwin",
+    "os_release": "25.5.0",
+    "python_version": "3.10.6",
+    "is_reference_host": false,
+    "note": "Agent execution sandbox \u2014 NOT the declared 8-core reference host required by NFR-010b. Figures are INDICATIVE only; not a canonical threshold result (protocol \u00a72)."
+  },
+  "corpus": {
+    "path": "/Users/subhashholla/Development/pii_anonymize_pseudonymize/pii-anon-core/pii-anon-eval-data/src/pii_anon_datasets/data/pii_anon.jsonl.gz",
+    "n_requested": 5000,
+    "n_selected": 5000,
+    "language": "en",
+    "sample": "head",
+    "record_size_chars": {
+      "min": 38,
+      "max": 1426,
+      "mean": 294.0702,
+      "p50": 200
+    }
+  },
+  "params": {
+    "warmup": 200,
+    "chunk_size": 256,
+    "runs": 3,
+    "percentile_method": "nearest-rank(ceil), no interpolation"
+  },
+  "detector_classes": [
+    {
+      "class": "regex",
+      "status": "measured",
+      "floored": true,
+      "runs": 3,
+      "rec_per_sec": {
+        "median": 17507.087917790755,
+        "min": 17489.60116593263,
+        "max": 17539.107807363544
+      },
+      "latency_us": {
+        "p50": 39.792,
+        "p95": 147.708,
+        "p99": 191.084,
+        "mean": 57.11972229166662
+      },
+      "n_timed": 4800
+    },
+    {
+      "class": "spacy_ner",
+      "status": "measured",
+      "floored": false,
+      "runs": 3,
+      "rec_per_sec": {
+        "median": 108.29269887089534,
+        "min": 104.37504622770794,
+        "max": 108.87369484185238
+      },
+      "latency_us": {
+        "p50": 6591.292,
+        "p95": 23720.0,
+        "p99": 35344.25,
+        "mean": 9234.232874666672
+      },
+      "n_timed": 375
+    },
+    {
+      "class": "transformer",
+      "status": "exempt",
+      "floored": false,
+      "reason": "NFR-010a exempts transformer/LLM detectors from the throughput floor (reported for completeness, not measured here)."
+    },
+    {
+      "class": "llm",
+      "status": "exempt",
+      "floored": false,
+      "reason": "NFR-010a exempts transformer/LLM detectors from the throughput floor (reported for completeness, not measured here)."
+    }
+  ],
+  "score_leg": {
+    "class": "score_detection",
+    "status": "measured",
+    "floored": false,
+    "runs": 3,
+    "rec_per_sec": {
+      "median": 50317.280328355475,
+      "min": 49798.472842682946,
+      "max": 50631.45119844325
+    },
+    "latency_us": {
+      "p50": 18.167,
+      "p95": 32.791,
+      "p99": 49.333,
+      "mean": 19.873888125
+    },
+    "n_timed": 4800
+  },
+  "end_to_end_leg": {
+    "class": "end_to_end",
+    "status": "measured",
+    "floored": false,
+    "runs": 3,
+    "rec_per_sec": {
+      "median": 11621.86785667491,
+      "min": 11068.398519920836,
+      "max": 11647.604181486018
+    },
+    "latency_us": {
+      "p50": 65.875,
+      "p95": 192.5,
+      "p99": 255.708,
+      "mean": 86.04468854166669
+    },
+    "n_timed": 4800
+  },
+  "nfr_010a": {
+    "regex": {
+      "status": "measured",
+      "rec_per_sec_median": 17507.087917790755
+    },
+    "spacy_ner": {
+      "status": "measured",
+      "rec_per_sec_median": 108.29269887089534
+    },
+    "transformer": {
+      "status": "exempt"
+    },
+    "llm": {
+      "status": "exempt"
+    }
+  },
+  "nfr_010b": {
+    "target_rec_per_sec": 5000,
+    "detector_class": "regex",
+    "measured_rec_per_sec": 17507.087917790755,
+    "meets_target": true,
+    "note": "Indicative only \u2014 see provenance.canonical_verdict."
+  },
+  "nfr_010c": {
+    "total_records": 575604,
+    "rec_per_sec": 17507.087917790755,
+    "wall_clock_seconds": 32.87834062997248,
+    "wall_clock_human": "32.878s",
+    "budget_seconds": 60.0,
+    "recommended_sampling_rows": 575604,
+    "note": "At 17507 rec/sec a full 575,604-row scan \u2248 32.878s; above ~575,604 rows, sample to stay within 60s."
+  },
+  "provenance": {
+    "is_reference_host": false,
+    "environment": "agent-execution-sandbox",
+    "canonical_verdict": "INSUFFICIENT_EVIDENCE",
+    "reason": "The agent sandbox is not the declared 8-core reference host (NFR-010 protocol \u00a72/\u00a78). The measured rec/sec is INDICATIVE; the canonical NFR-010b verdict stays INSUFFICIENT_EVIDENCE until a real reference-host run lands. Release stays SHIP-WITH-CAVEATS."
+  }
+}

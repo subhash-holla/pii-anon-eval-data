@@ -1,0 +1,110 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S3-03
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  GATE CHECKS SUMMARY — S3-03 (iter 1 / 2026-05-29)
+
+  Build / lint / type (re-run against current HEAD 5652f6e):
+  - `ruff check llm_adversary.py adversary/__init__.py scoring/__init__.py`
+    → All checks passed!
+  - `mypy --strict --follow-imports=silent` (same 3 files)
+    → Success: no issues found in 3 source files
+  Zero warnings; zero errors.
+
+  Test execution (re-run):
+  - `python3 -m pytest tests/test_llm_adversary.py -q` → 4 passed, 1 skipped in 0.13s
+  - Collected 5 tests, all 5 carry the `fr_010` token:
+      test_fr_010_llm_adversary_class_shape_without_anthropic     PASS
+      test_fr_010_llm_adversary_requires_extra_when_anthropic_absent  PASS
+      test_fr_010_llm_adversary_id_version_stamped                PASS
+      test_fr_010_package_imports_without_anthropic               PASS
+      test_fr_010_llm_attack_skips_if_absent                      SKIP
+  - Skip reason confirmed: "could not import 'anthropic': No module named 'anthropic'"
+    — this is the legitimate `pytest.importorskip("anthropic")` guard at line 234; not a
+    hidden failure. The skip is the specified behaviour for an env without the [llm] extra.
+
+  TDD ordering (RED → GREEN → REFACTOR):
+  - RED 966c038: story file (S3-03.md, status→IN_PROGRESS) + tests/test_llm_adversary.py.
+    No production module present at this commit; collection fails with ImportError
+    ("cannot import name 'llm_adversary'"). This is the canonical RED state for a new module.
+    Ordering is correct: test file lands before any production code.
+  - GREEN 29159ad: adds llm_adversary.py, adversary/__init__.py additions, scoring/__init__.py
+    additions. Tests move from collection-ImportError to 4 passed / 1 skipped. All three
+    files added are within the §8 NEW/MODIFIED set.
+  - REFACTOR 5652f6e: tightens import suppression (adds `type: ignore[import-not-found]`
+    alongside the existing `noqa: F401`, adds a comment block explaining the rationale),
+    types `self._client` as `Any` explicitly (removes the now-unnecessary
+    `type: ignore[attr-defined]` on the `.messages.create` call), and re-orders imports in
+    both __init__.py files for ruff isort compliance. Strictly within owned files; no logic
+    change. Full suite remains 4 passed / 1 skipped.
+
+  Scope discipline (§8 "Files owned"):
+  Source/test files touched across 966c038..5652f6e (excluding dev-assist-artifacts):
+    src/pii_anon_datasets/scoring/adversary/llm_adversary.py   → §8 NEW (owned)
+    src/pii_anon_datasets/scoring/adversary/__init__.py        → §8 MODIFIED (owned)
+    src/pii_anon_datasets/scoring/__init__.py                  → §8 MODIFIED (owned)
+    tests/test_llm_adversary.py                               → §8 NEW (owned)
+  Exactly the §8 set — no out-of-scope edits detected in any of the three commits.
+
+  Lazy import verification (reidx-01 / NFR-009):
+  - Runtime check: `python3 -c "import pii_anon_datasets.scoring; from
+    pii_anon_datasets.scoring import LLMAdversary; import sys;
+    assert 'anthropic' not in sys.modules; print('lazy-import OK')"`
+    → lazy-import OK
+  - Static check (test 4 re-verified): AST scan of llm_adversary.py shows `anthropic`
+    appears only inside `_require_anthropic`'s function body at a nested `ast.Import` node,
+    never at module top level. The only top-level imports are: `__future__`, `collections.abc`,
+    `typing`, `.base`.
+
+  Type-hint completeness:
+  All public functions and methods carry full PEP 484 annotations:
+    - `_require_anthropic() -> Any` (return type Any is justified: duck-typed client)
+    - `make_adversary_id(model: str, *, date: str = "v1") -> str`
+    - `_build_prompt(target: Target, candidates: Sequence[Persona], candidate_set_size: int) -> str`
+    - `_extract_text(response: Any) -> str`
+    - `LLMAdversary.__init__(...) -> None`
+    - `LLMAdversary.attack(targets: Sequence[Target], candidates: Sequence[Persona],
+      candidate_set_size: int) -> list[Guess]`
+  `mypy --strict` clean confirms the above; the two uses of `Any` both carry justifying
+  comments (duck-typed client, lazy import guard).
+
+  Docstring coverage:
+  Every public symbol has a docstring:
+    - Module docstring: comprehensive, cites FR-010 / reidx-01 / NFR-009 / DC-07.
+    - `_require_anthropic`: module-private but documented (explains the lazy-import rationale).
+    - `make_adversary_id`: documents the version-stamp format and FR-010 alignment.
+    - `_build_prompt` / `_extract_text`: documented including stub-tolerance note.
+    - `LLMAdversary` class: documents the SECONDARY role, deterministic=False, network opt-in.
+    - `LLMAdversary.__init__` / `LLMAdversary.attack`: inline comments explain key decisions;
+      `attack` has a full docstring covering return-count contract and abstain mapping.
+  Both modified __init__.py files carry updated module docstrings referencing S3-03.
+
+  Idiomatic Python / code quality:
+  - No bare `except`; ImportError caught specifically in `_require_anthropic`.
+  - No `unwrap()`-equivalent on production paths; RuntimeError is the intended guard.
+  - `Any` is used in two places only, each with a justifying comment — not pattern 3 blind use.
+  - No mutable defaults; `client: object | None = None` is correct.
+  - `_build_prompt` defensively handles empty pool via `max(0, candidate_set_size)` (guards
+    negative input too). `_extract_text` guards both a missing `content` attribute and an
+    empty content list.
+  - `attack` re-truncates the pool (`sorted(candidates, ...)[: max(0, ...)]`) consistent with
+    the spec — candidate_set_size is the closed-world |C|.
+  - Class attribute `deterministic = False` (not instance attribute) is correct: it is a
+    class-level constant, satisfying `LLMAdversary.deterministic is False` at the class level,
+    as required by the story spec and tested in test 1.
+
+  No domain-pack extensions loaded (domain-packs/ directory contains only _schema/ and
+  examples/ — no active packs configured). Built-in catalog only.
+
+  Zero findings. APPROVE.
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed
+
+review_time_seconds: 285
+
+context_bounds_respected: true

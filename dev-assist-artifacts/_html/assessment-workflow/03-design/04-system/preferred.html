@@ -1,0 +1,1527 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 — D4 CONVERGE: Preferred System archetype — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 — D4 CONVERGE: Preferred System archetype</h1>
+<p><strong>Capability</strong>: CAP-02 — academically-sound, repeatable, reportable assessment <strong>workflow</strong> that runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0 / 575,604 / CC0 / <code>annotations</code></strong> over a <strong>powered-representative sample (CLI default)</strong> / <strong>full corpus (opt-in, citable)</strong> / <strong>smoke (fast CI)</strong>, with statistical/epistemic observability + reporting at every spine stage <code>load → sample → run → score → rate → report</code>.
+<strong>Stage</strong>: assessment-workflow / 03-Design · <strong>Diamond 4 (System) — CONVERGE</strong>
+<strong>Date</strong>: 2026-06-01
+<strong>provisional_status</strong>: AGENT_SIMULATED — the archetype is selected by agent-simulated Pugh scoring against the requirements + the <strong>verified code seams (direct file-read at HEAD 2026-06-01</strong>; paths cited inline). No high-stakes user-validation commitment is introduced here that D2 did not already flag (the one such commitment — <em>no interactive per-stage consent</em>, D2 SP-W4 — is carried, not re-opened).</p>
+<blockquote>
+<p><strong>Vocabulary remap.</strong> DC = <strong>Benchmark Component</strong>; FR = Assessment Capability; UC = Evaluation Scenario; NFR = Quality Attribute; AX = binding axiom.</p>
+</blockquote>
+<blockquote>
+<p><strong>Locked architecture this diamond honors.</strong> eval-data <strong>OWNS</strong> sampling + observability + reporting; <code>pii-rate-elo</code> <strong>CONSUMES</strong> (extend, do <strong>NOT</strong> rebuild the engine / metrics / convergence). Two CLI entrypoints (L3); the <strong>sample-manifest is the L1 SEAM</strong> (the only cross-process data coupling). Cycle-1 precedent for this diamond = <strong>Modular system + Hexagonal scoring core (Clean inside <code>stats</code>)</strong>. D1 locked the L6 module map; D2 locked the Linear-batch spine + the manifest seam. <strong>D4 picks the in-process system shape and RESOLVES the L4 loader decision.</strong></p>
+</blockquote>
+<hr>
+<h2>1. The three system proposals (DIVERGE recap)</h2>
+<table>
+<thead>
+<tr>
+<th>Frame</th>
+<th>Archetype</th>
+<th>Deployment grain</th>
+<th>Replay</th>
+<th>Op-complexity</th>
+<th>Signature move</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>A</strong></td>
+<td><strong>Monolith</strong></td>
+<td>one in-process Python package (<code>pii_anon_datasets.assessment</code>) + a thin pii-rate-elo adapter</td>
+<td>partial (byte-repro-from-manifest)</td>
+<td><strong>low</strong></td>
+<td>In-process call-graph makes &quot;<code>significance.py</code> unreachable&quot; a trivial static-import gate; lowest orchestration overhead</td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td><strong>Modular</strong></td>
+<td>the same package as N cohesive modules (<code>sample</code>/<code>manifest</code>/<code>runrecord</code>/<code>prereg</code>/<code>report</code>/<code>verdicts</code>) + thin adapter; manifest as cross-repo seam</td>
+<td>partial (manifest + seed + RNG-fingerprint + sampler-commit)</td>
+<td><strong>medium</strong></td>
+<td>Clean module decomposition behind the L1 manifest seam; each module a unit-testable build seam matching the D1 DC partition</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td><strong>Event-Sourced</strong></td>
+<td>append-only stage-event log; report is a pure projection (fold) over the events</td>
+<td><strong>native</strong></td>
+<td>medium</td>
+<td>The per-stage run-record (L5/<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>) <strong>IS</strong> the event log; manifest + pre-reg are immutable hash-chained events; replay = <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a></td>
+</tr>
+</tbody></table>
+<p>All three: two installable packages in one shared venv; one-way dependency (pii-rate-elo → <code>pii_anon_datasets.{assessment,stats}</code>, never the reverse); pure-stdlib cores + lazy heavy-dep guards (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a>); six per-stage run-records under a shared run id (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>); the non-strippable synthetic-only caveat by construction (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a>); and <strong>all three independently DECIDED L4 = FIX the bundled parser</strong> (see §4).</p>
+<hr>
+<h2>2. Pugh comparison (the brief&#39;s five named criteria)</h2>
+<p><strong>Datum</strong> = <strong>Frame B (Modular)</strong> — the <strong>cycle-1 precedent</strong> (&quot;Modular system + Hexagonal scoring core&quot; in the locked hybrid) and the D1-locked partition (the L6 module map IS a modular decomposition). Scores: <strong>+1</strong> better than datum / <strong>0</strong> equal / <strong>−1</strong> worse.</p>
+<p>Weights are the brief&#39;s five named criteria, normalized to sum 1.00. <strong>OWNS/CONSUMES boundary cleanliness</strong> and <strong>decoupling of the two repos</strong> carry the highest weight: the locked architecture is <em>defined</em> by that boundary (eval-data OWNS, pii-rate-elo CONSUMES) and by keeping pii-rate-elo&#39;s bundled parser standalone-installable (L1/L4) — these are the load-bearing invariants D5 must inherit. <strong>Testability/TDD</strong> is weighted next (the whole stack is gated by <code>pytest</code>/<code>ruff</code>/<code>mypy</code> on both sides, <a class="trace-link" href="../../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a>, and the P1 quarantine is itself a <em>testable</em> import-graph predicate, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>). <strong>Reuse of eval-data modules</strong> and <strong>simplicity</strong> are real but secondary (reuse is already maximized by the verified-API map; simplicity is a tie-breaker the brief names last).</p>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th align="right">Weight</th>
+<th align="center">A (Monolith)</th>
+<th align="center">B (Modular) = datum</th>
+<th align="center">C (Event-Sourced)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>OWNS/CONSUMES boundary cleanliness</strong> (eval-data OWNS sample+obs+report; pii-rate-elo CONSUMES; manifest is the sole data seam)</td>
+<td align="right">0.26</td>
+<td align="center">0</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td><strong>Decoupling of the two repos</strong> (bundled parser standalone-installable; one-way import; no import cycle)</td>
+<td align="right">0.24</td>
+<td align="center">−1</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td><strong>Testability / TDD</strong> (each seam unit-testable; P1 quarantine an isolatable predicate; gates green)</td>
+<td align="right">0.22</td>
+<td align="center">0</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Reuse of eval-data modules</strong> (DC titles map 1:1 to L6 + verified reuse APIs)</td>
+<td align="right">0.16</td>
+<td align="center">0</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td><strong>Simplicity</strong> (fewest moving parts; consume-not-rebuild; cycle-1 consistency; no new persistence model)</td>
+<td align="right">0.12</td>
+<td align="center"><strong>+1</strong></td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Weighted total</strong></td>
+<td align="right">1.00</td>
+<td align="center"><strong>−0.12</strong></td>
+<td align="center"><strong>0.00</strong></td>
+<td align="center"><strong>−0.34</strong></td>
+</tr>
+</tbody></table>
+<h3>Score rationale (per criterion)</h3>
+<ul>
+<li><p><strong>OWNS/CONSUMES boundary cleanliness — all three 0 (equal).</strong> This is the <em>locked</em> invariant, so no archetype can score above the datum on it without redefining the brief: eval-data&#39;s <code>pii_anon_datasets.assessment</code> package OWNS sampling/observability/reporting and pii-rate-elo&#39;s thin adapter CONSUMES, in <strong>every</strong> frame. The boundary is realized identically — the sample-manifest is the sole cross-process data coupling (D2/L1) and the shared-venv import surface is one-directional. A&#39;s monolith and C&#39;s event log both still place the OWNED logic in eval-data and the CONSUMED engine in pii-rate-elo; neither improves nor harms the boundary. <strong>Equal to datum is the correct, honest score</strong> (the brief LOCKED Modular precisely because this boundary is already the architecture).</p>
+</li>
+<li><p><strong>Decoupling of the two repos — A −1; B datum; C 0.</strong> The verified seam fact is decisive: eval-data&#39;s <code>load_dataset(*, subset, domain, split, language, dimension)</code> (<code>src/pii_anon_datasets/__init__.py:55</code>) takes <strong>NO <code>version</code> argument</strong> — it resolves the version from the package + a fixed corpus path. <strong>A (Monolith)</strong> has the strongest gravitational pull toward importing <code>load_dataset</code> directly into the consumer to avoid maintaining two parsers — but doing so couples pii-rate-elo&#39;s loader to eval-data&#39;s package layout and <strong>breaks the L1 invariant</strong> that the bundled parser stays standalone-installable. A can resist this (and the L4 decision below makes it resist it), but the monolith <em>grain</em> makes the wrong coupling the path of least resistance — hence −1 on this criterion. <strong>B (datum)</strong> keeps the modules behind the manifest seam, so the decoupling is structural, not a discipline. <strong>C</strong> is equal-to-datum: append-only events are still consumed across the same one-way seam; the event log adds no coupling B lacks (and removes none).</p>
+</li>
+<li><p><strong>Testability / TDD — A 0; B datum; C −1.</strong> <strong>B&#39;s module split = the D1 DC partition</strong> (<code>sample</code>=<a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>/18, <code>manifest</code>=<a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a>, <code>runrecord</code>=<a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a>, <code>prereg</code>=<a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>, <code>report</code>=<a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>/27/28, <code>verdicts</code>=<a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>/28), so each DC is a unit-testable build seam — the TDD RED→GREEN cycle has a natural target per module. The P1 quarantine (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>) is an <strong>import-graph / call-graph static check</strong> that is equally assertable in a monolith (A 0 — a static-import gate over one package is, if anything, marginally simpler, but B&#39;s module boundary makes the <em>report</em> module&#39;s &quot;imports only <code>stats/*</code>&quot; assertion sharper). <strong>C is −1</strong>: an event-sourced design adds <strong>event-schema versioning + projection-fold correctness</strong> as new test surfaces (the report is now a fold over an append-only log, so tests must cover replay-equivalence and schema migration), enlarging the test matrix for zero requirement gain (no FR/NFR asks for event sourcing). The audited-stats correctness — the thing that actually matters (P1) — is identical work in all three.</p>
+</li>
+<li><p><strong>Reuse of eval-data modules — all three 0 (equal).</strong> Reuse is already maximized by <code>_engineering-findings-verified.md §3</code>: every frame composes the <strong>same</strong> verified APIs — <code>stats/intervals.py</code> (Wilson/Clopper-Pearson, integer-guard L39-51), <code>stats/paired.py</code> (<code>mcnemar_exact</code>/<code>mcnemar_chi2</code>/<code>paired_bootstrap_recall_delta</code>, LOCAL <code>random.Random(seed)</code> L140), <code>stats/power.py</code> (<code>TIER_SPECS</code>/<code>PowerMatrix.verdict()</code> L351-361), <code>scripts/lattice_audit.py</code> (<code>audit_positives</code>/<code>deficits</code> streaming), <code>scripts/benchmark_throughput.py</code> (RUNRECORD + <code>reservoir_sample</code> Algorithm-R), <code>scoring/detection.py::DesignProvenance</code>. The archetype does not change <em>which</em> modules are reused, so this criterion does not separate the frames.</p>
+</li>
+<li><p><strong>Simplicity — A +1; B datum; C −1.</strong> <strong>A genuinely wins here</strong>: a single in-process package with module boundaries inside it is the fewest moving parts, and &quot;no event bus, no append-only store, no projection machinery&quot; is the lowest orchestration overhead for a 6-stage linear spine (D2). <strong>B (datum)</strong> is nearly as simple — the modules are in-process function calls, not services — but carries a slightly larger surface (N module files + the cross-repo import contract). <strong>C −1</strong>: event sourcing introduces an append-only store, immutable-event discipline, and event-schema migration — real machinery for a flow D2 already proved is a <em>fixed total linear order</em> with one true branch point. <strong>Decisive context:</strong> A&#39;s simplicity win and B&#39;s structure are not actually in tension — B&#39;s &quot;modules&quot; ARE in-process (same deployable, same call-graph), so B captures ~all of A&#39;s simplicity while keeping the testable seams; the 0.12 weight on simplicity is why A&#39;s +1 cannot overcome B&#39;s decoupling edge.</p>
+</li>
+</ul>
+<p><strong>Pugh verdict: Frame B (Modular) is preferred (datum; the only non-negative total at 0.00; A −0.12, C −0.34).</strong> This confirms the <strong>cycle-1 precedent</strong> the brief names. It is <strong>not</strong> unanimous on every axis — <strong>A wins simplicity (+1)</strong> and A/B tie C out on testability/decoupling — so the preferred system is <strong>Modular, enriched with A&#39;s two best ideas as named switch-points</strong>: (i) A&#39;s <em>in-process, single-deployable grain</em> (the modules are import-time function calls in one shared venv, <strong>not</strong> services — capturing A&#39;s simplicity), and (ii) A&#39;s observation that the <strong>P1 quarantine is cleanest as a static-import gate</strong> (adopted as the canonical <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> mechanism). C contributes one keepable idea — its <strong>append-only / immutable framing of the run-records + pre-reg</strong> — absorbed as a <em>discipline</em> (run-records and pre-reg are write-once, never mutated) <strong>without</strong> building an event-sourcing engine. The result is B&#39;s module map, not a fourth archetype.</p>
+<hr>
+<h2>3. Switch-points (named, per the brief)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Switch-point</th>
+<th>Frames in tension</th>
+<th>Resolution (locked for D5)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SP-S1</strong></td>
+<td><strong>Deployment grain</strong>: in-process modules (B) vs single monolith package (A) vs event log + projection (C)</td>
+<td>A vs B vs C</td>
+<td><strong>IN-PROCESS MODULES IN ONE SHARED VENV (B with A&#39;s grain).</strong> The <code>assessment</code> modules are import-time Python (one deployable artifact per package, two packages in <code>pii-anon-core/.venv</code>), <strong>not</strong> services and <strong>not</strong> an event bus. This captures A&#39;s simplicity (no inter-process orchestration inside a repo) while keeping B&#39;s per-module test seams. No service mesh, no broker, no message queue.</td>
+</tr>
+<tr>
+<td><strong>SP-S2</strong></td>
+<td><strong>P1 quarantine mechanism</strong>: static-import/call-graph gate (A&#39;s clean monolith insight) vs runtime config-only (<code>run_significance_tests:false</code>)</td>
+<td>A vs B/C</td>
+<td><strong>BOTH, AS TWO CI PREDICATES (adopt A&#39;s static gate as canonical).</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>&#39;s gate is the conjunction: (a) a <strong>static import-graph / call-graph check</strong> on the assessment entrypoint asserting <code>pii-rate-elo/analysis/significance.py::SignificanceTester</code> is <strong>unreachable</strong> (verified targets: imported <code>cli.py:33</code>, instantiated <code>cli.py:242</code> behind the <code>cli.py:240</code> flag), AND (b) a config assertion <code>analysis.run_significance_tests == False</code>. &quot;Green requires no human&quot; (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>). A&#39;s monolith made this gate look trivial; B keeps it trivial because the consumer adapter is the single import surface to scan.</td>
+</tr>
+<tr>
+<td><strong>SP-S3</strong></td>
+<td><strong>Run-record / pre-reg persistence</strong>: append-only event store (C) vs write-once JSON artifacts (B)</td>
+<td>B vs C</td>
+<td><strong>WRITE-ONCE ARTIFACTS WITH APPEND-ONLY <em>DISCIPLINE</em> (B, absorbing C&#39;s immutability).</strong> The 6 stage run-records (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>) and the pre-reg (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>) are <strong>immutable once written</strong> (the pre-reg is hash-chained into the first run-record; run-records are never mutated in place) — C&#39;s correct instinct — but they are <strong>plain content-hashed JSON files</strong>, not an event-sourcing store with a projection engine. The report reads them; it does not &quot;fold an event stream.&quot; This buys C&#39;s auditability/replay-equivalence (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> byte-repro) at B&#39;s complexity.</td>
+</tr>
+<tr>
+<td><strong>SP-S4</strong></td>
+<td><strong>Holm–Bonferroni placement</strong>: net-new primitive in audited <code>stats/</code> vs anywhere reachable</td>
+<td>(all 3 agree it must be audited)</td>
+<td><strong>NET-NEW PRIMITIVE IN audited <code>stats/</code> (verified absent today).</strong> Confirmed at HEAD: <strong>no</strong> <code>holm</code>/<code>bonferroni</code> symbol exists in <code>src/pii_anon_datasets/stats/*.py</code>. Holm–Bonferroni (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>) lands as a new function in the audited, pure-stdlib <code>stats/</code> package (next to <code>paired.py</code>), <strong>NEVER</strong> in the quarantined <code>pii-rate-elo/analysis/significance.py</code>. It is unit-tested like the other audited primitives (integer-guarded, seeded where stochastic — Holm is deterministic).</td>
+</tr>
+<tr>
+<td><strong>SP-S5</strong></td>
+<td><strong>Heavy-dep boundary</strong>: which module may import numpy/matplotlib</td>
+<td>(all 3 agree on lazy guards)</td>
+<td><strong><code>report.py</code> IS THE SOLE LAZY-HEAVY-DEP MODULE (figure code only).</strong> Cores (<code>sample</code>/<code>manifest</code>/<code>runrecord</code>/<code>prereg</code>/<code>verdicts</code> + the <code>stats/*</code> reused cores) import <strong>only</strong> the stdlib (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a>). <code>report.py</code> may lazy-import numpy/matplotlib <strong>inside figure functions</strong> (the <code>benchmark_throughput.py::_spacy_ner_detector</code> lazy-guard pattern). An import-graph test asserts &quot;importing the assessment package triggers no heavy import.&quot;</td>
+</tr>
+<tr>
+<td><strong>SP-S6</strong></td>
+<td><strong>L4 loader strategy</strong> (the deferred decision)</td>
+<td>fix-bundled-parser vs import canonical <code>load_dataset</code></td>
+<td><strong>RESOLVED in §4 → FIX the bundled parser.</strong> Carried here as the headline switch-point; decided below with code-grounded justification.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>4. L4 LOADER DECISION (RESOLVED) — <strong>FIX the pii-rate-elo bundled parser; do NOT import the canonical loader</strong></h2>
+<p><strong>Decision.</strong> Fix <code>pii-rate-elo</code>&#39;s bundled parser to v2.0.0 + pin a regression contract; <strong>reserve</strong> eval-data&#39;s <code>pii_anon_datasets.load_dataset</code> for the <strong>eval-data sampler side only</strong>. (All three DIVERGE frames — Monolith, Modular, Event-Sourced — independently reached this same decision; D4 ratifies it.)</p>
+<p><strong>What gets fixed (verified at HEAD 2026-06-01 — re-confirm line numbers before editing):</strong></p>
+<ul>
+<li><code>pii-rate-elo-pipeline/src/pii_rate_elo_pipeline/datasets/converters/pii_anon_eval.py</code>: <code>num_records=159891</code> (<strong>L93</strong>) → <strong>575604</strong>; <code>license=&quot;CC-BY-4.0&quot;</code> (<strong>L221</strong>) → <strong>CC0</strong> (or <code>CC0-1.0</code>); <code>citation=&quot;…v1.3.0&quot;</code> (<strong>L222</strong>) → <strong>v2.0.0</strong>; docstring &quot;v1.3.0&quot; (<strong>L1</strong>). (The naive <code>max_samples</code> head-truncation at <strong>L82</strong> is <strong>not</strong> the powered sampler — that is exactly why CAP-02 adds one in eval-data; it is left as-is for standalone use.)</li>
+<li><code>pii-rate-elo-pipeline/src/pii_rate_elo_pipeline/schema.py</code> (<strong>package root</strong>, not <code>datasets/</code>): <code>version: str = &quot;1.3.0&quot;</code> (<strong>L137</strong>) → <strong>2.0.0</strong>; the second <code>&quot;version&quot;: &quot;1.3.0&quot;</code> (<strong>L752</strong>) → <strong>2.0.0</strong>; docstrings. The normalizer <code>_normalize_eval_row</code> (<strong>L334</strong>) already reads <code>annotations</code> with a <code>labels</code> fallback (<strong>L349</strong>) — so <strong>the drift is metadata-provenance (count/version/license/citation), NOT field-reading</strong>; the parser already speaks v2.0.0&#39;s annotation shape.</li>
+<li>A <strong>versioned crosswalk</strong> + the <strong>5-tuple regression contract</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>/031; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a>/041): pins <code>{version==2.0.0, record_count==575,604, entity-type count==63 (derived from </code>taxonomy.ENTITY_TYPE_COUNT<code>), schema fingerprint (annotation keys), dataset content hash}</code>. Canonical pins from eval-data <code>tests/test_doc_drift.py</code> (<code>CANONICAL_RECORDS=&quot;575,604&quot;</code>, <code>CANONICAL_ANNOTATIONS=&quot;2,486,438&quot;</code>, <code>CANONICAL_VERSION=&quot;2.0.0&quot;</code>). The contract test mutates each pin in turn and asserts RED.</li>
+</ul>
+<p><strong>Justification (grounded in firsthand code facts):</strong></p>
+<ol>
+<li><strong><code>load_dataset</code> takes NO version arg</strong> (<code>src/pii_anon_datasets/__init__.py:55</code> — <code>load_dataset(*, subset, domain, split, language, dimension)</code>); it resolves the version from eval-data&#39;s package + a fixed corpus path. Importing it into pii-rate-elo would <strong>couple the consumer&#39;s loader to eval-data&#39;s package layout</strong> and surrender pii-rate-elo&#39;s ability to be installed/run standalone — for <strong>zero</strong> version-selection benefit (the consumer cannot even ask for a version).</li>
+<li><strong>The fix is small and bounded</strong> because the drift is metadata-provenance pins only (the normalizer already reads <code>annotations</code>). A 5-line metadata correction + a regression contract is a far smaller, more auditable change surface than a cross-repo import dependency, and it keeps the change inside <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a>/041&#39;s bounds.</li>
+<li><strong>Decoupling keeps the seam at the manifest, not a Python import</strong> (L1). The cross-repo data contract is the <strong>sample-manifest</strong>; the dataset on disk is read by each side&#39;s own parser. A regression contract (5-tuple + content hash) red-flags any future drift <strong>without</strong> an import cycle.</li>
+<li><strong>The reverse direction stays forbidden</strong>: eval-data NEVER imports pii-rate-elo (eval-data OWNS reporting and must stay standalone). pii-rate-elo imports <code>pii_anon_datasets.{assessment,stats}</code> (one-way, shared venv).</li>
+</ol>
+<p><strong>Path resolution note (verified):</strong> <code>resolve_eval_dataset_path</code> (<code>schema.py:583</code>) walks ancestors to find the v2.0.0 corpus and honors <code>PII_ANON_DATASET_ROOT</code> (<code>schema.py:627</code>) — so the bundled parser locates the <strong>same</strong> on-disk v2.0.0 corpus the eval-data sampler reads, with no shared import. This is what makes &quot;two parsers, one corpus, one manifest seam&quot; coherent.</p>
+<hr>
+<h2>5. The preferred system — Modular (LOCKED)</h2>
+<p>Two pip-installable packages in one shared venv (<code>pii-anon-core/.venv</code>), a one-directional import boundary, and the <strong>sample-manifest as the only cross-repo data coupling</strong>. Pure-stdlib cores; <code>report.py</code> the sole lazy-heavy-dep module.</p>
+<h3>5.1 Module list (the L6 map, ratified)</h3>
+<p><strong>eval-data — <code>src/pii_anon_datasets/assessment/</code> (NEW package — confirmed absent at HEAD; OWNS sample + observability + reporting):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>DC(s)</th>
+<th>Responsibility</th>
+<th>Reuses (verified APIs)</th>
+<th>Deps</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>__init__.py</code></td>
+<td>—</td>
+<td>re-export <code>assessment</code> surface + <code>stats</code> passthrough</td>
+<td>—</td>
+<td>stdlib</td>
+</tr>
+<tr>
+<td><code>sample.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>/18</td>
+<td>single-streaming-pass seeded lattice sampler (Algorithm-R) → emits manifest</td>
+<td><code>stats/power.py</code> (<code>required_n</code>/<code>TIER_SPECS</code>/<code>classify</code>), <code>stats/lattice.py</code> (<code>build_committed_lattice</code>/<code>--check</code> 730@<code>47c3a8f</code>), <code>scripts/lattice_audit.py</code> (<code>audit_positives</code>/<code>deficits</code>), <code>subsets/slices.py</code>, <code>benchmark_throughput.py::reservoir_sample</code></td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>manifest.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a></td>
+<td>read/write the L1 SEAM manifest; canonical-form (sorted keys + fixed float repr); non-strippable caveat</td>
+<td><code>scripts/write_manifest.py</code> (sha256), <code>scoring/detection.py::DesignProvenance</code></td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>runrecord.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a></td>
+<td>append-only (write-once) emitter; 6 stage records, shared run id, provenance block</td>
+<td><code>benchmark_throughput.py</code> RUNRECORD pattern (<code>build_run_record</code>, provenance <code>{is_reference_host, environment, canonical_verdict}</code>), <code>write_manifest.py</code></td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>prereg.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a></td>
+<td>immutable, commit-anchored, hash-chained pre-registration</td>
+<td><code>write_manifest.py</code> hashing; commit-on-remote oracle <code>git branch -r --contains &lt;sha&gt;</code> (subprocess)</td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>verdicts.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>/28</td>
+<td>pure power-class / convergence / honesty-flag derivation (enums)</td>
+<td><code>stats/power.py::PowerClass</code>/<code>PowerMatrix.verdict()</code></td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>report.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>/27/28</td>
+<td>projection: audited CIs + paired tests + Holm + tie-gated leaderboard/figures; self-verifying header</td>
+<td><code>stats/intervals.py</code> (Wilson/CP), <code>stats/paired.py</code> (McNemar/bootstrap), <strong>new</strong> <code>stats</code> Holm primitive (SP-S4), <code>DesignProvenance</code></td>
+<td>stdlib core; <strong>lazy</strong> numpy/matplotlib in figure code only (SP-S5)</td>
+</tr>
+</tbody></table>
+<p><strong>audited <code>stats/</code> (EXISTING — extend, do not relocate):</strong> add <strong>Holm–Bonferroni</strong> (SP-S4, verified absent) next to <code>intervals.py</code>/<code>paired.py</code>/<code>power.py</code>/<code>lattice.py</code>. All pure-stdlib, integer-guarded.</p>
+<p><strong>pii-rate-elo (CONSUMES — thin adapter; do NOT rebuild engine/metrics/convergence):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>DC(s)</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>configs/assessment.yaml</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a></td>
+<td>the assessment preset; <strong><code>analysis.run_significance_tests: false</code></strong> (P1, SP-S2)</td>
+</tr>
+<tr>
+<td><code>cli.py</code> <code>assessment</code> command</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>/21</td>
+<td>second L3 entrypoint: <code>pii-rate-elo assessment --sample manifest.json --config configs/assessment.yaml --out results/</code></td>
+</tr>
+<tr>
+<td>assessment adapter (thin)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a></td>
+<td>load manifest → run <code>PIIRateEloEngine</code> + <code>ConvergenceChecker</code> (Glicko RD) + <code>compute_span_metrics</code> → hand per-system/per-record outcomes to <code>pii_anon_datasets.assessment.report</code></td>
+</tr>
+<tr>
+<td><code>datasets/converters/pii_anon_eval.py</code> + <code>schema.py</code> fix</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a></td>
+<td>v2.0.0 metadata pins + 5-tuple regression contract (§4)</td>
+</tr>
+</tbody></table>
+<h3>5.2 Dependency graph (one-way; eval-data never imports pii-rate-elo)</h3>
+<pre><code>                         shared venv: pii-anon-core/.venv (py 3.10.6)
+  ┌───────────────────────────────────────────────────────────────────────────────┐
+  │  eval-data  (pii_anon_datasets)  — OWNS sample + observability + reporting       │
+  │                                                                                 │
+  │   assessment.sample ─uses→ stats.power, stats.lattice, scripts.lattice_audit,   │
+  │                            subsets.slices, scripts.benchmark_throughput          │
+  │   assessment.manifest ─uses→ scripts.write_manifest, scoring.detection          │
+  │   assessment.runrecord ─uses→ scripts.benchmark_throughput, scripts.write_manifest│
+  │   assessment.prereg ─uses→ scripts.write_manifest   (+ git subprocess oracle)    │
+  │   assessment.verdicts ─uses→ stats.power                                          │
+  │   assessment.report ─uses→ stats.intervals, stats.paired, stats.&lt;HOLM new&gt;,      │
+  │                            scoring.detection   [lazy: numpy/matplotlib figs only]│
+  └───────────────────────────────────────────────────────────────────────────────┘
+                       ▲                                   ▲
+        (1) imports    │ pii_anon_datasets.assessment      │ pii_anon_datasets.stats
+            ───────────┘  + .stats   (ONE-WAY; the only    │
+                          Python coupling, in shared venv) │
+  ┌───────────────────────────────────────────────────────────────────────────────┐
+  │  pii-rate-elo  (pii_rate_elo_pipeline) — CONSUMES (extend, do NOT rebuild)       │
+  │   cli.py:assessment ─→ thin adapter ─→ PIIRateEloEngine + ConvergenceChecker     │
+  │                       └─→ hands outcomes to pii_anon_datasets.assessment.report  │
+  │   datasets/converters/pii_anon_eval.py + schema.py  = v2.0.0 fix + 5-tuple pin   │
+  │   (bundled parser STAYS standalone-installable — L4; reads the on-disk corpus    │
+  │    via resolve_eval_dataset_path / PII_ANON_DATASET_ROOT — NO import of load_dataset)│
+  └───────────────────────────────────────────────────────────────────────────────┘
+
+  DATA SEAM (L1, the ONLY cross-process coupling):
+     (eval-data) assessment.sample  ──writes──▶  sample-manifest.json  ──read──▶  (pii-rate-elo) adapter
+     v2.0.0 corpus on disk  ◀──read by BOTH sides&#39; own parsers (no shared import)──▶
+
+  FORBIDDEN EDGE:  eval-data ──X──▶ pii-rate-elo   (eval-data stays standalone; OWNS reporting)
+</code></pre>
+<h3>5.3 The seam contract (the load-bearing schema — L1)</h3>
+<p>The <strong>sample-manifest</strong> is the sole data coupling between the two repos. Its contract (written by <code>assessment.manifest</code>, read by the pii-rate-elo adapter), grounded in D1 <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a> + D2 SP-W5 + the cited NFRs:</p>
+<table>
+<thead>
+<tr>
+<th>Field group</th>
+<th>Contents</th>
+<th>Serves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>record_ids</code></td>
+<td>the exact corpus record ids the run scores (the adapter scores <strong>only</strong> these)</td>
+<td>L1 seam; <a class="trace-link" href="../../02-requirements/audit-report.html#fr-034" data-trace-id="FR-034" aria-label="Trace FR-034 — — PASS">FR-034</a></td>
+</tr>
+<tr>
+<td><code>per_cell_draw</code></td>
+<td>per-(entity-type × language) cell: realized positive count, draw provenance, <code>power_class ∈ {WELL_POWERED, UNDER_SAMPLED, CORPUS_LIMITED, EMPTY, NOT_ASSESSED}</code>, integer <code>realized_positive_shortfall</code></td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/036/037</td>
+</tr>
+<tr>
+<td><code>design_point</code></td>
+<td>per-tier <code>(p_ref, half_width, α)</code> triple + coverage envelope (which of 63 types × langs × domains committed)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-039" data-trace-id="NFR-039" aria-label="Trace NFR-039 — — PASS">NFR-039</a></td>
+</tr>
+<tr>
+<td><code>power_verdict</code></td>
+<td><code>PowerMatrix.verdict()</code> ∈ {SMALL, ADEQUATE, LARGE}</td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a></td>
+</tr>
+<tr>
+<td><code>repro</code></td>
+<td><code>seed</code>, RNG fingerprint (algorithm + seed-derivation), <code>lattice_version</code> (730@<code>47c3a8f</code>), sampler commit (<code>subsets/slices.py</code> + <code>stats/power.py</code> hash)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>/021/038</td>
+</tr>
+<tr>
+<td><code>run_type</code> / <code>preset</code></td>
+<td>the upfront selector (<code>smoke</code>/<code>dev</code>/<code>leaderboard-submission</code>/<code>filing-grade</code>; preset <code>powered-representative</code>/<code>full</code>/<code>smoke</code>)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>/034</td>
+</tr>
+<tr>
+<td><code>caveat</code></td>
+<td>non-strippable synthetic-only / anti-anonymity caveat (<code>DesignProvenance</code> <code>__post_init__</code> raises on empty)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a></td>
+</tr>
+<tr>
+<td><code>provenance</code></td>
+<td>producing <code>{run_id, stage, code_commit, content_hash}</code></td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>/043</td>
+</tr>
+</tbody></table>
+<p><strong>Canonical-form equality (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>):</strong> sorted keys + fixed float repr; re-running the sampler from the recorded <code>repro</code> block reproduces the manifest under canonical-form equality and every seeded artifact byte-identically. <strong>Standalone invariant:</strong> the manifest is the only thing pii-rate-elo needs from eval-data&#39;s <em>data</em> side; its bundled parser independently reads the on-disk v2.0.0 corpus.</p>
+<hr>
+<h2>6. NFR adherence (system-level projection)</h2>
+<table>
+<thead>
+<tr>
+<th>NFR</th>
+<th>Threshold (abbrev.)</th>
+<th align="center">Achievability</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/020/021/022</strong> (P1)</td>
+<td><code>SignificanceTester</code> unreachable; <code>run_significance_tests==false</code>; no approximated stats; LOCAL-RNG; integer-guarded</td>
+<td align="center"><strong>high</strong></td>
+<td>thin adapter is the single import surface; static import-graph gate + config assertion (SP-S2); report calls audited <code>stats/*</code> only</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a></strong></td>
+<td>canonical-form manifest + byte-identical seeded artifacts</td>
+<td align="center"><strong>high</strong></td>
+<td>in-process modules, single seeded <code>random.Random</code>, no concurrency nondeterminism; manifest <code>repro</code> block carries seed + RNG fingerprint + sampler commit</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a></strong></td>
+<td>single streaming pass; working set ≤ 730 keys; O(1)/annotation</td>
+<td align="center"><strong>high</strong></td>
+<td>direct reuse of <code>lattice_audit.audit_positives</code> (structural O-bound, not RSS) + <code>reservoir_sample</code></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a>/041</strong> (P2)</td>
+<td>v2.0.0 conjunction + 5-tuple red-on-drift</td>
+<td align="center"><strong>high</strong></td>
+<td>metadata-provenance pins only; normalizer already reads <code>annotations</code>; regression contract mutates each pin → RED (§4)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>/043</strong></td>
+<td>6 stage records, shared run id, code_commit + toolchain; file-level provenance</td>
+<td align="center"><strong>high</strong></td>
+<td>reuse <code>benchmark_throughput</code> RUNRECORD pattern; write-once discipline (SP-S3)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a></strong></td>
+<td>stdlib-only cores; heavy dep lazy-guarded</td>
+<td align="center"><strong>high</strong></td>
+<td><code>report.py</code> is the sole lazy-numpy/matplotlib module (SP-S5); cores import math/random only</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a></strong></td>
+<td>pii-rate-elo <code>pytest</code>+<code>ruff</code>+<code>mypy</code> green</td>
+<td align="center"><strong>medium</strong></td>
+<td>small edit surface (metadata pins + thin adapter) but cross-venv; mitigated by the manifest seam keeping coupling to one import surface</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a>/053/054/055</strong></td>
+<td>lattice 730@<code>47c3a8f</code>; power gate ON; doc-drift 0; four families never merged</td>
+<td align="center"><strong>high</strong></td>
+<td>no corpus regeneration; reused gates unchanged; CAP-02-added modules carry the static no-merge check</td>
+</tr>
+<tr>
+<td><strong>NFR-010b</strong> (inherited)</td>
+<td>≥5000 rec/sec lightweight detection, 8-core ref host</td>
+<td align="center"><strong>low / INSUFFICIENT_EVIDENCE</strong></td>
+<td>inherited unchanged; needs a reference-host run (out of scope; <code>real_user_needed: true</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>7. Constraints on D5 (Architecture)</h2>
+<ul>
+<li><strong>Dependency direction (hard):</strong> pii-rate-elo → <code>pii_anon_datasets.{assessment, stats}</code> only; <strong>eval-data NEVER imports pii-rate-elo</strong>. The manifest is the sole data seam.</li>
+<li><strong>Deployment grain:</strong> in-process modules in one shared venv (two pip-installable packages); <strong>no</strong> services, <strong>no</strong> event bus, <strong>no</strong> broker (SP-S1).</li>
+<li><strong>Module boundaries:</strong> pure-stdlib cores (<code>sample</code>/<code>manifest</code>/<code>runrecord</code>/<code>prereg</code>/<code>verdicts</code> + reused <code>stats/*</code>); <code>report.py</code> the <strong>only</strong> module permitted lazy numpy/matplotlib (figure code) (SP-S5).</li>
+<li><strong>L4 (resolved):</strong> FIX the bundled parser to v2.0.0 + 5-tuple regression contract; reserve <code>load_dataset</code> for the eval-data sampler side; bundled parser stays standalone-installable (§4).</li>
+<li><strong>P1 mechanism:</strong> two CI predicates — static import-graph unreachability of <code>SignificanceTester</code> <strong>and</strong> <code>run_significance_tests == False</code> (SP-S2); &quot;green requires no human.&quot;</li>
+<li><strong>Holm–Bonferroni:</strong> new primitive in audited <code>stats/</code> (verified absent), <strong>never</strong> in <code>significance.py</code> (SP-S4).</li>
+<li><strong>Persistence:</strong> write-once content-hashed JSON artifacts (manifest, 6 run-records, pre-reg, results, figures) with append-only discipline — <strong>not</strong> an event-sourcing store (SP-S3).</li>
+<li><strong>Seam schema:</strong> the §5.3 manifest contract is the load-bearing inter-process schema D5 must specify in full (field types, canonical-form serialization rule).</li>
+</ul>
+<hr>
+<h2>8. What feeds the next diamond (D5 Architecture)</h2>
+<p>D5 inherits a <strong>Modular, in-process, two-package system</strong> with a one-way dependency (pii-rate-elo → eval-data), the <strong>manifest as the sole data seam</strong>, pure-stdlib cores + a single lazy-heavy-dep module, and a <strong>resolved L4</strong> (fix-bundled-parser + 5-tuple contract). The load-bearing artifacts D5 must detail: (1) the <strong>sample-manifest schema</strong> (§5.3) including canonical-form serialization; (2) the <strong>run-record schema</strong> (6 stages, shared run id, provenance block) reusing the <code>benchmark_throughput</code> pattern; (3) the <strong>pre-reg hash-chain</strong> + commit-on-remote oracle; (4) the <strong>new Holm primitive</strong> signature in <code>stats/</code>; (5) the <strong>P1 static-import-gate</strong> spec (the exact import-graph predicate). The two named system switch-points carried forward are <strong>SP-S2</strong> (P1 = static gate + config flag) and <strong>SP-S3</strong> (write-once artifacts, not event sourcing); the simplicity win (A&#39;s in-process grain, SP-S1) is absorbed into the Modular shape rather than carried as an open fork.</p>
+<hr>
+<h2>9. Decision record (machine-readable)</h2>
+<pre><code class="language-yaml">d4_system_converge:
+  chosen_frame: B
+  chosen_archetype: modular            # cycle-1 precedent confirmed; in-process modules, one shared venv
+  datum: B
+  weighted_totals: { A_monolith: -0.12, B_modular: 0.00, C_event_sourced: -0.34 }
+  primary_data_shape: hybrid           # streaming sample -&gt; json manifest/run-records -&gt; relational metric rows
+  replay_capability: partial           # byte-reproducible-from-manifest (NFR-030), not event-sourced
+  operational_complexity: medium       # two pip packages, shared venv, two chained CLIs; no service infra
+  loader_decision: fix-bundled-parser  # L4 RESOLVED; reserve load_dataset for eval-data sampler side
+  dependency_direction: &quot;pii-rate-elo -&gt; pii_anon_datasets.{assessment,stats}; eval-data NEVER imports pii-rate-elo&quot;
+  sole_data_seam: sample-manifest.json
+  switch_points:
+    - id: SP-S1
+      decision: &quot;in-process modules in one shared venv (B with A&#39;s monolith grain); no bus/broker/services&quot;
+    - id: SP-S2
+      decision: &quot;P1 = static import-graph unreachability of SignificanceTester AND run_significance_tests==false&quot;
+    - id: SP-S3
+      decision: &quot;write-once content-hashed JSON artifacts with append-only discipline; NOT event sourcing (C absorbed as discipline)&quot;
+    - id: SP-S4
+      decision: &quot;Holm-Bonferroni = net-new primitive in audited stats/ (verified absent); never in significance.py&quot;
+    - id: SP-S5
+      decision: &quot;report.py is the sole lazy-heavy-dep module (numpy/matplotlib in figure code only)&quot;
+    - id: SP-S6
+      decision: &quot;L4 -&gt; fix bundled parser (see loader_decision)&quot;
+  modules_eval_data:
+    package: &quot;src/pii_anon_datasets/assessment/&quot;
+    new: [__init__.py, sample.py, manifest.py, runrecord.py, prereg.py, report.py, verdicts.py]
+    stats_extension: &quot;Holm-Bonferroni added to existing audited stats/ (pure-stdlib)&quot;
+  modules_pii_rate_elo:
+    - &quot;configs/assessment.yaml (run_significance_tests: false)&quot;
+    - &quot;cli.py assessment command (2nd L3 entrypoint)&quot;
+    - &quot;thin assessment adapter (load manifest -&gt; engine+convergence -&gt; report)&quot;
+    - &quot;datasets/converters/pii_anon_eval.py + schema.py v2.0.0 fix + 5-tuple regression contract&quot;
+  nfr_adherence:
+    - { nfr: NFR-019, projected_achievability: high }
+    - { nfr: NFR-030, projected_achievability: high }
+    - { nfr: NFR-038, projected_achievability: high }
+    - { nfr: NFR-040, projected_achievability: high }
+    - { nfr: NFR-042, projected_achievability: high }
+    - { nfr: NFR-050, projected_achievability: high }
+    - { nfr: NFR-051, projected_achievability: medium }
+    - { nfr: NFR-010b, projected_achievability: low }   # inherited; INSUFFICIENT_EVIDENCE; out of scope
+  no_regression_respected: true        # lattice 730@47c3a8f; NFR-018 power gate ON; doc-drift 0; four families separate; no corpus regen
+  context_bounds_respected: true
+  provisional_status: AGENT_SIMULATED
+</code></pre>
+<hr>
+<p>✅ <strong>D4 CONVERGE complete (2026-06-01).</strong> Pugh-compared 3 system archetypes (A Monolith / B Modular / C Event-Sourced) against the brief&#39;s five criteria; <strong>Frame B (Modular) preferred (datum; 0.00; A −0.12, C −0.34)</strong> — confirming the cycle-1 precedent — enriched with <strong>A&#39;s in-process grain + static-import-gate insight</strong> (SP-S1/SP-S2) and <strong>C&#39;s immutability discipline</strong> (SP-S3, absorbed without an event-sourcing engine). <strong>L4 RESOLVED: FIX the pii-rate-elo bundled parser to v2.0.0 + 5-tuple regression contract; reserve <code>load_dataset</code> for the eval-data sampler side</strong> — grounded in the verified fact that <code>load_dataset</code> has no version arg and the drift is metadata-provenance only. Six switch-points named + resolved (SP-S1…S6). Module list + one-way dependency graph + the L1 seam contract written. No-regression rails honored. <code>provisional_status: AGENT_SIMULATED</code>. Ready for D5 (Architecture).</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/03-design/04-system/preferred.md</code> ·
+  content-hash <code>45f117f77043</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

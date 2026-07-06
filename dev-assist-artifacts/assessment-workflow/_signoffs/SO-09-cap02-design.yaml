@@ -1,0 +1,47 @@
+signoff_id: SO-09-cap02-design
+date: 2026-06-01
+type: stage-close
+stage: 03-design
+capability: CAP-02
+scope: >
+  CAP-02 Design (5-Diamond Cascade + Synthesis). 16 Design Cases DC-16..31 (one per spine stage + observability +
+  governance + release). Preferred diamonds: D1 Workflow-arc-led, D2 Linear-batch, D3 Minimalist-CLI+Info-Dense,
+  D4 Modular, D5 Hexagonal (Clean inside stats). Implementation-ready design + 5 finalized schemas (sample-manifest,
+  6-stage run-record, pre-registration, configs/assessment.yaml, report/leaderboard register) + the seeded
+  stratified-covering sampler algorithm + the audited-stats wiring + the P1 import-boundary gate + the v2.0.0 seam fix
+  + 5-tuple regression contract + the S8-S12 build sequence. 3 audits PASS (requirements-traceability 0-orphan,
+  axiom-saturation, persona-service); 5-SME heuristic panel (11 MAJOR resolved in place).
+signer: AGENT_SIMULATED (developer-assistant); real-user Pass-2 commitments named (UT-2/3/4/6)
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/assessment-workflow/03-design/01-design-cases/preferred.md
+  - dev-assist-artifacts/assessment-workflow/03-design/02-workflow/preferred.md
+  - dev-assist-artifacts/assessment-workflow/03-design/03-ui/preferred.md
+  - dev-assist-artifacts/assessment-workflow/03-design/04-system/preferred.md
+  - dev-assist-artifacts/assessment-workflow/03-design/05-architecture/preferred.md
+  - dev-assist-artifacts/assessment-workflow/03-design/06-synthesis/D-implementation-ready-design.md
+  - dev-assist-artifacts/assessment-workflow/03-design/06-synthesis/sme-heuristic-findings.md
+
+decisions_acknowledged:
+  - "L4 (loader strategy) RESOLVED = FIX the pii-rate-elo bundled parser to v2.0.0 + 5-tuple regression contract; reserve pii_anon_datasets.load_dataset for the eval-data sampler side. Grounded firsthand: load_dataset(__init__.py:55) has NO version arg; the drift is metadata-provenance only; both parsers read the same on-disk corpus via resolve_eval_dataset_path (no shared import)."
+  - "P1 quarantine = a two-predicate CI gate: (a) static-AST import-graph closure from BOTH assessment entrypoints asserts pii_rate_elo_pipeline.analysis.significance is unreachable (module-level, since the eager `_tester_instance = SignificanceTester()` constructs the fabricated tester on any import) + (b) configs/assessment.yaml run_significance_tests:false; plus a fabrication-regex lint. Holm lands in net-new audited stats/multitest.py, NEVER significance.py."
+  - "Sampler determinism = per-cell child RNG random.Random((seed, cell_id)) (NOT one shared RNG fanned across cells; Algorithm-R is order-dependent); byte-repro conditional on pinned {corpus content_hash, lattice_version, seed}; sampler_version = sha256 of the FULL §7 closure; ut5 integers frozen into the hashed payload."
+  - "Multiplicity = Holm WITHIN each (metric, scoring-family) partition, never pooled across metrics or anon/pseudo (AX-004); family_size = #pairs × #metrics in the confirmatory set, asserted == prereg. Rank oracle = adjacent-pair paired-Δ + McNemar (marginal CIs descriptive-only). Full-corpus = descriptive-census (no-CI default unless --super-population)."
+  - "Architecture = Hexagonal: domain hexagon (stats + assessment) imports only stdlib + own ports; adapters (EloEngineAdapter / JsonlCorpusAdapter / MatplotlibFigureAdapter) are the only code naming pii-rate-elo or heavy deps; report.py calls the Clean stats ring directly (no port); EloEngineAdapter has NO edge to stats/* (fabricated path on a disjoint sub-graph)."
+  - "UT-1 CORRECTION (load-bearing): the D6 synthesis agent claimed pii-rate-elo has 'zero .py files on this machine' — this is WRONG (the agent used a bad relative path). The sister repo at ../pii-anon-research-paper/pii-rate-elo-pipeline IS present and was verified firsthand this session: significance.py read in full (fabrication confirmed at L205-206/L271-281), converters/schema drift pins confirmed (L93/L221/L222/L137), and its test suite ran 253 passed/1 skip. S8 story-0 (re-confirm) is therefore DONE; the design is drift-robust regardless."
+
+evidence:
+  - "27 agents: 15 diamond frame-explorers (3 per diamond) + 5 Pugh/writers + 1 synthesis + 5 SME heuristic evaluators + 1 SME-apply."
+  - "Audit 1 (traceability): 25/25 FRs + 37/37 NFRs each map to >=1 DC; 0 orphans both directions; 3 preconditions + 6 stratified-priority reqs placed. Audit 2 (axioms): AX-001..005 each saturate every layer they touch. Audit 3 (personas): 3 HIGH personas served incl. persona-MUST carve-outs (DC-31 P-acad-deid, DC-27 P-priv-eng)."
+  - "eval-data reuse APIs re-verified firsthand this session; Holm/multitest confirmed ABSENT (net-new); benchmark_throughput RUNRECORD pattern read in full; lattice --check 730 green."
+  - "Both repos baseline-green pre-development: eval-data 363/1 + guardrails; pii-rate-elo 253/1."
+
+findings_waived_to_pass2:
+  - "UT-2 non-interactive batch (no per-stage consent) — Pass-2 cognitive walkthrough with a real single-operator user."
+  - "UT-3 FR-048/DC-27 operating-point is COULD-overall/MUST-for-P-priv-eng; P-priv-eng unseated at R6 — highest-priority Pass-2 re-elicitation (DC built, not deferred)."
+  - "UT-4 DPO/assurance lens (DC-25/30) FIRST-CONTACT — real DPO validation a named Pass-2 must."
+  - "UT-5 small_n_cutoff=15/beta=2/recall_target=0.90/MIN_SEEDS=3 R10-DIRECTIONAL — frozen into the hashed payload; await a real ACL/PETS/de-id reviewer."
+  - "UT-6 real-data correlation slice (cycle-1 UC-13) — out-of-band/DUA-gated; surfaced as the DC-28 correlation-study:named-and-pending honesty flag. UT-7 NFR-010b throughput stays INSUFFICIENT_EVIDENCE."
+
+next: "Stage 4 Development (S8-S12, strict TDD RED->GREEN->REFACTOR, 2 repos). S8 preconditions (seam + P1 gate) gate everything. Executed main-thread-led for reliable cross-repo access + real gate verification + local TDD commits. Run: /dev-assist-development"

@@ -1,0 +1,110 @@
+# Canonical Reviewer Output — axiom-compliance @ SPRINT gate, Sprint S5
+reviewer: dev-assist-development-axiom-compliance
+scope_id: S5
+gate: sprint
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  SPRINT S5 axiom audit (Exports/CLI + Compliance + doc-drift). Reviewed the full
+  S5 footprint (commit range 91e2266~1..HEAD = S5-02..S5-07; S5-01 crosswalk.py
+  predates and was NOT re-touched). All project axioms + sprint-brief guardrails
+  hold. Zero SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR. Five OBSERVATION-level
+  confirmations below — non-blocking, recorded for the sprint record.
+
+  ── NFR-005 / AX-004 (anon/pseudo separation — never one de-id score) ──────────
+  • end_state_bundle.py: EndStateBundle keeps anonymization_evidence (ParetoPoint)
+    and pseudonymization_evidence (PseudonymizationReport) as TWO separate optional
+    sub-objects. No merged field; the frozenset _FORBIDDEN_MERGE_NAMES =
+    {combined, overall, overall_score, deid, de_identification_score, score} is
+    proven disjoint from the dataclass fields by a MODULE-BOTTOM import-time assert
+    (line 116) — confirmed to fire under a force-blocked-deps import. No __float__:
+    float(bundle) raises TypeError (test_end_state_bundle.py §161-171). Fields =
+    [regulatory_crosswalk, anonymization_evidence, pseudonymization_evidence,
+    disclaimer]; as_dict() emits two separate evidence keys + crosswalk + disclaimer,
+    no merged key.
+  • crosswalk.py: RegulatoryCrosswalk exposes N=5 legally-distinct typed regime
+    fields (gdpr, hipaa_safe_harbor, hipaa_expert_determination, ccpa_deidentified,
+    pci_dss) + other_regimes + disclaimer. HIPAA is deliberately TWO columns (two
+    legal standards). No merged/equivalence/rollup verdict field; import-time assert
+    (line 170) pins the first-5 fields == REGIMES. as_columns() yields exactly five
+    reg_* keys.
+  • parquet_export.py: _row() DROPS regulatory_domains (_DROP_FIELDS) and replaces
+    it with the five typed reg_* columns from as_columns() — the v1.3.0
+    export_parquet.py:54 single-JSON-blob flattening is rejected, not inherited.
+    No flattened regulatory_domains blob column reaches the writer; the empty-corpus
+    path still emits the five reg_* columns (_empty_schema).
+  • Source grep across compliance/ + distribution/ for
+    combined|overall|deid|de_identification_score|merged|flatten|__float__: every
+    hit is in docstring/comment prose ASSERTING absence, the _FORBIDDEN_MERGE_NAMES
+    guard set, or negation ("no merged compliance verdict"). No live merged surface.
+
+  ── NFR-004 (pure-stdlib core + lazy heavy deps) ───────────────────────────────
+  • EMPIRICAL PROOF: with pyarrow + mlcroissant + spacy + datasets ALL force-blocked
+    at import time, `import pii_anon_datasets.distribution`, `import
+    pii_anon_datasets.cli`, and the two compliance modules import cleanly (import-time
+    structural asserts hold). The three lazy guards then fire the correct install-error
+    RuntimeError naming the right extra: parquet_export._require_pyarrow ->
+    [distribution]; spacy_export._require_spacy -> [baselines];
+    croissant.validate_with_mlcroissant -> [croissant].
+  • All heavy imports are function-body (nested), never module-top: pyarrow inside
+    _require_pyarrow; spacy/DocBin inside _require_spacy/export_spacy_docbin;
+    mlcroissant inside validate_with_mlcroissant.
+  • Per-module AST purity guards banning {random,time,uuid,datetime,secrets} are
+    present + green for crosswalk, end_state_bundle, croissant, dataset_card,
+    conll_export, parquet_export, spacy_export. The CoNLL path (conll_export.py +
+    integrations/conll_format.py) is pure-stdlib.
+
+  ── AX-001 (synthetic-only, no egress) ─────────────────────────────────────────
+  • All exporters write LOCAL files only (ParquetWriter / open()/DocBin.to_disk /
+    Path.write_text). No requests/urllib/socket/boto3/smtplib/huggingface_hub/
+    push_to_hub/upload_file anywhere in compliance/ + distribution/ + cli.py. No
+    import-time side effects (proven by the force-blocked-deps clean import).
+  • cli.py subprocess invocations use a fixed repo-script path resolved under
+    _repo_root() (the pyproject.toml-bearing dir), [sys.executable, str(script),
+    *args], no shell=True, no untrusted interpolation. The export verb writes the
+    user-named local output only.
+
+  ── AX-002 (determinism) ───────────────────────────────────────────────────────
+  • No clock/RNG in any S5 emitter (AST guards above). Ordered/sorted structures:
+    REGIMES-ordered reg_* columns; sorted spaCy offsets; sort_keys JSON encoding in
+    parquet nested blocks; fixed Croissant @context literal; metadata-derived (not
+    clock-derived) card/croissant counts. Byte-identical repeat-emit pinned by e.g.
+    test_fr_024_deterministic_export (parquet).
+
+  ── Non-strippable caveats / disclaimers ───────────────────────────────────────
+  • CROSSWALK_DISCLAIMER + DPIA_DISCLAIMER: module constants + non-defaulted-validated
+    field + __post_init__ rejecting empty/whitespace (ValueError); "informs but does
+    NOT MAKE a determination" language asserted; DPIA disclaimer travels onto
+    assembled as_dict() unstripped (test_end_state_bundle §195-213).
+  • Dataset-card caveats present + test-pinned: ~72% synthetic_lattice_enrichment
+    disclosure ("72%" asserted), "Synthetic-distribution power is not external
+    validity" asserted, TRAIN_VS_EVAL (~27.8% evaluation substrate) + §7 POWER_SENTENCE
+    embedded; counts cross-checked == taxonomy.ENTITY_TYPE_COUNT (cannot drift,
+    NFR-013).
+
+  ── Guardrails (corpus / lattice / metadata / power-gate untouched) ────────────
+  • S5 diff (91e2266~1..HEAD) touches ZERO corpus .jsonl.gz, eval_lattice.json,
+    pii_anon.metadata.json, or tags files (grep clean). metadata.json +
+    eval_lattice.json last-touched at 47c3a8f (S-PWR, pre-S5). crosswalk.py NOT
+    re-edited in S5-02..07 (frozen at S5-01). v1.3.0 / pre-lattice-enrichment corpus
+    intact.
+  • NFR-018 power gate stays ON: cli _cmd_validate forwards args verbatim and never
+    injects --no-power-gate; test_nfr_018_cli_validate_keeps_power_gate_on asserts
+    "--no-power-gate" not in argv (twice). The export verb injects no --output to the
+    corpus (no-regeneration guardrail tested).
+
+  ── Test evidence ──────────────────────────────────────────────────────────────
+  • 86/86 passed across the S5-relevant suites: test_crosswalk, test_end_state_bundle,
+    test_parquet_export, test_croissant, test_dataset_card, test_conll_export,
+    test_spacy_export, test_cli, test_doc_drift, test_nfr005_separation,
+    test_validate_power_gate.
+
+  Out-of-scope deferred to peers (not axiom concerns): correctness of regime
+  IN_SCOPE mapping (traceability/requirements-coverage), parquet/DocBin perf
+  (performance-benchmark), card markdown a11y (n/a — no interactive UI per config).
+
+review_time_seconds: 690
+
+context_bounds_respected: true

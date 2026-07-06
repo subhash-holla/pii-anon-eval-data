@@ -11,7 +11,7 @@ scoring/detection.py. The combination — not any single span — is the privacy
   subsets/slices.py) -> :class:`QuasiIdScore`.
 
 Both value objects carry a **non-strippable v1.1 LOW-POWER caveat**
-(:data:`QUASI_IDENTIFIER_CAVEAT`, reusing the meaning of subsets/slices.py ``SLICE_CAVEAT``): ~72%
+(:data:`QUASI_IDENTIFIER_CAVEAT`, reusing the meaning of subsets/slices.py ``SLICE_CAVEAT``): 79.2%
 of the corpus is formulaic ``synthetic_lattice_enrichment``, so FR-016 (SHOULD / v1.1) has LIMITED
 statistical power and external validity (AX-003 epistemic honesty; cannot be constructed empty).
 
@@ -26,7 +26,7 @@ from dataclasses import dataclass
 
 # Non-strippable v1.1 low-power caveat (epistemic honesty; mirrors subsets/slices.py SLICE_CAVEAT).
 QUASI_IDENTIFIER_CAVEAT: str = (
-    "v1.1 quasi-identifier-combination scoring (FR-016 is SHOULD): ~72% of the corpus is formulaic "
+    "v1.1 quasi-identifier-combination scoring (FR-016 is SHOULD): 79.2% of the corpus is formulaic "
     "synthetic_lattice_enrichment, so re-identification power and external validity are LIMITED. "
     "Synthetic-distribution coverage is not external validity."
 )

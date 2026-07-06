@@ -1,0 +1,7 @@
+{
+  "split": "test_adversarial",
+  "language": "all",
+  "limit": null,
+  "n_records": 11254,
+  "content_hash": "7ff97c08cea30f81cbe543909c26acbec3ad86203045b577d6dfb0ace2433886"
+}

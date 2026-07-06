@@ -1,0 +1,151 @@
+# ============================================================================
+# Requirements-coverage review — SPRINT gate  (S3 · iteration 2)
+# Re-review after amendment bea79ba. Iteration-1 verdict was REQUEST_CHANGES on a
+# single MAJOR (coverage-S3-01: anonymization.py 72% line vs NFR-016's ≥85%
+# per-module bar). This iteration verifies that MAJOR is cleared and re-affirms the
+# holistic S3 MUST-coverage snapshot with 0 regressions.
+# Canonical reviewer output (templates/development/reviewer-output.yaml.tmpl).
+# ============================================================================
+reviewer: dev-assist-development-requirements-coverage
+scope_id: S3
+gate: sprint
+verdict: APPROVE
+iteration: 2
+
+findings: []
+
+notes: |
+  ── ITERATION-2 RESOLUTION OF THE ITERATION-1 MAJOR (coverage-S3-01) ──
+  RESOLVED. Amendment bea79ba added two test-only cases to tests/test_anonymization.py
+  (test_fr_006_utility_metrics_fold_in_components, test_fr_006_utility_score_rejects_out_of_range)
+  — NO production change to anonymization.py. Re-run THIS session:
+    python3 -m pytest --cov=pii_anon_datasets.scoring --cov=pii_anon_datasets.stats \
+      --cov-report=term-missing -q
+  anonymization.py is now 97% line / 87% branch (was 72% line / 75% branch): 72 stmts,
+  1 miss; 16 branch, 2 BrPart. The ≥85% per-module NFR-016 LINE clause is now CLEARED
+  (97% ≥ 85%), and the ≥70% branch sub-bar remains satisfied (87% ≥ 70%). Residual
+  uncovered surface is exactly the predicted defensive remainder: line 88 (the empty-union
+  Jaccard defensive return, reachable only via an internal-state combination score_utility
+  never constructs) + one partial branch 152->157 (the utility_metrics-absent fall-through,
+  whose populated arm IS now exercised by the new fold-in test). Both new tests pass
+  (2 passed). The FR-006 CORE path was already fully covered at iteration 1; this top-up
+  exercised only the OPTIONAL utility_metrics enrichment (information_retained + coherence),
+  _as_ratio bool/out-of-range coercion+clamp, the both-empty-text edge, and UtilityScore's
+  [0,1] __post_init__ guard — confirming the iteration-1 adjudication (per-module threshold
+  miss, not a core-path risk) was correct.
+
+  ── PER-MODULE NFR-016 LINE BAR — EVERY NEW/CHANGED S3 SCORER MODULE ≥85% (re-run) ──
+    MODULE                                  LINE   BRANCH   NFR-016 LINE (≥85%)
+    --------------------------------------  -----  -------  -------------------
+    scoring/anonymization.py        (S3-06)  97%    87%     PASS  (was 72% — the cleared MAJOR)
+    scoring/adversary/offline_adversary.py   94%    84%     PASS  (perf-refactored; see below)
+    scoring/adversary/llm_adversary.py       94%    80%     PASS
+    scoring/pseudonymization.py     (S3-07)  93%    88%     PASS  (perf-refactored; see below)
+    scoring/reidentification.py     (S3-08)  92%    75%     PASS
+    scoring/signals.py                       86%    87%     PASS
+    scoring/detection.py                    100%   100%     PASS
+    scoring/core.py                         100%   100%     PASS
+    stats/power.py                  (S3-08)  91%    87%     PASS
+    stats/lattice.py                         97%    97%     PASS
+    stats/intervals.py                      100%   100%     PASS
+  TOTAL (scoring+stats): 1179 stmts, 55 miss; 338 branch, 40 BrPart → 93% aggregate.
+  NO new/changed S3 scorer module is below the 85% per-module line bar. The
+  orphaned-requirement and per-module-threshold concern from iteration 1 is fully closed.
+
+  ── ZERO-REGRESSION CONFIRMATION (the amendment also carried two perf refactors) ──
+  Full suite re-run THIS session (python3 -m pytest -q): 169 passed, 1 skipped (2.19s).
+  Matches iteration 1's 167+2-new = 169 with the SAME single documented skip
+  (tests/test_llm_adversary.py live path; pytest.importorskip("anthropic"), anthropic
+  intentionally absent — a contract skip, not a failure). 0 failures, 0 errors, 0
+  regressions vs iteration 1.
+  Behavior-preserving perf refactors in bea79ba, each re-pinned to its FR tests this session:
+    * pseudonymization.py — _referential_integrity O(D*n)->O(n) single-pass occurrence
+      counter (drops the unused _occurs_more_than_once). FR-011/012/013 surface re-run:
+      37 passed, 1 skipped (incl. referential-integrity / key-rotation / collision /
+      key-state-separation). No FR-011/012/013 behavior change.
+    * offline_adversary.py — hoist candidate-INDEPENDENT target signal-feature map +
+      lowercased haystack out of the |C| loop; precompute candidate QI values once
+      (drops the inlined _target_feature_weights). Feature maps unchanged. FR-007/010 +
+      the determinism/order-independence/link/integrity pin set re-run: 18 passed
+      (determinism, order-independence, link, referential, rotation, integrity). No
+      FR-007/010 behavior change.
+  FR-006 core + NFR-005/018 + FR-008/009 group re-run: 29 passed. All green.
+
+  ── S3 SPRINT MUST-COVERAGE SNAPSHOT (RE-AFFIRMED · each requirement → ≥1 named passing test) ──
+    REQ      PRIORITY  STORY        STATUS    NAMED PASSING TEST(S)
+    -------  --------  -----------  --------  --------------------------------------------------
+    FR-006   MUST      S3-06        VERIFIED  test_fr_006_pareto_point_has_two_separate_axes;
+                                              test_fr_006_residual_risk_axis_is_measured_rrs;
+                                              test_fr_006_utility_probe_deterministic_and_versioned
+                                              (+ iter-2: test_fr_006_utility_metrics_fold_in_components,
+                                              test_fr_006_utility_score_rejects_out_of_range — the
+                                              optional utility surface that cleared the NFR-016 line bar)
+    FR-007   MUST      S3-04        VERIFIED  test_fr_007_rrs_equals_one_minus_recall_times_precision;
+                                              test_fr_007_recall_ci_uses_integer_n_targets;
+                                              test_fr_007_precision_ci_uses_integer_n_guesses;
+                                              test_fr_007_candidate_set_size_recorded
+    FR-008   MUST      S3-05        VERIFIED  test_fr_008_exposure_index_is_prior_not_rrs;
+                                              test_fr_008_exposure_index_recomputes_density_transparently;
+                                              test_fr_008_correlation_pearson_and_spearman
+    FR-009   MUST      S3-04/06/08  VERIFIED  test_fr_009_caveat_nonstrippable_in_measured_as_dict (S3-04);
+                                              survives ParetoPoint.as_dict via
+                                              test_fr_006_residual_risk_axis_is_measured_rrs (S3-06);
+                                              ReidProvenance.caveat non-empty via
+                                              test_nfr_018_reid_provenance_shape (S3-08)
+    FR-010   SHOULD    S3-02 + S3-03 VERIFIED test_fr_010_adversary_satisfies_port;
+              (NOT MUST — FR doc      test_fr_010_distractor_variant_distinct_id_and_lower_precision
+              line 20 marks SHOULD)   (offline S3-02); test_fr_010_llm_adversary_id_version_stamped;
+                                              test_fr_010_package_imports_without_anthropic (LLM S3-03).
+                                              Re-pinned post-refactor (offline_adversary.py): green.
+    FR-011   MUST      S3-07        VERIFIED  test_fr_011_reversal_rates_are_threat_conditioned;
+                                              test_fr_011_authorized_succeeds_unauthorized_fails_for_keyed;
+                                              test_fr_011_pseudonymizer_protocol_runtime_checkable
+    FR-012   MUST      S3-07        VERIFIED  test_fr_012_correct_deterministic_has_zero_crypto_collisions;
+                                              test_fr_012_faulty_pseudonymizer_flags_crypto_collisions
+    FR-013   MUST      S3-07        VERIFIED  test_fr_013_referential_integrity_join_stable;
+                                              test_fr_013_key_rotation;
+                                              test_fr_013_key_state_separation_edpb_art4_5
+                                              (re-pinned post O(n) refactor of _referential_integrity)
+    NFR-005  MUST      S3-08        VERIFIED  test_nfr_005_anon_and_pseudo_are_separate_modules;
+              (cross-module)                  test_nfr_005_no_combined_deid_callable_in_scoring_public_api
+    NFR-018  MUST      S3-08        VERIFIED  test_nfr_018_reid_required_n_pins_section5_numbers (897/385);
+              (reid power seam)               test_nfr_018_reid_tier_specs_are_derived_not_typed;
+                                              test_nfr_018_reid_provenance_attaches_to_measured_rrs;
+                                              test_nfr_018_seam_does_not_mutate_frozen_lattice
+
+  ORPHAN SCAN (re-affirmed): zero orphaned S3 MUSTs. All 8 genuine S3 MUSTs
+  (FR-006/007/008/009/011/012/013, NFR-005, NFR-018 — 9 requirement IDs; FR-010 is a
+  SHOULD and excluded from the MUST tally though still fully VERIFIED) map to ≥1 named
+  passing test. None silently missing; none "partially satisfied" without deferral.
+
+  AGENT_SIMULATED → PASS-2 OBLIGATION (carried forward to the S3 sprint record):
+  All eight stories (S3-01..S3-08) and their source DCs (DC-06/07/08/09) carry
+  provisional_status: AGENT_SIMULATED; NONE is DIVERGED. The S3 evidence base — including
+  this iteration-2 re-run — was produced against the real working tree (pytest 9.0.2 /
+  Python 3.10.6), NOT on a real CI runner / benchmark hardware. A Pass-2 real-CI run on a
+  clean checkout is OWED before any of FR-006/007/008/009/011/012/013, NFR-005, NFR-018 may
+  be counted RELEASE-verified (vs the current SPRINT-bar AGENT_SIMULATED verification). The
+  amendment commit message's own "169 passed ... ruff + mypy --strict clean" line is itself
+  an AGENT_SIMULATED attestation and inherits this same Pass-2 obligation.
+  DIVERGED+Pass-2 threshold cross-check: NOT APPLICABLE — no S3 DC is DIVERGED, so no
+  date+sample-size statistical Pass-2 commitment attaches; the only Pass-2 owed is the
+  execution-environment real-CI re-run (an AGENT_SIMULATED caveat, not a DIVERGED-NFR
+  threshold obligation).
+
+  TIER SNAPSHOT (re-id / anon-pseudo track at S3's planned bar): unchanged from iteration 1.
+  S3 is the scorer-trio sprint (DC-06 anon / DC-07 RRS / DC-08 pseudo + the DC-09 reid power
+  seam). At S3's planned bar ALL three scorer families + the shared measured-RRS axis are
+  PRESENT and unit/contract/audit-verified at the AGENT_SIMULATED bar. The per-cell POWER
+  population (NFR-001/018 corpus floors at scale) remains S4's bar, not S3's — S3 ships the
+  seam + the derived tier numbers (897/385), not the populated counts; no premature power
+  claim is made here.
+
+  ── ITERATION-2 VERDICT BASIS ──
+  Iteration-1 single MAJOR (coverage-S3-01) is RESOLVED (anonymization.py 72%->97% line,
+  ≥85% per-module NFR-016 bar cleared; only documented defensive line 88 + one partial
+  branch remain). No new findings introduced by the amendment (the two perf refactors are
+  behavior-preserving and re-pinned green; full suite 169 passed, 1 skipped — 0 regressions).
+  Zero MAJOR+, zero MINOR, zero OBSERVATION at this iteration → APPROVE.
+
+review_time_seconds: 540
+context_bounds_respected: true

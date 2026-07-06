@@ -1,11 +1,11 @@
 """Tests for compliance.entity_crosswalk (FR-053 / DC-30: per-entity-type regulatory crosswalk).
 
 C5 — extends the cycle-1 record-tag crosswalk (S5-01 / FR-022) DOWN to the per-ENTITY-TYPE
-level and ADDS GLBA. Each of the canonical 63 entity types (``taxonomy.ENTITY_REGISTRY``) maps
+level and ADDS GLBA. Each of the canonical entity types (``taxonomy.ENTITY_REGISTRY``) maps
 to a record carrying FIVE SEPARATE, legally-distinct regime fields — and NO merged verdict.
 
 LOAD-BEARING (FR-053 / DC-30, mirroring AX-004 separation + gov-02 stance):
-* EVERY one of the 63 taxonomy types has an entry (derived from taxonomy, never a stale list);
+* EVERY one of the taxonomy types has an entry (derived from taxonomy, never a stale list);
 * each entry exposes EXACTLY the 5 legally-distinct keys (``gdpr``,
   ``gdpr_art9_special_category``, ``hipaa_phi``, ``ccpa``, ``glba_nonpublic_personal_info``);
 * there is NO merged / roll-up verdict key (no ``overall`` / ``deidentified`` / ``compliant`` /
@@ -44,8 +44,8 @@ _FORBIDDEN_MERGED_KEYS = frozenset(
 )
 
 
-def test_fr_053_covers_every_one_of_the_63_taxonomy_types() -> None:
-    """``build_entity_crosswalk`` has an entry for EXACTLY the canonical 63 types — [UNIT-TEST].
+def test_fr_053_covers_every_one_of_the_taxonomy_types() -> None:
+    """``build_entity_crosswalk`` has an entry for EXACTLY the canonical entity types — [UNIT-TEST].
 
     Derived from ``taxonomy`` (no stale hand-list): the entry keyset equals the canonical set,
     so the crosswalk can never silently drift out of sync with the registry (DC-30).
@@ -53,7 +53,7 @@ def test_fr_053_covers_every_one_of_the_63_taxonomy_types() -> None:
     xwalk = build_entity_crosswalk()
     entries = xwalk["entries"]
     assert set(entries) == set(CANONICAL_ENTITY_TYPES)
-    assert len(entries) == ENTITY_TYPE_COUNT == 63
+    assert len(entries) == ENTITY_TYPE_COUNT
 
 
 def test_fr_053_each_entry_has_the_five_legally_distinct_keys_and_no_merged_verdict() -> None:

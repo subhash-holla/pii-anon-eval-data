@@ -1,5 +1,5 @@
 {
-  "_comment": "PINNED design-time frequency snapshot for the committed lattice (S-PWR). build_committed_lattice reads THIS, never the live metadata, so the frozen eval_lattice.json round-trips (NFR-018 anti-drift) even after enrichment changes the corpus counts. Do not regenerate after enrichment.",
+  "_comment": "PINNED design-time frequency snapshot for the committed lattice. v2.2-dev 2C re-pin: ru/th/el/bn/he declared head languages (powered rectangle 12->17). Routine enrichment must NOT regenerate this; only deliberate composition changes (a new sub-project) may.",
   "by_entity_type": {
     "AGE": 189,
     "API_KEY": 2041,
@@ -71,13 +71,13 @@
     "ar": 3090,
     "az": 210,
     "bg": 220,
-    "bn": 229,
+    "bn": 21000,
     "ca": 210,
     "cs": 223,
     "cy": 210,
     "da": 237,
     "de": 7127,
-    "el": 236,
+    "el": 21000,
     "en": 103616,
     "es": 9982,
     "et": 210,
@@ -86,7 +86,7 @@
     "fil": 210,
     "fr": 8707,
     "ha": 210,
-    "he": 229,
+    "he": 21000,
     "hi": 2258,
     "hu": 237,
     "id": 256,
@@ -108,7 +108,7 @@
     "ps": 210,
     "pt": 1798,
     "ro": 246,
-    "ru": 431,
+    "ru": 21000,
     "si": 210,
     "so": 210,
     "sq": 210,
@@ -117,7 +117,7 @@
     "sw": 214,
     "ta": 210,
     "te": 218,
-    "th": 277,
+    "th": 21000,
     "tr": 303,
     "uk": 237,
     "ur": 211,
@@ -127,5 +127,5 @@
     "zh": 3611,
     "zu": 210
   },
-  "source_version": "1.3.0"
+  "source_version": "2.2.0-dev"
 }

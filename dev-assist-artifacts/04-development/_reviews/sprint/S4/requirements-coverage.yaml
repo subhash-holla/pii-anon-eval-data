@@ -1,0 +1,186 @@
+# ============================================================================
+# Requirements-coverage review — SPRINT gate  (S4 · iteration 1)
+# Holistic S4 MUST-coverage snapshot across the 5 DONE stories (S4-01..05, each
+# APPROVE at its story gate). S4 = the Stats/reporting completion sprint (DC-09).
+# Canonical reviewer output (templates/development/reviewer-output.yaml.tmpl).
+# ============================================================================
+reviewer: dev-assist-development-requirements-coverage
+scope_id: S4
+gate: sprint
+verdict: APPROVE
+iteration: 1
+
+findings: []
+
+notes: |
+  ── S4 SPRINT MUST-COVERAGE SNAPSHOT (each S4-scoped requirement → ≥1 NAMED passing test) ──
+  Verified THIS session against the real working tree:
+    python3 -m pytest -q -o addopts=""              → 211 passed, 1 skipped (2.96s)   [matches expected]
+    python3 -m pytest -o addopts="" --cov=pii_anon_datasets.stats \
+       --cov=pii_anon_datasets.reporting --cov-report=term-missing → 211 passed, 1 skipped
+  The 1 skip is the pre-existing tests/test_llm_adversary.py live path (importorskip("anthropic"),
+  anthropic intentionally absent) — a contract skip carried from S3, NOT an S4 failure.
+
+    REQ      PRIORITY  STORY            STATUS    NAMED PASSING TEST(S)
+    -------  --------  ---------------  --------  -----------------------------------------------------
+    FR-004   MUST      S4-01            VERIFIED  test_fr_004_clopper_pearson_textbook_values (0/10,1/10,
+              (UC-02; FR doc line 12)             10/10 @95% to 4 d.p.); test_fr_004_clopper_pearson_
+                                                  brackets_point; test_fr_004_clopper_pearson_is_
+                                                  conservative_vs_wilson; test_fr_004_clopper_pearson_
+                                                  edges; test_fr_004_clopper_pearson_deterministic;
+                                                  test_fr_004_reidx02_clopper_pearson_integer_guard.
+                                                  FR-004 names BOTH CI methods (Wilson/Clopper-Pearson);
+                                                  Wilson predates S4 (S1), CP is this sprint's add.
+    FR-002   MUST      S4-02            VERIFIED  test_fr_002_mcnemar_exact_binomial (b=10,c=0 → p≈0.00195;
+              (UC-01; FR doc line 10;             5,5 → p≈1.0); test_fr_002_mcnemar_chi2_continuity
+              MEASUREMENT side of the            ((|b−c|−1)²/n, p=erfc); test_fr_002_mcnemar_zero_
+              detector-regression gate)          discordant; test_fr_002_mcnemar_odds_ratio; test_fr_002_
+                                                  paired_bootstrap_brackets_delta; test_fr_002_paired_
+                                                  bootstrap_deterministic (seeded random.Random; global
+                                                  RNG provably not consulted). NOTE-SCOPE: S4-02 ships the
+                                                  paired McNemar MEASUREMENT statistic; the FULL FR-002
+                                                  "CI FAILS on F2-regression / known-bypass" CI-gate wiring
+                                                  is a downstream (Stage-5 / harness) obligation — see
+                                                  OBSERVATION in the orphan/seam ledger below. Not deferred-
+                                                  with-successor inside S4 because the MEASUREMENT slice that
+                                                  S4 scoped IS fully verified; the gate-wiring was never an
+                                                  S4 story.
+    NFR-002  MUST      S4-01 + S4-02    VERIFIED  test_nfr_002_clopper_pearson_method_named (method ==
+              (UC-01/02; AX-003;                  "clopper-pearson", surfaced via as_dict); test_nfr_002_
+              CI method NAMED on                  paired_bootstrap_method_named (method == "paired-bootstrap";
+              every metric)                       McNemar.method ∈ {mcnemar-exact, mcnemar-chi2-continuity,
+                                                  mcnemar-chi2}). All FOUR S4 CI families carry a NAMED
+                                                  method in source (grep-confirmed): wilson, clopper-pearson,
+                                                  paired-bootstrap, mcnemar-{exact,chi2,chi2-continuity}.
+                                                  Zero bare point estimates: each fn returns an Interval/
+                                                  McNemarResult dataclass, never a float.
+    NFR-003  MUST      S4-04 + S4-05    VERIFIED  test_nfr_003_per_language_table_has_row_per_language;
+              (UC-02; N7; per-language            test_nfr_003_language_x_type_matrix_grouped; test_nfr_003_
+              + language×type power               low_power_cells_labeled (under_powered / empty / well_
+              transparency)                       powered); test_nfr_003_render_markdown_and_csv; test_nfr_
+                                                  003_no_corpus_read (AST src-purity guard); test_nfr_003_
+                                                  slice_heatmap_writes_png (S4-05 viz facet delegating to
+                                                  PowerMatrix.heatmap). Per-language table AND language×
+                                                  entity_type matrix both present; below-tier cells labelled
+                                                  low-power. Reporter is a THIN reader over the frozen
+                                                  eval_lattice.json + passed-in observed_counts — reads NO
+                                                  corpus (AST-pinned).
+    FR-005   SHOULD    S4-03 + S4-05    VERIFIED  ECE/Brier/reliability bins (S4-03): test_fr_005_ece_known_
+              (UC-03; FR doc line 13 —  (COMPLETE) value (0.29375 hand-derived); test_fr_005_brier_known_value
+              SHOULD, not MUST)                   (0.2171875); test_fr_005_perfect_calibration_zero_ece;
+                                                  test_fr_005_reliability_bins_partition (bins partition [0,1],
+                                                  Σcount==n). Reliability DIAGRAM + abstention COVERAGE-RISK
+                                                  curve (S4-05): test_fr_005_reliability_diagram_writes_png;
+                                                  test_fr_005_coverage_risk_curve_writes_png (selective
+                                                  prediction — the abstention facet flagged at the S4-03 gate,
+                                                  now CLOSED). FR-005 is FULLY covered across S4-03+S4-05 — NO
+                                                  SUCCESSOR STORY OWED. (Snapshotted here per dispatch; FR-005
+                                                  is a SHOULD per FR doc line 13, so it does not enter the MUST
+                                                  tally — but it is verified to the same evidence bar.)
+    NFR-008  SHOULD    S4-03            VERIFIED  test_nfr_008_meets_reference_is_reported_not_gated (ECE
+              (UC-03; FR doc/NFR doc    (reference) 0.29375 > 0.05 RETURNS normally, meets_reference == False —
+              line 19 — reported, NOT             never raised/gated); test_nfr_008_calibration_by_entity_
+              a submitter gate)                   class (per-entity-class ECE/Brier; PERSON 0.0 / EMAIL 0.9
+                                                  both returned). NFR-008's ECE≤0.05 is a REFERENCE reported,
+                                                  not a pass/fail gate — verified the gate-never-raises
+                                                  invariant explicitly. Co-validated at R10 (NFR doc line 19).
+
+  ── PER-MODULE COVERAGE — NFR-016 ≥85% LINE BAR ON EVERY S4 STATS+REPORTING MODULE (re-run this session) ──
+  --cov-report=term-missing `Cover` column reports LINE coverage when branch=true (pyproject [tool.coverage.run]
+  branch=true); the Branch/BrPart columns are reported separately. Pure line-rate cross-checked via the JSON
+  report (covered_lines/num_statements) — both readings clear ≥85% on EVERY module:
+    MODULE                                LINE(JSON)  Cover(term)  BRANCH   NFR-016 LINE(≥85%)  BRANCH(≥70%)
+    ------------------------------------  ----------  -----------  -------  ------------------  ------------
+    reporting/__init__.py                    100.0%      100%      100.0%       PASS                PASS
+    reporting/language_power.py    (S4-04)    98.1%       97%       92.9%       PASS                PASS
+    reporting/power_table.py                 100.0%      100%      100.0%       PASS  (74%→100% via 243ba63)
+    reporting/viz.py               (S4-05)    99.0%       96%       70.0%       PASS                PASS (==floor)
+    stats/__init__.py                        100.0%      100%      100.0%       PASS                PASS
+    stats/calibration.py           (S4-03)    97.8%       96%       90.0%       PASS                PASS
+    stats/intervals.py             (S4-01)    91.5%       87%       73.7%       PASS                PASS
+    stats/lattice.py                          97.4%       97%       97.2%       PASS                PASS
+    stats/paired.py                (S4-02)    94.7%       92%       78.6%       PASS                PASS
+    stats/power.py                            93.0%       91%       83.3%       PASS                PASS
+    TOTAL (stats+reporting): 820 stmts, 34 miss; 210 branch, 27 BrPart → 94% combined / 95.9% line.
+  WORST line = intervals.py 91.5% (JSON) / 87% (term `Cover`) — the dispatch's "intervals.py is now 87%"
+  matches the term-missing `Cover` reading. EVERY stats+reporting module ≥85% line: TRUE (both readings).
+  NFR-016 branch sub-bar (≥70% on scorer/statistical-computation modules) also satisfied: the statistical
+  modules (intervals 73.7%, paired 78.6%, power 83.3%, calibration 90.0%, lattice 97.2%) all clear 70%;
+  viz.py 70.0% sits exactly at the floor but is a report/visualization module (PNG renderers behind the
+  [viz] extra), not a statistical-computation module.
+
+  COVERAGE-HARDENING COMMIT 243ba63 (verified ancestor of HEAD on feat/v2-scoring-harness):
+  "test(reporting): S4 sprint coverage-hardening (DC-09 reporting completion)" — added
+  tests/test_power_table_reporting.py (render/report surface: render_csv, render_markdown(max_rows),
+  power_report(note=...), scores-attach, _verdict ladder, _power_class edges) lifting power_table.py
+  74%→100% LINE, AND renamed test_fr005_* → test_fr_005_* in test_viz.py so `pytest -k fr_005` selects
+  the viz facets (the S4-05 code-quality MINOR token fix). Test-only; 0 production change; 0 regressions.
+
+  RESIDUAL UNCOVERED SURFACE (audited — all DEFENSIVE remainder, no FR/NFR path uncovered):
+    * intervals.py 97/106/109/116/119 — Lentz continued-fraction underflow guards (d=tiny / c=tiny),
+      reachable only on numerical edge cases; 131/133/157/159 — _inv_betainc already-converged endpoint
+      clamps (return 0.0 / 1.0). FR-004 textbook values + CP⊇Wilson conservatism property still pass.
+    * paired.py 134 — empty-pairs sentinel Interval; 167/173 — percentile interpolation edges (single-value
+      / exact-index); 47 — frozen-dataclass as_dict return arm. None on the exercised FR-002 measurement path.
+    * calibration.py 128/154 — empty-bin / empty-input `return 0.0` guards.
+    * language_power.py 95, viz.py 181/197 — analogous defensive/edge arms.
+  This is exactly the defensive residue the S3 sprint precedent (coverage-S3-01 resolution) explicitly
+  tolerated under NFR-016 — line ≥85% satisfied; the residue is unreachable-via-public-API defensive code.
+
+  ── ORPHAN SCAN ──
+  Zero orphaned S4-scoped requirements. NO S4 MUST has neither test evidence nor a successor story.
+  S4-scoped MUSTs (FR-004, FR-002, NFR-002, NFR-003) → each maps to ≥1 NAMED passing test (above). FR-005
+  + NFR-008 are SHOULD (FR doc line 13 / NFR doc line 19) — excluded from the MUST tally but verified to the
+  same bar (FR-005 fully closed across S4-03+S4-05, no successor owed). NOTE: this repo carries NO 61-MUST
+  board / epic catalog / sprint-plan artifact (lean 29-FR + 18-NFR requirements set under 02-requirements/);
+  coverage is therefore computed directly against functional-requirements.md / non-functional-requirements.md
+  / traceability-matrix.md — there is no separate MUST-board to reconcile against or leave stale. No MUST is
+  "partially satisfied" without deferral; none silently missing. Domain packs: developer-assistant.yaml
+  domain_packs == [] (per the S3 precedent) → no reviewer pack-extension finding patterns to merge.
+
+  ── SEAM / DOWNSTREAM OBSERVATION (non-blocking; logged, not a finding-of-record) ──
+  FR-002's headline clause is "CI FAILS on an F2 regression beyond tolerance OR a known-injected bypass that
+  goes undetected." S4-02 ships the MEASUREMENT half (paired McNemar exact+continuity-χ² + seeded paired
+  bootstrap) that such a gate consumes — this is the slice S4 scoped and it is fully verified. The actual
+  CI-gate WIRING (fail-the-build-on-regression) is a Stage-5 / harness-integration obligation, never an S4
+  story. Recorded here as a forward seam so it is not later mistaken for an S4 orphan. (OBSERVATION-equivalent.)
+
+  ── AGENT_SIMULATED → PASS-2 OBLIGATION (carried into the S4 sprint record) ──
+  All five stories (S4-01..05) and their source DC (DC-09) carry provisional_status: AGENT_SIMULATED; NONE is
+  DIVERGED. The S4 evidence base — including THIS session's 211-passed/1-skipped + coverage re-run — was
+  produced against the real working tree (Python 3.10.6 / pytest 9.0.2, pythonpath=src), NOT on a real CI
+  runner / benchmark hardware. A Pass-2 real-CI run on a clean checkout is OWED before any of FR-004 / FR-002
+  / NFR-002 / NFR-003 (and the FR-005 / NFR-008 SHOULDs) may be counted RELEASE-verified (vs the current
+  SPRINT-bar AGENT_SIMULATED verification). The S4-05 matplotlib PNG renders executed in-process on the Agg
+  backend inherit the same Pass-2 obligation. This obligation is consistent with the traceability-matrix
+  Status Change Log (all rows AGENT_SIMULATED unless PERSONA-CONDITIONAL).
+
+  DIVERGED + PASS-2 THRESHOLD CROSS-CHECK: NOT APPLICABLE — no S4 DC/requirement carries provisional_status:
+  DIVERGED, so no date+sample-size statistical Pass-2 commitment attaches. The only Pass-2 owed is the
+  execution-environment real-CI re-run (an AGENT_SIMULATED caveat), not a DIVERGED-NFR threshold obligation.
+  (For the record: NFR-018/NFR-001 are ACCEPTED-WITH-CAVEATS at R10, not DIVERGED, and are out of S4 scope —
+  they are the corpus-power-population bar, a later sprint's concern, not S4's stats/reporting completion.)
+
+  ── TIER SNAPSHOT (stats/reporting track at S4's planned bar) ──
+  S4 is the DC-09 stats/reporting COMPLETION sprint. At S4's planned bar the statistical-method surface is
+  COMPLETE and unit/property/contract-verified at the AGENT_SIMULATED bar:
+    * Interval estimation — Wilson (S1) + Clopper-Pearson exact (S4-01), both NAMED-method (NFR-002).
+    * Paired inference — McNemar exact + continuity-χ² + seeded paired bootstrap (S4-02), the FR-002
+      measurement realisation pairing the S-PWR design-time sizer (required_discordant_pairs).
+    * Calibration — ECE + Brier + per-entity-class reliability bins (S4-03), NFR-008 reference-not-gated.
+    * Transparency — per-language + language×entity_type power table (S4-04, NFR-003).
+    * Reports/viz — reliability diagram, privacy-utility Pareto (two-axis, NFR-005/AX-004), slice heatmap,
+      agent-leakage Sankey, abstention coverage-risk curve (S4-05); core stays pure-stdlib, viz behind [viz].
+  The per-cell POWER POPULATION at scale (NFR-001/018 corpus floors) is NOT an S4 claim — S4 ships the
+  reporting/measurement surface, not the populated counts; no premature power claim is made here.
+
+  ── VERDICT BASIS ──
+  All 4 S4-scoped MUSTs (FR-004, FR-002, NFR-002, NFR-003) VERIFIED by ≥1 named passing test; the 2 scoped
+  SHOULDs (FR-005, NFR-008) also fully verified, FR-005 closed across S4-03+S4-05 with no successor owed.
+  Every stats+reporting module ≥85% line (worst intervals.py 91.5% line / 87% term-Cover; coverage-hardening
+  243ba63 lifted power_table.py 74%→100% and is an ancestor of HEAD). Zero orphaned S4 MUSTs. Suite green
+  (211 passed, 1 pre-existing skip; 0 regressions). AGENT_SIMULATED→Pass-2 obligation recorded; no DIVERGED
+  cross-check owed. Zero MAJOR+, zero MINOR (one forward seam logged as OBSERVATION-equivalent) → APPROVE.
+
+review_time_seconds: 3300
+context_bounds_respected: true

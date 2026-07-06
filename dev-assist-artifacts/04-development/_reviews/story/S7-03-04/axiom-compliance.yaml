@@ -1,0 +1,95 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S7-03-04
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  COMBINED STORY gate for S7-03 (FR-027 real-data validation correlation harness) +
+  S7-04 (FR-015/016 coreference + quasi-identifier slices). LOAD-BEARING axiom: this gate
+  exists to protect the epistemic-honesty invariants — the FR-027 "never fabricate" sentinel
+  and the FR-015/016 ~72%-formulaic low-power caveat. Both upheld.
+
+  Project axioms applied (dev-assist-artifacts/00-axioms/project-axioms.yaml):
+    AX-pii-anon-001 (synthetic-only / no real PII), AX-pii-anon-002 (deterministic-reproducible),
+    AX-pii-anon-003 (stated-statistical-power). No domain packs active (developer-assistant.yaml
+    domain_packs: []), so no pack-extension catalog merged. No reviewer_hooks in the registry
+    target dev-assist-development-axiom-compliance, so the three reviewer hooks (security-sast,
+    code-quality, requirements-coverage) are out of my lane and left to those reviewers.
+
+  --- S7-03 / FR-027 (the crux is NEVER FABRICATE) — UPHELD ----------------------------------
+  * Never-fabricate sentinel (epistemic-honesty invariant). Verified empirically:
+    correlate([...], real_scores=None) -> RealDataAbsent; correlate([...], real_scores=[]) ->
+    RealDataAbsent. Both return available=False and are asserted NOT a CorrelationResult by
+    test_fr_027_returns_sentinel_when_real_data_absent [CONTRACT-TEST]. The harness refuses to
+    invent a correlation when real i2b2-2014 / TAB data is absent. correlation.py:205 guard
+    `if not real_scores:` covers both the None and the empty-list path. Edge case I probed:
+    a single present real score [0.0] is a truthy list, so it bypasses the sentinel and
+    correctly hits the >=2 ValueError (correlation.py:208-209) — it REFUSES rather than
+    fabricates a degenerate correlation. Correct, not a finding.
+  * Non-strippable note + caveat. RealDataAbsent.__post_init__ (correlation.py:46-48) and
+    CorrelationResult.__post_init__ (correlation.py:70-72) both raise ValueError on an
+    empty/whitespace string. Content verified: CORRELATION_CAVEAT contains "NOT external
+    validity" + "FR-027"; REAL_DATA_ABSENT_NOTE contains "REFUSES" + "fabricate" + "FR-027".
+    Pinned by test_fr_027_caveat_non_strippable [UNIT-TEST] (caveat="" and caveat="   " both
+    raise; RealDataAbsent(note="") raises). The caveat truthfully states synthetic-distribution
+    agreement is NOT external validity and routes the synthetic->real transfer delta to a
+    real-data Pass-2 item — faithful to FR-027 (SHOULD; v1.1; Pass-2) in
+    functional-requirements.md:47.
+  * Seed-deterministic bootstrap (AX-pii-anon-002 / NFR-004). _bootstrap_ci (correlation.py:185)
+    owns a LOCAL random.Random(seed) — never a module-global random.<fn>. The AST guard
+    test_nfr004_correlation_purity [PROPERTY-TEST] (1) asserts {time,uuid,datetime,secrets}
+    disjoint from imports and (2) walks every `random.<attr>` Attribute node and asserts it is
+    exactly `random.Random`. Mirrors stats/paired.py:140 verbatim. test_fr_027_bootstrap_ci_
+    seeded_deterministic additionally proves byte-identical CIs across two same-seed runs AND
+    invariance under a perturbed module-global RNG (random.seed(0) / random.seed(999999) leave
+    the result identical) — direct evidence the global RNG is never consulted. `python3 -m
+    pytest tests/test_correlation.py -k fr_027 -q` -> 4 passed; `-k nfr004 -q` -> 1 passed.
+
+  --- S7-04 / FR-015-016 (the crux is the low-power caveat) — UPHELD --------------------------
+  * Non-strippable SLICE_CAVEAT (epistemic-honesty invariant for the synthetic monoculture).
+    Slice.__post_init__ (slices.py:40-42) raises ValueError on empty/whitespace. Content
+    verified: SLICE_CAVEAT contains "72%", "v1.1", "LIMITED", and "external validity", and names
+    the formulaic synthetic_lattice_enrichment monoculture — honest that synthetic-distribution
+    coverage is not external validity (AX-pii-anon-003: stated statistical power). Pinned by
+    test_fr_015_slice_low_power_caveat_non_strippable [UNIT-TEST]. This is the form AX-003
+    takes for a SHOULD/v1.1 slice that cannot meet the NIST per-cell power bar: it labels itself
+    low-power/exploratory rather than presenting a bare score.
+  * Correct filtering. coreference_slice keeps records with a NON-EMPTY coreference_chains
+    (slices.py:62-65; empty/missing/null entity_tracking excluded); quasi_identifier_slice keeps
+    records with >= min_qids quasi_identifiers, min_qids configurable and tightening (slices.py:
+    68-71). Pinned by test_fr_015_* and test_fr_016_*. Faithful to FR-015/016
+    (functional-requirements.md:29-30).
+  * Pure-stdlib AST guard. test_nfr004_slices_pure_stdlib [PROPERTY-TEST] asserts
+    {random,time,uuid,datetime,secrets} disjoint from imports; slices.py imports only
+    {__future__, collections, dataclasses} — deterministic, order-preserving filter, no
+    clock/RNG (AX-pii-anon-002). `python3 -m pytest tests/test_slices.py -q` -> 4 passed.
+
+  --- AX-pii-anon-001 (synthetic-only / no real PII) — UPHELD ---------------------------------
+  Both modules' build-time prose, fixtures, and examples carry NO real PII. Scanned the four
+  files for structurally-real PII (SSN/card/phone shapes, real consumer email domains): zero
+  matches. correlation.py operates on float scores only; test_slices.py fixtures use placeholder
+  tokens (mention_a/mention_b, DATE_OF_BIRTH/ORGANIZATION_NAME/CITY) — entity-type labels, not
+  real natural-person data.
+
+  --- Content-lint (CATASTROPHIC trip-wire) — CLEAN ------------------------------------------
+  Scanned build-time prose for banned/overclaiming phrases (99.9%, state-of-the-art, perfect/
+  guaranteed detection, fully-anonymized, 100% accurate, etc.): zero matches. The prose is, if
+  anything, the opposite of overclaiming — both modules' docstrings foreground the limits.
+
+  Out of my lane (deferred to the named reviewers): whether tau/rho/Bland-Altman are
+  numerically correct (code-quality / requirements-coverage), TDD RED-before-GREEN ordering
+  (code-quality), and the OPTIONAL pyproject.toml coverage-source edit both stories deferred to
+  S7 sprint close (coverage gate). None of those bear on axiom compliance.
+
+  Evidence base: full suite green (344 passed, 1 pre-existing skip; 0 regressions); target files
+  tests/test_correlation.py + tests/test_slices.py -> 9 passed; ruff check + mypy --strict on
+  both source modules -> clean.
+
+review_time_seconds: 470
+
+context_bounds_respected: true

@@ -15,7 +15,9 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from _version import DATASET_VERSION
+from pii_anon_datasets.compliance.entity_crosswalk import _ART9_SPECIAL_CATEGORY, _NON_PERSONAL
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "src" / "pii_anon_datasets" / "data"
@@ -219,6 +221,7 @@ def compute_k_anonymity_estimates(records: list[dict]) -> int:
             k_est = 2
 
         pr["k_anonymity_estimate"] = k_est
+        pr["qid_type_count_risk_label"] = k_est  # B-6 honest alias (same value)
         rec["privacy_risk"] = pr
         updated += 1
 
@@ -229,8 +232,16 @@ def enrich_regulatory_domains(records: list[dict]) -> int:
     """Add SOX, LGPD, and PIPA regulatory domain tags where applicable."""
     updated = 0
     for rec in records:
-        reg = set(rec.get("regulatory_domains", []))
         entity_types = {a["entity_type"] for a in rec.get("annotations", [])}
+
+        # Non-personal records carry no regulatory tags — skip gdpr/ccpa/hipaa tagging entirely.
+        # Consume the transient build marker (pop, don't read) so it never leaks into the shipped corpus.
+        is_non_personal = rec.pop("_non_personal", False)
+        if is_non_personal or (entity_types and entity_types <= _NON_PERSONAL):
+            rec["regulatory_domains"] = []
+            continue
+
+        reg = set(rec.get("regulatory_domains", []))
         lang = rec.get("language", "")
         domain = rec.get("domain", "")
 
@@ -256,6 +267,19 @@ def enrich_regulatory_domains(records: list[dict]) -> int:
             rec["regulatory_domains"] = new_reg
             updated += 1
 
+    return updated
+
+
+def enrich_art9_special_categories(records: list[dict]) -> int:
+    """B-5: stamp each record with the sorted distinct GDPR Art-9 entity types it contains (a stratification
+    key for the Art-9 coverage finding). Pure derivation from annotations; references the authoritative set."""
+    updated = 0
+    for rec in records:
+        present = sorted({a["entity_type"] for a in rec.get("annotations", [])
+                          if a["entity_type"] in _ART9_SPECIAL_CATEGORY})
+        rec["art9_special_categories"] = present
+        if present:
+            updated += 1
     return updated
 
 
@@ -286,6 +310,9 @@ def main():
     print("\nEnriching regulatory domains (SOX, LGPD, PIPA)...")
     n_reg = enrich_regulatory_domains(records)
     print(f"  Updated regulatory domains on {n_reg} records")
+
+    n_art9 = enrich_art9_special_categories(records)
+    print(f"  art9_special_categories stamped on {n_art9} records with >=1 Art-9 type")
 
     # Write back
     print("\nWriting enriched dataset...")

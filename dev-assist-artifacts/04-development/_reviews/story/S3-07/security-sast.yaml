@@ -1,0 +1,146 @@
+reviewer: dev-assist-development-security-sast
+scope_id: S3-07
+gate: story
+iteration: 1
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY-gate security-sast review of S3-07 (iteration 1), the [AUDIT]-tagged "moat",
+  read-only. Bounded context: the story file, the 3 owned files
+  (src/pii_anon_datasets/scoring/pseudonymization.py [PRIMARY],
+  src/pii_anon_datasets/scoring/__init__.py, tests/test_pseudonymization.py), the in-package
+  Interval/wilson dependency (stats/intervals.py, read for context only — not owned, not
+  reviewed for findings), and developer-assistant.yaml (domain_packs only). Verdict APPROVE:
+  zero findings at any severity; both PRIMARY [AUDIT] privacy-correctness controls verified
+  SOUND on inspection AND by live test execution (10/10 owned tests pass, clock-free).
+
+  ================================================================================
+  PRIMARY (the [AUDIT] privacy controls) — both VERIFIED SOUND
+  ================================================================================
+
+  (1) FR-012 collision-type SEPARATION is a correct privacy-correctness control — a correct
+      deterministic pseudonymizer is NEVER falsely flagged. VERIFIED on three grounds:
+        a. _collision_counts (pseudonymization.py:240-275) computes the two categories by TWO
+           INDEPENDENT passes and returns them as separate tuple elements
+           (intended, len(crypto_reals), n_distinct) — they are never added. `intended`
+           (L263-267) sums 1 ONLY over same-real repeats resolving to a single pseudonym (the
+           deterministic-linkage FEATURE). `crypto_reals` (L270-273) is a disjoint set() of
+           DISTINCT reals colliding on one token (the FAULT). The two `sum(...)` call sites in
+           the module (L263 intended-linkage counter, L285 broken-joins counter, L343 recovered
+           counter) are each WITHIN-category cardinality counters — none crosses the
+           intended/unintended boundary. Intended-linkage and unintended-crypto are structurally
+           incapable of being conflated.
+        b. The report (PseudonymizationReport, L161-216) surfaces intended_linkage_collisions
+           and unintended_crypto_collisions as two separate int fields and as two separate
+           as_dict keys (L194-195); there is DELIBERATELY no total_collisions / combined / deid /
+           overall / utility / residual_risk field or key anywhere in the module (confirmed by
+           grep + by the as_dict body). A correct deterministic scheme yields crypto_reals == {}
+           => unintended_crypto_collisions == 0, so it cannot be penalized.
+        c. Live: test_fr_012_correct_deterministic_has_zero_crypto_collisions [AUDIT] PASSES
+           (_ReversibleKeyed -> unintended==0, intended>0, no total_collisions attr/key);
+           test_nfr005_report_has_no_anonymization_or_combined_field [AUDIT] PASSES (forbidden
+           set {utility,residual_risk,combined,deid,overall,total_collisions} disjoint from
+           attrs AND as_dict keys — the within-module AX-004/NFR-005 guard).
+
+  (2) FR-013 EDPB Art 4(5) key/state-separation logic is sound — _keyless_rejoinable correctly
+      detects a no-secret artifact is self-rejoinable (bare-md5 -> True), and the finding is
+      EXPRESSED, not hidden. VERIFIED:
+        a. _keyless_rejoinable (L301-321) re-derives the keyless public digests (md5 + sha256,
+           plus common truncations/prefixes) over the CLOSED-WORLD candidate plaintext space
+           (the artifact's own distinct real values) and returns True iff a derived token
+           matches an actual artifact token. For _BareMd5 (pseudonym = "MD5_"+md5(value)[:12],
+           no salt/secret) this matches => rejoinable_from_artifact_alone = True (correctly
+           FAILS Art 4(5)). For _ReversibleKeyed (HMAC-shaped sha256 over secret|salt|...) no
+           keyless derivation reproduces a token => False. Logic is correct and conservative
+           (closed-world, public-hash only, no secret needed — exactly what makes a keyless
+           scheme fail and a keyed scheme pass).
+        b. EXPRESSED-not-hidden: KeyStateSeparationResult.note (built L452-465) is non-empty,
+           cites the Art-4(5) literal (_EDPB_ART_4_5_CITATION = "EDPB / GDPR Art. 4(5)", L51),
+           and on the rejoinable branch NAMES the real example by full path:
+           "scripts/enrich_context_preservation.py::PseudonymGenerator has exactly this shape."
+           The Protocol docstring (L108-110) and the module header (L24-29) repeat this. The
+           result note is surfaced as the report verdict (KeyStateSeparationResult.__post_init__
+           hard-fails on an empty note, L153-155), so the finding cannot be silently dropped.
+        c. Live: test_fr_013_key_state_separation_edpb_art4_5 [AUDIT] PASSES (bare-md5 ->
+           rejoinable True with "art"/"4(5)" in note; keyed -> False with "4(5)" in note).
+
+  ================================================================================
+  SECONDARY — all VERIFIED CLEAN
+  ================================================================================
+
+  Pure-stdlib determinism (NFR-004): AST import audit of the PRIMARY module — imports are
+  {__future__, collections.abc, dataclasses, enum, hashlib, typing, ..stats.intervals} ONLY.
+  None of {random, time, uuid, datetime, secrets} present; none of {os, subprocess, socket,
+  pickle, yaml, requests, urllib}. hashlib is allowed (deterministic) and is the scorer's
+  detection primitive. The import-purity AST guard
+  (test_fr_011_nfr004_pseudonymization_imports_no_nondeterminism [PROPERTY-TEST]) is a REAL,
+  non-stubbed check (parses the module source, asserts banned-set disjoint, asserts hashlib
+  present) and PASSES.
+
+  Inert (no eval/exec/subprocess/pickle/yaml/network/os.environ/real-secrets): VERIFIED across
+  all 3 files. The grep hits for "function"/"exec*" resolve to docstring prose ("deterministic
+  FUNCTION of the input"), not calls. No dynamic execution, no deserialization, no network
+  egress surface, no environment/secret pull, no filesystem write. The only filesystem read in
+  scope is the test's AST guard reading the module's OWN source via Path(...).read_text — inert
+  and self-referential.
+
+  AX-001 synthetic-only: the 3 inline reference pseudonymizers (_ReversibleKeyedPseudonymizer,
+  _BareMd5Pseudonymizer, _CollidingPseudonymizer) and all test data are synthetic. Candidate
+  plaintext space is the toy set (Alice/Bob/Carol/Dave/Erin/Frank); records use synthetic names
+  under PERSON_NAME. No corpus/load_dataset/open path in scope => no real-PII can enter.
+
+  Hardcoded secrets: NONE. Secret-shape scan (AWS AKIA, PEM private-key headers, JWT eyJ..,
+  api_key/client_secret/password assignments, long hex/base64) over all 3 files: zero matches.
+  The only "secret"/"salt"/"key" literals are obvious synthetic toys confined to the test
+  reference pseudonymizers: "k3y", "s4lt", "keyA"/"keyB", "saltA"/"saltB". These are test
+  fixtures modelling a held key, not real credentials. _held_secret_of (L410-417) reads a
+  test instance's own _secret via getattr for the rotation probe — no real secret is involved.
+
+  Domain packs: developer-assistant.yaml `domain_packs: []` (financial / agentic-runtime NOT
+  active — the project deliberately encodes no-real-PII / determinism / statistical-power as
+  project-authored axioms instead). No pack-extension finding patterns merged into the catalog;
+  no sensitive-data scan output to consult; no `source_pack` findings.
+
+  Supply-chain / CVE: the S3-07 RED..REFACTOR range (49fbfba~1..0e92642) touches ZERO
+  dependency manifests (no pyproject/requirements/setup/.toml/.cfg) — +846 lines across exactly
+  the 3 owned files. No new dependency, no git-pinned dep, no denied-license surface, no new
+  transitive CVE. pip-audit not installed in this environment; moot for a stdlib-only diff that
+  adds zero auditable dependencies.
+
+  ================================================================================
+  Common-pattern catalog (15) sweep + OBSERVATION on pattern 15
+  ================================================================================
+
+  Patterns 1-14 N/A to this Python, stdlib-only, no-network diff (no capability registry, no
+  trust-boundary/mediator code, no HSM/signing path, no unsafe block [Python], no new egress
+  route, no SQL/NoSQL interpolation, no git-pinned/denied-license dep, no wildcard capability,
+  no tokio::spawn, no cross-crate architectural egress). Story-gate conditional signals did NOT
+  trip the capability/trust-boundary/HSM/signing/egress/unsafe set; this reviewer participates
+  here because the [AUDIT] tag reinforces it for the collision-separation + EDPB key/state +
+  no-merge privacy controls — all three pass.
+
+  Pattern 15 (weak hash primitive md5/sha1) — present-but-NOT-a-finding (DELIBERATE,
+  DISAMBIGUATED): md5 appears in two places, and in BOTH it is a DETECTION tool over a
+  closed-world candidate set, never a security primitive protecting a secret:
+    - _KEYLESS_DIGESTS = ("md5","sha256") (L56) and _keyless_rejoinable/_unauthorized_reversal
+      (L301-344) re-derive PUBLIC keyless digests to PROVE that a keyless scheme is reversible
+      from the artifact alone. md5 here is the adversary's/auditor's probe FOR the weakness, not
+      a defense. Using md5 (and sha256) is exactly correct — the scorer must model what a
+      secret-less attacker can compute.
+    - _BareMd5Pseudonymizer (test) intentionally MODELS the known-weak real PseudonymGenerator
+      so the scorer can flag it. That is the system-under-test's fault being demonstrated, not
+      introduced by this code.
+    No sha1 anywhere. No md5 is used for integrity/auth/secret protection. Per scope, "weak hash
+    introduced for non-checksum purpose" does not apply: md5 is used precisely to detect/express
+    a weakness, which is the control's purpose. Recorded as an OBSERVATION, not a MAJOR finding.
+
+  TDD lineage spot-checked: RED 49fbfba (failing — import of nonexistent module), GREEN 0ffedd8
+  (module created), REFACTOR 0e92642 (lint/type-only) all present and correctly ordered. The
+  pre-existing reidentification.py:69 mypy note flagged in the story is OUT OF S3-07's owned-file
+  scope and is not a security concern; not assessed here.
+
+review_time_seconds: 600
+
+context_bounds_respected: true

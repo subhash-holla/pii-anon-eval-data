@@ -9,7 +9,7 @@ Two loaders/filters over the existing frozen corpus fields:
   detection (FR-016).
 
 Each slice is a :class:`Slice` value object carrying a **non-strippable v1.1 low-power caveat**
-(:data:`SLICE_CAVEAT`): ~72% of the corpus is formulaic ``synthetic_lattice_enrichment``, so these
+(:data:`SLICE_CAVEAT`): 79.2% of the corpus is formulaic ``synthetic_lattice_enrichment``, so these
 slices (FR-015/016 are SHOULD / v1.1) have **limited statistical power and external validity** —
 synthetic-distribution coverage is not external validity.
 
@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 # Non-strippable v1.1 low-power caveat (epistemic honesty).
 SLICE_CAVEAT: str = (
-    "v1.1 slice (FR-015/016 are SHOULD): ~72% of the corpus is formulaic "
+    "v1.1 slice (FR-015/016 are SHOULD): 79.2% of the corpus is formulaic "
     "synthetic_lattice_enrichment, so this slice's statistical power and external validity are LIMITED. "
     "Synthetic-distribution coverage is not external validity."
 )

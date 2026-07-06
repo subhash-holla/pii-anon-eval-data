@@ -1,0 +1,16 @@
+{
+  "status": "scored",
+  "model_id": "stanza-en-ontonotes",
+  "deterministic": true,
+  "build_seconds": 4.3,
+  "wall_seconds": 5710.2,
+  "record_errors": 0,
+  "n_records": 31048,
+  "n_gold": 201880,
+  "n_pred": 106661,
+  "n_tp": 62203,
+  "precision": 0.5831841066556661,
+  "recall": 0.30811868436695067,
+  "f1": 0.40320735331771146,
+  "f2": 0.3402116211122305
+}

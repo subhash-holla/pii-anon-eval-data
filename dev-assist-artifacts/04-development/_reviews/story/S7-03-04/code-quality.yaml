@@ -1,0 +1,92 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S7-03-04
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  All 15 common-pattern checks were run against the diff and source files. Zero blocking
+  findings across both stories. Detailed per-check observations below.
+
+  LINT / TYPE (re-run, not self-attested):
+  - ruff check src/pii_anon_datasets/validation/ src/pii_anon_datasets/subsets/slices.py
+    tests/test_correlation.py tests/test_slices.py → "All checks passed!"
+  - mypy --strict --follow-imports=silent src/pii_anon_datasets/validation/correlation.py
+    src/pii_anon_datasets/subsets/slices.py → "Success: no issues found in 2 source files"
+  Both are live re-runs, not self-attested. Zero warnings, zero errors.
+
+  TESTS (re-run):
+  - python3 -m pytest tests/test_correlation.py tests/test_slices.py -v → 9 passed (0.22s)
+    (5 S7-03 fr_027/nfr004-tokened; 4 S7-04 fr_015/fr_016/nfr004-tokened)
+  - python3 -m pytest -q (full suite) → 344 passed, 1 skipped (6.00s); 0 failures, 0 errors.
+    1 pre-existing skip unchanged; full-suite baseline delta +9 vs 335 pre-branch baseline.
+
+  TDD — RED-BEFORE-GREEN verified for each story (git log --format="%H %ai %s" db1a006..HEAD):
+  - S7-04 RED  bbcf838  01:17:33  [collection error: slices absent] → precedes...
+  - S7-03 RED  3525a5d  01:18:01  [collection error: validation absent] → both RED first, then...
+  - S7-04 GREEN  cc496b0  01:18:52  (production code) → then...
+  - S7-03 GREEN  a17726d  01:19:46  (production code)
+  - S7-04 REFACTOR  7200ee0  01:19:50
+  - S7-03 REFACTOR  4d8611f  01:21:00
+  Both stories exhibit strict RED-before-GREEN ordering. RED commits contain ONLY tests +
+  story doc updates (no production module present); collections fail for the correct reason
+  (ModuleNotFoundError / ImportError on absent package, not trivially-green tests).
+
+  SCOPE DISCIPLINE:
+  git diff db1a006 HEAD --name-only → exactly 8 files:
+    dev-assist-artifacts/04-development/02-stories/sprint-7/S7-03.md  (story doc)
+    dev-assist-artifacts/04-development/02-stories/sprint-7/S7-04.md  (story doc)
+    src/pii_anon_datasets/subsets/__init__.py   (S7-04 §8 NEW)
+    src/pii_anon_datasets/subsets/slices.py     (S7-04 §8 NEW)
+    src/pii_anon_datasets/validation/__init__.py  (S7-03 §8 NEW)
+    src/pii_anon_datasets/validation/correlation.py  (S7-03 §8 NEW)
+    tests/test_correlation.py  (S7-03 §8 NEW)
+    tests/test_slices.py       (S7-04 §8 NEW)
+  pyproject.toml is untouched — both stories correctly deferred the coverage-source edit to
+  the S7 sprint-close step (§8 "OPTIONAL"; sprint-close ACTION noted in §12 of each story).
+  No file outside the two §8 owned sets was touched.
+
+  S7-03 §8b DEVIATIONS (both sound, reviewed):
+  1. _PairStat = Callable[[Sequence[float], Sequence[float]], float] added to satisfy
+     mypy --strict; the §8b skeleton left it as a forward-ref stub. Correct fix; pure typing.
+  2. Three stat function bodies implemented (kendall_tau tau-b via _tie_counts/_average_ranks;
+     spearman_rho via _pearson; bland_altman per-pair diff ±1.96·sd ddof=1). §8b provided
+     only docstrings; signatures + return types match §8b verbatim. Implementation is correct:
+     concordant → τ=1.0/ρ=1.0; discordant → τ=-1.0/ρ=-1.0 verified by test suite.
+  3. pyproject.toml coverage-source edit deferred — explicitly sanctioned by §8 "OPTIONAL".
+
+  S7-04 §8b DEVIATIONS: none of substance. Module/init docstrings + [UNIT-TEST]/[PROPERTY-TEST]
+  tags added to match codebase idiom; ruff format normalised blank lines; test #3 additionally
+  asserts whitespace-only caveats raise (stronger, not weaker, than the §8b spec). No API change.
+
+  PATTERN 1 (unwrap/expect/non-null-assertion): Not applicable — Python; no equivalent. N/A.
+  PATTERN 3 (Any/dynamic-type): No Any usage in either module. Clean.
+  PATTERN 4 (missing docs): All public symbols in both modules carry docstrings.
+    validation/__init__.py and subsets/__init__.py carry module-level docstrings.
+    All exported functions and dataclasses are documented.
+  PATTERN 9 (dead code): _average_ranks, _tie_counts, _pearson, _bootstrap_ci, _coreference_chains,
+    _quasi_identifiers are all referenced — no orphaned helpers.
+  PATTERN 10 (dev-dependency at runtime): No new dependencies; pure-stdlib throughout (confirmed
+    by AST guards in the test suite itself).
+  PATTERN 12 (doc example section): No example section in any public function. Acceptable at
+    MINOR level; noted as OBSERVATION below since test coverage is comprehensive and the spec
+    (§8b) did not mandate example sections.
+
+  OBSERVATION — no example sections in public API docstrings (correlation.py functions,
+  slices.py functions): the codebase idiom does not require them at story gate and the spec did
+  not mandate them. The test suite provides executable coverage. Not a blocker.
+
+  OBSERVATION — subsets/__init__.py uses an absolute import
+  (from pii_anon_datasets.subsets.slices import ...) rather than a relative import
+  (from .slices import ...). Both forms are idiomatic Python; the relative form is more common
+  for intra-package re-exports. No behavioural difference; not blocking.
+
+  DOMAIN PACKS: domain-packs directory contains only README/schema/examples; no active pack
+  reviewer-extensions loaded.
+
+review_time_seconds: 145
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

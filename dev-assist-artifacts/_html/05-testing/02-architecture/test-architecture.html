@@ -1,0 +1,1573 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Test Architecture — pii-anon-eval-data — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="05-testing">
+<h1>Test Architecture — pii-anon-eval-data</h1>
+<p><strong>Stage 5 · Wave T2 (Test Architecture)</strong> · 2026-05-31 · <code>language_profile: python</code>
+<strong>Scope:</strong> the <code>pii-anon-datasets</code> v2.0.0 benchmark + evaluation harness (<code>src/pii_anon_datasets/</code>).
+<strong>Provisional status:</strong> <code>AGENT_SIMULATED</code> — every Stage-4 verdict is agent-simulated; a real-CI Pass-2 is owed (see §7).</p>
+<blockquote>
+<p><strong>Brownfield mode — Source Signal vs Gaps.</strong> This project entered the PDLC with a brownfield assessment
+(<code>00-brownfield-assessment/assessment-2026-05-28.md</code>) that rated <strong>Testing WEAK→PARTIAL</strong> and filed
+<strong>C1 (CATASTROPHIC): zero automated tests; the scoring harness itself is unverified.</strong> This architecture
+documents the test suite Stage 4 <em>built</em> against that gap (0 → 346 tests), and reads the existing signal
+honestly: the only pre-existing &quot;test&quot; assets were <code>scripts/validate.py</code> (8 schema checks) and
+<code>baselines/evaluate.py</code> (an unrun, partial-credit-double-counting eval harness). Both were <strong>wrapped /
+superseded, not preserved</strong> — <code>evaluate.py</code>&#39;s reidx-02 double-count bug was fixed-not-inherited. There is
+<strong>no STRONG-rated prior test pattern to protect</strong>; the canonical developer-assistant shape below is the
+shape this suite was grown into. This document <strong>describes and calibrates</strong> the realized architecture; it
+does not prescribe a framework migration (the suite is pytest, and stays pytest).</p>
+</blockquote>
+<hr>
+<h2>0. Inputs read (read-only)</h2>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Path</th>
+<th>Used for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Design synthesis (D6)</td>
+<td><code>03-design/06-synthesis/D-implementation-ready-design.md</code></td>
+<td><a class="trace-link" href="../../03-design/06-synthesis/D-implementation-ready-design.html#dc-15" data-trace-id="DC-15" aria-label="Trace DC-15">DC-15</a> test+CI mandate; Hexagonal/Clean module map; reidx-/gov-/DX- design constraints</td>
+</tr>
+<tr>
+<td>NFR document</td>
+<td><code>02-requirements/non-functional-requirements.md</code></td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a> coverage bar; what needs verification (<a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a>..018)</td>
+</tr>
+<tr>
+<td>Development log</td>
+<td><code>04-development/development-log.md</code></td>
+<td>8-sprint roll-up; per-sprint coverage + green counts</td>
+</tr>
+<tr>
+<td>Brownfield assessment</td>
+<td><code>00-brownfield-assessment/assessment-2026-05-28.md</code></td>
+<td>C1 + Testing rating; &quot;wrap don&#39;t rebuild&quot;</td>
+</tr>
+<tr>
+<td>Test suite (sample)</td>
+<td><code>tests/</code> (48 files)</td>
+<td>pyramid-shape calibration; inline test-type tags; token convention</td>
+</tr>
+<tr>
+<td>Language profile</td>
+<td><code>python</code> (from <code>developer-assistant.yaml</code>) + <code>pyproject.toml</code></td>
+<td>build/test/lint/coverage commands</td>
+</tr>
+</tbody></table>
+<p><strong>Calibration note:</strong> the suite already carries <strong>inline test-type markers</strong> in test docstrings
+(<code>[UNIT-TEST]</code>, <code>[INTEGRATION-TEST]</code>, <code>[PROPERTY-TEST]</code>, <code>[CONTRACT-TEST]</code>, <code>[AUDIT]</code>). The pyramid shape
+declared in §1 is <strong>measured from those markers</strong>, not asserted as a default.</p>
+<hr>
+<h2>1. Pyramid shape declaration</h2>
+<h3>Shape: <strong>CLASSIC PYRAMID with a PROPERTY-TEST mantle</strong> (broad unit base · thin integration band · system cap)</h3>
+<p><strong>Measured marker census</strong> (<code>grep</code> over <code>tests/</code> docstrings, 2026-05-31):</p>
+<table>
+<thead>
+<tr>
+<th>Marker</th>
+<th>Count</th>
+<th>Band</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>[UNIT-TEST]</code></td>
+<td>108</td>
+<td>base</td>
+</tr>
+<tr>
+<td><code>[PROPERTY-TEST]</code></td>
+<td>45</td>
+<td>base mantle (determinism / invariants / order-independence)</td>
+</tr>
+<tr>
+<td><code>[CONTRACT-TEST]</code></td>
+<td>15</td>
+<td>port boundaries (adapter / adversary / serializer)</td>
+</tr>
+<tr>
+<td><code>[AUDIT]</code></td>
+<td>15</td>
+<td>cross-cutting structural guards (purity / separation / no-merge)</td>
+</tr>
+<tr>
+<td><code>[INTEGRATION-TEST]</code></td>
+<td>14</td>
+<td>export→load round-trips, store↔policy, CLI dispatch</td>
+</tr>
+<tr>
+<td>(system / gate)</td>
+<td>small named set</td>
+<td><code>validate.py --lattice</code> gate, determinism re-run hash</td>
+</tr>
+</tbody></table>
+<p>Unit + property dominate (~153 of ~197 marked assertions). Integration is a <strong>deliberately thin band</strong>, and
+the system tier is a <strong>small named set</strong> of end-to-end gates. This is a <strong>classic pyramid</strong>, not an
+inverted trophy and not a honeycomb.</p>
+<h3>Justification (from project profile — NOT &quot;best practice&quot;)</h3>
+<ol>
+<li><strong>The value of this artifact is measurement correctness, and correctness lives in pure functions.</strong> The
+thesis (brownfield C1, design M6) is that a benchmark&#39;s credibility <em>is</em> the math: Clopper-Pearson vs.
+table, McNemar vs. binomial, ECE/Brier on fixed inputs, the crosswalk N-column invariant, integer-count
+guards. These are <strong>stdlib, deterministic, side-effect-free</strong> primitives — the ideal unit surface. A broad
+unit base is the correct shape because the risk is concentrated there.</li>
+<li><strong>The architecture is Hexagonal (scoring core) + Clean (<a class="trace-link" href="../../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a> stats).</strong> Ports &amp; adapters make the
+integration band <em>small by construction</em>: there are a bounded number of port boundaries
+(adapter inbound, adversary outbound, export/leaderboard outbound), each covered by a focused
+<strong>CONTRACT</strong> test rather than a wide integration web.</li>
+<li><strong>Determinism (AX-002) is a first-class axiom</strong>, so the natural test is a <strong>PROPERTY</strong> test (identical
+inputs → byte-equal output; shuffle inputs → identical result). The 45-strong property mantle is a
+direct consequence of the determinism mandate, not a stylistic choice.</li>
+<li><strong>There is no UI and no service runtime</strong> (CLI + library + files). There is nothing to drive an
+e2e/browser tier, so the system tier is correctly limited to <strong>two gates</strong>: the corpus-power gate
+(<code>validate.py --lattice</code>) and the determinism re-run hash. An e2e-heavy shape here would be an
+<strong>anti-pattern</strong> for a batch benchmark.</li>
+</ol>
+<h3>Anti-pattern check (part of the job)</h3>
+<ul>
+<li><strong>Ice-cream cone (e2e-heavy / unit-light): NOT PRESENT.</strong> Ratio is ~7.7:1 unit+property : integration.
+No finding.</li>
+<li><strong>Hidden integration weight in &quot;unit&quot; files: checked.</strong> Heavy deps (pyarrow / datasets / mlcroissant /
+spacy / matplotlib / anthropic) are gated behind <code>pytest.importorskip</code> — they do <strong>not</strong> silently
+inflate the base. The one structural risk is that <strong>integration round-trips skip when optional deps are
+absent</strong> (see §3 CI-isolation and §7) — this is the load-bearing Pass-2 item, not a shape defect.</li>
+<li><strong>Flag (MINOR, carried to Pass-2):</strong> the system-tier &quot;real round-trip&quot; guarantees (Parquet→<code>datasets</code>
+load, Croissant spec-conformance) are <strong>environment-conditional</strong>. In a dep-bare runner they degrade to
+skips. The architecture is sound; the <strong>proof is owed in a provisioned CI image</strong> (<a class="trace-link" href="../../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a>).</li>
+</ul>
+<hr>
+<h2>2. Per-test-type strategy (the 5 realized tags)</h2>
+<p>The canonical 9-tag set collapses to the <strong>5 tags this suite actually uses</strong>; the unused four
+(E2E, SNAPSHOT, SMOKE, PERFORMANCE) are addressed honestly below rather than silently filled.</p>
+<h3>2.1 UNIT-TEST (108) — the base</h3>
+<ul>
+<li><strong>When it applies:</strong> any pure function in <code>scoring/</code>, <code>stats/</code>, <code>compliance/</code>, <code>subsets/</code> whose output is a
+function of its arguments. The statistical &amp; scoring primitives.</li>
+<li><strong>Canonical members:</strong> Clopper-Pearson vs. a hand-checked table (<code>test_intervals</code> / <code>test_clopper_pearson</code>);
+Wilson integer-count guard (rejects fractional k/n — reidx-02); McNemar exact/χ² vs. binomial
+(<code>test_paired</code>); ECE/Brier on fixed inputs (<code>test_calibration</code>); NIST <code>required_n</code> derivation
+(<code>test_power</code>); crosswalk → exactly-5-typed-columns (<code>test_crosswalk::test_fr_022_five_legally_distinct_columns</code>).</li>
+<li><strong>Fixture convention:</strong> <strong>inline literals only</strong> — tiny hand-constructed inputs whose expected output is
+computed independently (table, closed form, or by hand). <strong>Never the corpus.</strong></li>
+<li><strong>Lifecycle:</strong> stateless; no setup/teardown; no <code>tmp_path</code>.</li>
+<li><strong>Ownership:</strong> the module author (TDD RED→GREEN per Build Task). One test file mirrors one module.</li>
+</ul>
+<h3>2.2 PROPERTY-TEST (45) — the determinism/invariant mantle</h3>
+<ul>
+<li><strong>When it applies:</strong> AX-002 determinism, order-independence, and algebraic invariants that must hold across
+<em>all</em> inputs of a shape, not one example.</li>
+<li><strong>Canonical members:</strong> <code>test_offline_adversary::test_fr_007_attack_is_deterministic</code> (identical inputs →
+byte-equal <code>Guess</code> list via frozen-dataclass equality); <code>test_fr_007_ranking_is_order_independent</code> (shuffle
+→ identical); strict-match multiset order-independence (reidx-03); crosswalk N-column invariant under
+regime reordering; lattice spec round-trips against its deterministic generator (anti-drift).</li>
+<li><strong>Fixture convention:</strong> small generated families (shuffles, permutations, seeded <code>random.Random(seed)</code> —
+never global RNG). Determinism is asserted via <strong>frozen-dataclass <code>==</code></strong>, not a recomputed hash that a
+shared seed could fake.</li>
+<li><strong>Lifecycle:</strong> stateless; the seed is local and explicit.</li>
+<li><strong>Ownership:</strong> module author; these are the tests that encode AX-002 at the unit level.</li>
+</ul>
+<h3>2.3 CONTRACT-TEST (15) — the port boundaries (Hexagonal)</h3>
+<ul>
+<li><strong>When it applies:</strong> at every port in the ports-&amp;-adapters core — the inbound <code>SpanAdapter</code>, the outbound
+adversary port, and every <strong>serializer</strong> that must carry a value object&#39;s mandatory fields.</li>
+<li><strong>Canonical members:</strong> <code>test_adversary_port::*_satisfies_port</code> (offline + LLM adapters honor the
+<code>deterministic</code> + <code>adversary_id</code> contract); the <strong>non-strippable caveat</strong> contract
+(<code>test_rrs_caveat</code>: caveat is a mandatory non-defaulted field → omitting it is <code>TypeError</code>; empty →
+rejected; survives <code>as_dict()</code> — gov-01); the CoI <strong>non-strippable attestation</strong> contract
+(<code>test_coi::test_fr_026_attestation_is_non_strippable</code> — empty/whitespace → <code>ValueError</code>; gov-03).</li>
+<li><strong>Fixture convention:</strong> the minimal object that satisfies / violates the contract; assertions target the
+<em>boundary shape</em> (field presence, type, exception), not numeric values.</li>
+<li><strong>Lifecycle:</strong> stateless.</li>
+<li><strong>Ownership:</strong> the port owner + any adapter author (a new adapter must add a contract test before merge).</li>
+</ul>
+<h3>2.4 AUDIT (15) — cross-cutting structural guards</h3>
+<ul>
+<li><strong>When it applies:</strong> invariants that must hold <strong>across the source tree</strong>, enforced by reading the code
+itself (AST) or by source-grep — the guards that make a class of bug <em>structurally impossible</em>.</li>
+<li><strong>Canonical members:</strong><ul>
+<li><strong>AST import-purity guards</strong> — pure-stdlib core / lazy heavy deps. <code>test_nfr005_separation</code> parses module
+source with <code>ast.walk</code>; <code>test_offline_adversary::test_fr_007_nfr004_offline_adversary_imports_no_nondeterminism</code>
+asserts the offline adversary imports <strong>no</strong> nondeterministic modules (no <code>random</code>/<code>time</code>/<code>datetime</code>) —
+&quot;offline deterministic&quot; proven by <em>absence of capability</em>, not by idempotence a seed could fake.</li>
+<li><strong><a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> separation (AX-004)</strong> — no module merges anon + pseudo into one headline; no combined <code>de-id</code>
+callable in the scoring public API; mutation-tested against 4 fusion vectors.</li>
+<li><strong>gov-02 no-merged-verdict</strong> — <code>test_crosswalk::test_fr_022_no_merged_or_equivalence_column</code> greps the
+module source: no merged/equivalence/flattened regime field anywhere.</li>
+<li><strong>Heavy-dep laziness</strong> — force-block <code>pyarrow</code>/<code>mlcroissant</code>/<code>spacy</code>/<code>datasets</code> at import and assert
+<code>distribution</code>/<code>cli</code>/<code>compliance</code> still import (<a class="trace-link" href="../../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a> purity), each lazy guard raising its
+correctly-named extra <code>RuntimeError</code>.</li>
+</ul>
+</li>
+<li><strong>Fixture convention:</strong> the <strong>module source</strong> (<code>inspect.getsource</code> / <code>ast.parse</code>) or an import-blocking
+shim. These are the most valuable tests in the suite per unit of code.</li>
+<li><strong>Lifecycle:</strong> stateless; operate on source/import, not runtime data.</li>
+<li><strong>Ownership:</strong> the architecture owner (this discipline is cross-module; an audit failing is an
+architecture regression, not a local bug).</li>
+</ul>
+<h3>2.5 INTEGRATION-TEST (14) — the thin band</h3>
+<ul>
+<li><strong>When it applies:</strong> when two real subsystems must agree across a serialized boundary.</li>
+<li><strong>Canonical members:</strong> export→Croissant→<code>datasets</code> load round-trip (<code>test_croissant</code>, <code>test_parquet_export</code>
+— the 5 <code>reg_*</code> columns survive HF <code>datasets</code> load); Parquet / spaCy DocBin / CoNLL BIO-BILOU round-trips;
+leaderboard <strong>store ↔ policy</strong> (append-only hash-chain feeds the anti-gaming policy); <code>validate.py --lattice</code>
+wiring; <strong>CLI dispatch</strong> (<code>test_cli</code>: 5 thin verbs route to the owning subsystem;
+<code>export --format parquet</code> → <code>distribution</code>; <code>validate</code> <strong>never</strong> injects <code>--no-power-gate</code>).</li>
+<li><strong>Fixture convention:</strong> <code>tmp_path</code> for any filesystem artifact; <code>monkeypatch</code>/<code>subprocess.run</code> patched to
+assert <strong>dispatch</strong>, not to re-run heavy logic; optional deps via <code>pytest.importorskip</code> (skip-clean when
+absent).</li>
+<li><strong>Lifecycle:</strong> <code>tmp_path</code>-scoped; no shared mutable state between tests; no network.</li>
+<li><strong>Ownership:</strong> the two subsystem owners jointly; the boundary is the contract.</li>
+</ul>
+<h3>2.6 Tags NOT used (honest non-fill)</h3>
+<ul>
+<li><strong>E2E / browser:</strong> N/A by design — no UI, no service (brownfield: accessibility N/A).</li>
+<li><strong>SMOKE:</strong> subsumed by the CLI dispatch integration tests + the <code>import pii_anon_datasets</code> purity audits.</li>
+<li><strong>SNAPSHOT:</strong> deliberately avoided — determinism is asserted via frozen-dataclass equality and explicit
+expected values, which are more legible than golden-file snapshots for math.</li>
+<li><strong>PERFORMANCE:</strong> <strong>no perf gate</strong> (consistent with NFR-010a&#39;s &quot;no throughput floor&quot; and the advisory-only
+perf findings in S3/S6). Two O(n²) seams (pseudonymization referential-integrity — already lifted to O(n);
+leaderboard store re-read) are documented as v1.x hardening, <strong>not</strong> gated. NFR-010b&#39;s 5,000 rec/sec floor
+is explicitly <code>real_user_needed: true</code> → Pass-2.</li>
+</ul>
+<hr>
+<h2>3. Cross-cutting discipline</h2>
+<h3>3.1 The <code>fr_NNN</code> / <code>nfr_NNN</code> token convention (every capability → ≥1 named test)</h3>
+<ul>
+<li><strong>Mechanism:</strong> every test function name carries a requirement token, e.g. <code>test_fr_024_*</code>, <code>test_nfr004_*</code>,
+<code>test_fr_022_five_legally_distinct_columns</code>. The token is the traceability join key (closes brownfield M3).</li>
+<li><strong>Realized census (2026-05-31):</strong> <strong>221</strong> test functions carry an <code>fr_/nfr_</code> token (of <strong>335</strong> total test
+functions); <strong>34 distinct FR/NFR tokens</strong> are exercised by name (<a class="trace-link" href="../../04-development/02-stories/sprint-4/S4-02.html#fr-002" data-trace-id="FR-002" aria-label="Trace FR-002 — / NFR-002)">FR-002</a>/004/005/006/007/008/009/010/
+011/012/013/015/016/017/018/019/020/021/022/023/024/025/026/027/029 + <a class="trace-link" href="../../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a>/003/004/005/008/012/013/014/018).</li>
+<li><strong>Discipline:</strong> a Build Task is not GREEN until its FR/NFR has ≥1 named test. Non-tokened tests are allowed
+for internal helpers, but every shipped capability and every quantified NFR has a named guardian.</li>
+</ul>
+<h3>3.2 AST import-purity guards (pure-stdlib core, lazy heavy deps)</h3>
+<ul>
+<li><strong>Invariant:</strong> the scoring/stats <strong>core is pure stdlib</strong> (<a class="trace-link" href="../../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>) so <code>import pii_anon_datasets</code> never pulls
+a runtime dep; all heavy deps (pyarrow / datasets / mlcroissant / spacy / matplotlib / anthropic) are
+<strong>lazy</strong> behind their optional-extra and a named <code>RuntimeError</code>.</li>
+<li><strong>Enforcement:</strong> per-module AST/import-block audits (§2.4). This is what lets the published wheel stay
+dependency-free while the exporters remain optional.</li>
+</ul>
+<h3>3.3 Non-strippable-caveat tests (<a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> / gov-01 / gov-03 / EDPB Art 4(5))</h3>
+<ul>
+<li><strong>Invariant:</strong> a privacy figure can never be emitted without its caveat. The caveat is a <strong>mandatory
+non-defaulted field on the value object</strong>, not renderer state — so it travels with the number through any
+serializer.</li>
+<li><strong>Enforcement:</strong> construct-without-caveat → <code>TypeError</code>; empty caveat → rejected; <code>as_dict()</code> still
+contains it. Replicated for the RRS anti-anonymity caveat, the exposure-&quot;NOT RRS&quot; disclaimer, the EDPB
+Art 4(5) key/state-separation caveat, the Pareto separation, the DPIA disclaimer, and the CoI
+no-pre-publication attestation.</li>
+</ul>
+<h3>3.4 Determinism (AX-002) tests</h3>
+<ul>
+<li><strong>Invariant:</strong> seeded/offline paths are <strong>byte-reproducible</strong>; LLM paths are explicitly flagged
+<code>deterministic=False</code> and version-stamped (<a class="trace-link" href="../examples-and-tests-catalog.html#nfr-007" data-trace-id="NFR-007" aria-label="Trace NFR-007 — — Adversary version-pinning (MUST)">NFR-007</a>).</li>
+<li><strong>Enforcement:</strong> PROPERTY tests assert identical-input → byte-equal output and shuffle-invariance;
+a <strong>system-tier re-run hash</strong> check (the migration + enrichment proved byte-identical across two full runs;
+<code>data/MANIFEST.sha256</code> over the 28 data files is <code>--check</code>-verified). Determinism is proven structurally,
+too, via the no-RNG/no-clock import audit on the offline adversary.</li>
+</ul>
+<h3>3.5 De-circularization (reidx-01) test</h3>
+<ul>
+<li><strong>Invariant:</strong> the <strong>RRS headline is the DETERMINISTIC offline adversary + exposure index</strong>; the LLM
+adversary is a <em>version-stamped secondary</em> figure (design revision #1). This breaks the circularity of
+&quot;score the benchmark with the same stochastic model the benchmark is meant to grade.&quot;</li>
+<li><strong>Enforcement:</strong> <code>test_offline_adversary</code> pins the offline attacker as deterministic
+(<code>OFFLINE_ADVERSARY_VERSION == &quot;offline-deterministic-v1&quot;</code>, <code>deterministic is True</code>), order-independent,
+and import-pure (no nondeterminism). <code>test_adversary_port</code> confirms the LLM adapter is the secondary,
+<code>deterministic=False</code>, lazy behind <code>[llm]</code>. The exposure index is tested as an explicit <strong>prior, NOT RRS</strong>.</li>
+</ul>
+<h3>3.6 Hermeticity / CI-isolation / fixture-management / flakiness budget</h3>
+<ul>
+<li><strong>Hermeticity:</strong> the core is network-free and clock-free; no test reaches the network. Filesystem writes
+are <code>tmp_path</code>-scoped. The <strong>frozen corpus and <code>eval_lattice.json</code> (730 cells @ <code>47c3a8f</code>) are never
+mutated by tests</strong> — reporters/gates take <code>(lattice, observed_counts)</code> as arguments.</li>
+<li><strong>CI-isolation:</strong> optional deps are <code>pytest.importorskip</code>-gated; a dep-bare runner yields <strong>clean skips</strong>,
+not errors. The single standing skip is <strong><code>anthropic</code>-absent</strong> (the live-LLM-attack contract test) — by
+design, the offline adversary is the headline.</li>
+<li><strong>Fixture-management:</strong> fixtures are tiny inline literals or <code>tmp_path</code>; there is <strong>no <code>conftest.py</code>
+fixture web and no shared mutable state</strong> — each test reconstructs its inputs. This is what keeps the
+property/determinism guarantees honest.</li>
+<li><strong>Flakiness budget: ZERO.</strong> The corpus-power gate is <strong>count-based (non-flaky) by deliberate design</strong>,
+held distinct from the <a class="trace-link" href="../../04-development/02-stories/sprint-4/S4-02.html#fr-002" data-trace-id="FR-002" aria-label="Trace FR-002 — / NFR-002)">FR-002</a> paired-McNemar detector-regression gate. Seeds are local and explicit.
+Determinism is asserted by equality, not tolerance (except the <em>stated epsilon</em> on the stochastic LLM
+re-run, <a class="trace-link" href="../examples-and-tests-catalog.html#nfr-007" data-trace-id="NFR-007" aria-label="Trace NFR-007 — — Adversary version-pinning (MUST)">NFR-007</a>). Any nonzero flake is a release blocker, not a budget line.</li>
+</ul>
+<hr>
+<h2>4. Per-language commands (python profile)</h2>
+<p>Honoring <code>language_profile: python</code> and the tooling actually used in Stage 4 (per commit history +
+<code>pyproject.toml</code>). <strong>No new framework is prescribed</strong> — pytest / ruff / mypy / pytest-cov are the realized
+toolchain.</p>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Command</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Build / install (editable + dev)</td>
+<td><code>python3 -m pip install -e &quot;.[dev]&quot;</code></td>
+<td><code>pyproject.toml [project.optional-dependencies] dev = pytest&gt;=8, pytest-cov&gt;=5</code></td>
+</tr>
+<tr>
+<td>Build (full optional surface)</td>
+<td><code>python3 -m pip install -e &quot;.[dev,baselines,llm,distribution,croissant,viz]&quot;</code></td>
+<td>optional-extras</td>
+</tr>
+<tr>
+<td>Test (fast)</td>
+<td><code>python3 -m pytest -q</code></td>
+<td><code>[tool.pytest.ini_options] addopts=&quot;-q&quot;</code>, <code>pythonpath=[&quot;src&quot;]</code>, <code>testpaths=[&quot;tests&quot;]</code></td>
+</tr>
+<tr>
+<td>Test + coverage (line+branch)</td>
+<td><code>python3 -m pytest -q --cov</code></td>
+<td><code>[tool.coverage.run] branch=true</code> over the 11 source packages</td>
+</tr>
+<tr>
+<td>Lint</td>
+<td><code>ruff check src tests</code></td>
+<td>S3–S7 <code>[REFACTOR]</code> commits (ruff)</td>
+</tr>
+<tr>
+<td>Format</td>
+<td><code>ruff format src tests</code></td>
+<td>S7 <code>[REFACTOR]</code> commits (ruff-format)</td>
+</tr>
+<tr>
+<td>Type-check</td>
+<td><code>mypy --strict src</code></td>
+<td>S2–S7 <code>[REFACTOR]</code> commits (mypy --strict)</td>
+</tr>
+<tr>
+<td>Coverage gate (per-module)</td>
+<td><code>python3 -m pytest -q --cov</code> → assert ≥85% line on changed scorer modules</td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a></td>
+</tr>
+<tr>
+<td>Power gate (corpus)</td>
+<td><code>python3 scripts/validate.py --lattice</code> (default-on; exits non-zero on any under-powered committed cell)</td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+</tr>
+<tr>
+<td>Manifest integrity</td>
+<td><code>python3 scripts/write_manifest.py --check</code> (sha256 over 28 data files; asserts v1.3.0 tag intact)</td>
+<td><a class="trace-link" href="../../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+</tr>
+<tr>
+<td>Lattice anti-drift</td>
+<td><code>python3 scripts/generate_lattice_fill.py --check</code> (frozen <code>eval_lattice.json</code> round-trips its deterministic generator)</td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+</tr>
+<tr>
+<td>CLI smoke</td>
+<td><code>pii-anon --help</code> (5 verbs) / <code>pii-anon validate</code> (power gate ON)</td>
+<td><a class="trace-link" href="../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> / DX-03</td>
+</tr>
+<tr>
+<td>Bench</td>
+<td><strong>none</strong> — no perf gate (NFR-010a no-floor; perf findings advisory)</td>
+<td>§2.6</td>
+</tr>
+</tbody></table>
+<p><strong>One copy-paste CI invocation (DX-03):</strong> <code>python3 -m pip install -e &quot;.[dev]&quot; &amp;&amp; ruff check src tests &amp;&amp; mypy --strict src &amp;&amp; python3 -m pytest -q --cov &amp;&amp; python3 scripts/validate.py --lattice</code>.</p>
+<hr>
+<h2>5. Coverage targets &amp; posture</h2>
+<h3>Target (<a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a>, R10 ACCEPTED-WITH-CAVEATS)</h3>
+<ul>
+<li><strong>≥85% line</strong> on new/changed scorer modules.</li>
+<li><strong>≥70% branch</strong> on scorer / statistical-computation modules (where reproducibility bugs hide).</li>
+<li>CI green (lint + type + test) and coverage recorded in a versioned, auditable artifact (<a class="trace-link" href="../examples-and-tests-catalog.html#nfr-017" data-trace-id="NFR-017" aria-label="Trace NFR-017 — — Threshold-validation transparency (MUST)">NFR-017</a>).</li>
+</ul>
+<h3>Measured (this run: <code>python3 -m pytest -q --cov</code>, 2026-05-31 — <strong>346 passed / 1 skipped</strong>)</h3>
+<ul>
+<li><strong>Aggregate: 96.4% line (2364/2452), 88.7% branch (605/682)</strong> over the 11 covered packages
+(scoring, stats, compliance, distribution, reporting, integrations, cli, leaderboard, validation, subsets).
+Report headline reads &quot;94%&quot; (the rounded combined line figure).</li>
+<li><strong>Posture vs. <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a>: CLEARED, with margin, on both axes.</strong> Every scoring/stats module is <strong>≥85% line and
+well over ≥70% branch.</strong> Representative per-module floor check:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Line</th>
+<th>Module</th>
+<th>Line</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>scoring/core.py</code></td>
+<td>100%</td>
+<td><code>stats/intervals.py</code></td>
+<td>87%</td>
+</tr>
+<tr>
+<td><code>scoring/detection.py</code></td>
+<td>100%</td>
+<td><code>stats/calibration.py</code></td>
+<td>96%</td>
+</tr>
+<tr>
+<td><code>scoring/anonymization.py</code></td>
+<td>97%</td>
+<td><code>stats/paired.py</code></td>
+<td>92%</td>
+</tr>
+<tr>
+<td><code>scoring/pseudonymization.py</code></td>
+<td>93%</td>
+<td><code>stats/power.py</code></td>
+<td>91%</td>
+</tr>
+<tr>
+<td><code>scoring/reidentification.py</code></td>
+<td>92%</td>
+<td><code>stats/lattice.py</code></td>
+<td>97%</td>
+</tr>
+<tr>
+<td><code>scoring/signals.py</code></td>
+<td>86%</td>
+<td><code>compliance/crosswalk.py</code></td>
+<td>95%</td>
+</tr>
+<tr>
+<td><code>scoring/adversary/offline_adversary.py</code></td>
+<td>94%</td>
+<td><code>distribution/parquet_export.py</code></td>
+<td>99%</td>
+</tr>
+<tr>
+<td><code>scoring/adversary/llm_adversary.py</code></td>
+<td>94%</td>
+<td><code>reporting/power_table.py</code></td>
+<td>100%</td>
+</tr>
+<tr>
+<td><code>cli.py</code></td>
+<td>91%</td>
+<td><code>validation/correlation.py</code></td>
+<td>94%</td>
+</tr>
+</tbody></table>
+<p><strong>Lowest scorer/stats module is <code>signals.py</code> at 86% line</strong> — still above the 85% bar; it is the largest
+single module (160 stmts) and the only one near the floor. No scorer/stats module is below either threshold.</p>
+<h3>Mutation testing</h3>
+<ul>
+<li><strong>Not run as a gate.</strong> Two targeted &quot;mutation-style&quot; audits exist where they matter most (the <a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>
+no-merge audit rejects 4 fusion vectors; the gov-02 audit rejects a merged-verdict column), but a full
+<code>mutmut</code>/<code>cosmic-ray</code> mutation score is <strong>not part of v1</strong>. Recommended as a Pass-2 enhancement on the
+<code>stats/</code> + <code>scoring/core</code> hot-spots, where a high mutation score would most strengthen the credibility
+claim. <strong>Flagged, not silently omitted.</strong></li>
+</ul>
+<hr>
+<h2>6. What Stage 5 adds vs. Stage 4</h2>
+<p>Stage 4 produced the <strong>suite</strong> (346 green) under strict TDD with self-assessed reviewer gates. Stage 5&#39;s
+distinct contributions:</p>
+<table>
+<thead>
+<tr>
+<th>Stage 5 wave</th>
+<th>Adds over Stage 4</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>T2 — this doc</strong></td>
+<td>The <strong>holistic architecture view</strong>: pyramid-shape <em>measurement</em> (not per-story green), cross-cutting discipline as one document, coverage posture confirmed against live <code>--cov</code>, the anti-pattern check, mutation-testing gap call.</td>
+<td>test-architecture (this agent)</td>
+</tr>
+<tr>
+<td><strong>NFR-verification execution</strong> (<code>05-testing/03-nfr-verification/</code>)</td>
+<td><strong>Execution</strong> of the quantified NFRs as a matrix — <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a>/018 power gate run to completion on the frozen lattice, <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-008" data-trace-id="NFR-008" aria-label="Trace NFR-008 — ECE ≤0">NFR-008</a> ECE on the dev split, <a class="trace-link" href="../../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a> Croissant validate-AND-load in a <strong>provisioned</strong> image, <a class="trace-link" href="../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> doc-drift = 0, <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a> the numbers above. Stage 4 asserted these per-module; Stage 5 runs them as a labelled NFR ledger.</td>
+<td>nfr-verification</td>
+</tr>
+<tr>
+<td><strong>WCAG / accessibility audit</strong> (<code>05-testing/04-accessibility/</code>)</td>
+<td><strong>N/A by design</strong> (no UI; brownfield Testing→accessibility N/A). Stage 5 records the explicit N/A determination + the doc-clarity-only posture (markdown/static reports) rather than leaving the section blank.</td>
+<td>accessibility</td>
+</tr>
+<tr>
+<td><strong>Examples-catalog roll-up</strong></td>
+<td>1:1 <strong>example↔test</strong> pairing (closes brownfield &quot;examples+tests WEAK&quot;): every README/Quick-Start example mapped to its guarding test via the <code>fr_/nfr_</code> token. The token convention (§3.1) is the join.</td>
+<td>examples-catalog</td>
+</tr>
+<tr>
+<td><strong>Pass-2 protocol hand-off</strong> (<code>05-testing/05-pass2/</code>)</td>
+<td><strong>Not authored here</strong> (out of this agent&#39;s bounded context). The honest-limitations ledger in §7 is the <em>input</em> the Pass-2 coordinator consumes.</td>
+<td>pass2-coordinator</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>7. Honest limitations (non-strippable)</h2>
+<p>Carried forward from the Stage-4 handoff and confirmed against the live suite — these are <strong>release caveats,
+not defects to hide</strong>, and are the binding Pass-2 agenda:</p>
+<ol>
+<li><strong>All <code>AGENT_SIMULATED</code>; real-CI Pass-2 is owed.</strong> Every story + sprint gate is an agent self-assessment.
+The suite has <strong>not been run in a clean, provisioned external CI image</strong>. The two
+environment-conditional guarantees — Parquet→HF-<code>datasets</code> load and full <code>mlcroissant</code> spec-conformance
+(<a class="trace-link" href="../../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a>) — currently <strong>degrade to <code>importorskip</code> skips</strong> when the <code>distribution</code>/<code>croissant</code> extras are
+absent. The numbers in §5 are from the local environment. <strong>A real CI run is the load-bearing Pass-2
+item.</strong></li>
+<li><strong>~72% formulaic synthetic corpus.</strong> The S-PWR enrichment that powered all 710 committed cells used a
+single carrier template (<code>provenance.source_type=&quot;synthetic_lattice_enrichment&quot;</code>, filterable). Power is
+<strong>precision on the synthetic distribution, not external validity.</strong> Every published per-cell metric carries
+the non-strippable synthetic-provenance / external-validity caveat (<a class="trace-link" href="../../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a>/<a class="trace-link" href="../../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a>). Template-diversity is
+a follow-on; the <strong>synthetic→real transfer delta (<a class="trace-link" href="../../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a>)</strong> is the binding Pass-2 study — <code>correlate()</code>
+returns a <code>RealDataAbsent</code> sentinel rather than fabricate it.</li>
+<li><strong>The <code>anthropic</code>-absent skip (the 1 skipped).</strong> The live-LLM-attack contract test
+(<code>test_llm_adversary</code>) skips cleanly via <code>pytest.importorskip(&quot;anthropic&quot;)</code>. This is <strong>by design</strong> — the
+deterministic offline adversary is the RRS headline (reidx-01) and the LLM path is a version-stamped
+secondary — but it means the LLM adversary&#39;s <em>live</em> behavior is unexercised in the default run. Likewise,
+<code>pyarrow</code>/<code>datasets</code>/<code>mlcroissant</code>/<code>spacy</code>/<code>matplotlib</code> skips reduce realized integration coverage in a
+dep-bare runner.</li>
+<li><strong>Design was never real-user/real-SME trialed.</strong> D6 was critiqued by a representative SME <em>heuristic</em>
+panel; R10 threshold validation was a <em>simulated</em> 10-persona panel. Real benchmark-consumer interviews,
+real external leaderboard submissions, and a real privacy-eval SME review of the anon/pseudo scoring
+semantics are Pass-2 (cannot be agent-simulated).</li>
+<li><strong>No mutation gate; no perf gate.</strong> (§5, §2.6.) Targeted no-merge/no-fusion audits exist; a full mutation
+score and the NFR-010b 5,000 rec/sec throughput number are Pass-2.</li>
+<li><strong>Reserved seams (intentionally v1-deferred):</strong> effective near-duplicate-collapsed positive counts
+(reidx-04 — v1 uses raw counts); <a class="trace-link" href="../../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016 full coreference/quasi-id <em>scoring</em> (loaders ship; scoring is
+v1.1); <a class="trace-link" href="../../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020 agentic facets (ROADMAP, not shipped). Each ships behind a non-strippable
+scope-honesty caveat.</li>
+</ol>
+<p><strong>Expected Stage-5 release verdict on this evidence: SHIP-WITH-CAVEATS.</strong></p>
+<hr>
+<p><em>Conforms to the developer-assistant <code>templates/testing/test-architecture.md.tmpl</code> section contract
+(pyramid · per-type strategy · cross-cutting discipline · per-language commands · coverage targets ·
+Stage-5-vs-Stage-4). Brownfield &quot;Source Signal vs Gaps&quot; header carried. No test framework prescribed beyond
+the python profile&#39;s realized pytest/ruff/mypy toolchain.</em></p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>05-testing/02-architecture/test-architecture.md</code> ·
+  content-hash <code>8edeb2b46c5a</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

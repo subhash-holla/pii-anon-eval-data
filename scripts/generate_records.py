@@ -20,6 +20,7 @@ Usage:
 
 import argparse
 import gzip
+import importlib.util as _il
 import json
 import random
 import string
@@ -35,6 +36,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon_generated.jsonl"
 
 SEED = 42
+
+# Derive SCRIPT_MAP from validate_contribution.LANG_SCRIPT (single source of truth, ISO 15924).
+# Languages absent from LANG_SCRIPT (e.g. Latin-script languages) fall back to "Latn" at call sites.
+_vcspec = _il.spec_from_file_location("_vc_scriptmap", Path(__file__).resolve().parent / "validate_contribution.py")
+_vc_sm = _il.module_from_spec(_vcspec)
+_vcspec.loader.exec_module(_vc_sm)
+SCRIPT_MAP: dict[str, str] = dict(_vc_sm.LANG_SCRIPT)  # language-complete ISO 15924
 
 # ─── PII Value Factories ────────────────────────────────────────────────────
 
@@ -137,6 +145,13 @@ FIRST_NAMES_TH = ["Somchai", "Suda", "Prasit", "Wanida", "Prayut", "Nattaya", "T
 LAST_NAMES_TH = ["Srisai", "Wongsawat", "Channarong", "Thongdee", "Kaewkla", "Panyarachun",
     "Shinawatra", "Bunnak", "Charoenpol", "Siripong", "Rattanakorn", "Jirayu"]
 
+# 2.2.0 SP-I: native Thai-script spellings, INDEX-PARALLEL to FIRST_NAMES_TH / LAST_NAMES_TH above
+# (standard transliterations of common Thai names — VERIFY spellings with a Thai speaker before freeze).
+FIRST_NAMES_TH_NATIVE = ["สมชาย", "สุดา", "ประสิทธิ์", "วนิดา", "ประยุทธ์", "ณัฐยา", "ทักษิณ", "ขวัญชัย",
+    "อานนท์", "สุพัตรา", "วิโรจน์", "กัญญา", "พิชิต", "รัตนา", "สมศักดิ์", "มาลัย"]
+LAST_NAMES_TH_NATIVE = ["ศรีสาย", "วงศ์สวัสดิ์", "ชาญณรงค์", "ทองดี", "แก้วกล้า", "ปัญญารชุน",
+    "ชินวัตร", "บุนนาค", "เจริญผล", "ศิริพงศ์", "รัตนกร", "จิรายุ"]
+
 FIRST_NAMES_VI = ["Minh", "Linh", "Hùng", "Hạnh", "Tuấn", "Lan", "Đức", "Mai",
     "Quang", "Ngọc", "Thành", "Hoa", "Phong", "Thảo", "Bình", "Yến"]
 LAST_NAMES_VI = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ",
@@ -188,6 +203,20 @@ FIRST_NAMES_LV = ["Jānis", "Anna", "Andris", "Ieva", "Mārtiņš", "Kristīne",
 LAST_NAMES_LV = ["Bērziņš", "Kalniņš", "Ozoliņš", "Jansons", "Liepiņš", "Ozols", "Krūmiņš",
     "Balodis", "Eglītis", "Zariņš", "Vītols", "Celmiņš", "Grants"]
 
+# 2C: native-script name pools (public common-name lists; generic/high-frequency only — no real individuals).
+FIRST_NAMES_EL = ["Γεώργιος", "Μαρία", "Δημήτριος", "Ελένη", "Κωνσταντίνος", "Αικατερίνη", "Ιωάννης",
+    "Σοφία", "Νικόλαος", "Βασιλική", "Παναγιώτης", "Αναστασία", "Χρήστος", "Δήμητρα", "Αθανάσιος", "Παρασκευή"]
+LAST_NAMES_EL = ["Παπαδόπουλος", "Βασιλείου", "Γεωργίου", "Νικολάου", "Δημητρίου", "Κωνσταντίνου",
+    "Παππάς", "Οικονόμου", "Αντωνίου", "Μακρής", "Αθανασίου", "Ιωάννου"]
+FIRST_NAMES_BN = ["আরিফ", "ফাতেমা", "রহিম", "আয়েশা", "করিম", "নাসরিন", "জাহিদ", "সুমাইয়া",
+    "তানভীর", "রুমা", "সাকিব", "নুসরাত", "ইমরান", "মিতু", "রাকিব", "শিরিন"]
+LAST_NAMES_BN = ["ইসলাম", "আহমেদ", "হোসেন", "রহমান", "খান", "চৌধুরী", "সরকার", "মণ্ডল",
+    "দাস", "রায়", "বিশ্বাস", "আক্তার"]
+FIRST_NAMES_HE = ["דוד", "שרה", "משה", "רבקה", "יוסף", "מרים", "אברהם", "רחל",
+    "יעקב", "לאה", "דניאל", "תמר", "איתן", "נועה", "יונתן", "מיכל"]
+LAST_NAMES_HE = ["כהן", "לוי", "מזרחי", "פרץ", "ביטון", "דהן", "אברהם", "פרידמן",
+    "כץ", "אזולאי", "גבאי", "שפירא"]
+
 # Consolidated name database lookup
 NAME_DB = {
     "en": (FIRST_NAMES_EN, LAST_NAMES_EN),
@@ -206,7 +235,7 @@ NAME_DB = {
     "pl": (FIRST_NAMES_PL, LAST_NAMES_PL),
     "nl": (FIRST_NAMES_NL, LAST_NAMES_NL),
     "sv": (FIRST_NAMES_SV, LAST_NAMES_SV),
-    "th": (FIRST_NAMES_TH, LAST_NAMES_TH),
+    "th": (FIRST_NAMES_TH_NATIVE, LAST_NAMES_TH_NATIVE),
     "vi": (FIRST_NAMES_VI, LAST_NAMES_VI),
     "id": (FIRST_NAMES_ID, LAST_NAMES_ID),
     "si": (FIRST_NAMES_SI, LAST_NAMES_SI),
@@ -217,6 +246,9 @@ NAME_DB = {
     "zu": (FIRST_NAMES_ZU, LAST_NAMES_ZU),
     "cy": (FIRST_NAMES_CY, LAST_NAMES_CY),
     "lv": (FIRST_NAMES_LV, LAST_NAMES_LV),
+    "el": (FIRST_NAMES_EL, LAST_NAMES_EL),
+    "bn": (FIRST_NAMES_BN, LAST_NAMES_BN),
+    "he": (FIRST_NAMES_HE, LAST_NAMES_HE),
 }
 
 ORGS = ["Acme Corp", "Globex Industries", "Initech Solutions", "Umbrella Corp",

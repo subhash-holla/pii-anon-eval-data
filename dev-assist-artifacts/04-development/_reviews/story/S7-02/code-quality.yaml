@@ -1,0 +1,80 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S7-02
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S7-02-01
+    severity: MINOR
+    location: src/pii_anon_datasets/scoring/adversary/payloads.py:90
+    description: |
+      `InjectionPayload.__post_init__` is a public-callable method (dunder methods are
+      part of the public protocol of a frozen dataclass) and carries no docstring. The
+      method performs non-trivial validation (3 ValueError guards) whose intent is not
+      self-evident from the name alone.
+    suggested_resolution: |
+      Add a one-line docstring, e.g.:
+        """Validate intent_tag, carrier_template placeholder, and non-empty disclaimer."""
+
+  - id: code-quality-S7-02-02
+    severity: MINOR
+    location: src/pii_anon_datasets/scoring/adversary/payloads.py:102
+    description: |
+      `InjectionPayload.as_dict` is a public method (no leading underscore) and has no
+      docstring. Missing docs on a public surface item in a frozen dataclass that is
+      part of the exported API.
+    suggested_resolution: |
+      Add a one-line docstring, e.g.:
+        """Return the FR-017 tuple fields as a plain dict (serialisation helper)."""
+
+notes: |
+  All SHOWSTOPPER / CATASTROPHIC / MAJOR checks passed cleanly:
+
+  Lint/type:
+  - `ruff check payloads.py tests/test_payloads.py` → "All checks passed!" (zero warnings).
+  - `mypy --strict --follow-imports=silent payloads.py` → "Success: no issues found in 1 source file".
+
+  Tests:
+  - `python3 -m pytest tests/test_payloads.py -v` → 6 passed in 0.13 s (6/6 expected).
+  - All 6 test names carry `fr_017` or `nfr004` tokens as required by §6.
+  - Tests are deterministic — pure-stdlib, no clock/RNG/network/real-FS (pathlib read of
+    own source is acceptable for the AST guard).
+
+  TDD RED→GREEN→REFACTOR confirmed:
+  - fe9630b [RED]     — test-only commit; `tests/test_payloads.py` added with no production code;
+                        fails at collection (ImportError: `INERT_DISCLAIMER` absent). Correct reason.
+  - fb83f6b [GREEN]   — `payloads.py` implemented; 6 passed.
+  - b8ad21f [REFACTOR] — lint/type/format-clean; behavioral invariants unchanged.
+  Ordering is strictly RED < GREEN < REFACTOR (timestamp and commit-graph both confirm).
+
+  Scope discipline:
+  - `git diff 2e459bb HEAD --name-only` produces exactly 4 paths:
+    `dev-assist-artifacts/04-development/02-stories/sprint-7/S7-02.md` (story doc — not production),
+    `src/pii_anon_datasets/scoring/adversary/__init__.py` (§8 MODIFIED — additive exports only),
+    `src/pii_anon_datasets/scoring/adversary/payloads.py` (§8 NEW),
+    `tests/test_payloads.py` (§8 NEW).
+    No out-of-scope production files touched. oracle.py / base.py / offline_adversary.py /
+    llm_adversary.py are all untouched.
+
+  §12 deviations (both REFACTOR-only, sound):
+  1. Removed unused `from collections.abc import Sequence` — `build_payloads` returns `list`;
+     no annotation references `Sequence`. Dead import per ruff F401; removal is correct.
+  2. Module docstring stdlib line changed from "base64 + unicodedata" to "base64 + dataclasses"
+     (the OCR map is a fixed dict literal; `unicodedata` is never imported). Accurate and
+     non-behavioral. Test #6's docstring retains the §6 wording but the assertion only checks
+     banned-module absence, so it is unaffected.
+
+  `_TRANSFORMS` dict has no explicit type annotation (`dict[str, Callable[[str], str]]`), but
+  mypy --strict inferred it correctly and emitted no error; not a blocking finding.
+
+  The `as_dict` and `__post_init__` missing-docstring findings (code-quality-S7-02-01/02) are
+  MINOR — neither blocks APPROVE. All other public items (`base64_transform`, `ocr_transform`,
+  `zero_width_transform`, `InjectionPayload`, `render`, `build_payloads`, module docstring,
+  `INERT_DISCLAIMER` inline comment, `INTENT_TAGS` inline comment) carry adequate documentation.
+
+review_time_seconds: 187
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

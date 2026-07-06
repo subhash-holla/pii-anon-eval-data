@@ -1,0 +1,115 @@
+# Axiom-compliance review — STORY gate S5-02 (Parquet export; gov-02 N regime columns + streaming)
+schema_version: 1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S5-02
+iteration: 1
+verdict: APPROVE
+mode: read-only
+context_bounds_respected: true
+
+scope_reviewed:
+  story: dev-assist-artifacts/04-development/02-stories/sprint-5/S5-02.md
+  axioms_registry: dev-assist-artifacts/00-axioms/project-axioms.yaml
+  owned_files:
+    - src/pii_anon_datasets/distribution/__init__.py
+    - src/pii_anon_datasets/distribution/parquet_export.py
+    - pyproject.toml
+    - tests/test_parquet_export.py
+  read_only_dependency:
+    - src/pii_anon_datasets/compliance/crosswalk.py   # S5-01 SSOT; imported, not modified
+  s5_02_commit_range: "91e2266^..4bf4ef8"             # RED -> GREEN -> REFACTOR
+
+axioms_triggered:
+  - id: gov-02
+    name: legally-distinct-regime-columns-no-merge
+    layer: architecture/system
+    upheld: true
+  - id: AX-pii-anon-002
+    alias: AX-002
+    name: deterministic-reproducible-generation
+    layer: system
+    upheld: true
+  - id: NFR-004
+    name: pure-stdlib-core-heavy-deps-behind-extras
+    layer: architecture
+    upheld: true
+  - id: AX-pii-anon-001
+    alias: AX-001
+    name: synthetic-only-no-real-pii
+    layer: data/ethics
+    upheld: true
+
+verification:
+
+  - axiom: gov-02
+    claim: "Parquet emits the 5 legally-distinct reg_* columns via crosswalk.as_columns; NO flattened regulatory_domains blob; no-merge discipline survives serialization."
+    result: PASS
+    evidence:
+      - "_row() adds `regulatory_domains` to _DROP_FIELDS (frozenset) and replaces it with `as_columns(record)` (parquet_export.py:35,83-84,90-92) — source blob never written back."
+      - "Dynamic: exported table schema = [...scalars..., reg_gdpr, reg_hipaa_safe_harbor, reg_hipaa_expert_determination, reg_ccpa_deidentified, reg_pci_dss]; `regulatory_domains` absent; reg_* appended last (independently addressable)."
+      - "hipaa tag fans out to BOTH HIPAA legal-standard columns (in_scope each); never collapsed. sox is surfaced via crosswalk other_regimes, NOT a named reg_ column — confirmed dynamically (`reg_sox` absent)."
+      - "SSOT crosswalk.py (read-only) still carries the structural assert (line 170) that the dataclass exposes exactly the 5 named regimes + other_regimes + disclaimer and no merged-verdict field; S5-02 imports it unmodified (git range shows zero crosswalk commits)."
+      - "Test #1 (test_fr_024_parquet_has_n_separate_regime_columns) asserts all 5 reg_* present AND `regulatory_domains` NOT in schema AND per-record in_scope values — load-bearing assertion present."
+
+  - axiom: AX-002 (determinism)
+    claim: "Table CONTENTS deterministic (fixed column order + json.dumps sort_keys for nested blocks; no clock/RNG); test asserts Table.equals not raw bytes (avoids pyarrow footer false-determinism trap)."
+    result: PASS
+    evidence:
+      - "Column order deterministic: record fields in record order, reg_* appended last via REGIMES tuple (ordered) — schema fixed from first batch (parquet_export.py:135-137)."
+      - "_json_or_none uses json.dumps(value, ensure_ascii=False, sort_keys=True) (line 66) — dict-key ordering cannot perturb encoded nested blocks; verified dynamically (shuffled-key record -> identical encoded string)."
+      - "No clock/RNG/uuid in module: top-level imports are json, collections.abc, typing, compliance.crosswalk only (grep confirmed); no time/random/uuid anywhere."
+      - "Test #5 (test_fr_024_deterministic_export) asserts `table_a.schema.equals(table_b.schema)` AND `table_a.equals(table_b)` — logical-table equality, NOT raw bytes. The false-determinism trap (pyarrow stamps lib-version/created_by into footer kv-metadata) is correctly avoided; documented in §test docstring + story Determinism note."
+      - "Dynamic re-run: schema.equals=True, table.equals=True (twice-exported same records identical)."
+
+  - axiom: NFR-004 (purity boundary)
+    claim: "pyarrow behind [distribution], lazy; `import pii_anon_datasets.distribution` succeeds without it; stats/scoring core stays pure-stdlib."
+    result: PASS
+    evidence:
+      - "pyarrow imported ONLY inside _require_pyarrow() (parquet_export.py:47-48); never at module top. __init__.py imports only the pure-stdlib parquet_export module + re-exports export_parquet."
+      - "pyproject.toml: distribution extra = [pyarrow, datasets, huggingface_hub] (line 36); core declares no runtime deps; coverage source scoped to scoring+stats (lines 60)."
+      - "Dynamic: with `__import__` blocking pyarrow, `import pii_anon_datasets.distribution` SUCCEEDS and exposes export_parquet; calling export_parquet then raises RuntimeError naming `pip install pii-anon-datasets[distribution]`; no partial file written on the guard path."
+      - "Test #6 (test_nfr004_distribution_imports_without_pyarrow) is a CONTRACT-TEST pinning exactly this — package imports under pyarrow-block + RuntimeError names install cmd."
+      - "Stats/scoring core untouched by S5-02 (commit range touches none of stats/ or scoring/)."
+
+  - axiom: AX-001 (synthetic-only / no egress)
+    claim: "Synthetic corpus only, no real PII; no network egress; frozen lattice/corpus/tags untouched."
+    result: PASS
+    evidence:
+      - "Test fixtures (_synthetic_records) are tiny hand-written in-memory dicts ('Synthetic alpha/beta/gamma/delta'); no real corpus read, no PII patterns, deterministic."
+      - "No egress: grep for requests|urllib|http|socket|upload|push_to_hub|HfApi|hf_hub|boto3|smtplib|.post(|.get( in the owned module -> matches are docstring lines ONLY ('no network egress, no HF upload'). export_parquet writes a LOCAL file via pq.ParquetWriter(out_path). HF upload/publish NOT wired into export."
+      - "datasets.load_dataset('parquet', data_files=local) in test #3 is a LOCAL file round-trip (loadability/NFR-012), not a hub fetch."
+      - "Frozen-asset integrity: S5-02 commit range (91e2266^..4bf4ef8) touches EXACTLY {distribution/__init__.py, distribution/parquet_export.py, tests/test_parquet_export.py, pyproject.toml, S5-02.md}. ZERO changes to data/ (eval_lattice.json, MANIFEST.sha256, *.jsonl.gz corpus, metadata), scoring/, stats/, or compliance/crosswalk.py. (Branch-cumulative main...HEAD diff includes prior S4/S5-01 work and is correctly excluded.)"
+
+findings: []   # zero MAJOR+ ; zero MINOR ; zero OBSERVATION
+
+findings_summary:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+  total: 0
+
+notes:
+  - "False-determinism trap (pyarrow footer kv-metadata stamping lib version + created_by) is correctly identified and avoided by asserting Table.equals over the logical table rather than raw bytes. In this reviewer's re-run the two files happened to be byte-identical too, but the test does not depend on that — the contract is logical-table equality, which is the correct (and stricter-than-necessary) choice."
+  - "gov-02 is enforced in DEPTH: the no-merge discipline is structurally guaranteed at the S5-01 crosswalk SSOT (frozen dataclass + module-level assert) and S5-02 merely projects those 5 ordered keys into Parquet columns + drops the source blob — there is no place in the exporter where regimes could be re-merged."
+  - "Empty-record path (_empty_schema) still emits a valid Parquet file advertising the 5 reg_* columns and no regulatory_domains blob — gov-02 holds even on the zero-record corpus."
+
+self_attestation:
+  independent: true
+  conflicts_of_interest: none
+  files_modified_by_reviewer: none   # read-only; only emitted this verdict YAML under _reviews/
+  dynamic_checks_run: true           # determinism, purity-boundary, gov-02 fan-out, no-egress, frozen-asset diff
+  trusted_story_self_report: false   # §12 claims independently re-verified
+  pack_extensions_applied: none      # no agentic-runtime / domain-pack axiom extensions active in this repo
+
+verdict_rationale: >
+  All four triggered axioms (gov-02, AX-002, NFR-004, AX-001) are upheld and independently
+  verified both statically and dynamically. gov-02's legally-distinct, no-merge regime
+  discipline survives serialization (5 typed reg_* columns, no flattened regulatory_domains
+  blob, HIPAA fans to two columns, non-FR-022 tags not folded). Determinism is over logical
+  table contents with the pyarrow-footer false-determinism trap correctly avoided. The purity
+  boundary holds (lazy pyarrow behind [distribution]; package imports pure-stdlib; clear
+  RuntimeError otherwise). Synthetic-only fixtures, no egress, and the frozen lattice / corpus
+  / tags / scoring / stats are untouched by this story's commit range. Zero MAJOR+ findings.

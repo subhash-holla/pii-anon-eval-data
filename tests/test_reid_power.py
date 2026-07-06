@@ -30,7 +30,7 @@ from pii_anon_datasets.stats.intervals import wilson_interval
 _EVAL_LATTICE = Path(__file__).resolve().parents[1] / (
     "src/pii_anon_datasets/data/eval_lattice.json"
 )
-_FROZEN_LATTICE_CELL_COUNT = 730
+_FROZEN_LATTICE_CELL_COUNT = 938  # 2C powered rectangle: 17 head langs × 41 frequent types + marginals/interactions
 
 
 # ── 1. the §5 operating-point numbers are pinned (idiom from test_power.py) ───────────────

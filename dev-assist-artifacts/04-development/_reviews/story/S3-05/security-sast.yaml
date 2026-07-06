@@ -1,0 +1,98 @@
+# Story-gate security-sast review — canonical YAML
+reviewer: security-sast
+gate: story
+story_id: S3-05
+iteration: 1
+audit_tagged: true
+reviewed_at: "2026-05-29"
+verdict: APPROVE
+context_bounds_respected: true
+independence_attested: true
+
+scope:
+  branch: feat/v2-scoring-harness
+  owned_paths:
+    - src/pii_anon_datasets/scoring/reidentification.py   # APPENDED exposure-index + correlation (FR-008)
+    - src/pii_anon_datasets/scoring/__init__.py           # export (additive)
+    - tests/test_exposure_index.py                        # NEW (6 fr_008-tokened tests)
+  primary_check: "Additive-only FR-008 prior; existing FR-009 caveat machinery (RRSResult/MeasuredRRS) NOT weakened; pure-stdlib + inert; AX-001 synthetic-only; AST import-purity guard present."
+  evidence_shas:
+    red: 2fda0ef
+    green: 88bc2c4
+    refactor: 650df0e
+  domain_packs: []          # developer-assistant.yaml.domain_packs == [] — no pack extensions to merge
+  pack_extensions_loaded: none
+
+# ── PRIMARY CHECK: appended code is purely additive; FR-009 caveat machinery byte-preserved ──
+audit_findings:
+  fr009_caveat_machinery_not_weakened:
+    status: PASS
+    claim: "The appended FR-008 exposure-index code does not alter, bypass, or weaken the existing FR-009 non-strippable anti-anonymity caveat on the RRS value objects."
+    evidence:
+      - "AST-equivalence proof (stronger than byte-equality): ANTI_ANONYMITY_CAVEAT, RRSResult, MeasuredRRS, and score_reidentification are ast.dump()-IDENTICAL between RED-parent (2fda0ef~1) and HEAD. The mandatory non-defaulted `caveat` field, RRSResult.__post_init__ empty-caveat guard, from_attack, as_dict, and MeasuredRRS.as_dict() caveat-nesting are unchanged."
+      - "git diff 2fda0ef~1..HEAD on reidentification.py is 100% additive (140 insertions, 0 deletions in the existing region): the only edits inside the pre-existing block are two new top-level imports (`import math` line 21, `from . import signals` line 26) that the appended FR-008 code requires; the entire RRS contract below is untouched and the new symbols are appended after score_reidentification (line 181+)."
+      - "ExposureIndex is a DISTINCT frozen dataclass with NO rrs/reid_recall/reid_precision field and a non-empty, __post_init__-validated `note` ('NOT measured RRS') — the de-circularization control holds; the cheap prior is structurally non-citable as an RRS result. It cannot be mistaken for / coerced into MeasuredRRS or RRSResult."
+    test_proves_it:
+      name: test_fr_008_exposure_index_is_prior_not_rrs
+      file: tests/test_exposure_index.py:36-62
+      result: "PASS. Asserts type(idx) is ExposureIndex, not isinstance MeasuredRRS/RRSResult, {rrs,reid_recall,reid_precision} disjoint from fields + not hasattr, note non-empty and contains 'NOT measured RRS'. Full file 6/6 PASS; existing tests/test_reidentification_measured.py 9/9 PASS (0 FR-009 regression)."
+  byte_preservation_intent:
+    status: PASS
+    note: "Dispatch asked to confirm RRSResult/MeasuredRRS 'byte-preserved'. The two pre-existing contracts are AST-identical (semantic byte-preservation of the value objects). The only non-appended bytes are two additive import lines required by the new block — these introduce no new dep and do not touch the caveat path. Treated as satisfied; flagged here for transparency, not as a finding."
+
+# ── INERTNESS / PURITY / SUPPLY-CHAIN / AX-001 (story-gate conditional checks) ──
+secondary_checks:
+  pure_stdlib:
+    status: PASS
+    detail: "reidentification.py top-level imports: __future__, math, collections.abc.Sequence, dataclasses + first-party ..stats.intervals and .scoring.{signals,adversary.base}. test_exposure_index.py: ast, dataclasses, math, pathlib + first-party scoring. No third-party runtime dep; no numpy/scipy/pandas (Pearson/Spearman hand-rolled in stdlib)."
+  inert_surface:
+    status: PASS
+    detail: "Scan of all 3 owned files for eval/exec/compile/__import__/subprocess/os.system/popen/pickle/marshal/shelve/yaml/socket/requests/urllib/httpx/http.client/ctypes/input()/open()/getenv/os.environ/secrets found ZERO executable matches. The only textual hits are the banned-module string set inside the NFR-004 AST-guard test and its docstring. No network, no filesystem, no process spawn, no deserialization, no env/secret read. Programmatic AST walk confirms NO eval/exec/compile/__import__/input/open call nodes anywhere in reidentification.py."
+  nondeterminism_free:
+    status: PASS
+    detail: "AX-002/NFR-004: production module imports NONE of {random,time,uuid,datetime,secrets} and no numpy/scipy/pandas (verified by re-running the test's own AST guard logic against reidentification.py — PASS). Logic is a pure function of caller-supplied dicts/pairs; no RNG, no clock, no I/O."
+  import_purity_guard_present:
+    status: PASS
+    detail: "tests/test_exposure_index.py::test_fr_008_nfr004_exposure_imports_no_nondeterminism (PROPERTY-TEST, lines 149-167) AST-parses reidentification.py and asserts banned == {random,time,uuid,datetime,secrets,numpy,scipy,pandas} is disjoint from imports — the dispatch-required guard set is present and enforced in CI. PASS."
+  synthetic_only_AX001:
+    status: PASS
+    detail: "AX-001: all test fixtures are abstract synthetic dicts — per-category {present,uniqueness,indicators} annotations (uniqueness labels + opaque indicator tokens like 'industry_jargon:medical:3') and numeric (index,rrs) pairs. Regex sweep for real-PII shapes (SSN/phone/email/CC/IBAN/API-key/AWS-key) over the test found NONE. The exposure_index public surface operates only over caller-supplied behavioral_signals dicts; no real-PII ingestion path, no dataset file read."
+  weak_crypto:
+    status: PASS
+    detail: "No md5/sha1 or any hash primitive introduced; no crypto surface."
+  hardcoded_credentials:
+    status: PASS
+    detail: "No credential/API-key/token/password shapes. Only string literals are the inert EXPOSURE_INDEX_NOTE disclaimer, the method-version strings, and synthetic test fixtures."
+  injection_paths:
+    status: PASS
+    detail: "No SQL/NoSQL/shell/format-string interpolation; no capability-gated sink. exposure_index uses dict.get with safe defaults (no KeyError-based control flow on attacker input); correlate handles n==0 and zero-variance via math.nan (never raises). Pure arithmetic over caller-supplied values."
+  supply_chain:
+    status: PASS
+    detail: "No new dependency added (additive imports are stdlib `math` + first-party `signals`). No git=/url-pinned dep, no manifest change, no new transitive package — CVE/SBOM surface unchanged at story scope."
+
+# ── canonical severity tallies ──
+findings:
+  showstopper: []
+  catastrophic: []
+  major: []
+  minor: []
+  observation:
+    - id: SAST-S3-05-OBS-1
+      severity: OBSERVATION
+      title: "Two additive imports inserted into the pre-existing import block (not strictly append-only)"
+      where: src/pii_anon_datasets/scoring/reidentification.py:21,26
+      detail: "`import math` and `from . import signals` were inserted into the existing import region rather than appended at file end (imports must be top-level). This is the correct Python idiom and both are pure-stdlib/first-party; the existing RRS contract bodies are AST-identical. No security impact — monitor only so future reviewers do not mistake the import-line delta for a contract edit."
+      action: none-required
+
+# ── self-attestation ──
+attestation:
+  context_bounds_respected: true
+  independence: "Bounded to the 3 owned paths + read-only inspection of the in-repo `signals`/`stats.intervals` dependencies and git history. No shared mutable state; verdict derived solely from this story's diff."
+  checks_run:
+    - "git diff 2fda0ef~1..HEAD (owned files) — confirmed 318 additive insertions, 0 deletions"
+    - "AST dump-equality of ANTI_ANONYMITY_CAVEAT/RRSResult/MeasuredRRS/score_reidentification across revs — IDENTICAL"
+    - "grep inert-API sweep (eval/exec/subprocess/pickle/yaml/network/os.environ/secrets/open) — zero executable hits"
+    - "programmatic AST import-purity + dynamic-call-node walk on reidentification.py — PASS"
+    - "real-PII-shape regex sweep over test fixtures — none (AX-001 synthetic-only)"
+    - "developer-assistant.yaml.domain_packs read — [] (no pack extensions)"
+    - "pytest tests/test_exposure_index.py tests/test_reidentification_measured.py — 15 passed, 0 failed (0 FR-009 regression)"

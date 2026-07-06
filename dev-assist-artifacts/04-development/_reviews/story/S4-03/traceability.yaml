@@ -1,0 +1,156 @@
+# Traceability reviewer — STORY gate
+schema: dev-assist/reviewer-finding/v1
+reviewer: traceability
+gate: story
+story_id: S4-03
+story_title: "Calibration: ECE + Brier + reliability bins (per entity class)"
+iteration: 1
+mode: read-only
+reviewed_at: "2026-05-29"
+reviewer_email: subhashholla23@gmail.com
+branch: feat/v2-scoring-harness
+
+scope:
+  chain: "FR/NFR -> Story -> Test -> DC (forward traceability only)"
+  primary_requirements: [FR-005, NFR-008]
+  supporting_requirements: [AX-003, NFR-004]
+  source_dc: DC-09
+  owned_files:
+    - src/pii_anon_datasets/stats/calibration.py
+    - src/pii_anon_datasets/stats/__init__.py
+    - tests/test_calibration.py
+
+verdict: APPROVE
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+context_bounds_respected: true
+
+# ---------------------------------------------------------------------------
+# Verification log (all forward-trace gates GREEN)
+# ---------------------------------------------------------------------------
+checks:
+  - id: TRC-S4-03-01
+    name: "Declared FR/NFR IDs exist in requirements"
+    status: PASS
+    evidence: >
+      FR-005 present at functional-requirements.md:13 ("Calibration + abstain-to-review ...
+      ECE + Brier + a reliability diagram per entity class ..."). NFR-008 present at
+      non-functional-requirements.md:19 ("Calibration target ... ECE reported per entity class;
+      reference/baseline detectors target ECE <= 0.05 (reported, not a submitter pass/fail)").
+      No SHOWSTOPPER (no phantom ID).
+
+  - id: TRC-S4-03-02
+    name: "Every test fn carries an fr_005 / nfr_008 token"
+    status: PASS
+    evidence: >
+      8/8 test fns tokened — 6 fr_005 (ece_known_value, brier_known_value,
+      perfect_calibration_zero_ece, reliability_bins_partition, input_length_mismatch_raises,
+      nfr004_calibration_imports_no_nondeterminism) + 2 nfr_008
+      (meets_reference_is_reported_not_gated, calibration_by_entity_class).
+      tests/test_calibration.py:33,52,65,81,110,140,176,190.
+
+  - id: TRC-S4-03-03
+    name: "Token selection selects >0 (fr_005 and nfr_008)"
+    status: PASS
+    evidence: >
+      `pytest -k fr_005 --co` -> 6 selected; `pytest -k nfr_008 --co` -> 2 selected
+      (PYTHONPATH=src). Both run GREEN: -k fr_005 -> 6 passed, -k nfr_008 -> 2 passed,
+      full file -> 8 passed (python3.10.6 / pytest local).
+
+  - id: TRC-S4-03-04
+    name: "Symbol docstrings cite FR-005 / NFR-008 / DC-09"
+    status: PASS
+    evidence: >
+      calibration.py module docstring cites "(FR-005, DC-09)" (L1) and "NFR-008 is a REFERENCE,
+      NOT a gate (load-bearing)" (L12). CalibrationResult.meets_reference docstring: "(NFR-008).
+      REPORTED, never a pass/fail gate" (L80). calibrate / calibration_by_entity_class docstrings
+      both cite NFR-008 (L199, L219). __init__.py export block tagged "S4-03: calibration ...
+      (FR-005/NFR-008)" (L53).
+
+  - id: TRC-S4-03-05
+    name: "Contract realized — ECE + Brier + reliability; per-entity-class; reference reported not gated"
+    status: PASS
+    evidence: >
+      expected_calibration_error (equal-width bins, pinned idx=min(n_bins-1,int(conf*n_bins))),
+      brier_score (mean((conf-correct)**2)), _reliability_bins (n_bins Bin tuple partitioning
+      [0,1], counts sum to n), calibrate -> CalibrationResult, calibration_by_entity_class ->
+      dict[entity_type, CalibrationResult]. All §8b symbols implemented + exported in __init__.py
+      __all__ (L54-55).
+
+  - id: TRC-S4-03-06
+    name: "meets_reference is REPORTED, not a gate (no name-says-X-asserts-Y)"
+    status: PASS
+    evidence: >
+      meets_reference is a derived @property `ece <= reference_ece` (calibration.py:78-85); the
+      ONLY raising path in the module is ValueError on len(confidences)!=len(correct)
+      (_check_lengths, L100-105) — confirmed by grep (no sys.exit / SystemExit / gate-assert on
+      high ECE). Runtime proof: calibrate() on ECE=0.29375 returns normally with
+      meets_reference=False (no raise). test_nfr_008_meets_reference_is_reported_not_gated asserts
+      exactly this; test body matches its name (no semantic mismatch).
+
+  - id: TRC-S4-03-07
+    name: "traceability-matrix.md row present for FR-005 / NFR-008"
+    status: PASS
+    evidence: >
+      traceability-matrix.md:10 — "| UC-03 calibration | FR-005 | NFR-008 | SHOULD |
+      AGENT_SIMULATED |". Row maps the calibration UC to both claimed IDs with status matching the
+      story.
+
+  - id: TRC-S4-03-08
+    name: "provisional_status cascade matches source DC"
+    status: PASS
+    evidence: >
+      Story metadata provisional_status=AGENT_SIMULATED (S4-03.md:16); §4 "DC-09 · AGENT_SIMULATED
+      · not DIVERGED" (L31). Matches matrix row (AGENT_SIMULATED) and the corroborated DC-09 state
+      (S4-01/S4-02 stories + S4-01 requirements-coverage.yaml:92 all record DC-09 NOT DIVERGED).
+      No DIVERGED cascade required.
+
+  - id: TRC-S4-03-09
+    name: "Dependencies DONE; no IN_PROGRESS blocker"
+    status: PASS
+    evidence: >
+      §5 "Must be DONE: none new (pure-stdlib over confidence/correct arrays)". Blocks S4-05
+      (reliability-diagram viz consumes CalibrationResult) + Stage-5 NFR-008 verification —
+      downstream, not a prerequisite. No unmet upstream dependency.
+
+  - id: TRC-S4-03-10
+    name: "Single-owner of FR-005 calibration facet (no ambiguous tracing)"
+    status: PASS
+    evidence: >
+      sprint-3 stories S3-06/S3-07/S3-08 surfaced by an FR-005 grep are FALSE POSITIVES — they
+      reference NFR-005 (anon/pseudo separation), matched on the 'FR-005' substring. None owns
+      calibration.py / brier_score / ECE / CalibrationResult. S4-03 is the sole owner of FR-005's
+      calibration facet. No finding-pattern-12.
+
+# ---------------------------------------------------------------------------
+findings:
+  - id: TRC-S4-03-OBS-1
+    severity: OBSERVATION
+    pattern: 14  # examples-and-tests / scope-of-claim note
+    title: "FR-005 claimed at the calibration facet only; abstention coverage-risk curve deferred"
+    file: dev-assist-artifacts/02-requirements/functional-requirements.md
+    line: 13
+    detail: >
+      FR-005's full statement is "ECE + Brier + a reliability diagram per entity class AND an
+      abstention coverage-risk curve". S4-03 intentionally scopes only ECE + Brier + reliability
+      (story title + §2 + §3 "calibration: reliability + ECE"). The abstention coverage-risk-curve
+      facet of FR-005 is not implemented here and is not yet visibly owned by another story.
+      This is a LEGITIMATE PARTIAL CLAIM (the calibration facet is fully traced + tested), not a
+      defect — recorded so the open abstention facet of FR-005 is not lost at epic/sprint
+      roll-up. No action required at the story gate.
+    action: "Confirm a later story (or S4 epic catalog) owns the FR-005 abstention coverage-risk-curve facet so FR-005 reaches full coverage."
+
+self_attestation:
+  independent: true
+  reviewed_only_owned_surface_and_traces: true
+  no_code_authored: true
+  context_bounds_respected: true
+  statement: >
+    Reviewed forward FR/NFR -> Story -> Test -> DC traceability for S4-03 only. Did not assess
+    test quality, idiom, NFR threshold attainment, or FR semantics beyond G/W/T (out of scope —
+    code-quality / requirements-coverage / performance own those). Read-only; no files mutated
+    except this review artifact.

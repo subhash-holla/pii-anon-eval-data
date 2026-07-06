@@ -1,0 +1,70 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S5-06
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY-gate security review of S5-06 (DPIA-input end-state bundle, iteration 1).
+  Bounded context honoured: read S5-06.md, the diff `git diff c8c66f0 HEAD`
+  (4 files / +746, story-file + tests + module + compliance/__init__.py export-only),
+  the reviewed module src/pii_anon_datasets/compliance/end_state_bundle.py, its test
+  tests/test_end_state_bundle.py, and the three READ-ONLY upstream value objects whose
+  as_dict() the bundle nests (scoring/anonymization.py ParetoPoint, scoring/pseudonymization.py
+  PseudonymizationReport, compliance/crosswalk.py RegulatoryCrosswalk + crosswalk_record).
+  No browsing beyond bounds.
+
+  DOMAIN PACKS: developer-assistant.yaml `domain_packs: []` (and `extends.domain_packs: []`),
+  per the S3/S4 precedent in prior _reviews — financial / agentic-runtime NOT active. No
+  reviewer-extension finding patterns merged; no `source_pack` findings; no sensitive-data-scan
+  output to consult.
+
+  STORY-SIGNAL CHECK (conditional security-sast at story gate): NONE of the trigger signals
+  are tripped by this diff — no capability registry, no trust-boundary code, no HSM port, no
+  event-signing path, NO network egress added, NO `unsafe`/native code (pure Python). The
+  module is a frozen-dataclass value-object over already-computed scorer outputs + record tags.
+  Reviewed defensively nonetheless per the dispatch brief; clean on every axis.
+
+  (1) NO-EGRESS / NO-SECRETS (clean) — grep of end_state_bundle.py for
+  socket|requests|urllib|httpx|aiohttp|upload|download|subprocess|os.system|popen|eval|exec|
+  pickle|marshal|shelve|secrets|getpass|os.environ|getenv|boto|s3|open(|Path(|md5|sha1|
+  password|api_key|token|credential|private_key returned ZERO matches. Imports are exactly
+  `collections.abc.Mapping`, `dataclasses.{dataclass,fields}`, and three first-party READ-ONLY
+  value objects. No network, filesystem, process, deserialization, crypto, or credential
+  surface anywhere. Common-findings catalog patterns 1-15 do not apply (no Rust crates/SDK/HSM/
+  egress-manifest/unsafe/weak-hash/SQL-interp/git-dep in scope).
+
+  (2) NO REAL-PII PATH (AX-001 satisfied) — DECISIVE. The ONLY record-derived data entering the
+  bundle is via assemble_end_state_bundle -> crosswalk_record(record), which reads ONLY
+  record["regulatory_domains"] and emits normalized regime *labels* (str->strip->lower, e.g.
+  "gdpr"/"hipaa"; unmapped tags surface as `other_regimes`, still bare labels) — never raw
+  record text, free-text fields, or PII values. Verified the three nested serializers directly:
+  ParetoPoint.as_dict -> {privacy(MeasuredRRS metrics+caveat), utility(score+components), variant,
+  note}; PseudonymizationReport.as_dict -> version strings, booleans, integer collision counts,
+  CIs, static notes; RegulatoryCrosswalk.as_dict -> regime-status strings + disclaimer. All
+  composed values are numeric metrics / version strings / booleans / counts / static caveat-note
+  strings. The bundle nests the scorers' own as_dict() (never re-projects record content), so no
+  raw text or real PII can transit the bundle.
+
+  (3) COMPLIANCE-INTEGRITY CONTROLS (security-relevant for this module) — LIVE and tested.
+  Non-strippable disclaimer: DPIA_DISCLAIMER module constant + non-defaulted-validated
+  `disclaimer` field; __post_init__ raises ValueError on empty/whitespace (test
+  test_fr_021_disclaimer_is_non_strippable asserts both "" and "   "), and the disclaimer
+  survives onto as_dict() unstripped. No-merged-verdict separation: anonymization_evidence and
+  pseudonymization_evidence are two SEPARATE keys; no __float__ (confirmed absent at runtime;
+  float(bundle)->TypeError tested); the module-bottom
+  `assert _FORBIDDEN_MERGE_NAMES.isdisjoint({f.name for f in fields(EndStateBundle)})` executes
+  at import and holds at runtime (disjoint == True confirmed). A stripped disclaimer or a fused
+  de-id score — the two compliance-misrepresentation risks named in the brief — are both
+  structurally precluded. >=1-axis guard (ValueError) tested.
+
+  EVIDENCE: tests/test_end_state_bundle.py -> 7 passed in 0.12s (re-run live, not just from §12).
+  All 7 carry fr_021/nfr_005/nfr004 tokens. No mutation of any reviewed file (read-only review).
+
+review_time_seconds: 360
+
+context_bounds_respected: true

@@ -49,6 +49,11 @@ def score_detectors(
     """
     records = list(records)
     n_gold_total = sum(len(r.get("annotations", []) or []) for r in records)
+    # The run's single language (cloud shards run one concrete code at a time). "all"/"" => multilingual or
+    # unspecified: no per-language threading or gating (the historical behaviour). Only the cloud adapters
+    # carry a ``language`` slot / ``supports_language`` hook, so local adapters are wholly unaffected.
+    run_language = str((dataset_info or {}).get("language") or "")
+    concrete_language = run_language if run_language and run_language != "all" else ""
 
     detectors: dict[str, dict] = {}
     ranking_rows: list[dict] = []
@@ -62,6 +67,22 @@ def score_detectors(
             }
             _emit(progress, {"event": "detector_skipped", "detector": name, "reason": "unavailable"})
             continue
+        # A provider that does not support this run's language is RECORDED and skipped BEFORE the expensive
+        # build()/detect() — never run as garbage en-on-Hindi, never a silent budget burn (cloud only;
+        # local adapters expose no supports_language hook, so this is a no-op for them).
+        supports = getattr(adapter, "supports_language", None)
+        if concrete_language and callable(supports) and not supports(concrete_language):
+            detectors[name] = {
+                "status": "unsupported-language",
+                "model_id": getattr(adapter, "model_id", ""),
+                "reason": f"{name}: provider PII detection does not support language {concrete_language!r}",
+            }
+            _emit(progress, {"event": "detector_skipped", "detector": name, "reason": "unsupported-language"})
+            continue
+        # Thread the run language onto any adapter that carries the slot (the cloud adapters), so detect()
+        # sends the right per-provider locale to the API.
+        if concrete_language and hasattr(adapter, "language"):
+            adapter.language = concrete_language
         _emit(progress, {"event": "detector_start", "detector": name, "total": len(records)})
         try:
             detectors[name] = _score_one(adapter, records, confidence, progress=progress)
@@ -165,7 +186,10 @@ def _score_one(
     for i, rec in enumerate(records):
         text = str(rec.get("text", "") or "")
         try:
-            raw = adapter.detect(text, model)
+            if getattr(adapter, "wants_record", False):
+                raw = adapter.detect(text, model, record=rec)
+            else:
+                raw = adapter.detect(text, model)
         except Exception:  # noqa: BLE001 - one pathological record must not zero out the whole detector
             raw = []
             record_errors += 1

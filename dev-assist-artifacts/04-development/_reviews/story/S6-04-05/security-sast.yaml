@@ -1,0 +1,66 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S6-04-05
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  Combined STORY gate, iteration 1 — S6-04 (GOVERNANCE.md) + S6-05 (CONTRIBUTING.md).
+  Light surface: two governance/policy docs + two read-only pinning test modules.
+  Bounded context: GOVERNANCE.md, CONTRIBUTING.md, tests/test_governance.py,
+  tests/test_contributing.py. Diff reviewed: `git diff d017796 HEAD` (467 net-added
+  lines; the two .md files, the two test files, and two out-of-scope story .md files).
+
+  Domain packs: developer-assistant.yaml.domain_packs == [] (financial + agentic-runtime
+  both explicitly declined for a benchmark project). No reviewer-extension finding
+  patterns to merge; no `source_pack` tagging applies to any finding.
+
+  (1) No real PII / no secrets (AX-001) — PASS. Credential-shape scan (api_key, secret,
+      token, bearer, AWS keys, private-key PEM headers, gh*_ tokens, JWT) over both docs:
+      zero matches. Real-PII-shape scan (SSN 3-2-4, 9-digit ABA, 16-digit card, email,
+      phone) over both docs: zero matches. The docs *describe* the no-real-PII policy and
+      the CC0-data / Apache-2.0-code split; they introduce no actual personal data,
+      credentials, or tokens. The single substring "1" matched by the bus-factor pin is
+      the literal "bus factor = 1" honesty statement, not data.
+
+  (2) Pinning tests read-only / inert — PASS. test_governance.py and test_contributing.py
+      import only `pathlib` and `from __future__ import annotations`. Every operation is
+      pathlib.Path.read_text(encoding="utf-8") / .exists() / str.lower() / assert against
+      static substrings. No subprocess / socket / requests / urllib / httpx / eval / exec /
+      os.system / Popen / __import__ / pickle / marshal / file-write / write_text. No
+      network egress, no dynamic execution, no filesystem mutation. Both modules read repo
+      files and assert substrings only — exactly as specified.
+
+  (3) CONTRIBUTING.md security posture — PASS. The synthetic-only / no-real-PII intake gate
+      is STATED as an imperative gate, not implied: "Every contributed record MUST be
+      synthetic", "No real PII may be contributed (AX-001): real personal information —
+      even 'anonymized' real data — is out of scope and will be rejected." CC0 license
+      hygiene is likewise an explicit gate: data must be CC0-compatible / fully synthetic
+      with no scraped or real personal data, and "If you cannot dedicate a data
+      contribution to the public domain (CC0), it cannot be merged." Provenance
+      (generator + seed + source_type) is required per record. The security-relevant
+      contribution gate is asserted, not merely suggested.
+
+  (4) Links — PASS. Exactly one external URL across both docs: the CC0 license deed
+      (https://creativecommons.org/publicdomain/zero/1.0/) in CONTRIBUTING.md:25. Apache-2.0
+      is referenced by name (no raw URL). All inter-document links resolve to repo files
+      (GOVERNANCE.md <-> CONTRIBUTING.md, and CONTRIBUTING.md#versioning anchor). No
+      suspicious or off-host external URLs.
+
+  security-sast common-pattern catalog (15) — none tripped: no production-crate composition
+  ban (docs/tests only, no crate deps), no capability granted outside a registry, no trust
+  boundary bypass, no `unsafe`, no new dependency (so no CVE / git-pin / denied-license /
+  weak-crypto surface), no new egress, no SQL/NoSQL interpolation, no wildcard capability
+  scope, no cross-boundary tokio::spawn, no architectural-egress import. sensitive_data_scan
+  is configured advisory-mode (security.sensitive_data_scan.enforcement: advisory); the scan
+  run for this gate surfaced nothing.
+
+  Zero SHOWSTOPPER / CATASTROPHIC / MAJOR (and zero MINOR). Clean APPROVE.
+
+review_time_seconds: 240
+
+context_bounds_respected: true

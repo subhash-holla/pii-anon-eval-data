@@ -1,0 +1,1489 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Stage 4 — Development Log &amp; Sprint Plan — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="04-development">
+<h1>Stage 4 — Development Log &amp; Sprint Plan</h1>
+<p><strong>Date</strong>: 2026-05-28 · Target: <code>src/pii_anon_datasets/</code> (DX-01: nested under the existing package — no wheel-breaking rename) + v2.0.0 schema. TDD; reviewer-gate self-assessment per slice.</p>
+<blockquote>
+<p><strong>Safety:</strong> <code>git tag v1.3.0</code> applied to HEAD (<code>19ce769</code>) <strong>before</strong> any v2.0.0 work — the corpus state is pinned/restorable (plan guardrail + AX-002).</p>
+</blockquote>
+<h2>Sprint plan (from design build sequence)</h2>
+<table>
+<thead>
+<tr>
+<th>Sprint</th>
+<th>Scope (DCs)</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>S1 Foundations</strong></td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-15" data-trace-id="DC-15" aria-label="Trace DC-15">DC-15</a> pytest+CI baseline · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-04" data-trace-id="DC-04" aria-label="Trace DC-04">DC-04</a> Hexagonal scoring core + I/O contract · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-05" data-trace-id="DC-05" aria-label="Trace DC-05">DC-05</a> detection scorer · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a>(partial) Wilson CI · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a>(value-object) RRS caveat</td>
+<td>✅ <strong>DONE (this session)</strong></td>
+</tr>
+<tr>
+<td>S2 Schema</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-02" data-trace-id="DC-02" aria-label="Trace DC-02">DC-02</a> v2.0.0 unified schema + <code>v1_3_0_to_v2_0_0.py</code> migration (tag-first, archive, deterministic)</td>
+<td>✅ <strong>DONE</strong></td>
+</tr>
+<tr>
+<td><strong>S-PWR Power &amp; Sampling</strong></td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-01" data-trace-id="DC-01" aria-label="Trace DC-01">DC-01</a>/<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a> committed-lattice statistical-power work-stream: power audit + DOE lattice + targeted stratified enrichment + CI power-gate + per-cell design provenance (<a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>) — inserted before S3 per the 2026-05-29 amendment</td>
+<td>✅ <strong>DONE (this session)</strong> — corpus 159,891→575,604; all 710 committed cells powered; 103 tests green</td>
+</tr>
+<tr>
+<td>S3 Scorers</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-06" data-trace-id="DC-06" aria-label="Trace DC-06">DC-06</a> anonymization (residual-risk+utility Pareto) · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-08" data-trace-id="DC-08" aria-label="Trace DC-08">DC-08</a> pseudonymization-integrity (moat) · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a> measured-attack RRS (offline+LLM adversary ports)</td>
+<td>✅ <strong>DONE (2026-05-29)</strong> — 8 stories S3-01..08, all story gates + sprint gate APPROVE; 169 tests green; M6 closed (all 4 privacy directions runnable)</td>
+</tr>
+<tr>
+<td>S4 Stats/reporting</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a> Clopper-Pearson + paired (McNemar/bootstrap) + ECE/Brier + per-language power table + viz (reliability/Pareto/heatmap)</td>
+<td>✅ <strong>DONE (2026-05-29)</strong> — 5 stories S4-01..05, all story gates + sprint gate APPROVE; 211 tests green; <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a> complete; <a class="trace-link" href="02-stories/sprint-4/S4-03.html#fr-005" data-trace-id="FR-005" aria-label="Trace FR-005 — / NFR-008)">FR-005</a> fully closed</td>
+</tr>
+<tr>
+<td>S5 Compliance+dist</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-11" data-trace-id="DC-11" aria-label="Trace DC-11">DC-11</a> end-state bundle + legally-distinct crosswalk · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-12" data-trace-id="DC-12" aria-label="Trace DC-12">DC-12</a> Parquet/Croissant/spaCy exports (fix regime-flattening) + HF card + CLI entry · <strong><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> doc-drift fix</strong></td>
+<td>⏳ TODO</td>
+</tr>
+<tr>
+<td>S6 Governance</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-13" data-trace-id="DC-13" aria-label="Trace DC-13">DC-13</a> leaderboard (held-out, opt-in, anti-gaming, CoI recusal) + GOVERNANCE.md + contribution pipeline</td>
+<td>⏳ TODO</td>
+</tr>
+<tr>
+<td>S7 Seams</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-10" data-trace-id="DC-10" aria-label="Trace DC-10">DC-10</a> agentic oracle (bounded) · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-14" data-trace-id="DC-14" aria-label="Trace DC-14">DC-14</a> real-data correlation (v1.1) · <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-01" data-trace-id="DC-01" aria-label="Trace DC-01">DC-01</a> coreference/quasi-id slices (v1.1)</td>
+<td>⏳ TODO</td>
+</tr>
+</tbody></table>
+<h2>S1 — what shipped (real, tested code)</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Closes</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>stats/intervals.py</code></td>
+<td><a class="trace-link" href="02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a>, <a class="trace-link" href="02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a></td>
+<td><strong>Wilson CI</strong>, pure-stdlib, deterministic; <strong>integer-count guard</strong> (reidx-02 — rejects fractional k/n)</td>
+</tr>
+<tr>
+<td><code>scoring/core.py</code></td>
+<td><a class="trace-link" href="../05-testing/examples-and-tests-catalog.html#fr-003" data-trace-id="FR-003" aria-label="Trace FR-003 — — Scorer I/O contract + reference adapter (MUST)">FR-003</a>, <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-04" data-trace-id="DC-04" aria-label="Trace DC-04">DC-04</a></td>
+<td>Hexagonal core: <code>Span</code>, <code>SpanAdapter</code> port, <strong>deterministic order-independent strict matching → integer counts</strong> (reidx-02/03), <code>MATCHING_POLICY_VERSION</code></td>
+</tr>
+<tr>
+<td><code>scoring/detection.py</code></td>
+<td><a class="trace-link" href="../05-testing/examples-and-tests-catalog.html#fr-001" data-trace-id="FR-001" aria-label="Trace FR-001 — — Multilingual/adversarial detection scoring (MUST)">FR-001</a>/004, <strong>M6</strong></td>
+<td>scores a <em>system&#39;s</em> spans; P/R/F1/F2 + Wilson CIs on integer counts; <strong>partial-F1 reported separately, excluded from CIs</strong></td>
+</tr>
+<tr>
+<td><code>scoring/reidentification.py</code></td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>/008/009, <strong>gov-01</strong></td>
+<td><code>RRSResult</code> value object with <strong>mandatory non-defaulted <code>caveat</code> field</strong> → <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> made structural (caveat travels with the number through any serializer); `</td>
+</tr>
+<tr>
+<td><code>tests/</code> (4 files, 23 tests)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a>, <strong>C1</strong></td>
+<td>all green</td>
+</tr>
+<tr>
+<td><code>pyproject.toml</code></td>
+<td>M5, DX-05, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a></td>
+<td>declared <code>dev</code>/<code>baselines</code>/<code>llm</code>/<code>distribution</code> extras; pytest pythonpath; <strong>branch coverage</strong>; classifier Production→<strong>Beta</strong> (honest)</td>
+</tr>
+</tbody></table>
+<p><strong>Verification (this session):</strong> <code>python3 -m pytest</code> → <strong>23 passed</strong>. <code>--cov</code> → <strong>95% line, branch on</strong> (core 100% · detection 100% · RRS 92% · intervals 86%) — clears <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a>. Determinism confirmed (frozen dataclasses, stdlib-only core).</p>
+<h3>SME-panel bugs fixed as code (not inherited from v1.3.0)</h3>
+<ul>
+<li><strong>reidx-02</strong> — the v1.3.0 <code>baselines/evaluate.py</code> adds partial matches to <em>both</em> CI denominators + fractional success counts. The new <code>match_strict</code> produces clean integer (k,n); <code>wilson_interval</code> <strong>rejects</strong> non-integer counts. ✅</li>
+<li><strong>reidx-03</strong> — <code>evaluate.py</code> greedy order-dependent matching → non-reproducible. <code>match_strict</code> is a multiset operation, <strong>order-independent</strong> (tested by shuffling). ✅</li>
+<li><strong>gov-01</strong> — <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> caveat was renderer-bound (strippable). Now a <strong>mandatory value-object field</strong>. ✅</li>
+</ul>
+<h2>S1 — story-gate self-review (reviewer-set: code-quality · traceability · security-sast · axiom-compliance)</h2>
+<ul>
+<li><strong>code-quality:</strong> PASS — typed, frozen dataclasses, pure-stdlib core, docstrings cite FR/finding IDs, lint-clean (no unused), TDD evidence (tests written alongside). </li>
+<li><strong>traceability:</strong> PASS — every module docstring cites its FR + design finding; maps to <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-04" data-trace-id="DC-04" aria-label="Trace DC-04">DC-04</a>/05/07/09/15.</li>
+<li><strong>security-sast (AX-001):</strong> PASS — no real PII, no secrets, no network egress in core/stats (pure-stdlib); <code>_count_partial</code>/matching operate on synthetic spans only.</li>
+<li><strong>axiom-compliance:</strong> PASS — AX-002 (determinism: stdlib, frozen, tested) · AX-003 (CIs with named method + integer counts) · AX-004 (anon vs pseudo will be separate modules; RRS value object is re-id, distinct). </li>
+<li><strong>Verdict: APPROVE</strong> for S1 slice.</li>
+</ul>
+<h2>Honest status (epistemic)</h2>
+<p>S1 delivered the M6 scoring spine, the statistical-rigor fix, and the structural <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> caveat as real tested code. <strong>S2 is now also DONE</strong> (see below). <strong>Sprints S3–S7 remain</strong> (anonymization/pseudonymization/measured-RRS scorers, stats/reporting completion, exports/CLI, leaderboard/governance, remaining doc-drift) + Stage 5 Testing — each best continued in focused follow-on sessions, TDD + reviewer-gated, on this branch.</p>
+<h2>S2 — what shipped (DONE 2026-05-28)</h2>
+<p>True-v2.0.0 clean restructure of all 159,891 records, committed on <code>feat/v2-scoring-harness</code>:</p>
+<ul>
+<li><code>tier3_evaluation</code> wrapper consolidating the scattered RRS/behavioral/tier3-risk signal (7,003 paired-profile wrappers merged, not clobbered).</li>
+<li>Deterministic content-addressed <code>record_id</code>; lineage in <code>provenance.v1_3_0_record_id</code>.</li>
+<li>Canonical entity registry <code>src/pii_anon_datasets/taxonomy.py</code> (<strong>63 types / 9 categories</strong> — fixes the 48/65/80 drift); <code>validate.py</code> derives from it; +schema_version checks.</li>
+<li><code>scripts/v1_3_0_to_v2_0_0.py</code> (deterministic streaming) + <code>migration.py</code> + back-compat <code>compat.to_v1_record()</code>; <code>load_dataset()</code> unchanged (DX-01).</li>
+<li><strong>Verified:</strong> migration byte-identical across 2 full runs; <code>validate.py</code> PASSED 0 errors / 159,891 records; splits+subsets regenerated, counts preserved; pytest <strong>33 green</strong>; loader + back-compat smoke-pass. Doc bump (README/CHANGELOG/TAXONOMY → v2.0.0 / 63).</li>
+<li><strong>S2 story-gate:</strong> code-quality / traceability / security-sast(AX-001) / axiom-compliance(AX-002 determinism proven, AX-004 separation) → <strong>APPROVE</strong>.</li>
+</ul>
+<h3>Git (branch <code>feat/v2-scoring-harness</code>)</h3>
+<p><code>8efbf57</code> spec · <code>75e9eed</code> S1 scoring foundation · <code>1cc8d87</code> v2.0.0 migration · <code>bf2d990</code> doc bump. (v1.3.0 pinned at tag <code>v1.3.0</code>.)</p>
+<h3>Remaining doc-drift (tracked): DATASHEET counts + train-vs-eval; MIGRATION v1.3.0→v2.0.0 section; COMPARISON competitor-claim fixes + name disambiguation; TAXONOMY body pruning to exactly 63.</h3>
+<hr>
+<h2>S-PWR — Statistical Power &amp; Sampling Design (IN_PROGRESS, 2026-05-29)</h2>
+<p><strong>Why:</strong> the v2.0.0 corpus is adequate for marginal claims but under-powered for crossed dimensions — of 60×63 = 3,780 language×entity-type cells, <strong>73% are EMPTY</strong> and only <strong>3.3% reach ≥753 positives</strong>. The benchmark cannot honestly make per-(language×type×domain×difficulty×adversarial) claims. This sprint adds <strong>hard guarantees that every COMMITTED evaluation cell meets a stated power bar</strong>, exploiting the synthetic-data advantage (generate exactly enough seeded records to power each committed cell).</p>
+<p><strong>Requirements + Design amendment (DONE, validated APPROVE):</strong></p>
+<ul>
+<li><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a> extended to committed crossed cells; <a class="trace-link" href="02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a> → per-language×type transparency; <strong><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></strong> (committed-lattice per-cell power, hard CI gate) added; <strong><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a></strong> (power audit + enforcement + per-cell provenance); AX-003 extended to crossed-cell granularity; <a class="trace-link" href="../05-testing/examples-and-tests-catalog.html#nfr-011" data-trace-id="NFR-011" aria-label="Trace NFR-011 — — Coverage (63 types, 60 languages, 4 domains) (MUST)">NFR-011</a> entity-count 65→63.</li>
+<li><strong>R10 threshold validation:</strong> literal 10-persona panel → <strong>ACCEPTED-WITH-CAVEATS</strong> (tier numbers 1,522/753/200 LOCKED, 0 REVISE; 6 mechanism/framing refinements bound). <code>_threshold-validation/findings-nfr-018-2026-05-29.md</code>.</li>
+<li>Design note <code>03-design/sampling-design.md</code>: DOE = forced estimability skeleton + balanced D-optimal fraction; estimand = main effects + 3 named 2-ways (language×entity-type, domain×track[both readings], adversarial-type×entity-type); tiered NIST targets; McNemar paired efficiency; two-gate distinction; track-specific power seam; SMALL/ADEQUATE/LARGE claim ladder.</li>
+<li>Cross-artifact validation: <code>00-validation/validation-report-2026-05-29-1200.md</code> → <strong>APPROVE</strong>.</li>
+</ul>
+<p><strong>Stories (TDD RED→GREEN→REFACTOR; story-gate reviewer self-assessment per slice) — ALL DONE:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Story</th>
+<th>Scope</th>
+<th>Closes</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P1</strong></td>
+<td><code>stats/power.py</code> — NIST <code>required_n</code>, design-time <code>projected_wilson_halfwidth</code>/<code>projected_interval</code> (method <code>wilson-projected</code>, NOT integer-guarded), <code>Tier</code>/<code>TierSpec</code>/<code>PowerClass</code>, <code>classify</code>, <code>audit_crossing</code>→<code>PowerMatrix</code> (md/csv/heatmap), McNemar <code>required_discordant_pairs</code>/<code>paired_vs_independent_ratio</code>; <code>taxonomy.risk_tier</code> (22 critical / 31 standard / 10 long_tail, derived)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>, AX-003</td>
+<td>✅ DONE</td>
+</tr>
+<tr>
+<td><strong>P2</strong></td>
+<td><code>stats/lattice.py</code> — <code>build_committed_lattice(...)</code> (deterministic, reads PINNED <code>data/lattice_freq_snapshot.json</code> so the frozen spec survives enrichment) → frozen <code>data/eval_lattice.json</code> (730 cells)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>✅ DONE</td>
+</tr>
+<tr>
+<td><strong>P3</strong></td>
+<td>28 missing <code>PIIFactory</code> emitters (centralized in <code>scripts/lattice_targeting.py</code> — all 63 covered, fail-loud) + <code>gen_targeted_record</code> (guaranteed 1-positive-per-record; 3 faithful value-level adversarial transforms; non-PII nonce for uniqueness)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>, AX-001</td>
+<td>✅ DONE</td>
+</tr>
+<tr>
+<td><strong>P4</strong></td>
+<td><code>scripts/lattice_audit.py</code> (shared O(1)/annotation audit + deficit) + <code>scripts/generate_lattice_fill.py</code> (SEED 91237, per-cell sub-seed, greedy running-counter w/ incidental fills, <code>migrate_record</code> normalize, exact <code>--dry-run</code> estimate)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>, AX-002</td>
+<td>✅ DONE</td>
+</tr>
+<tr>
+<td><strong>P5</strong></td>
+<td><code>merge_and_rebuild.py</code> migrate-normalize + stable-sort by content-addressed id; <code>scripts/write_manifest.py</code> (<code>data/MANIFEST.sha256</code> over 28 files + v1.3.0-tag-intact assertion) — closes M2</td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>, AX-002</td>
+<td>✅ DONE</td>
+</tr>
+<tr>
+<td><strong>P6</strong></td>
+<td><code>validate.py</code> committed-cell power gate (<code>--lattice</code> default-on, <code>--no-power-gate</code>) — exits non-zero on any under-powered committed cell</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a></td>
+<td>✅ DONE</td>
+</tr>
+<tr>
+<td><strong>P7</strong></td>
+<td><code>scoring/detection.py::DesignProvenance</code> (non-strippable external-validity caveat) on <code>DetectionScore</code> + <code>reporting/power_table.py</code> (per-cell n + Wilson CI + provenance; <code>power_report</code> matrix)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, AX-003</td>
+<td>✅ DONE</td>
+</tr>
+</tbody></table>
+<h3>S-PWR — what shipped + verification</h3>
+<ul>
+<li><strong>Enrichment run (Full Broad, user-approved at the dry-run checkpoint):</strong> <code>pre-lattice-enrichment</code> tag set → before-matrix → <code>generate_lattice_fill.py</code> (415,713 records, deterministic) → <code>merge_and_rebuild.py</code> → <code>generate_subsets.py</code> → <code>write_manifest.py</code> → <code>validate.py</code> → after-matrix.</li>
+<li><strong>Corpus: 159,891 → 575,604 records · 1,239,637 → 2,486,438 annotations</strong> (+415,713 / +1,246,801).</li>
+<li><strong>Power: BEFORE 251 well / 200 under / 259 empty (shortfall 424,144, verdict SMALL) → AFTER 710/0/0 (shortfall 0, verdict LARGE).</strong> <code>03-design/_power/power-matrix-{before,after}.{md,csv}</code>.</li>
+<li><strong>Verification:</strong> <code>pytest</code> <strong>103 green</strong>; coverage 95% line (scoring+stats; lattice 97%, power 90%, detection 100%) — clears <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a>. <code>validate.py</code> → <strong>0 errors, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> gate PASS</strong> (all 710 committed cells ≥ target). Lattice anti-drift (<code>--check</code>) OK; <code>MANIFEST.sha256 --check</code> OK; <strong>v1.3.0 tag intact</strong> (19ce769). Re-fill record_id determinism verified (AX-002). <code>data/enrichment-report.json</code> archives before/after + provenance.</li>
+<li><strong>S-PWR story-gate self-review (code-quality · traceability · axiom-compliance · security-sast · performance):</strong> PASS — pure-stdlib power core; targets DERIVED from NIST (no hand-typed bars, asserted); AX-001 synthetic-only (fail-loud emitter coverage; faithful adversarial obfuscation); AX-002 determinism (seeded + content-addressed + stable-sort, re-run identical); AX-003 per-cell provenance non-strippable; gate is count-based (non-flaky), distinct from the <a class="trace-link" href="02-stories/sprint-4/S4-02.html#fr-002" data-trace-id="FR-002" aria-label="Trace FR-002 — / NFR-002)">FR-002</a> McNemar regression gate. <strong>Verdict: APPROVE.</strong></li>
+<li><strong>Honest limitations (documented, Pass-2 / follow-on):</strong> (1) targeted records are formulaic (one carrier template) → ~72% of the corpus is enrichment; tagged <code>provenance.source_type=&quot;synthetic_lattice_enrichment&quot;</code> (filterable); template-diversity is a follow-on. (2) Domain distribution skews to <code>general</code> (cells not pinning a domain default to general); committed domain marginals + domain×adv_track cells are each individually powered, but overall balance is general-heavy. (3) Power = precision on the SYNTHETIC distribution, <strong>not external validity</strong> (non-strippable caveat + <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> real-data slice). (4) adv×type committed to 3 reliably-faithful transforms (base64/ocr/zero-width); letter-only transforms (homoglyph/leetspeak/mixed-case) no-op on digit IDs and are NOT committed. (5) effective (near-dup-collapsed) counts are a reserved seam (reidx-04); v1 uses raw counts.</li>
+</ul>
+<hr>
+<h2>S3 — Scorers (DONE 2026-05-29)</h2>
+<p>Closes the M6 centerpiece: all four privacy directions now have <strong>running scorers</strong> (not precomputed signals). 8 stories, strict TDD, every story gate + the sprint gate APPROVE. Story contracts in <code>02-stories/sprint-3/</code>; gate evidence in <code>_reviews/story/S3-*/</code> + <code>_reviews/sprint/S3/</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Story</th>
+<th>Module(s)</th>
+<th>Closes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S3-01</td>
+<td><code>scoring/adversary/{base,__init__}.py</code>, <code>scoring/signals.py</code> (ported pure)</td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a> port; <code>assemble_paired_set</code> (the 2,500 paired personas are ASSEMBLED from the tier3 substrate — no paired file existed)</td>
+</tr>
+<tr>
+<td>S3-02</td>
+<td><code>scoring/adversary/offline_adversary.py</code></td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>/010 — the deterministic OFFLINE adversary (RRS headline, reidx-01) + distractor variant</td>
+</tr>
+<tr>
+<td>S3-03</td>
+<td><code>scoring/adversary/llm_adversary.py</code></td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a> — LLM secondary, <code>deterministic=False</code>, behind <code>[llm]</code> extra (lazy import; pkg imports without anthropic)</td>
+</tr>
+<tr>
+<td>S3-04</td>
+<td><code>scoring/reidentification.py</code> (+<code>MeasuredRRS</code>)</td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>/009 — measured RRS = 1−recall×precision, Wilson CIs on integer counts, non-strippable caveat</td>
+</tr>
+<tr>
+<td>S3-05</td>
+<td><code>scoring/reidentification.py</code> (+exposure index)</td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-05.html#fr-008" data-trace-id="FR-008" aria-label="Trace FR-008 — S3-05 — Deterministic exposure index (pre-screen prior) + i…">FR-008</a> — deterministic exposure-index PRIOR (explicitly NOT RRS) + index↔RRS Pearson/Spearman correlation</td>
+</tr>
+<tr>
+<td>S3-06</td>
+<td><code>scoring/anonymization.py</code></td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-06.html#fr-006" data-trace-id="FR-006" aria-label="Trace FR-006 — 7. Acceptance criteria (G/W/T from FR-006)">FR-006</a>/<a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> — privacy-utility <code>ParetoPoint</code>, structurally unmergeable (no <code>__float__</code>/combined field)</td>
+</tr>
+<tr>
+<td>S3-07</td>
+<td><code>scoring/pseudonymization.py</code></td>
+<td><a class="trace-link" href="02-stories/sprint-3/S3-07.html#fr-011" data-trace-id="FR-011" aria-label="Trace FR-011 — 7. Acceptance criteria (G/W/T from FR-011/012/013)">FR-011</a>/012/013 — <strong>the moat</strong>: enumerated threat model, intended-vs-crypto collision separation (never summed), referential integrity, key rotation, EDPB Art 4(5) key/state separation</td>
+</tr>
+<tr>
+<td>S3-08</td>
+<td><code>stats/power.py</code> (+reid ladder)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>/<a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> — reid-operating-point power seam (<code>reid_required_n</code> 897/385, <code>ReidProvenance</code>) + the 4-way cross-module no-merge audit</td>
+</tr>
+</tbody></table>
+<h3>S3 — verification + guardrails</h3>
+<ul>
+<li><strong>Tests:</strong> 159,891-record corpus untouched; <code>python3 -m pytest</code> → <strong>169 passed, 1 skipped</strong> (the <code>anthropic</code>-absent contract skip), <strong>0 regressions</strong> from the S-PWR baseline. Coverage <strong>93% aggregate</strong> line on scoring+stats; every new scorer module ≥85% (<a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a>).</li>
+<li><strong>S-PWR guardrail HELD:</strong> <code>eval_lattice.json</code> (730 cells) untouched (last touched at <code>47c3a8f</code>); tags <code>v1.3.0</code> + <code>pre-lattice-enrichment</code> intact; <strong>no corpus regeneration</strong>; the reid ladder is a parallel CODE seam, not a lattice rebuild.</li>
+<li><strong>Axioms:</strong> AX-001 synthetic-only · AX-002 determinism (offline headline byte-reproducible; LLM flagged non-deterministic) · AX-003 named-method CIs on integer counts · AX-004/<a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> anon/pseudo/RRS/detection never merged (mutation-tested, 4 fusion vectors rejected). Non-strippable caveats structural: RRS anti-anonymity, exposure-&quot;NOT RRS&quot;, EDPB Art 4(5), Pareto separation.</li>
+<li><strong>Sprint-gate amendment <code>bea79ba</code>:</strong> lifted <code>anonymization.py</code> 72%→97% (<a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a> per-module) + fixed 2 advisory perf findings (pseudonymization <code>_referential_integrity</code> O(n²)→O(n); offline-adversary target-signal hoist out of the |C| loop) — behavior-preserving.</li>
+<li><strong>Honest status:</strong> <code>provisional_status: AGENT_SIMULATED</code> (no DIVERGED DC). The execution-environment <strong>real-CI Pass-2</strong> is owed before any S3 MUST counts RELEASE-verified.</li>
+<li><strong>Deferred:</strong> the pre-existing lint baseline (power.py UP035/E702/type-arg; reidentification.py UP037/type-arg; scoring/<strong>init</strong> I001) → a Stage-5 lint-hardening pass.</li>
+</ul>
+<h3>Git (branch <code>feat/v2-scoring-harness</code>)</h3>
+<p>S3 commits interleave <code>[RED]/[GREEN]/[REFACTOR]</code> per story (SHAs in each story&#39;s §12 + <code>_reviews/</code>) with <code>docs(pdlc)</code> bookkeeping commits; <code>bea79ba</code> sprint-gate amendment.</p>
+<hr>
+<h2>S4 — Stats/reporting completion (DONE 2026-05-29)</h2>
+<p><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a> completed. 5 stories, strict TDD, every story gate + the S4 sprint gate APPROVE. Pure-stdlib stats/reporting core; matplotlib behind a new <code>[viz]</code> extra (lazy). Signoff <code>SO-03-s4</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Story</th>
+<th>Module</th>
+<th>Closes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S4-01</td>
+<td><code>stats/intervals.py</code> (+<code>clopper_pearson_interval</code> + stdlib inverse-beta)</td>
+<td><a class="trace-link" href="02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a>, <a class="trace-link" href="02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a></td>
+</tr>
+<tr>
+<td>S4-02</td>
+<td><code>stats/paired.py</code> (McNemar exact/χ² + seeded paired bootstrap)</td>
+<td><a class="trace-link" href="02-stories/sprint-4/S4-02.html#fr-002" data-trace-id="FR-002" aria-label="Trace FR-002 — / NFR-002)">FR-002</a> (measure), <a class="trace-link" href="02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a></td>
+</tr>
+<tr>
+<td>S4-03</td>
+<td><code>stats/calibration.py</code> (ECE/Brier/reliability per entity class)</td>
+<td><a class="trace-link" href="02-stories/sprint-4/S4-03.html#fr-005" data-trace-id="FR-005" aria-label="Trace FR-005 — / NFR-008)">FR-005</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-008" data-trace-id="NFR-008" aria-label="Trace NFR-008 — ECE ≤0">NFR-008</a></td>
+</tr>
+<tr>
+<td>S4-04</td>
+<td><code>reporting/language_power.py</code> (per-language + language×type power table)</td>
+<td><a class="trace-link" href="02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a></td>
+</tr>
+<tr>
+<td>S4-05</td>
+<td><code>reporting/viz.py</code> (reliability/Pareto/heatmap/Sankey/coverage-risk) + <code>[viz]</code> extra</td>
+<td><a class="trace-link" href="02-stories/sprint-4/S4-03.html#fr-005" data-trace-id="FR-005" aria-label="Trace FR-005 — / NFR-008)">FR-005</a>, <a class="trace-link" href="02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a>, <a class="trace-link" href="02-stories/sprint-3/S3-06.html#fr-006" data-trace-id="FR-006" aria-label="Trace FR-006 — 7. Acceptance criteria (G/W/T from FR-006)">FR-006</a></td>
+</tr>
+</tbody></table>
+<h3>S4 — verification + notes</h3>
+<ul>
+<li><strong>Tests:</strong> <code>pytest</code> → <strong>211 passed, 1 skipped</strong> (the <code>anthropic</code>-absent contract skip), 0 regressions. <strong>Every stats+reporting module ≥85% line</strong> (power_table 100%, intervals 87%, calibration 96%, paired 92%, viz 96%, language_power 97%); sprint coverage-hardening <code>243ba63</code> lifted power_table.py 74%→100% (<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a> reporting completion) + fixed the <code>fr_005</code> token.</li>
+<li><strong><a class="trace-link" href="02-stories/sprint-4/S4-03.html#fr-005" data-trace-id="FR-005" aria-label="Trace FR-005 — / NFR-008)">FR-005</a> COMPLETE</strong> across S4-03 (ECE/Brier/reliability) + S4-05 (reliability diagram + abstention coverage-risk curve — the facet flagged open at the S4-03 gate).</li>
+<li><strong><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-008" data-trace-id="NFR-008" aria-label="Trace NFR-008 — ECE ≤0">NFR-008</a> honesty:</strong> ECE≤0.05 is a REFERENCE reported via <code>meets_reference</code>, NEVER a submitter gate (a high-ECE input returns normally). <strong><a class="trace-link" href="02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a>:</strong> every CI carries a named method (Wilson/Clopper-Pearson/paired-bootstrap/McNemar). <strong><a class="trace-link" href="02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>:</strong> matplotlib lazy behind <code>[viz]</code>; <code>import reporting</code> succeeds without it.</li>
+<li><strong>S4-04 recovery:</strong> the executor was interrupted at a long-run boundary mid-cycle (RED+GREEN committed, tests passing); the orchestrator finished the REFACTOR (<code>b4e0335</code>, annotation-only mypy fix) + the REVIEW transition. No work lost.</li>
+<li><strong>S-PWR guardrail HELD:</strong> <code>eval_lattice.json</code> (730 cells) untouched; tags intact; reporters read NO corpus (take <code>(lattice, observed_counts)</code> as args).</li>
+<li><strong>Honest status:</strong> <code>provisional_status: AGENT_SIMULATED</code> — real-CI Pass-2 owed at Stage 5.</li>
+</ul>
+<h2>S5 — Exports/CLI (<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-12" data-trace-id="DC-12" aria-label="Trace DC-12">DC-12</a>) + Compliance end-state bundle (<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-11" data-trace-id="DC-11" aria-label="Trace DC-11">DC-11</a>) + Doc-drift (<a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a>) (DONE 2026-05-30)</h2>
+<p>7 stories, strict TDD, every story gate + the S5 sprint gate APPROVE. Signoff <code>SO-04-s5</code>. <strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> fully closed</strong>; <strong><a class="trace-link" href="02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a></strong>, <strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-021" data-trace-id="FR-021" aria-label="Trace FR-021 — AGENT_SIMULATED">FR-021</a></strong>, <strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-022" data-trace-id="FR-022" aria-label="Trace FR-022 — 2026-05-30 FR-022, NFR-012 AGENT SIMULATED AGENT SIMULATED…">FR-022</a>/gov-02</strong>, <strong><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a></strong> closed.</p>
+<table>
+<thead>
+<tr>
+<th>Story</th>
+<th>Module(s)</th>
+<th>Closes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S5-01</td>
+<td><code>compliance/crosswalk.py</code> (5 legally-distinct regime columns; HIPAA SH/ED)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-022" data-trace-id="FR-022" aria-label="Trace FR-022 — 2026-05-30 FR-022, NFR-012 AGENT SIMULATED AGENT SIMULATED…">FR-022</a> / gov-02</td>
+</tr>
+<tr>
+<td>S5-02</td>
+<td><code>distribution/parquet_export.py</code> (streaming; N <code>reg_*</code> cols; fixes v1.3.0 blob-flatten)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a></td>
+</tr>
+<tr>
+<td>S5-03</td>
+<td><code>distribution/{croissant,dataset_card}.py</code> (Croissant 1.0 validate-AND-load; counts from metadata.json)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <strong><a class="trace-link" href="02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a></strong></td>
+</tr>
+<tr>
+<td>S5-04</td>
+<td><code>distribution/{conll_export,spacy_export}.py</code> + <code>integrations/conll_format.py</code> (CoNLL BIO/BILOU thin-wrap; spaCy DocBin lazy)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a></td>
+</tr>
+<tr>
+<td>S5-05</td>
+<td><code>cli.py</code> + <code>[project.scripts] pii-anon</code> (5 thin verbs; power gate ON; no business logic)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> (DX-03) — <strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> fully closed</strong></td>
+</tr>
+<tr>
+<td>S5-06</td>
+<td><code>compliance/end_state_bundle.py</code> (DPIA-input; anon/pseudo SEPARATE; non-strippable disclaimer)</td>
+<td><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-021" data-trace-id="FR-021" aria-label="Trace FR-021 — AGENT_SIMULATED">FR-021</a></strong>, <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></td>
+</tr>
+<tr>
+<td>S5-07</td>
+<td>README/DATASHEET/COMPARISON/TAXONOMY/MIGRATION/CHANGELOG/<code>__init__</code> + <code>tests/test_doc_drift.py</code></td>
+<td><strong><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a></strong></td>
+</tr>
+</tbody></table>
+<h3>S5 — verification + notes</h3>
+<ul>
+<li><strong>Tests:</strong> <code>pytest</code> → <strong>290 passed, 1 skipped</strong> (the <code>anthropic</code>-absent contract skip), 0 regressions. Proactive sprint coverage-hardening <code>35faf3a</code> lifted the 4 sub-85% modules (cli 71→93%, integrations/conll_format 78→98%, croissant 79→99%, parquet_export 81→99%) — <strong>every new S5 module ≥85% line</strong>; coverage source extended to compliance/distribution/reporting/integrations/cli. Also fixed the pre-existing <code>__init__.py</code> <code>list[dict]</code> type-arg.</li>
+<li><strong><a class="trace-link" href="02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a> (the literal threshold):</strong> <code>validate_croissant()</code> is an always-on pure-stdlib schema-shape check; the described Parquet loads via HF <code>datasets</code> with the five <code>reg_*</code> columns intact (genuinely RAN — pyarrow + datasets present). Full <code>mlcroissant</code> spec-conformance is skip-if-absent → Pass-2 CI image.</li>
+<li><strong>gov-02 end-to-end:</strong> crosswalk emits N legally-distinct typed regime columns (HIPAA split SH/ED) → Parquet writes them as N <code>reg_*</code> columns (no flattened blob) → Croissant recordSet declares them. No merged verdict.</li>
+<li><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-021" data-trace-id="FR-021" aria-label="Trace FR-021 — AGENT_SIMULATED">FR-021</a> separation (<a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>/AX-004):</strong> <code>EndStateBundle</code> keeps anon (<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-06" data-trace-id="DC-06" aria-label="Trace DC-06">DC-06</a> Pareto) + pseudo (<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-08" data-trace-id="DC-08" aria-label="Trace DC-08">DC-08</a> integrity) evidence in SEPARATE keys — no merged field, no <code>__float__</code>, import-time structural assert; <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> + EDPB Art 4(5) caveats travel unstripped; non-strippable DPIA disclaimer.</li>
+<li><strong>CLI:</strong> 5 thin dispatch verbs; <code>export</code>→distribution (lazy), <code>validate</code>/<code>generate</code>/<code>score</code>→trusted repo scripts via subprocess (fixed paths, no <code>shell=True</code>), <code>leaderboard</code>→graceful-until-S6. The <code>validate</code> verb NEVER injects <code>--no-power-gate</code> (<a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> gate stays ON, test-asserted); <code>generate</code> never targets the frozen corpus.</li>
+<li><strong><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> (doc-drift):</strong> 7 docs at canonical 575,604 / 2,486,438 / 63 / 9 / 60 / 7 / v2.0.0; the <code>159,891 (100%)</code> reframed to the 27.8% Tier-3 eval substrate; the ~72%-enrichment + synthetic≠external-validity (§7 sentence) + train-vs-eval caveats surfaced; MIGRATION v1.3.0→v2.0.0 section; CHANGELOG S-PWR entry; TAXONOMY body = the 63 <code>ENTITY_REGISTRY</code> types. <code>tests/test_doc_drift.py</code> pins zero current-state drift; competitor figures only the two authorized deltas + a sourcing note; history preserved.</li>
+<li><strong><a class="trace-link" href="02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a> purity:</strong> force-blocking pyarrow + mlcroissant + spacy + datasets at import → <code>distribution</code> + <code>cli</code> + <code>compliance</code> import OK; each lazy guard raises the correctly-named extra <code>RuntimeError</code>; per-module AST purity guards green for all 7 modules.</li>
+<li><strong>Guardrail HELD:</strong> <code>eval_lattice.json</code> (730 cells) frozen at <code>47c3a8f</code> (<code>lattice --check</code> OK); corpus <code>.jsonl.gz</code> + <code>metadata.json</code> untouched; tags <code>v1.3.0</code> + <code>pre-lattice-enrichment</code> intact.</li>
+<li><strong>Honest status:</strong> <code>provisional_status: AGENT_SIMULATED</code> — real-CI Pass-2 owed at Stage 5.</li>
+</ul>
+<h2>S6 — Leaderboard &amp; governance (<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-13" data-trace-id="DC-13" aria-label="Trace DC-13">DC-13</a>) (DONE 2026-05-31)</h2>
+<p>5 stories, every story gate + the S6 sprint gate APPROVE. Signoff <code>SO-05-s6</code>. All pure-stdlib (json + hashlib; no hosted service in v1 — the governance seam). <strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>/025/026 + <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a> verified.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Story</th>
+<th>Module / doc</th>
+<th>Closes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S6-01</td>
+<td><code>leaderboard/store.py</code> (append-only hash-chained held-out store; gold never stored; <code>verify_chain</code>)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+</tr>
+<tr>
+<td>S6-02</td>
+<td><code>leaderboard/policy.py</code> (opt-in publish + anti-gaming: rate-limit / rotation epoch / contamination)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+</tr>
+<tr>
+<td>S6-03</td>
+<td><code>leaderboard/coi.py</code> (gov-03 CoIRecord: non-strippable no-pre-pub attestation + recusal)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+</tr>
+<tr>
+<td>S6-04</td>
+<td><code>GOVERNANCE.md</code> (charter + aspirational/AGENT_SIMULATED roster + CoI naming pii-anon-core + bus-factor=1)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+</tr>
+<tr>
+<td>S6-05</td>
+<td><code>CONTRIBUTING.md</code> (PR template + CC0 checklist + synthetic-only provenance + deprecation/erratum + semver)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-025" data-trace-id="FR-025" aria-label="Trace FR-025 — AGENT_SIMULATED">FR-025</a></td>
+</tr>
+</tbody></table>
+<h3>S6 — verification + notes</h3>
+<ul>
+<li><strong>Tests:</strong> <code>pytest</code> → <strong>325 passed, 1 skipped</strong> (the <code>anthropic</code>-absent contract skip), 0 regressions. The leaderboard package was 99% line out of the gate (store 97%, policy/coi/<strong>init</strong> 100%) — <strong>no coverage-hardening needed</strong>; coverage source extended to add <code>pii_anon_datasets.leaderboard</code>.</li>
+<li><strong>Held-out store (<a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>):</strong> append-only, event-sourced (submitted/scored/published), sha256 content-hash chained (<code>prev_hash</code> links, <code>GENESIS_HASH</code> first); <code>verify_chain()</code> detects any line mutation (tamper-EVIDENT, honestly framed). Held-out GOLD is NEVER stored — <code>append</code> rejects {gold,gold_labels,held_out,held_out_labels,answers,ground_truth} before any write. Deterministic: seq-ordered, NO clock/RNG (no time/datetime).</li>
+<li><strong>Anti-gaming policy (<a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a>):</strong> opt-in publish (a disallowed submission is never published) + rate-limit (per submitter per epoch) + held-out rotation epoch (stale-epoch rejected) + contamination/duplicate — each a distinct reason; read-only over the store.</li>
+<li><strong>gov-03 recusal (<a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a>):</strong> <code>CoIRecord</code> carries a non-strippable <code>NO_PREPUB_ATTESTATION</code> (empty rejected) + <code>requires_recusal</code> True for maintainer / any pii-anon-core affiliation (lower+strip+substring, evasion-resistant); <code>as_dict()</code> rides in a <code>submitted</code> event.</li>
+<li><strong>Epistemic honesty (S6-04):</strong> GOVERNANCE.md flags the advisory roster ASPIRATIONAL / AGENT_SIMULATED (no fabricated members) + states bus-factor=1 plainly; every CoI/neutrality claim maps to real code. The two governance docs (S6-04/05) were authored directly (orchestrator RED→GREEN, a property test pins each) + reviewed jointly in one combined 5-reviewer gate (<code>_reviews/story/S6-04-05/</code>).</li>
+<li><strong>Performance (advisory):</strong> the store&#39;s O(N²)-over-appends + policy&#39;s O(N)-per-eval are single-digit-ms at the intended tens/hundreds-submission seam scale; an indexed/append-without-reread hosted leaderboard is a v1.x hardening.</li>
+<li><strong>Guardrail HELD:</strong> <code>eval_lattice.json</code> (730 cells) frozen at <code>47c3a8f</code>; corpus <code>.jsonl.gz</code> + <code>metadata.json</code> + <code>MANIFEST.sha256</code> untouched; tags <code>v1.3.0</code> + <code>pre-lattice-enrichment</code> intact; <a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> doc-drift still 0.</li>
+<li><strong>Honest status:</strong> <code>provisional_status: AGENT_SIMULATED</code> — real-CI Pass-2 owed at Stage 5.</li>
+</ul>
+<h2>S7 — Extension seams (<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-10" data-trace-id="DC-10" aria-label="Trace DC-10">DC-10</a>/14/01, v1.1) (DONE 2026-05-31) — closes Development</h2>
+<p>5 stories, every story gate + the S7 sprint gate APPROVE. Signoff <code>SO-06-s7</code>. All pure-stdlib v1.1 seams with non-strippable scope-honesty guards. <strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a> fully covered</strong>; <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> + <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016 v1 SEAMS verified (real-data correlation + full coref/qid scoring = Pass-2); <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020 ROADMAP.</p>
+<table>
+<thead>
+<tr>
+<th>Story</th>
+<th>Module / doc</th>
+<th>Closes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>S7-01</td>
+<td><code>scoring/adversary/oracle.py</code> (PII-recognition oracle; &quot;never agent-leakage scoring&quot;)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a></td>
+</tr>
+<tr>
+<td>S7-02</td>
+<td><code>scoring/adversary/payloads.py</code> (INERT injection payloads; base64/ocr/zero-width faithful transforms)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a></td>
+</tr>
+<tr>
+<td>S7-03</td>
+<td><code>validation/correlation.py</code> (Kendall/Spearman bootstrap + Bland-Altman; <code>RealDataAbsent</code> never-fabricate sentinel)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> (SEAM)</td>
+</tr>
+<tr>
+<td>S7-04</td>
+<td><code>subsets/slices.py</code> (coreference + quasi-id loaders; ~72%-formulaic v1.1 low-power caveat)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016 (SEAM)</td>
+</tr>
+<tr>
+<td>S7-05</td>
+<td><code>ROADMAP.md</code> (<a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020 documented as v1.x, NOT shipped)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020 roadmap</td>
+</tr>
+</tbody></table>
+<h3>S7 — verification + notes</h3>
+<ul>
+<li><strong>Tests:</strong> <code>pytest</code> → <strong>346 passed, 1 skipped</strong>, 0 regressions. Every new S7 module ≥85% line (oracle 94%, payloads 98%, slices 97%, correlation 94%) out of the gate — <strong>no coverage-hardening needed</strong>; coverage source extended (<code>+validation</code>, <code>+subsets</code>); overall TOTAL 94%.</li>
+<li><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a> FULLY covered</strong> (oracle + payloads). The &quot;never marketed as agent-leakage scoring&quot; scope guard is type-enforced + stress-verified non-droppable; the payloads are INERT synthetic fixtures (3 committed FAITHFUL transforms base64/ocr/zero-width; benign carriers; no weaponized content).</li>
+<li><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> never-fabricate (S7-03):</strong> <code>correlate()</code> returns a <code>RealDataAbsent</code> sentinel when real i2b2/TAB data is absent — the short-circuit precedes any result construction (non-bypassable); the synthetic→real transfer delta is the binding Stage-5 Pass-2 item. Bootstrap is seed-deterministic via a LOCAL <code>random.Random(seed)</code> (mirrors <code>stats/paired.py</code>).</li>
+<li><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016 (S7-04):</strong> coreference + quasi-id slice loaders ship with a non-strippable ~72%-formulaic v1.1 low-power caveat; the full scoring is v1.1/Pass-2.</li>
+<li><strong>Parallel execution:</strong> S7-03 + S7-04 executors ran concurrently on disjoint dirs (validation/ vs subsets/) — interleaved commits, no conflict; both deferred the pyproject coverage-source edit to this close (landed).</li>
+<li><strong>Guardrail HELD:</strong> the full S7 diff is NEW/additive only; corpus / <code>eval_lattice.json</code> (frozen at <code>47c3a8f</code>) / tags untouched; <a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> doc-drift still 0.</li>
+<li><strong>Honest status:</strong> <code>provisional_status: AGENT_SIMULATED</code> — real-CI + real-data Pass-2 owed at Stage 5.</li>
+</ul>
+<hr>
+<h2>Development stage COMPLETE (2026-05-31)</h2>
+<p>All 8 development sprints DONE (S1 foundations · S2 v2.0.0 migration · S-PWR statistical power · S3 scorer trio (M6 closed) · S4 stats/reporting · S5 exports/CLI + compliance + doc-drift · S6 leaderboard + governance · S7 extension seams). <strong>346 tests / 1 skip</strong>; every scoring+stats+reporting+compliance+distribution+leaderboard+validation+subsets module ≥85% line. All story + sprint gates APPROVE; signoffs SO-01-spwr … SO-06-s7. Frozen-corpus guardrails held throughout (<code>eval_lattice.json</code> 730 cells @ <code>47c3a8f</code>; tags <code>v1.3.0</code> + <code>pre-lattice-enrichment</code>). <strong>Handoff to Stage 5 Testing:</strong> all work <code>AGENT_SIMULATED</code>; the Pass-2 roster (<a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> synthetic→real transfer; <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016 full scoring; design never real-user-trialed [R10 10-persona simulated]; ~72% formulaic-template monoculture) carries forward as non-strippable caveats. Expected release verdict: <strong>SHIP-WITH-CAVEATS</strong>.</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>04-development/development-log.md</code> ·
+  content-hash <code>50300cc51aed</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

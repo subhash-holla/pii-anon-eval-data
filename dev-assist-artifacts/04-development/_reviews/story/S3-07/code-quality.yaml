@@ -1,0 +1,112 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S3-07
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S3-07-01
+    severity: MINOR
+    location: src/pii_anon_datasets/scoring/pseudonymization.py:92
+    description: |
+      `ThreatModel.has` is a public concrete method (not a Protocol stub, not `__dunder__`)
+      and carries no docstring. Per contributor-readiness policy (NFR-005/AX-004 flavour),
+      every public surface item touched by the story should have a pydoc entry. The method
+      is self-evident but technically violates the "every public `pub`/`export` has docs"
+      check (pattern 4 of 15). It is a one-liner (`return capability in self.capabilities`)
+      whose intent is clear from the class docstring, so this is non-blocking MINOR.
+    suggested_resolution: |
+      Add a one-line docstring, e.g.:
+        def has(self, capability: AttackerCapability) -> bool:
+            """Return True if *capability* is in this model's enumerated capability set."""
+            return capability in self.capabilities
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-07.md#10
+
+  - id: code-quality-S3-07-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/scoring/pseudonymization.py:115-117
+    description: |
+      `Pseudonymizer.pseudonymize` and `Pseudonymizer.reverse` are Protocol stub methods
+      (body is `...`). They carry no individual docstrings; their semantics are documented
+      in the class-level docstring on `Pseudonymizer`. For `@runtime_checkable Protocol`
+      stubs this is idiomatic Python — the class docstring is the canonical place for
+      member semantics. Noted for completeness; not a blocking issue.
+    suggested_resolution: |
+      No required change. Optionally add inline one-liners to each stub body for IDE
+      tooltips:
+        def pseudonymize(self, value: str, entity_type: str, *, context_key: str) -> str:
+            """Map *value* (of *entity_type*, scoped to *context_key*) to its pseudonym."""
+            ...
+        def reverse(self, pseudonym: str, entity_type: str, *, secret: object) -> str | None:
+            """Return original plaintext for *pseudonym* iff *secret* is the held key; else None."""
+            ...
+
+  - id: code-quality-S3-07-03
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/scoring/pseudonymization.py (overall)
+    description: |
+      `mypy --strict --follow-imports=silent` exits non-zero due to the pre-existing
+      `reidentification.py:69` `dict` missing type-params error (foundation commit `75e9eed`,
+      predates S3-07; not in §8 owned files). Under `--follow-imports=skip` (which scopes
+      mypy to only the target file), `pseudonymization.py` reports zero diagnostics. The
+      new file itself is fully mypy-strict clean. The pre-existing error is out of scope for
+      S3-07 and was correctly not touched (scope discipline preserved). Noted per executor's
+      deviation §1.
+    suggested_resolution: |
+      Fix the pre-existing nit in a separate chore commit (S3-04 owned file):
+        # reidentification.py:69
+        def as_dict(self) -> dict[str, object]:   # was: dict (bare)
+      This should be tracked as a standalone follow-up, NOT folded into S3-07.
+
+notes: |
+  TDD discipline verified (strict mode):
+    RED  49fbfba — test module created; collection ImportError because pseudonymization.py
+         did not yet exist; all 10 tests failing. RED commit contains NO production code.
+    GREEN 0ffedd8 — pseudonymization.py + __init__.py export created; 10/10 pass.
+    REFACTOR 0e926420 — ruff/mypy cleanup only; zero behavior change; 143/143 pass.
+  Topological order confirmed: RED → GREEN → REFACTOR is the complete feature sequence
+  with no production code preceding tests.
+
+  Scope discipline: the S3-07 diff touches exactly 4 paths —
+    dev-assist-artifacts/04-development/02-stories/sprint-3/S3-07.md (story artifact, RED)
+    tests/test_pseudonymization.py (NEW — §8 owned)
+    src/pii_anon_datasets/scoring/pseudonymization.py (NEW — §8 owned)
+    src/pii_anon_datasets/scoring/__init__.py (MODIFIED — §8 owned)
+  No out-of-scope file is modified.
+
+  Tool results (re-run by this reviewer):
+    pytest tests/test_pseudonymization.py -v : 10/10 PASSED in 0.12s
+    pytest (full suite)                      : 143 passed in 1.94s (0 regressions)
+    ruff check (all owned+modified files)    : All checks passed
+    mypy --strict --follow-imports=skip pseudonymization.py : Success: no issues found
+    mypy --strict --follow-imports=silent pseudonymization.py : 1 error (pre-existing
+      reidentification.py:69 — out of S3-07 scope; pseudonymization.py itself is clean)
+
+  Key correctness checks (all PASS):
+    KeyStateSeparationResult.__post_init__ rejects empty note and whitespace-only note.
+    All dataclasses verified frozen=True via AST inspection.
+    No bare except, no print(), no mutable defaults anywhere in pseudonymization.py.
+    No typing.Any usage in pseudonymization.py.
+    All 10 test function names carry fr_NNN or nfr token.
+    Tests are deterministic (no real time/network/RNG).
+    PseudonymizationReport has no total_collisions/combined/deid/overall/utility/residual_risk
+      field (moat guarantee verified by AST + test_nfr005).
+    Import purity: no random/time/uuid/datetime/secrets; hashlib present (deterministic).
+    All public functions in pseudonymization.py carry full type annotations.
+    All public classes and the module carry docstrings.
+    ThreatModel.has is the only public concrete method missing a docstring (finding 01, MINOR).
+
+  The Pseudonymizer Protocol's `pseudonymize` and `reverse` stub methods lack individual
+  docstrings (finding 02, OBSERVATION). Protocol stubs are idiomatic Python — the class-level
+  docstring is the documented contract. Not blocking.
+
+  The bare-md5 EDPB Art 4(5) finding is correctly expressed (not hidden): keyless
+  md5(value) yields rejoinable_from_artifact_alone=True with a non-empty note citing
+  "EDPB / GDPR Art. 4(5)". The salted+keyed pseudonymizer correctly yields False.
+
+review_time_seconds: 312
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

@@ -1,0 +1,125 @@
+# Traceability reviewer — STORY gate
+reviewer: traceability
+gate: story
+story_id: S3-05
+iteration: 1
+reviewed_at: "2026-05-29"
+mode: read-only
+context_bounds_respected: true
+self_attestation: >-
+  Reviewed only the forward FR/NFR -> Story -> Test -> DC traceability chain for S3-05
+  (primary FR-008; DC-07). Did not assess test quality, idiomatic code, NFR thresholds,
+  or semantic FR validity beyond G/W/T — those are out of scope and owned by
+  code-quality / requirements-coverage / axiom-compliance / performance reviewers.
+
+verdict: APPROVE
+
+summary:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+  total: 1
+
+scope:
+  primary_requirement: FR-008
+  supporting_requirements: [AX-002, NFR-004]
+  source_dc: DC-07
+  provisional_status_story: AGENT_SIMULATED
+  provisional_status_source_dc: AGENT_SIMULATED
+  diverged_cascade_applicable: false
+  owned_files:
+    - src/pii_anon_datasets/scoring/reidentification.py   # appended (FR-008 block)
+    - src/pii_anon_datasets/scoring/__init__.py           # export
+    - tests/test_exposure_index.py                        # new
+
+checks:
+  - id: fr_exists_in_requirements
+    description: >-
+      FR-008 declared in 02-requirements/functional-requirements.md line 18 with the
+      matching G/W/T contract (deterministic exposure index explicitly labeled
+      pre-screen prior NOT RRS, AND index<->measured-RRS correlation reported).
+    status: PASS
+  - id: tests_embed_fr_token
+    description: >-
+      All 6 test functions in tests/test_exposure_index.py carry the `fr_008` token.
+      `python3 -m pytest tests/test_exposure_index.py -k fr_008 -q --co` selects 6/6
+      (file has exactly 6 `def test_` fns, all fr_008-tokened — selection is complete,
+      no fr_008 test escapes the filter). Node IDs:
+        test_fr_008_exposure_index_is_prior_not_rrs
+        test_fr_008_exposure_index_recomputes_density_transparently
+        test_fr_008_exposure_index_per_signal_transparent
+        test_fr_008_correlation_pearson_and_spearman
+        test_fr_008_correlation_n_zero_graceful
+        test_fr_008_nfr004_exposure_imports_no_nondeterminism
+    status: PASS
+  - id: tests_green
+    description: "`-k fr_008` run is 6 passed (......) on Python 3 / pytest pythonpath=src."
+    status: PASS
+  - id: docstrings_cite_fr
+    description: >-
+      The 4 public FR-008 symbols cite FR-008 in their docstrings: ExposureIndex,
+      exposure_index, IndexRRSCorrelation, correlate_index_vs_rrs (reidentification.py
+      lines 200/230/253/301); the EXPOSURE_INDEX_NOTE/exposure block header also cites it.
+    status: PASS
+  - id: contract_realized
+    description: >-
+      FR-008 contract genuinely realized: (a) deterministic exposure index labeled
+      prior-NOT-RRS — frozen ExposureIndex with NO rrs/reid_recall/reid_precision field,
+      method "behavioral-signal-density-v1", non-empty validated `note` ("NOT measured
+      RRS", "prior") sourced from module constant EXPOSURE_INDEX_NOTE, value transparently
+      RECOMPUTED via signals.compute_signal_density (poisoned precomputed scalar proven
+      ignored); (b) index<->RRS correlation reported — correlate_index_vs_rrs returns
+      IndexRRSCorrelation(pearson_r, spearman_rho, n, method) pure-stdlib.
+    status: PASS
+  - id: exposure_index_is_distinct_type_not_renamed_rrs
+    description: >-
+      ExposureIndex is a standalone @dataclass(frozen=True) (line 199) with NO inheritance
+      from RRSResult/MeasuredRRS and disjoint field set — NOT a renamed RRS. Tests assert
+      `type(idx) is ExposureIndex`, `not isinstance(idx, MeasuredRRS)`,
+      `not isinstance(idx, RRSResult)`, and {rrs,reid_recall,reid_precision} disjoint from
+      fields + absent as attributes. The load-bearing de-circularization distinction holds.
+    status: PASS
+  - id: no_name_says_x_asserts_y
+    description: >-
+      Each fr_008 test body asserts the FR-008 invariant its name advertises (prior-not-RRS
+      type/note; transparent density recompute; per-signal 6-category transparency; Pearson+
+      Spearman correlation; n=0 graceful; NFR-004/AX-002 import-purity AST guard). No
+      semantic mismatch between test name and assertions.
+    status: PASS
+  - id: dependencies_done
+    description: >-
+      §5 declares S3-01 and S3-04 must be DONE. S3-01 Status=DONE, S3-04 Status=DONE.
+      S3-04's MeasuredRRS (the correlation target) and S3-01's signals.compute_signal_density
+      / UNIQUENESS_WEIGHT are both present and imported.
+    status: PASS
+  - id: provisional_status_cascade
+    description: >-
+      Source DC-07 = AGENT_SIMULATED / not DIVERGED (design
+      03-design/06-synthesis/D-implementation-ready-design.md DC-07 row; corroborated by
+      sibling DC-07 stories S3-01/S3-02/S3-04). Story §1 metadata and §4 both show
+      AGENT_SIMULATED. Cascade consistent; DIVERGED obligations (provisional_status:DIVERGED
+      + Pass-2 §10 commitment) NOT triggered.
+    status: PASS
+  - id: traceability_matrix_row_present
+    description: >-
+      02-requirements/traceability-matrix.md UC-05 row covers FR-007, FR-008, FR-009,
+      FR-010 (NFR-007, MUST, AGENT_SIMULATED) — the FR-008 forward-trace row exists and its
+      AGENT_SIMULATED status matches the story's provisional_status.
+    status: PASS
+
+findings:
+  - id: S3-05-TRACE-OBS-01
+    severity: OBSERVATION
+    pattern: 14  # examples-and-tests audit (FR claimed lacks an example pair)
+    title: "No runnable example pair for FR-008 exposure_index/correlate_index_vs_rrs yet"
+    detail: >-
+      FR-008 is fully test-evidenced (6 fr_008 tests, GREEN) but no examples/ doc pair
+      demonstrates exposure_index() + correlate_index_vs_rrs() end-to-end. Not required at
+      the STORY gate (no SHOWSTOPPER/MAJOR); flagged for the S8 contributor-readiness /
+      examples-and-tests audit so the prior-NOT-RRS framing is shown, not just asserted.
+    location: examples/ (absent for FR-008)
+    blocking: false
+
+approve_condition: "Zero MAJOR-or-above findings — satisfied (0 SHOWSTOPPER, 0 CATASTROPHIC, 0 MAJOR)."

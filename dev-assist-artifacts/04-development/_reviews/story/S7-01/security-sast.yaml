@@ -1,0 +1,76 @@
+# Canonical Reviewer Output — security-sast @ STORY gate — S7-01
+reviewer: dev-assist-development-security-sast
+
+scope_id: S7-01
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY gate, S7-01 (PII-recognition oracle, iteration 1) — light surface, pure-stdlib
+  value object over a record's synthetic gold annotations. No domain packs active
+  (developer-assistant.yaml: domain_packs: []; project encodes no-real-PII / determinism
+  as project-authored axioms), so no security-sast pack-extension catalog merged.
+
+  Bounded surface reviewed (story diff 132f760^..HEAD = exactly the 4 owned files):
+    - src/pii_anon_datasets/scoring/adversary/oracle.py  (NEW, +83)
+    - src/pii_anon_datasets/scoring/adversary/__init__.py (MODIFIED, +17 — additive exports only)
+    - tests/test_oracle.py                                (NEW, +106)
+    - dev-assist-artifacts/.../sprint-7/S7-01.md           (story)
+
+  Per-pattern scan (15-pattern catalog), all NEGATIVE:
+    - Egress / network: NONE. Import surface = {__future__, collections.abc, dataclasses}.
+      No socket/urllib/requests/http; no new egress route to declare. (cf. patterns 7, 14)
+    - Secrets / hard-coded credentials: NONE. No api-key/token/secret/private-key/BEGIN-block
+      shapes (regex-scanned). (pattern 8)
+    - Unsafe deserialization / dynamic exec: NONE. No pickle/marshal/shelve/yaml.load, no
+      eval/exec/compile, no __import__/importlib/getattr-dispatch, no ctypes. (relevant to
+      the "no pickle/exec/eval" gate ask)
+    - SQL/NoSQL injection: N/A — no query construction; no DB access. (pattern 9)
+    - Weak crypto (md5/sha1): NONE introduced. (pattern 15)
+    - Supply-chain: ZERO new dependencies. No pyproject/requirements/lock delta in the diff;
+      no git="..."-pinned dep; no denied-license dep. cargo/pnpm/pip-audit N/A (no manifest
+      change). (patterns 5, 10, 11)
+    - Capability/trust-boundary/HSM/unsafe/composition-root: N/A for this Python benchmark
+      repo — no Rust capability registry, no HSM port, no `unsafe`, no composition-root crate
+      ban in scope. The new `pub`-equivalent surface (recognize / recognize_span / value
+      objects) is a pure read-projection of caller-supplied data, granting no capability.
+      (patterns 1, 2, 3, 4, 6, 12, 13)
+
+  Real-PII surface (AX-001): the oracle performs NO I/O — no FS read, no network, no
+  load_dataset call. recognize()/recognize_span() echo ONLY the record's own
+  annotation fields (start/end/entity_type/text via record.get("annotations")), which are
+  synthetic gold supplied by the caller. No real-PII ingress path exists; the module cannot
+  source, persist, or transmit real PII. Output stays in-process (frozen value objects /
+  as_dict()); nothing is logged or written.
+
+  Non-strippable "NEVER agent-leakage scoring" disclaimer — scope-misrepresentation /
+  honesty control (the security-adjacent ask). VERIFIED it cannot be silently dropped via a
+  live 8-case stress test (all PASS):
+    1. default-constructed verdict carries ORACLE_DISCLAIMER (cannot be implicitly absent);
+    2. empty string -> ValueError (__post_init__);
+    3. whitespace-only -> ValueError (the .strip() guard, not just truthiness);
+    4. None -> rejected (ValueError/AttributeError — not swallowed);
+    5. frozen dataclass -> post-construction mutation to drop the disclaimer blocked;
+    6. as_dict() always serializes the disclaimer (the scope claim travels with the payload);
+    7. disclaimer text asserts the required out-of-scope tokens (recognition / never /
+       agent-leakage / fr-017);
+    8. recognition-only — no score()/leak()/measure_leak()/leakage_rate computation surface
+       exists; the only "agent-leakage"/"harness" strings are the explicit OUT-OF-SCOPE
+       statements in the disclaimer + docstring.
+  The guard (module constant + non-defaulted-validated field + __post_init__ + frozen) is a
+  defensible non-strippable control: a consumer cannot construct an OracleVerdict that
+  emits-without-disclaiming, and cannot mutate one to strip it. This holds the FR-017
+  "never marketed as agent-leakage scoring" scope boundary at the type level.
+
+  Determinism (AX-002): no random/time/datetime/uuid/secrets import — consistent with the
+  no-clock/no-RNG claim (corroborates, not security-blocking).
+
+  No SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR / OBSERVATION findings. Clean.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

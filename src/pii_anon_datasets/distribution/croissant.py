@@ -48,16 +48,19 @@ DATA_LICENSE = "https://creativecommons.org/publicdomain/zero/1.0/"
 _CROISSANT_CONTEXT: dict[str, Any] = {
     "@language": "en",
     "@vocab": "https://schema.org/",
-    "sc": "https://schema.org/",
-    "cr": "http://mlcommons.org/croissant/",
-    "dct": "http://purl.org/dc/terms/",
-    "conformsTo": "dct:conformsTo",
     "citeAs": "cr:citeAs",
     "column": "cr:column",
+    "conformsTo": "dct:conformsTo",
+    "cr": "http://mlcommons.org/croissant/",
+    "rai": "http://mlcommons.org/croissant/RAI/",
     "data": {"@id": "cr:data", "@type": "@json"},
     "dataType": {"@id": "cr:dataType", "@type": "@vocab"},
+    "dct": "http://purl.org/dc/terms/",
+    "equivalentProperty": "cr:equivalentProperty",
+    "examples": {"@id": "cr:examples", "@type": "@json"},
     "extract": "cr:extract",
     "field": "cr:field",
+    "fileProperty": "cr:fileProperty",
     "fileObject": "cr:fileObject",
     "fileSet": "cr:fileSet",
     "format": "cr:format",
@@ -66,8 +69,6 @@ _CROISSANT_CONTEXT: dict[str, Any] = {
     "jsonPath": "cr:jsonPath",
     "key": "cr:key",
     "md5": "cr:md5",
-    "sha256": "sc:sha256",  # schema.org term (mlcroissant maps sha256 -> SDO.sha256, NOT cr:)
-    "datePublished": "sc:datePublished",  # schema.org term ("citeAs" already mapped above)
     "parentField": "cr:parentField",
     "path": "cr:path",
     "recordSet": "cr:recordSet",
@@ -75,6 +76,9 @@ _CROISSANT_CONTEXT: dict[str, Any] = {
     "regex": "cr:regex",
     "repeated": "cr:repeated",
     "replace": "cr:replace",
+    "samplingRate": "cr:samplingRate",
+    "sc": "https://schema.org/",
+    "separator": "cr:separator",
     "source": "cr:source",
     "subField": "cr:subField",
     "transform": "cr:transform",
@@ -89,6 +93,32 @@ _CORE_FIELDS: tuple[tuple[str, str], ...] = (
     ("language", "sc:Text"),
     ("domain", "sc:Text"),
     ("primary_dimension", "sc:Text"),
+)
+
+# v2.1.0 honesty fields: top-level scalar + nested JSON paths within JSON-encoded blob columns.
+# reg_hipaa_phi_present is a top-level scalar column (passes through _row unchanged).
+# The nested fields (legal_category, residual_quasi_identifier, _caveat, token_overlap_jaccard_*,
+# exposure_index_prior) are embedded in JSON-encoded string columns (context_preservation,
+# tier3_evaluation, privacy_risk) — declared here for machine-discoverability of the honesty layer.
+_HONESTY_SCALAR_FIELDS: tuple[tuple[str, str], ...] = (
+    ("reg_hipaa_phi_present", "sc:Text"),
+    ("art9_special_categories", "sc:Text"),  # B-5: per-record GDPR Art-9 special-category stratification key
+)
+
+# Nested honesty fields: (name, dataType, parent_column, json_path)
+_HONESTY_NESTED_FIELDS: tuple[tuple[str, str, str, str], ...] = (
+    ("context_preservation.legal_category", "sc:Text", "context_preservation", "$.legal_category"),
+    ("context_preservation.residual_quasi_identifier", "sc:Text", "context_preservation", "$.residual_quasi_identifier"),
+    ("context_preservation._caveat", "sc:Text", "context_preservation", "$._caveat"),
+    ("context_preservation.utility_metrics.token_overlap_jaccard_masked", "sc:Float", "context_preservation", "$.utility_metrics.token_overlap_jaccard_masked"),
+    ("context_preservation.utility_metrics.token_overlap_jaccard_pseudonymized", "sc:Float", "context_preservation", "$.utility_metrics.token_overlap_jaccard_pseudonymized"),
+    ("context_preservation.utility_metrics.token_overlap_jaccard_llm_sanitized", "sc:Float", "context_preservation", "$.utility_metrics.token_overlap_jaccard_llm_sanitized"),
+    ("context_preservation.utility_metrics._caveat", "sc:Text", "context_preservation", "$.utility_metrics._caveat"),
+    ("tier3_evaluation.exposure_index_prior", "sc:Float", "tier3_evaluation", "$.exposure_index_prior"),
+    ("tier3_evaluation._caveat", "sc:Text", "tier3_evaluation", "$._caveat"),
+    ("privacy_risk._caveat", "sc:Text", "privacy_risk", "$._caveat"),
+    ("privacy_risk.qid_type_count_risk_label", "sc:Integer", "privacy_risk", "$.qid_type_count_risk_label"),
+    ("context_preservation.coherence_assumed", "sc:Boolean", "context_preservation", "$.coherence_assumed"),  # B-6
 )
 
 # The single FileObject @id / RecordSet @id — fixed literals (deterministic).
@@ -117,6 +147,30 @@ def _field(name: str, data_type: str) -> dict[str, Any]:
         "source": {
             "fileObject": {"@id": _FILE_OBJECT_ID},
             "extract": {"column": name},
+        },
+    }
+
+
+def _nested_field(name: str, data_type: str, parent_column: str, json_path: str) -> dict[str, Any]:
+    """One Croissant ``cr:Field`` for a v2.1.0 honesty field nested inside a JSON-encoded blob column.
+
+    ``source`` extracts the parent Parquet ``column`` and then applies a ``transform`` with ``jsonPath``
+    to reach the nested field — declared for machine-discoverability of the honesty layer even though
+    the field is embedded in a JSON-encoded string column rather than a standalone Parquet column.
+    Per the Croissant model, ``column`` / ``fileProperty`` / ``jsonPath`` are mutually-exclusive
+    ``extract`` alternatives, so JSON-path descent into a column is a ``transform`` on the extracted
+    column — NOT a second key inside ``extract`` (mlcroissant rejects an ``extract`` carrying both).
+    Deterministic and pure.
+    """
+    return {
+        "@type": "cr:Field",
+        "@id": f"{_RECORD_SET_ID}/{name.replace('.', '/')}",
+        "name": name,
+        "dataType": data_type,
+        "source": {
+            "fileObject": {"@id": _FILE_OBJECT_ID},
+            "extract": {"column": parent_column},
+            "transform": {"jsonPath": json_path},
         },
     }
 
@@ -182,6 +236,12 @@ def build_croissant(
     md = dict(metadata) if metadata is not None else load_metadata()
     fields = [_field(name, dtype) for name, dtype in _CORE_FIELDS]
     fields += [_field(f"reg_{regime}", "sc:Text") for regime in REGIMES]
+    # v2.1.0 honesty fields: top-level scalar + nested JSON-path fields for the honesty layer.
+    fields += [_field(name, dtype) for name, dtype in _HONESTY_SCALAR_FIELDS]
+    fields += [
+        _nested_field(name, dtype, parent, jpath)
+        for name, dtype, parent, jpath in _HONESTY_NESTED_FIELDS
+    ]
     return {
         "@context": _CROISSANT_CONTEXT,
         "@type": "sc:Dataset",

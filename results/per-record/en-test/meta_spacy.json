@@ -1,0 +1,16 @@
+{
+  "status": "scored",
+  "model_id": "en_core_web_lg",
+  "deterministic": true,
+  "build_seconds": 2.3,
+  "wall_seconds": 381.2,
+  "record_errors": 0,
+  "n_records": 31048,
+  "n_gold": 201880,
+  "n_pred": 127798,
+  "n_tp": 59308,
+  "precision": 0.46407612012707555,
+  "recall": 0.29377848226669306,
+  "f1": 0.35979349547133865,
+  "f2": 0.31704725024002534
+}

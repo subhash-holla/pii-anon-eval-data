@@ -13,6 +13,7 @@ Usage:
 import argparse
 import gzip
 import hashlib
+import importlib.util as _il
 import json
 import os
 import re
@@ -257,7 +258,7 @@ SENSITIVITY_MAP: dict[str, str] = {
     "AGE": "quasi_identifier",
     "GENDER": "quasi_identifier",
     "NATIONALITY": "quasi_identifier",
-    "ETHNICITY": "quasi_identifier",
+    "ETHNICITY": "sensitive_attribute",  # GDPR Art. 9 racial/ethnic origin
     "LOCATION_NAME": "quasi_identifier",
     "BUILDING_NAME": "quasi_identifier",
     "ORGANIZATION_NAME": "quasi_identifier",
@@ -353,23 +354,12 @@ LANGUAGE_FAMILY_MAP: dict[str, str] = {
     "tl": "Austronesian", "ms": "Austronesian", "id": "Austronesian",
 }
 
-SCRIPT_MAP: dict[str, str] = {
-    "en": "Latn", "es": "Latn", "fr": "Latn", "de": "Latn", "it": "Latn",
-    "pt": "Latn", "nl": "Latn", "pl": "Latn", "tr": "Latn", "sv": "Latn",
-    "no": "Latn", "da": "Latn", "fi": "Latn", "cs": "Latn", "ro": "Latn",
-    "hu": "Latn", "sk": "Latn", "hr": "Latn", "lt": "Latn", "et": "Latn",
-    "is": "Latn", "af": "Latn", "vi": "Latn", "mt": "Latn", "ca": "Latn",
-    "sq": "Latn", "lv": "Latn", "cy": "Latn", "sw": "Latn", "id": "Latn", "ms": "Latn",
-    "tl": "Latn", "az": "Latn", "yo": "Latn", "zu": "Latn",
-    "ru": "Cyrl", "uk": "Cyrl", "sr": "Cyrl", "bg": "Cyrl",
-    "mk": "Cyrl", "be": "Cyrl", "mn": "Cyrl", "kk": "Cyrl",
-    "ar": "Arab", "fa": "Arab", "ur": "Arab", "ps": "Arab", "ku": "Arab", "ug": "Arab",
-    "zh": "Hans", "zh-Hans": "Hans", "zh-Hant": "Hant",
-    "ja": "Jpan", "ko": "Kore",
-    "el": "Grek", "hi": "Deva", "bn": "Beng", "th": "Thai",
-    "he": "Hebr", "ka": "Geor", "hy": "Armn", "lo": "Laoo", "km": "Khmr",
-    "am": "Ethi", "si": "Sinh", "ne": "Deva",
-}
+# Derive SCRIPT_MAP from validate_contribution.LANG_SCRIPT (single source of truth, ISO 15924).
+# Languages absent from LANG_SCRIPT (e.g. Latin-script languages) fall back to "Latn" at call sites.
+_vcspec = _il.spec_from_file_location("_vc_scriptmap", Path(__file__).resolve().parent / "validate_contribution.py")
+_vc_sm = _il.module_from_spec(_vcspec)
+_vcspec.loader.exec_module(_vc_sm)
+SCRIPT_MAP: dict[str, str] = dict(_vc_sm.LANG_SCRIPT)  # language-complete ISO 15924
 
 RESOURCE_LEVEL_MAP: dict[str, str] = {
     "en": "high", "es": "high", "fr": "high", "de": "high", "it": "high",

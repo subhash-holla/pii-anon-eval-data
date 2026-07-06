@@ -1,0 +1,117 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S4-01
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S4-01-01
+    severity: OBSERVATION
+    location: tests/test_clopper_pearson.py:60-66
+    source_pack: builtin
+    description: |
+      Four `# type: ignore[arg-type]` comments in `test_fr_004_reidx02_clopper_pearson_integer_guard`
+      become `[unused-ignore]` errors when mypy runs with `--strict --follow-imports=silent` against
+      the installed package (no `py.typed` marker causes mypy to skip type analysis of the import,
+      so it never detects the intentional type violations). The same pattern is present in
+      `tests/test_intervals.py` (S1, pre-existing): lines 31 and 33 show the identical `[unused-ignore]`
+      under the same invocation. This is a project-wide pre-existing condition (no `py.typed` marker
+      in `src/`), not introduced by S4-01. The comments serve as documentation of deliberate
+      misuse-for-testing and match S1 house style exactly.
+    suggested_resolution: |
+      No action required for story-gate approval. If the team later adds a `py.typed` marker
+      (or configures mypy `ignore_missing_imports = True` in `pyproject.toml`), mypy will then
+      catch the actual type errors and the `type: ignore[arg-type]` comments will become active.
+      This is a project-wide concern to address at a future contributor-readiness or epic gate,
+      not scoped to S4-01.
+
+  - id: code-quality-S4-01-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/stats/intervals.py:28
+    source_pack: builtin
+    description: |
+      `Interval.as_dict(self) -> dict` uses bare `dict` without type parameters, which triggers
+      mypy `[type-arg]` under `--strict`. This line is pre-existing from S1 commit `75e9eed`
+      (confirmed via `git show 75e9eed -- src/pii_anon_datasets/stats/intervals.py | grep as_dict`).
+      S4-01 §8 explicitly instructs "PRESERVE `Interval`/`wilson_interval`/`_z` exactly". The
+      executor did not introduce or touch this line.
+    suggested_resolution: |
+      Out of S4-01 scope. A future S1-scoped fix: change `-> dict` to `-> dict[str, object]`
+      (consistent with S3-08's ReidTierSpec.as_dict style). Flag for a type-hygiene pass.
+
+notes: |
+  ## Review summary
+
+  ### TDD RED-before-GREEN (strict mode)
+  Verified via git log: commit `8939c46` ([RED]) creates ONLY `tests/test_clopper_pearson.py`
+  and the story file `S4-01.md`. Production files `intervals.py` and `stats/__init__.py`
+  first appear in commit `acac5a8` ([GREEN]). The [REFACTOR] commit `c4dc62c` modifies
+  only the test file (ruff I001 import-order — no logic change). RED strictly precedes GREEN.
+  Discipline is correct and strict.
+
+  ### Scope discipline
+  `git diff 8939c46~1..c4dc62c --name-only` produces exactly 4 paths:
+    dev-assist-artifacts/04-development/02-stories/sprint-4/S4-01.md
+    src/pii_anon_datasets/stats/__init__.py
+    src/pii_anon_datasets/stats/intervals.py
+    tests/test_clopper_pearson.py
+  All four are within §8 owned files. Zero out-of-scope files touched.
+
+  ### Lint (ruff)
+  `ruff check` on all three code-owned paths (intervals.py, stats/__init__.py,
+  tests/test_clopper_pearson.py) → "All checks passed!" Zero warnings.
+
+  ### Type checking (mypy --strict --follow-imports=silent)
+  On `intervals.py`: exactly one error at line 28 (`as_dict -> dict`, bare type parameter),
+  confirmed pre-existing from S1. Zero mypy errors on any S4-01-added lines (lines 39–51
+  for `_require_int_counts`; lines 83–187 for beta helpers and `clopper_pearson_interval`).
+  On the test file: four `[unused-ignore]` errors caused by the missing `py.typed` marker
+  (project-wide pre-existing condition; identical pattern in test_intervals.py from S1).
+
+  ### Test suite re-run
+  `python3 -m pytest tests/test_clopper_pearson.py tests/test_intervals.py -v` →
+  **13 passed in 0.20s** (7 CP + 6 Wilson). Wilson suite passes 6/6 byte-identical —
+  `_require_int_counts` factoring preserved Wilson behavior exactly.
+
+  ### Wilson integer-guard refactor (§8b-permitted behavior-preserving change)
+  `_require_int_counts` is a correctly factored shared guard. The bool-rejection branch
+  (`isinstance(k, bool) or isinstance(n, bool)`) strengthens the original S1 guard, which
+  did not explicitly reject booleans (Python's `bool` is an `int` subclass). Wilson's
+  `test_integer_counts_required_reidx02` uses `wilson_interval(True, 100)` — this now hits
+  the new guard and raises `TypeError`. Confirmed passing: Wilson test 3/6 still passes.
+  The guard message now names the calling function via the `fname` parameter, which improves
+  debuggability without changing observable behavior.
+
+  ### Public API docs
+  All S4-01-added public symbol has a complete docstring:
+  - `clopper_pearson_interval`: 5-line docstring with Beta-quantile formula, reidx-02
+    reference, NFR-004 note, edge-case semantics (k=0 / k=n / n=0), and NFR-002 citation.
+  All S4-01-added private helpers have docstrings:
+  - `_require_int_counts`: explains the reidx-02 contract, bool rejection, exception types.
+  - `_betacf`: cites Lentz method.
+  - `_betainc`: documents symmetry swap and lgamma dependency.
+  - `_inv_betainc`: explains bisection choice (vs Newton), fixed-iter determinism, NFR-004.
+
+  ### Test quality
+  All 7 test names carry `fr_004` or `nfr_002` tokens (traceability gate visible from names).
+  Tests are deterministic: no datetime / time / random / network / uuid calls.
+  The textbook cross-check uses fixed (k,n) pairs with `pytest.approx` at 4 d.p. tolerance.
+  The conservative-vs-Wilson property test runs 7 fixed (k,n) pairs with 1e-12 tolerance.
+  The determinism test makes 5+3 in-process calls and asserts dict equality.
+
+  ### No unwrap/panic/non-null-assertion
+  Python-only; no `!` non-null assertions. No bare `assert` on production paths.
+  `_betacf`/`_betainc`/`_inv_betainc` use fixed-bound loops and conditional guards only.
+
+  ### No out-of-scope runtime dependencies
+  Pure `math` stdlib throughout. No numpy, scipy, or other runtime imports introduced.
+  `import math` is the only new import (already present in the file). NFR-004 satisfied.
+
+  ### Domain packs
+  `developer-assistant.yaml` → `domain_packs: []`. No pack extensions to load.
+
+review_time_seconds: 310
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

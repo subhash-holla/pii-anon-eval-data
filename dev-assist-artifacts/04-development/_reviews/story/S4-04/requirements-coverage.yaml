@@ -1,0 +1,109 @@
+# Requirements-coverage review — STORY gate
+reviewer: requirements-coverage
+gate: story
+story: S4-04
+iteration: 1
+date: 2026-05-30
+mode: read-only
+verdict: APPROVE
+context_bounds_respected: true
+
+scope:
+  title: "Per-language + language×type power transparency reporter (NFR-003)"
+  primary_requirement: NFR-003
+  supporting_requirements: [FR-029, AX-003, NFR-004]
+  source_dc: DC-09
+  provisional_status: AGENT_SIMULATED   # not DIVERGED → no Pass-2 cross-check obligation
+  domain_packs_active: []               # developer-assistant.yaml domain_packs: [] → no pack extensions merged
+
+self_attestation:
+  independent: true
+  reran_tests: true
+  read_only: true
+  no_files_modified_outside_review_dir: true
+
+verification:
+  test_file: tests/test_language_power.py
+  module_under_test: src/pii_anon_datasets/reporting/language_power.py
+  pytest_command: "python3 -m pytest tests/test_language_power.py -q"
+  pytest_result: "6 passed in 0.13s"
+  coverage_command: "python3 -m pytest tests/test_language_power.py -q --cov=pii_anon_datasets.reporting.language_power --cov-report=term-missing"
+  coverage_line_pct: 97          # bar ≥85 → MET (only line 95 missed: per-language render branch where rows carry no entity_type)
+  coverage_bar: 85
+  coverage_met: true
+  full_suite_result: "198 passed, 1 skipped in 2.29s"   # matches story §1 evidence; 0 regressions
+  red_green_discipline: confirmed   # RED 3893fdf: language_power.py ABSENT (module import fails) → GREEN ae8ff0b adds it → REFACTOR b4e0335
+  tdd_red_commit: 3893fdf
+  tdd_green_commit: ae8ff0b
+  tdd_refactor_commit: b4e0335
+
+# §6 test plan + §7 acceptance clauses → passing test mapping (every clause covered)
+clause_coverage:
+  - clause: "§6.1 / §7: per-language positive-count table — one row per language marginal {language,positives,target_n,tier,power_class}, sorted"
+    test: test_nfr_003_per_language_table_has_row_per_language
+    status: VERIFIED
+  - clause: "§6.2 / §7: per-(language×entity_type) power matrix grouped by language (forward-contiguous + reverse-navigable by entity_type)"
+    test: test_nfr_003_language_x_type_matrix_grouped
+    status: VERIFIED
+  - clause: "§6.3 / §7: below-tier-target cells labelled low-power (under_powered / empty); ≥target → well_powered"
+    test: test_nfr_003_low_power_cells_labeled
+    status: VERIFIED
+  - clause: "§6.4 / §7: render_markdown + render_csv produce non-empty, header-bearing output; CSV round-trips to same row count"
+    test: test_nfr_003_render_markdown_and_csv
+    status: VERIFIED
+  - clause: "§6.5 / §7 negative: reporter reads NO corpus — AST guard (no load_dataset import/call, no gzip, no open, no load_lattice); operates on passed-in (lattice, observed_counts)"
+    test: test_nfr_003_no_corpus_read
+    status: VERIFIED
+  - clause: "§6.6 / NFR-004: deterministic — AST guard imports none of {random,time,uuid,datetime,secrets}"
+    test: test_nfr_003_nfr004_imports_no_nondeterminism
+    status: VERIFIED
+
+# Dispatch CRITICAL items (a)-(d)
+critical_checks:
+  - id: a
+    requirement: "per-language table AND language×type matrix both produced"
+    status: VERIFIED
+    evidence: "per_language_table() + language_x_type_matrix() both exist + tested (tests 1,2); real eval_lattice.json carries 60 marginal:language + 492 language_x_entity_type cells matching the reporter's interaction-tag/dimensions contract"
+  - id: b
+    requirement: "below-tier-target cells labelled low-power"
+    status: VERIFIED
+    evidence: "reuses power_table._power_class → under_powered/empty; render_markdown flags '⚠ LOW', render_csv emits low_power boolean (test 3 asserts the labelling invariant on both table shapes)"
+  - id: c
+    requirement: "reporter reads NO corpus (operates on passed-in (lattice, observed_counts))"
+    status: VERIFIED
+    evidence: "AST guard (test 5) + source review: functions take (lattice, observed_counts) args; only imports csv/io/typing/.power_table; mirrors reporting/power_table.py src-purity discipline; frozen lattice never rebuilt/mutated"
+  - id: d
+    requirement: "coverage on reporting/language_power.py ≥85% line"
+    status: VERIFIED
+    evidence: "97% line coverage (52 stmts, 1 miss @ line 95)"
+
+contract_integrity:
+  real_lattice_cellshape_matches_reporter: true
+  detail: "lattice.py:163 emits interaction='marginal:language' dims={language}; lattice.py:176 emits interaction='language_x_entity_type' dims={language,entity_type}; id-prefix map lattice.py:108 (M/LxE) matches fixture; reporter filters + reads exactly these keys. Verified on-disk eval_lattice.json: all 60 ml + 492 lxe cells carry the required dimensions keys."
+  power_class_reused_from_power_table: true   # imports _power_class → published per-cell labels stay consistent (no divergent classifier)
+
+findings:
+  - id: RC-S4-04-01
+    severity: OBSERVATION
+    title: "reporting/__init__.py exports render_language_markdown / render_language_csv, not the bare render_markdown / render_csv named in story §8"
+    detail: >
+      §8 lists the modified-exports as render_markdown + render_csv, but those identifiers
+      already belong to reporting/power_table. The executor correctly aliased the language-power
+      renderers to render_language_markdown / render_language_csv to avoid a name collision in
+      the package namespace. Functionally complete and a sound deviation; flagged only as a
+      wording divergence between the shipped __init__ and the story's §8 export list. No coverage
+      gap — both renderers are exercised by test 4 via the module-qualified path.
+    location: src/pii_anon_datasets/reporting/__init__.py:2-19
+    action: "Optional: reconcile §8 wording in the story to record the alias. No code change required."
+
+orphaned_requirement_scan:
+  result: none
+  note: "NFR-003 is fully realized by this slice (per-language + language×type tables, low-power labelling, markdown+CSV). FR-029 provenance is inherited via the frozen lattice the reporter consumes. No claimed-but-unverified MUST slice in this story's scope."
+
+deferrals: []     # nothing deferred; all in-scope clauses verified
+
+summary:
+  major_plus_count: 0
+  finding_count: 1
+  finding_breakdown: { showstopper: 0, catastrophic: 0, major: 0, minor: 0, observation: 1 }
+  verdict_rationale: "All six §6/§7 clauses map to passing nfr_003-tokened tests; all four dispatch CRITICAL items (a-d) verified; coverage 97% ≥ 85%; real-lattice cell-shape contract confirmed; RED→GREEN genuine; full suite 0 regressions. Sole finding is an OBSERVATION on export naming. Zero MAJOR+ → APPROVE."

@@ -1,0 +1,42 @@
+signoff_id: SO-12-cap02-rerule
+date: 2026-06-01
+type: stage-rerule
+stage: 05-testing
+capability: CAP-02 (+ cycle-1 addendum)
+scope: >
+  v2-scoring-harness close-out: re-rule of Stage 5 across BOTH cycles after closing every code-achievable
+  caveat under strict TDD (RED->GREEN, local commits, both repos) and attempting every external path to the
+  genuine human/DUA/hardware wall. Closed C1-C13 + the orchestrator integration + a real McNemar-overflow defect
+  the real-systems run exposed; ran E1 (real-systems) + E2 (full-corpus census) for real; scaffolded the external
+  handoffs (E3/E4/E5). Wave-7 adversarial review (honesty / AX-004 / traceability) CLEAN with all findings
+  resolved.
+verdict: SHIP-WITH-CAVEATS (caveat set MINIMIZED to the irreducible synthetic-only invariant + pending-external)
+signer: AGENT_SIMULATED (developer-assistant); real-data / real-user / reference-host Pass-2 still required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/assessment-workflow/05-testing/release-readiness-report.md (re-ruled)
+  - dev-assist-artifacts/05-testing/release-readiness-addendum.md (cycle-1 re-rule)
+  - dev-assist-artifacts/assessment-workflow/05-testing/HUMAN-ONLY-TODO.md
+  - dev-assist-artifacts/assessment-workflow/05-testing/runs/{real-systems-powered,full-corpus-census-synthetic}/
+  - eval-data src/pii_anon_datasets/assessment/{governance,provenance,ports,tracks}.py + stats/{operating_point,rank_stability}.py + scoring/{coreference,quasi_identifier}.py + compliance/entity_crosswalk.py + release/citation.py + validation/real_data_ingest.py + reporting/viz.py(operating_point_curve) + scripts/{benchmark_throughput.py(--reference-host),run_throughput_benchmark.sh}
+  - pii-rate-elo src/pii_rate_elo_pipeline/{detectors/*,assessment_runner.py,cli.py(--systems)}
+
+decisions_acknowledged:
+  - "NFR matrix re-ruled: 24 PASS (+1 inherited) / 0 PARTIAL / 0 DEFERRED / 0 FAIL (was 18/4/2/0). The 4 PARTIAL (NFR-025/033/034 run-type enforcement, NFR-042/043 file-level provenance, NFR-047 honesty-set) + 2 DEFERRED (NFR-046 operating-point, NFR-048/049 governance/contamination) all closed."
+  - "INDICATIVE caveat RETIRED -> real-systems: Presidio/GLiNER/Piiranha run end-to-end. E1 powered (15,569 gold positives): presidio 0.616 [0.608,0.624] > gliner 0.558 > piiranha 0.285, Holm-significant paired McNemar (chi2-continuity selector), prereg verified. The run is real-systems on SYNTHETIC data — AX-001 ceiling holds."
+  - "Full-corpus citable census (E2): 575,604 records / 2,486,438 gold positives, descriptive-census, CI+p-values SUPPRESSED at full scale (NFR-025 proven), power LARGE."
+  - "Real defect fixed (exposed by the real-systems run, not synthetic fixtures): mcnemar_exact OverflowError at ~15k discordant pairs -> principled exact/chi2 selector stats.paired.mcnemar."
+  - "Caveat set MINIMIZED + CLASSIFIED: permanent-by-design (synthetic-only AX-001) | pending-external (FR-027 real-data correlation, NFR-010b reference-host, real-user re-elicitation, real-CI, DOI mint) | closed-this-session (C1-C13 + McNemar + E1 + E2). The synthetic-only invariant is PERMANENT and cannot be removed, only bounded by the real-data slice (DUA-gated, not available this session)."
+  - "Honesty held: every external/Pass-2 seam refuses to fabricate (RealDataAbsent / INSUFFICIENT_EVIDENCE / AGENT_SIMULATED / DOI pending sentinel), Wave-7 honesty review CLEAN, no simulated cohort outcome.md written, no agent-env number published as a result."
+
+evidence:
+  - "eval-data: 502 passed / 7 skipped (dep-gated); +68 close-out tests; ruff clean on new files; lattice --check 730@47c3a8f; NFR-018 power gate PASS on 575,604 / 0 errors; doc-drift 0; tags + corpus + lattice git-verified untouched."
+  - "pii-rate-elo: 296 passed / 1 skipped; mypy clean (full src, 61 files, 0 issues); ruff clean; P1 import-closure intact (significance.py unreachable from both assessment entrypoints after the new audited orchestrator imports)."
+  - "Wave-7 adversarial verification (3 reviewers): honesty CLEAN; AX-004 no family-collapse (guard hardened vs __int__/__index__/__round__); traceability strong (MAJOR auprc-degeneracy flag + OBS tracks-wiring resolved)."
+
+findings_waived_to_pass2:
+  - "PERMANENT: synthetic-only external validity (AX-001) — rides every metric forever; bounded (not removed) by FR-027."
+  - "PENDING-EXTERNAL (code seam + exact command shipped; sentinel held): FR-027 real-data correlation (DUA), NFR-010b reference-host throughput (8-core host), real-user operating-point re-elicitation + design trial + concept-value (real participants), real-CI clean-checkout, DOI mint (Zenodo). See HUMAN-ONLY-TODO.md."
+
+next: "Render /dev-assist-html; /dev-assist-validate (0 orphans) + /dev-assist-trace. Unconditional SHIP requires the HUMAN-ONLY-TODO external items (none code-achievable in this environment)."

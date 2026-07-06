@@ -1,0 +1,112 @@
+# requirements-coverage review — STORY gate
+schema: dev-assist/review/v1
+reviewer: requirements-coverage
+gate: story
+scope_id: S3-03
+iteration: 1
+mode: read-only
+reviewed_at: "2026-05-29"
+reviewed_by: requirements-coverage
+independence_attestation: >
+  Findings derived solely from the S3-03 story file, the owned production + test
+  sources, the Adversary Protocol (S3-01), and re-run test evidence in this working
+  tree. No other reviewer's output was consulted. Verdict is my own.
+context_bounds_respected: true
+
+verdict: APPROVE
+
+summary: >
+  S3-03 closes the FR-010 LLM-adversary clause (the version-stamped, non-deterministic
+  SECONDARY; the offline deterministic headline is S3-02, already DONE). Every §7
+  acceptance clause and every §6 test maps to a passing or legitimately-skipped test in
+  tests/test_llm_adversary.py. Re-ran `python3 -m pytest tests/test_llm_adversary.py -q`
+  → 4 passed, 1 skipped (`....s`); full suite 160 passed / 1 skipped — matches the story
+  claim exactly, 0 regressions. All four CRITICAL invariants independently verified:
+  (a) the package imports WITHOUT anthropic — `anthropic` stays out of sys.modules after
+  importing the scoring surface + LLMAdversary, and AST scan finds no top-level
+  `import anthropic` (NFR-009 offline-default guarantee, reidx-01); (b) bare instantiation
+  without the [llm] extra raises a clear `RuntimeError` naming `pip install
+  pii-anon-datasets[llm]`; (c) `LLMAdversary.deterministic is False` (never the headline),
+  with `OfflineDeterministicAdversary.deterministic is True` confirming the dual; (d) the
+  live attack test is skip-if-absent at the `importorskip("anthropic")` line (234), which
+  precedes any construction (236) — a genuine skip for a network path, NOT a hidden
+  coverage gap. FR-010 is now fully covered (offline S3-02 + LLM S3-03) → DC-07
+  (FR-007/008/009/010) complete. Zero MAJOR+ findings.
+
+# ── §7 acceptance clause → test mapping (all satisfied) ───────────────────────
+acceptance_clause_coverage:
+  - clause: "LLM adversary satisfies the Adversary port (version-pinned id, deterministic=False)"
+    covered_by:
+      - test: test_fr_010_llm_adversary_class_shape_without_anthropic
+        status: passed
+        note: "isinstance(adv, Adversary) against the @runtime_checkable Protocol; deterministic is False; attack returns len(targets) Guesses"
+  - clause: "Full version-pinning — results read 'vs adversary@version'"
+    covered_by:
+      - test: test_fr_010_llm_adversary_id_version_stamped
+        status: passed
+        note: "make_adversary_id('claude-3-5-sonnet')=='llm:claude-3-5-sonnet@v1'; instance id frozen per (model,date)"
+  - clause: "Package imports without anthropic; bare instantiation raises a clear install error"
+    covered_by:
+      - test: test_fr_010_package_imports_without_anthropic
+        status: passed
+        note: "(a) anthropic absent from sys.modules after fresh scoring import; (b) AST scan finds no top-level import anthropic"
+      - test: test_fr_010_llm_adversary_requires_extra_when_anthropic_absent
+        status: passed
+        note: "RuntimeError naming 'pip install pii-anon-datasets[llm]'"
+  - clause: "Negative — no eager import anthropic at load; LLM path never the deterministic headline"
+    covered_by:
+      - test: test_fr_010_package_imports_without_anthropic
+        status: passed
+        note: "no-eager-import contract"
+      - test: test_fr_010_llm_adversary_class_shape_without_anthropic
+        status: passed
+        note: "deterministic is False — secondary; offline (S3-02) deterministic is True is the headline"
+  - clause: "Live attack contract (envs with the [llm] extra)"
+    covered_by:
+      - test: test_fr_010_llm_attack_skips_if_absent
+        status: skipped
+        note: "importorskip('anthropic') at line 234, BEFORE construction (236) — legitimate skip-if-absent, not a coverage gap; documents the live contract"
+
+# ── §6 test-first plan → 1:1 with the 5 fr_010-tokened tests, all present ──────
+test_plan_coverage:
+  expected: 5
+  present: 5
+  all_fr_010_tokened: true
+  red_green_refactor_shas_resolve: true   # 966c038 / 29159ad / 5652f6e all exist in this tree
+
+requirement_coverage_delta:
+  fr: FR-010
+  dc: DC-07
+  status: fully-covered
+  evidence: >
+    FR-010 LLM clause (this story) + FR-010 offline-deterministic clause (S3-02, DONE).
+    Confirmed runtime: OfflineDeterministicAdversary.deterministic is True (headline),
+    LLMAdversary.deterministic is False (secondary). DC-07 (FR-007/008/009/010) complete.
+  deferred_with_successor: none
+  orphaned_requirements: none
+
+critical_invariants_verified:
+  no_eager_anthropic_import: true       # sys.modules check + AST scan, independently re-run
+  clear_extra_install_error: true       # RuntimeError → pip install pii-anon-datasets[llm]
+  deterministic_false_secondary: true   # never the headline
+  live_path_legit_skip_if_absent: true  # importorskip precedes construction; not a hidden gap
+
+test_rerun:
+  command: "python3 -m pytest tests/test_llm_adversary.py -q"
+  result: "4 passed, 1 skipped (....s)"
+  full_suite: "160 passed, 1 skipped"
+  regressions: 0
+  matches_story_claim: true
+
+diverged_pass2_cross_check:
+  applicable: false
+  note: "S3-03 provisional_status is AGENT_SIMULATED, not DIVERGED. (Story-level Pass-2 real-CI run is scheduled in §12; that is the standard simulation→CI attestation, outside this reviewer's DIVERGED-NFR scope.)"
+
+findings: []
+
+counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0

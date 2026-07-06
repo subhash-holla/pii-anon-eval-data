@@ -1,0 +1,165 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S5-02
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S5-02-01
+    severity: OBSERVATION
+    location: tests/test_parquet_export.py:33
+    description: |
+      _synthetic_records() is annotated `list[dict]` (bare dict, no type parameters). The
+      nested generator in test_fr_024_export_streams_not_materializes is annotated
+      `Iterator[dict]` (line 167). Under mypy --strict these trigger [type-arg] errors.
+      The mypy --strict scope per §10/§12 is `src/pii_anon_datasets/distribution/*.py`
+      only; test files are not covered. This is consistent with all prior stories in this
+      codebase. Not a blocking concern.
+    suggested_resolution: |
+      If mypy --strict coverage is extended to the test suite in a future sprint, replace
+      `list[dict]` with `list[dict[str, object]]` and `Iterator[dict]` with
+      `Iterator[dict[str, object]]`. Additionally, annotate pytest fixture parameters
+      (tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch). No action required now.
+
+  - id: code-quality-S5-02-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/distribution/parquet_export.py:151-153
+    description: |
+      In the zero-records code path, the schema is obtained via:
+        empty_schema = pa.Table.from_pylist([], schema=_empty_schema(pa)).schema
+      _empty_schema(pa) already returns a pa.Schema object; the intermediate
+      pa.Table.from_pylist([], schema=...).schema extraction is redundant — the
+      returned .schema attribute is the same object passed in. Harmless; does not
+      affect correctness, type safety, or the gov-02 column contract.
+    suggested_resolution: |
+      Simplify to:
+        writer = pq.ParquetWriter(out_path, _empty_schema(pa))
+      and remove the intermediate empty_schema variable and Table construction.
+      No behavioral change; reduces one unnecessary allocation.
+
+notes: |
+  Review performed 2026-05-30 against branch feat/v2-scoring-harness,
+  commits 91e2266 (RED) -> e6176fa (GREEN) -> 4bf4ef8 (REFACTOR).
+
+  SCOPE: src/pii_anon_datasets/distribution/__init__.py (NEW),
+  src/pii_anon_datasets/distribution/parquet_export.py (NEW),
+  tests/test_parquet_export.py (NEW), pyproject.toml (MODIFIED).
+  Language profile: Python.
+
+  TDD RED-BEFORE-GREEN verified (strict mode):
+    - RED commit 91e2266: adds tests/test_parquet_export.py (6 fr_024/nfr_012/nfr004-
+      tokened tests) and S5-02.md story stub. pii_anon_datasets.distribution is ABSENT;
+      pytest fails at collection with ModuleNotFoundError. Genuine RED: no production
+      code present, no false-pass risk.
+    - GREEN commit e6176fa: adds src/pii_anon_datasets/distribution/__init__.py and
+      parquet_export.py per §8b spec; pyproject.toml [distribution] extra updated to
+      include datasets + huggingface_hub. All 6 tests GREEN; full suite 223 passed,
+      1 skipped, 0 regressions.
+    - REFACTOR commit 4bf4ef8: drops dead TYPE_CHECKING pyarrow block; scopes
+      # type: ignore[import-untyped] on the lazy pyarrow imports (2 lines, with
+      justifying comment at line 45-46); ruff import-sort on test. mypy --strict clean
+      on production module confirmed.
+
+  LAZY PYARROW — AST-CONFIRMED (live check, module-body statements only):
+    Top-level imports in parquet_export.py: [__future__, json,
+    collections.abc.Iterable/Mapping, typing.Any, pii_anon_datasets.compliance.crosswalk.as_columns].
+    Zero top-level pyarrow imports. pyarrow appears ONLY at lines 47-48 inside
+    _require_pyarrow() function body. Lazy import contract fully satisfied.
+    __init__.py imports the export_parquet function at module load; parquet_export.py
+    has no pyarrow at module top, so `import pii_anon_datasets.distribution` is safe
+    on a pure-stdlib box (NFR-004 contract).
+
+  STREAMING AUDIT (grep + dynamic):
+    - grep on parquet_export.py for list(records), len(records), records[...]:
+      zero hits in executable code. Only occurrence is line 12 in the module docstring
+      asserting their absence — not executable code.
+    - len(batch) at line 143 operates on the LOCAL batch accumulator list, not on
+      the input records iterator. Correct streaming discipline.
+    - test_fr_024_export_streams_not_materializes passes a one-shot generator; exporter
+      consumes it once, generator is exhausted (list(gen)==[]), all 4 rows reach the
+      file. One-pass streaming contract dynamically verified by test #4.
+
+  TYPE IGNORE DEVIATIONS — BOTH SOUND:
+    1. # type: ignore[import-untyped] at parquet_export.py:47 (import pyarrow as pa):
+       pyarrow ships no py.typed marker; suppression is scoped to the specific error
+       code (not bare # type: ignore); justified by comment at lines 45-46 referencing
+       the repo's anthropic/llm_adversary convention. Sound.
+    2. # type: ignore[import-untyped] at parquet_export.py:48 (import pyarrow.parquet
+       as pq): same reasoning. Both are scoped, commented, and consistent. Sound.
+
+  DETERMINISM DEVIATION — SOUND:
+    - test_fr_024_deterministic_export uses Table.equals (schema + column data equality)
+      rather than raw-byte comparison. Rationale: pyarrow stamps library version and
+      created_by into the Parquet footer metadata, so raw bytes differ across runs/versions
+      even for identical logical content. Table.equals compares logical content only.
+      This matches §6 test #5 explicit specification ("compare the table contents not raw
+      bytes"). JSON-encoded nested blocks use sort_keys=True; no clock/RNG touched. Sound.
+
+  LINT / TYPE (live re-run):
+    - `ruff check src/pii_anon_datasets/distribution/ tests/test_parquet_export.py`
+      -> All checks passed (exit 0).
+    - `mypy --strict --follow-imports=silent src/pii_anon_datasets/distribution/*.py`
+      -> Success: no issues found in 2 source files (exit 0).
+
+  PYTEST (live re-run):
+    - `python3 -m pytest tests/test_parquet_export.py -q` -> 6 passed (exit 0).
+    - `python3 -m pytest --tb=no` -> 223 passed, 1 skipped in 3.98s.
+      217 prior + 6 new; 0 regressions; 1 pre-existing skip unchanged.
+
+  SCOPE DISCIPLINE:
+    - git diff --name-only 91e2266~1..4bf4ef8 shows 5 files changed:
+      dev-assist-artifacts/.../S5-02.md (story documentation artifact — not source)
+      pyproject.toml (MODIFIED — in §8)
+      src/pii_anon_datasets/distribution/__init__.py (NEW — in §8)
+      src/pii_anon_datasets/distribution/parquet_export.py (NEW — in §8)
+      tests/test_parquet_export.py (NEW — in §8)
+    - Zero scope creep; lattice/corpus/tags/scoring/compliance/crosswalk untouched.
+
+  DOCSTRING COVERAGE (all public and private surfaces):
+    - parquet_export.py module docstring: comprehensive (gov-02/streaming/lazy/AX-001).
+    - __init__.py module docstring: comprehensive (DC-12/gov-02/lazy/AX-001).
+    - export_parquet(): full pydoc with streaming contract, gov-02, AX-001, Raises section.
+    - _require_pyarrow(): lazy-import rationale documented.
+    - _json_or_none(): determinism property (sort_keys) documented.
+    - _row(): gov-02 drop/replace behaviour, column ordering, determinism documented.
+    - _flush() (nested): schema-fixing-on-first-flush documented.
+    - _empty_schema(): zero-record use case and gov-02 column set documented.
+    - __all__ = ["export_parquet"] in __init__.py.
+    Full coverage on all public and private symbols.
+
+  DOMAIN PACKS:
+    - developer-assistant domain-packs/ directory contains only README.md, _schema/,
+      examples/ — no installed packs. No pack-extension catalog loaded. No pack findings.
+
+  ALL 15 PATTERNS CHECKED:
+    1. unwrap/panic: N/A (Python). No equivalent production-path panics.
+    2. Unsafe cast: not present.
+    3. Any without comment: Any in parquet_export.py justified at lines 27-29. CLEAR.
+    4. Missing docs on public/export surfaces: all covered (see docstring coverage above). CLEAR.
+    5. RED commit absent: RED at 91e2266 genuine (collection-time ModuleNotFoundError). CLEAR.
+    6. Test names no FR/NFR token: all 6 carry fr_024/nfr_012/nfr004. CLEAR.
+    7. Non-deterministic tests: all tests use tmp_path; no real-time/network/RNG. CLEAR.
+    8. Scope creep: 5 files changed, all within §8. CLEAR.
+    9. Dead code: none detected; all functions reachable. CLEAR.
+    10. Production module gains dev-dep: stdlib + crosswalk only at runtime. CLEAR.
+    11. Inconsistent error wrapping: single pattern (raise ... from e). CLEAR.
+    12. New public API lacks doc example section: §8b and test file serve as examples;
+        Raises section present on export_parquet. CLEAR.
+    13. Lint warning fires: ruff All checks passed. CLEAR.
+    14. Type error: mypy --strict 0 issues on production module. CLEAR.
+    15. Per-language violations (Python): # type: ignore[import-untyped] scoped with
+        justifying comment. CLEAR.
+
+  TEST NAMES WITH FR/NFR TOKENS (all 6 confirmed):
+    test_fr_024_parquet_has_n_separate_regime_columns  [fr_024]
+    test_fr_024_parquet_roundtrips_records              [fr_024]
+    test_nfr_012_parquet_loads_via_datasets             [nfr_012]
+    test_fr_024_export_streams_not_materializes         [fr_024]
+    test_fr_024_deterministic_export                    [fr_024]
+    test_nfr004_distribution_imports_without_pyarrow   [nfr004]
+
+review_time_seconds: 547
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

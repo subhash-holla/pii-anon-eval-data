@@ -1,0 +1,87 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S6-01
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  Axiom-compliance STORY-gate review of S6-01 (append-only, content-hash-chained
+  held-out leaderboard store — src/pii_anon_datasets/leaderboard/{store.py,__init__.py};
+  tests/test_leaderboard_store.py). Read-only, bounded context. Zero
+  SHOWSTOPPER/CATASTROPHIC/MAJOR → APPROVE.
+
+  Axioms triggered by this diff and their disposition (each independently
+  re-verified by this reviewer, not taken on the executor's word):
+
+  AX-002 / AX-pii-anon-002 (determinism — notable here) — UPHELD.
+    * No clock / no RNG in-module: AST audit of store.py imports only
+      {hashlib, json, collections.abc, dataclasses, enum, pathlib}; __init__.py only
+      {sys, collections.abc, pii_anon_datasets.*}. The banned set
+      {random, time, uuid, datetime, secrets} has ZERO hits in either file. `import time`
+      and `import datetime` are confirmed ABSENT, as the §8b spec requires.
+    * Re-appending the same events to a fresh log is byte-identical. I built two
+      independent logs from the same 3 events — INCLUDING a caller-supplied wall-clock
+      `ts` payload field — and got byte-identical files / identical sha256
+      (8e0cf3a1…). This proves the only timestamp in the store is caller-provided
+      payload data, never generated in-module. (My digest differs from the executor's
+      reported 5daef8cf… only because I used different fixture payloads; the digest is
+      fixture-specific, NOT a contract — the load-bearing property is determinism, and
+      it holds. The executor's own #5 test re-derives this on its fixture and passes.)
+    * Ordering is the monotonic `seq` (0..N-1), hashing is canonical JSON
+      (sort_keys=True, separators=(",",":")) → order- and platform-stable.
+    * `pytest -k "nfr_014 or nfr004"` → 3 passed, 9 deselected (tamper-detection,
+      hash-chain-link, and pure-stdlib AST guard).
+
+  NFR-004 (pure-stdlib) — UPHELD. AST guard test #6 passes; my independent audit agrees
+    (only json + hashlib + stdlib value-object machinery). `import
+    pii_anon_datasets.leaderboard` succeeds and pulls in NONE of
+    {numpy, pandas, pyarrow, scipy, spacy, torch, transformers, datasets} — confirmed by a
+    pre/post sys.modules snapshot. The governance seam stays a zero-heavy-dep value object.
+
+  Append-only / no-gold (data-integrity / governance axioms) — UPHELD.
+    * Append-only: the public surface of LeaderboardStore is exactly
+      {append, events, verify_chain}. Runtime introspection on instance AND class finds
+      ZERO of {update, delete, remove, pop, set, setitem, edit, mutate, replace,
+      __setitem__, __delitem__, truncate, clear, write}. `append` opens mode "a";
+      test #1 proves a second append grows the file and leaves line 1's bytes
+      byte-for-byte unchanged.
+    * No held-out gold (FR-023): `append` rejects {gold, gold_labels, held_out,
+      held_out_labels, answers, ground_truth} with ValueError; I confirmed the rejected
+      append writes NO file (leaves no trace). The held-out gold is STRUCTURALLY excluded
+      — the right shape for the governance-integrity control.
+
+  AX-001 / AX-pii-anon-001 (no-real-PII) — NOT TRIGGERED IN SUBSTANCE / UPHELD by design.
+    The store is a generic value object over scores + submission ids + config-version +
+    attestation + provenance; it holds no corpus records and no PII path. No real-PII
+    surface is introduced by this diff. (security-sast owns the corpus/fixture leakage
+    scan; nothing here weakens AX-001.)
+
+  Tamper-evidence framing — HONEST. The story, module docstring, and CLI message describe
+    the sha256 chain as tamper-EVIDENT (verify_chain detects any mutation; tests #4/#7
+    flip it to False/non-zero on a single mutated line), not tamper-PROOF. This is correct:
+    a log owner who recomputes forward can re-seal a forged chain, so the control is
+    detection-of-mutation, not prevention. No over-claim (no "immutable" / "tamper-proof" /
+    bare-accuracy regex bait) appears in build-time prose. Content-lint clean.
+
+  Cross-axiom (AX-pii-anon-003 power, AX-pii-anon-004 anon/pseudo separation): not touched
+    by this diff (the store carries opaque score payloads; it neither computes nor merges
+    metric families, nor publishes per-cell numbers). No action.
+
+  Pack extensions: developer-assistant.yaml domain_packs: [] → no reviewer pack extensions
+    to merge. project-axioms.yaml present and applied (AX-pii-anon-001..004); no
+    axiom-compliance reviewer_hook is registered on those entries (hooks target
+    security-sast / code-quality / requirements-coverage / traceability), so no additional
+    hook obligations fall to this reviewer for S6-01.
+
+  Out of scope (deferred to the named owners, per charter): the cross-§8 successor edit to
+    tests/test_cli.py and the S5-05 CLI delegate wiring (traceability / code-quality);
+    correctness of any score value (executor / traceability); ruff/mypy hygiene
+    (code-quality). Flagged here only for gate awareness; no axiom bearing.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

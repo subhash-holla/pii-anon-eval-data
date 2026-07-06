@@ -1,0 +1,61 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S5-05
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY-gate security-sast review of S5-05 (pii-anon CLI, iteration 1) — LOAD-BEARING for
+  subprocess/argv handling. Bounded context: story §8b/§11/§12, diff `git diff 480d24a HEAD`,
+  src/pii_anon_datasets/cli.py (NEW, 162 LOC), tests/test_cli.py (NEW), pyproject.toml
+  ([project.scripts] add). developer-assistant.yaml domain_packs: [] — no pack extensions to merge
+  (financial/agentic-runtime patterns explicitly not loaded; project invariants live in
+  project-axioms.yaml). sensitive_data_scan is enabled but advisory with no pack pattern set loaded,
+  so no pack-sourced sensitive-data evidence bears on this diff.
+
+  Subprocess safety (the load-bearing concern) — CLEAN:
+  - Single subprocess call site: cli.py:49 `subprocess.run([sys.executable, str(script), *args])`.
+    LIST argv, NOT shell=True. Grep of cli.py for shell=/os.system/os.popen/Popen/check_output/
+    check_call/subprocess.call/getoutput/getstatusoutput returned ZERO executable hits (the only
+    `shell=` match is the comment at L47 asserting its absence). No string-concatenated command, no
+    `commands` module, no eval/exec/__import__-of-user-input.
+  - Fixed script paths: the three rel_path args are hardcoded string literals at the call sites
+    (cli.py:63 "scripts/generate_records.py", :67 "baselines/evaluate.py", :73 "scripts/validate.py"),
+    resolved under _repo_root() (the pyproject.toml-holding dir). Not user-controlled.
+  - Missing-script branch (cli.py:44-46) prints to stderr and `return 2` — clean error, no crash/raise.
+  - argv[0] = sys.executable (absolute); script = _repo_root()/<rel> (absolute resolved path), so the
+    Bandit S607 partial-exec-path class is not in play either — there is no bare-name exec.
+  - Arg passthrough: user `rest` is forwarded verbatim into the list argv (never composed into a shell
+    string). The trusted repo scripts are the trust boundary and parse their own argv. Acceptable per §7.
+
+  `# noqa: S603` suppression — SCOPED + JUSTIFIED: the one inline `# noqa: S603` is line-scoped to the
+  single trusted call (cli.py:49) with an adjacent 2-line rationale (L47-48: fixed repo-script path
+  under _repo_root(), no shell=True, no untrusted interpolation). No blanket/file-level
+  `# ruff: noqa` / `# flake8: noqa` present.
+
+  NFR-018 power-gate guardrail (security control — a `--no-power-gate` CI bypass would be a control
+  weakness) — ENFORCED: `_cmd_validate` (cli.py:70-73) forwards args.rest verbatim and injects nothing.
+  The only `--no-power-gate` occurrences in cli.py are comments (L14, L71-72) stating it is never
+  injected; the gate runs by default and only the *user* may opt out by passing the flag through `rest`.
+  Test-enforced: tests/test_cli.py:102 and :122 both `assert "--no-power-gate" not in argv` (captured
+  spawned argv via a patched subprocess.run).
+
+  No secrets / no egress: zero hardcoded-credential shapes and zero network primitives in cli.py
+  (grep for socket/requests/urllib/urlopen/httpx/aiohttp/http.client/smtplib/ftplib/boto3/paramiko/
+  websocket/.connect/urlretrieve → NONE). The CLI makes no network calls; `export` writes local files
+  only (Path.write_text / the distribution exporters).
+
+  Scope discipline: diff 480d24a..HEAD touches only the §8-owned files (cli.py NEW, test_cli.py NEW,
+  pyproject.toml [project.scripts]). The trust-boundary scripts (scripts/validate.py,
+  scripts/generate_records.py, baselines/evaluate.py) and the frozen corpus (data/pii_anon.jsonl.gz)
+  are UNTOUCHED (confirmed via git diff --name-only).
+
+  No SHOWSTOPPER/CATASTROPHIC/MAJOR/MINOR. APPROVE.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

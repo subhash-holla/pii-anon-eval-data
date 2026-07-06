@@ -27,6 +27,8 @@ COVERAGE_FILL = DATA_DIR / "pii_anon_coverage.jsonl"
 V120_GENERATED = DATA_DIR / "pii_anon_v120_generated.jsonl"
 V130_GENERATED = DATA_DIR / "pii_anon_v130_generated.jsonl"
 LATTICE_FILL = DATA_DIR / "pii_anon_lattice_fill.jsonl"   # S-PWR committed-cell enrichment
+ART9_GENERATED = REPO_ROOT / "pii_anon_art9.jsonl"         # GDPR Art-9 special-category records
+NON_PERSONAL = REPO_ROOT / "pii_anon_non_personal.jsonl"   # non-personal records (reg_gdpr discriminative)
 OUTPUT_JSONL = DATA_DIR / "pii_anon.jsonl"
 OUTPUT_GZ = DATA_DIR / "pii_anon.jsonl.gz"
 METADATA = DATA_DIR / "pii_anon.metadata.json"
@@ -69,7 +71,7 @@ def main():
     # 2. Load generated records from all sources
     generated = []
     normalized = 0
-    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED, V130_GENERATED, LATTICE_FILL]:
+    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED, V130_GENERATED, LATTICE_FILL, ART9_GENERATED, NON_PERSONAL]:
         if src_path.exists():
             print(f"Loading {src_path.name}...")
             count = 0
@@ -209,7 +211,7 @@ def main():
         print(f"  {t:30s} {c:>8,}")
 
     # Clean up generated files
-    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED, V130_GENERATED, LATTICE_FILL]:
+    for src_path in [GENERATED, COVERAGE_FILL, V120_GENERATED, V130_GENERATED, LATTICE_FILL, ART9_GENERATED, NON_PERSONAL]:
         if src_path.exists():
             print(f"Cleaning up {src_path.name}...")
             src_path.unlink()

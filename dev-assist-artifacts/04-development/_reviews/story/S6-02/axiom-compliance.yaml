@@ -1,0 +1,69 @@
+reviewer: dev-assist-development-axiom-compliance
+scope_id: S6-02
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  AXIOM SLICE (S6-02 — leaderboard submission policy; module
+  src/pii_anon_datasets/leaderboard/policy.py, tests tests/test_leaderboard_policy.py).
+  Diff triggers three cross-cutting axioms; all upheld, each with a passing test.
+
+  AX-pii-anon-002 / NFR-004 — deterministic + pure-stdlib (UPHELD)
+    * AST guard: policy.py imports only {__future__, collections.abc, dataclasses,
+      pii_anon_datasets.leaderboard.store}. banned {random,time,uuid,datetime,secrets}
+      ∩ imports = ∅ (re-verified independently, not just via the in-repo test).
+    * `python3 -m pytest tests/test_leaderboard_policy.py -k nfr004 -q` -> 1 passed
+      (test_nfr004_policy_pure_stdlib, [PROPERTY-TEST]).
+    * Pure function of (store events, submission, config): evaluate_submission takes no
+      clock/RNG. Behavioral determinism check (mine): 5 identical evaluations of a
+      stale+duplicate submission yielded byte-identical PolicyDecision(allowed=False,
+      published=False, reasons=('stale_epoch','duplicate')); clean-path equally stable
+      across repeated calls. Same inputs -> same PolicyDecision. NFR-004 "byte-identical
+      re-run" intent satisfied at the decision level.
+    * Registry note: AX-pii-anon-002 reviewer_hook routes to code-quality (seed-threading
+      / no-unseeded-RNG); that hook is not assigned to this reviewer. Assessed here as a
+      cross-cutting axiom at the story level regardless — the stdlib+determinism slice is
+      green from both vantage points.
+
+  Read-only over the store (NFR-014 invariant §8b.3) — UPHELD
+    * evaluate_submission reads only store.events() (via _prior_submitted); never appends.
+    * The only `.append` calls in policy.py are `reasons.append(...)` on a LOCAL list[str]
+      (3 occurrences); static scan found no store.append / .open / file-write.
+    * Behavioral audit (mine): JSONL log SHA-256 and event count byte-identical before/after
+      blocked + duplicate + clean evaluations (2 events -> 2 events, hash unchanged). The
+      caller — not the policy — records the outcome event; the append-only log keeps a single
+      writer surface (store.append, mode "a").
+
+  AX-pii-anon-001 / NFR-006 — synthetic-only, no real PII (UPHELD)
+    * The policy operates on SUBMITTER metadata, not corpus content: opaque submitter ids,
+      content-hash strings, and integer epochs. No corpus record / PII is read or surfaced.
+    * Fixture inventory: submitter ids are synthetic placeholders (alice/bob/carol/dave/
+      erin/frank/zoe), submission_hash values are opaque tokens (h-out, seen-hash,
+      alice-h-0, frank-fresh, novel-hash), epochs are ints. PII-heuristic scan over
+      policy.py + tests: zero SSN / credit-card / real-email / phone-shaped literals; no
+      checksum-valid identifiers; no real public-figure name+contact pairing.
+    * Defense-in-depth: the underlying store (store.py) structurally REJECTS held-out gold
+      payload keys (gold/held_out/answers/ground_truth/...), so even the data the policy
+      reads cannot carry undistributed gold. The policy never widens that surface.
+
+  TDD / scope corroboration (informational; code-quality owns the verdict on these):
+    * Strict RED->GREEN->REFACTOR commits cited in §12 (RED 3f5fbe2 / GREEN 5b6e19c /
+      REFACTOR 14d9f8d). GREEN commit touches only policy.py + leaderboard/__init__.py;
+      the test file lands as owned. tests/test_leaderboard_policy.py -> 6 passed locally.
+    * §8b implemented verbatim (field names, defaults, signatures, control order,
+      published = allowed and publish_opt_in). No behavioral deviation. Scope confined to
+      the 3 owned files; store.py / corpus / lattice untouched.
+
+  Domain packs: developer-assistant.yaml domain_packs == [] -> no reviewer pack extensions
+  to merge. project-axioms.yaml carries no reviewer_hook assigned to axiom-compliance for
+  the touched axioms; assessed under the standard cross-cutting axiom catalog.
+
+  provisional_status: AGENT_SIMULATED (local pytest on Python 3.10.x; no hosted CI). The
+  axiom verdict is implementation-grounded (AST + behavioral determinism + log-immutability
+  + PII scan run by this reviewer), so the AGENT_SIMULATED label does not weaken it.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

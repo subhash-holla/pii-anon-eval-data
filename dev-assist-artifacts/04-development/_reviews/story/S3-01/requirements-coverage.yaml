@@ -1,0 +1,126 @@
+reviewer: dev-assist-development-requirements-coverage
+scope_id: S3-01
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: coverage-S3-01-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-3/S3-01.md:30
+    description: |
+      Scope-classification nuance (non-blocking). §3 labels FR-010 the "Primary"
+      traced requirement, and the story title frames it as the requirement being
+      "established". In the source requirements catalog, FR-010 is a **SHOULD**
+      (functional-requirements.md:20 — "UC-05, N3; SHOULD"), whereas FR-007 and
+      FR-008 — the two reqs listed as SUPPORTING here — are the **MUSTs** (lines
+      17–18). So at the sprint/MUST-coverage gate the load-bearing MUSTs this story
+      *touches* are FR-007 and FR-008, and the deliverable here is correctly only
+      the PORT they will consume (Adversary Protocol + assemble_paired_set + the
+      ported signals.py substrate), not their full implementation. The story makes
+      exactly this disclaimer ("No adversary implementation yet … only the contract
+      + the data plumbing"; §3 SUPPORTING note; §8b "that script becomes a thin
+      caller in a LATER cleanup, NOT this story"). No over-claim — recording only
+      so the sprint-gate MUST-coverage snapshot tracks FR-007/008 as still-OPEN
+      (their full G/W/T — 2,500-pair measured recall×precision with Wilson CIs for
+      FR-007; the explicit pre-screen-vs-RRS correlation report for FR-008 — is
+      deferred-with-successor to S3-04/S3-05, which §5 names as the consumers).
+    suggested_resolution: |
+      No change required for this story. At the S3 sprint gate, ensure the
+      MUST-coverage snapshot lists FR-007 (S3-04) and FR-008 (S3-05) as the
+      successor stories carrying the full acceptance evidence, and treats S3-01
+      as supplying only their shared port substrate.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-007
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-008
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-010
+
+  - id: coverage-S3-01-02
+    severity: OBSERVATION
+    location: tests/test_adversary_port.py:133
+    description: |
+      Acceptance-coverage completeness note (non-blocking). The §7 G/W/T clause
+      "its adversary_id is available for version-pinning (vs adversary@version)"
+      is satisfied structurally — the Adversary Protocol declares the adversary_id
+      member and test_adversary_protocol_is_runtime_checkable exercises a stub whose
+      adversary_id == "offline-deterministic-v1", and test_persona_target_guess_are_frozen
+      pins ADVERSARY_PORT_VERSION == "adversary-port-v1". The literal *rendering* of
+      the "vs adversary@version" provenance STRING is not asserted by any test in
+      this story. That is correct scope: string assembly is a downstream consumer
+      (FR-007 RRS reporting, S3-04) responsibility, not the port's. Recording so the
+      S3-04 coverage check verifies the pin-string is emitted there.
+    suggested_resolution: |
+      No change for this story. Track at S3-04 (FR-007) gate: a test asserting the
+      version-pinning provenance string ("vs <adversary_id>@<version>") is rendered
+      into the RRS report.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-01.md#7
+
+notes: |
+  STORY-LEVEL coverage snapshot only (full Tier-1/2/3 MUST-coverage runs at the S3
+  sprint gate, not here — per my contract this gate verifies a single slice).
+
+  Acceptance-criteria ↔ test mapping (§7 G/W/T → §6 plan → tests/, all GREEN):
+    AC-1 "consumer adversary type-checks against Adversary Protocol → accepted;
+          adversary_id available for version-pinning"
+          → test_adversary_protocol_is_runtime_checkable (positive branch, #3)
+          + test_persona_target_guess_are_frozen pins ADVERSARY_PORT_VERSION (#1).
+    AC-2 "assemble_paired_set deterministically yields aligned (targets,candidates)
+          with target_id == persona_id ground-truth link and |C| honored"
+          → test_assemble_paired_set_deterministic (#4, incl. sort-by-record_id order
+            + target_id==persona_id link assertion)
+          + test_candidate_set_size_is_first_class (#6, |C|=min(N,n_available),
+            DEFAULT_CANDIDATE_SET_SIZE==2500).
+    AC-3 (negative) "object missing any of the three members is NOT an Adversary;
+          assemble_paired_set skips records lacking the tier3 substrate"
+          → test_adversary_protocol_is_runtime_checkable (negative branches:
+            _MissingAttack, _MissingId → isinstance False, #3)
+          + test_assemble_filters_to_tier3_substrate (#5: missing behavioral_signals,
+            missing/None context_preservation, and the "neither" record all skipped;
+            empty input → ([],[])).
+  Every §7 acceptance clause is backed by at least one passing test. No acceptance
+  criterion lacks a test.
+
+  Supra-AC tests (back §8b spec + the reidx-01 LOAD-BEARING invariant, beyond the
+  bare §7 minimum):
+    #1 frozen value objects; #2 abstain (guessed_persona_id=None) distinct from a
+    wrong guess; #7 test_target_observed_signals_reextracted_not_gold — the
+    de-circularization guard. I independently re-ran the signals extractor: real
+    text "…the T into Beacon Hill…" → location uniqueness=high (present=True);
+    pseudonymized "…commute downtown…" → present=False, uniqueness=none. The
+    divergence is genuine, so Target.observed_signals are demonstrably RE-EXTRACTED
+    from anonymized text, not gold-copied. This guard protects the FUTURE FR-007 RRS
+    (S3-04) from collapsing into the precomputed heuristic — a coverage-relevant
+    safeguard on the consuming MUST.
+    #8 UNIQUENESS_WEIGHT golden table; #9 compute_signal_density 0.6*peak+0.4*mean
+    golden (==0.7333); #10 detect_* + extract purity/determinism;
+    test_signal_extractor_version_pinned (SIGNAL_EXTRACTOR_VERSION=="signal-extractor-v1").
+    These back the FR-008 substrate (the port S3-05 consumes), not FR-008's full
+    pre-screen-vs-RRS correlation deliverable — correctly classified SUPPORTING.
+
+  Port faithfulness (coverage-of-source) cross-check: the ported detect_* set,
+  UNIQUENESS_WEIGHT, compute_signal_density (0.6*peak+0.4*avg) and
+  categorize_reid_contribution all match the source bodies in
+  scripts/enrich_behavioral_signals.py (verified by grep). The one signature
+  deviation — detect_professional_domain(text, record_domain="general") added a
+  default so extract(text) is text-pure — is documented in §12 deviation #1 and
+  only un-asserts the domain-gated SOAP/legal STRUCTURAL indicator; the dominant
+  text-based INDUSTRY_JARGON path is byte-for-byte faithful and IS covered by #10.
+
+  Scope discipline (the user's explicit check): CONFIRMED. This story does NOT
+  over-claim FR-007/008 implementation. §3 marks them SUPPORTING ("consume this
+  port; implemented in later stories"), §8b states the scripts/ caller cleanup is
+  "NOT this story", and §2 states "No adversary implementation yet (that's
+  S3-02/03)". The owned-files set (§8) is confined to the port + signals substrate.
+
+  Re-ran: python3 -m pytest tests/test_adversary_port.py tests/test_signals.py -q
+  → 11 passed (~0.13s). 0 MAJOR+ coverage findings → APPROVE.
+
+  Out of my lane (deferred to peer reviewers per §11): test quality / assertion
+  strength (code-quality); whether traceability markers are present & correct
+  (traceability); AX-002 determinism + NFR-004 purity verification
+  (axiom-compliance); no-real-PII over corpus reads (security-sast). DoD §10 CI-green
+  is AGENT_SIMULATED and the 6 residual mypy errors are declared PRE-EXISTING /
+  out-of-§8-scope — noted, not a coverage concern.
+
+review_time_seconds: 240
+context_bounds_respected: true

@@ -1,0 +1,1409 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 Requirements R3 — Simulated Interview Synthesis — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 Requirements R3 — Simulated Interview Synthesis</h1>
+<p><strong>Capability</strong>: CAP-02 — Powered, repeatable, reportable assessment <strong>workflow</strong> (runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0</strong> over a <strong>powered, lattice-stratified sample (default)</strong> / <strong>full corpus (opt-in)</strong> / <strong>smoke (fast)</strong>, with epistemic instrumentation + reporting at every spine stage: <code>load → sample → run systems → score → rate → report</code>).
+<strong>Stage</strong>: assessment-workflow / 02-Requirements · Phase R3 (simulated-interview synthesis)
+<strong>Date</strong>: 2026-06-01
+<strong>Inputs</strong>: 6 simulated interviews dispatched against the R2 interview-guide.md (18 persona-agnostic core probes + per-persona Layer-2 + sub-archetype probes). INT-01 P-acad-deid (clinical/PHI de-id) · INT-02 P-mlnlp-researcher (methods-author/leaderboard) · INT-03 P-tool-builder (OSS Presidio/GLiNER maintainer) · INT-04 P-priv-eng (pre-screen/procurement) · INT-05 P-dpo / P-complreviewer (external assessor, Art-11) · INT-06 P-agentic-redteam (enterprise red-teamer, recognition-oracle lens).
+<strong>provisional_status</strong>: AGENT_SIMULATED — every interviewee is an agent-simulated single-session respondent; the <em>code/version/line evidence</em> they reason against is the Discovery file-read at HEAD on 2026-06-01. <strong>Agent-simulated research is NOT a substitute for real users.</strong> Real-user interviewing with the same guide is a Pass-2 activity. Two structural caveats inherited from R2: (1) the <strong>P-dpo / assurance lens (INT-05) is FIRST CONTACT</strong>, not re-confirmation of the cycle-1 P-dpo priority — a clean result here does not validate that priority; real-user DPO interviews remain a Pass-2 must. (2) The whole roster is <strong>representative-scale, single-session</strong> — directional, not saturated.</p>
+<blockquote>
+<p><strong>Vocabulary remap (project framing — synthetic PII benchmark).</strong> Persona = assessment/benchmark <strong>consumer</strong>; UC = <strong>Evaluation Scenario</strong>; FR = <strong>Benchmark/Assessment Capability</strong>; NFR = <strong>Quality Attribute</strong>; DC = <strong>Benchmark Component</strong>.</p>
+</blockquote>
+<blockquote>
+<p><strong>ID discipline (load-bearing).</strong> The interviewees referenced FR/NFR numbers <strong>inconsistently and in conflict</strong> (e.g., INT-02/03/04 each minted overlapping <code>FR-030…FR-04x</code> / <code>NFR-019…NFR-02x</code> for <em>different</em> capabilities; INT-01/INT-06 referenced UC IDs only). <strong>This synthesis does NOT canonicalize those clashing FR/NFR IDs</strong> — that is the R4 FR/NFR-author&#39;s job (offsets reserved: <strong>FR→030, NFR→019</strong>, continue global numbering, never renumber/reuse). To stay decision-stable, this synthesis anchors every signal to the <strong>already-stable</strong> IDs: <strong><a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>…<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a></strong>, the five decision-forks <strong>DF-1…DF-5</strong>, the candidate axiom <strong>AX-pii-anon-005</strong> (and inherited AX-001/002/003/004), the concept-value items <strong>C1…C10</strong>, <strong>Open Items 1–13</strong>, and the anti-over-claim rails <strong>G1–G7</strong>. Where a net-new capability has no home yet, it is named descriptively and tagged <code>→ R4 (new FR/NFR candidate)</code>.</p>
+</blockquote>
+<hr>
+<h2>0. Coverage map (who answered, what they gate)</h2>
+<table>
+<thead>
+<tr>
+<th>Interviewee</th>
+<th>Persona (sub-archetype)</th>
+<th>Priority</th>
+<th>Probes</th>
+<th>Primary lens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>INT-01</td>
+<td>P-acad-deid (clinical i2b2/n2c2)</td>
+<td>HIGH</td>
+<td>29 (18 core + 11)</td>
+<td>Citation legitimacy; synthetic ceiling; DOI gate</td>
+</tr>
+<tr>
+<td>INT-02</td>
+<td>P-mlnlp-researcher (methods-author)</td>
+<td>HIGH</td>
+<td>29 (18 core + 11)</td>
+<td>Reviewer-3 survival; seam-pinning; rank stability</td>
+</tr>
+<tr>
+<td>INT-03</td>
+<td>P-tool-builder (OSS maintainer)</td>
+<td>HIGH</td>
+<td>28 (18 core + 10)</td>
+<td>CI-gate viability; smoke speed; F2/AUPRC; contamination</td>
+</tr>
+<tr>
+<td>INT-04</td>
+<td>P-priv-eng (pre-screen)</td>
+<td>MEDIUM</td>
+<td>27 (18 core + 9)</td>
+<td>Operating-point / false-positive tax; taxonomy crosswalk; neutrality</td>
+</tr>
+<tr>
+<td>INT-05</td>
+<td>P-dpo / P-complreviewer (external assessor)</td>
+<td>MEDIUM (<strong>first contact</strong>)</td>
+<td>30 (18 core + 10 + 2)</td>
+<td>Art-11 filing; anon/pseudo legal end-states; non-strippable per-metric; arms-length</td>
+</tr>
+<tr>
+<td>INT-06</td>
+<td>P-agentic-redteam (enterprise)</td>
+<td>MEDIUM</td>
+<td>27 (18 core + 9)</td>
+<td>Recognition-oracle calibration; throughput SLA; adversarial-distribution gap</td>
+</tr>
+</tbody></table>
+<p><strong>3 HIGH (INT-01/02/03) = the acceptance + credibility cohort.</strong> The academic-soundness bar is built for their standards; where all three converge, the signal is gating. The 3 MEDIUM (INT-04/05/06) are real but downstream — and each surfaced a <strong>net-new capability the HIGH cohort did not</strong> (operating-point, Art-11 format, throughput SLA), which is the most valuable MEDIUM contribution.</p>
+<hr>
+<h2>1. Convergent priorities (multi-persona, gating)</h2>
+<p>Ordered by breadth + strength of convergence. A signal is <strong>UNANIMOUS</strong> when all 6 named it, <strong>HIGH-CONVERGENT</strong> when all 3 HIGH personas named it.</p>
+<h3>C-1 · Audited stats path is non-negotiable — quarantine <code>significance.py</code> (P1 precondition) — UNANIMOUS, anxiety=strong</h3>
+<p>Every interviewee independently treated routing through the <strong>audited <code>eval-data/stats</code> core</strong> (<code>paired.py</code> + <code>intervals.py</code>) and <strong>quarantining the fabricated <code>pii-rate-elo/analysis/significance.py</code></strong> (bootstrap <code>se=metric*(1-metric)/100</code> + Gaussian noise L205-206; McNemar <code>n_approx=100</code>/<code>pooled_sd=0.1</code> L271-281) as a <strong>walk-away trigger</strong>, not a preference. INT-01: &quot;if I audit the significance code and find hardcoded n=100 or Gaussian noise … I walk away and I tell my colleagues.&quot; INT-02: &quot;if any significance computation routes through <code>significance.py</code> … my paper is compromised.&quot; INT-03 (tool-builder, surprised himself): &quot;matters to me … more than I expected … I&#39;m publishing a number derived from noise.&quot; <strong>Threshold signal</strong>: INT-02 and INT-03 both demanded this be <strong>CI-enforced, not just documented</strong> — a test asserting the audited path is always taken and the fabricated path is <strong>unreachable from the run surface</strong>. → sharpens <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a></strong>, <strong>Open Item 1</strong>; <code>→ R4 (new NFR candidate: run-surface quarantine assertion test)</code>.</p>
+<h3>C-2 · Dataset-seam regression contract — silent drift is a confirmed historical burn (P2 precondition) — HIGH-CONVERGENT + INT-04/05, anxiety=strong</h3>
+<p>The seam reconciliation to <strong>v2.0.0 / 575,604 / CC0 / <code>annotations</code></strong> with a <strong>regression contract</strong> (version + record-count + 63-type count + schema fingerprint + <strong>dataset content hash</strong>) is confirmed by 5 of 6, and two reported a <strong>real multi-period burn from silent dataset drift</strong>: INT-01 lost &quot;a 6-month reanalysis&quot;; INT-03 &quot;spent a week tracing which changes drove the delta&quot; after shipping a model-card number computed against the wrong version. INT-02 named it &quot;the single most likely trust-killer.&quot; <strong>Threshold signals</strong>: (a) the contract must catch <strong>same-count substitution</strong> (content hash), not only count/version reverts (INT-03, GAME-07); (b) INT-02 wants the contract emitted as a <strong>structured field in the run-record JSON</strong> — assertable in a paper&#39;s methods section, not just a crosswalk doc; (c) INT-03 wants <strong>corpus-vs-model delta attribution</strong> when a score moves across runs. → sharpens <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a></strong>, <strong>C1</strong>; <code>→ R4 (new FR candidate: run-record regression-contract field; delta attribution)</code>.</p>
+<h3>C-3 · Per-metric CIs with a deterministic interval-selection rule — UNANIMOUS (incl. the oracle lens) — pull=strong</h3>
+<p>A CI on every published proportion is the cheapest credibility the benchmark can buy, and all 6 confirmed it — including INT-06, who reframed it for the oracle use (&quot;if I know the oracle has 94% recall on SSN (Wilson CI 91–96%) I can calibrate my false-negative rate&quot;). INT-04 has built Wilson/Clopper-Pearson &quot;once from scratch; it took two days and a stats review.&quot; <strong>Threshold signal</strong>: the <strong>interval-selection rule must be disclosed</strong> (Wilson default / Clopper-Pearson small-n/boundary / paired-bootstrap for differences) — INT-01 and INT-05 both flagged that an undisclosed rule makes the CI column ambiguous. INT-05 lists per-metric CI with disclosed method among the <strong>first-six hard send-back triggers</strong>. → confirms <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> (a)</strong>, <strong>AX-003</strong>, <strong>Open Item 5</strong>.</p>
+<h3>C-4 · Paired test before any system-vs-system claim, with declared multiplicity family — HIGH-CONVERGENT + INT-05, push=strong</h3>
+<p>Eyeballed F1-deltas are a confirmed rejection vector: INT-01&#39;s delta &quot;evaporated (p=0.14)&quot; under McNemar in revision; INT-02&#39;s ACL submission was killed by Reviewer-3 (&quot;delta is within noise, no significance test&quot;) at a <strong>6-week</strong> cost. All three HIGH personas + INT-05 want McNemar + paired bootstrap gating directional claims. <strong>Threshold signal (sharpens AX-005)</strong>: INT-01 and INT-02 independently demanded the <strong>multiplicity family be declared explicitly</strong> — the <strong>two inference families</strong> (exploratory per-cell uncorrected vs confirmatory pairwise <strong>Holm-Bonferroni with family size stated</strong>) must be in the axiom/report text, <strong>not only in code</strong>, &quot;because reviewers will ask and the author needs to be able to explain it without reading source code&quot; (INT-01). → confirms <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> (b)</strong>, <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (b)</strong>; sharpens <strong>AX-pii-anon-005</strong>.</p>
+<h3>C-5 · Named shortfall on under-powered cells (DF-3) — UNANIMOUS, and the study&#39;s strongest <em>delight</em> — pull=strong</h3>
+<p><strong>DF-3 resolved with zero dissent</strong>: all 6 chose <strong>show-greyed/flagged-with-the-exact-shortfall-named</strong>, and all 6 explicitly rejected <strong>both</strong> &quot;omit&quot; (a lie of omission; &quot;looks like you had power you didn&#39;t&quot; — INT-01; &quot;looks like the pipeline failed to run on that type&quot; — INT-05) <strong>and</strong> &quot;show like any other number&quot; (it gets cited unqualified). This is the single most-praised feature across the cohort and the resolution of the DF-3 fork. <strong>Threshold signals</strong>: (a) the shortfall must be expressed in <strong>REALIZED positive counts, not target_n labels</strong> — INT-03: &quot;&#39;short by 47 realized positives vs ADEQUATE threshold&#39; is actionable; &#39;needs more data&#39; is not&quot;; INT-06 wants it per (entity-type × language) cell (&quot;need N more positives on IBAN/es-ES&quot;); (b) the distinction <strong>UNDER_SAMPLED vs CORPUS_LIMITED vs EMPTY</strong> matters (INT-03, INT-06 — fixable-by-drawing-more vs irreducible); (c) INT-01/05 require the label be <strong>structurally part of the number / non-strippable</strong>, because &quot;the stamp gets lost in the filing&quot; (INT-04&#39;s Japanese-data case: he flagged it verbally, the reviewer &quot;cited the number unqualified in their risk memo&quot;). → confirms <strong><a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a></strong>, <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (d)</strong>; resolves <strong>DF-3 (Open Items 3,5)</strong>.</p>
+<h3>C-6 · Non-strippable synthetic-only caveat, enforced by construction — UNANIMOUS, anxiety=strong (assurance/procurement) — pull=strong</h3>
+<p>All 6 confirmed the <strong>non-strippable synthetic-only / anti-anonymity caveat</strong> (<code>DesignProvenance</code> / <code>ReidProvenance.__post_init__</code> raises on empty caveat; AX-001/003). The two consumers who <em>receive</em> artifacts rather than run them (INT-04, INT-05) escalated it to <strong>anxiety=strong</strong>: INT-04 watched &quot;a colleague present a synthetic leaderboard rank in a vendor review meeting as if it were a POC result … It wasn&#39;t caught&quot;; INT-05 makes a strippable caveat the <strong>#1 of four disqualifying failure modes</strong> for a compliance file. <strong>Threshold signal (sharpens C7/format)</strong>: the caveat must survive <strong>export / copy-paste into Confluence / Excel / a regulatory system</strong> and be <strong>inline per-metric</strong>, not a removable header, footer, or appendix (INT-04, INT-05). → confirms <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (c)</strong>, <strong>AX-001/003</strong>; sharpens <strong>C3/C7</strong>.</p>
+<h3>C-7 · Pre-registration is OPT-IN, scoped by run-type (DF-2) — UNANIMOUS resolution — see §3 for the nuance</h3>
+<p>All 6 converged on the <strong>same</strong> resolution of DF-2: <strong>opt-in for development/internal runs, enforced for the publication/leaderboard/filing run-type.</strong> Nobody wanted mandatory-for-all-runs; everybody wanted it available and enforced where stakes warrant. This is a convergent <em>resolution</em>, but because each persona drew the &quot;stakes&quot; line at a different run-type, the <strong>mechanism</strong> (a run-type-scoped gate) is the requirement — detailed in §3. → resolves <strong>DF-2 (Open Item 6)</strong>; confirms <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a></strong>.</p>
+<h3>C-8 · Seeded / byte-reproducible-from-manifest — UNANIMOUS, table-stakes — pull=strong (habit=low → easy adoption)</h3>
+<p>Every interviewee named seeded byte-reproducibility (AX-002) as a top trust gate. INT-03&#39;s loyalty hook is &quot;file a GitHub issue with a seed, you can repro the failure.&quot; INT-01&#39;s smallest un-reproducibility trigger is a <strong>missing seed</strong>; second is <strong>undeclared span-match mode</strong>; third is <strong>no corpus version pin</strong>. <strong>Threshold signal</strong>: reproducibility must hold <strong>from the manifest</strong> including the <strong>RNG/environment fingerprint + sampler version</strong>, not just the seed integer (INT-01, INT-06; matches <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>&#39;s canonical-form-equality acceptance signal). → confirms <strong><a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a> acceptance signal</strong>, <strong>AX-002</strong>.</p>
+<h3>C-9 · Per-stage observability run-record with <code>code_commit</code> + toolchain — HIGH for the assurance/audit consumers, MEDIUM-pull for HIGH cohort</h3>
+<p>INT-04 (primary on <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a>) and INT-05 both treat the per-stage run-record as <strong>audit-admissibility</strong>: &quot;when I hand a result to security or audit … they will ask &#39;which file produced this number?&#39; — not &#39;which run.&#39;&quot; Both demand <strong>file-level provenance</strong> (C5), not run-level-only, for filing-grade artifacts. The HIGH cohort values it (embeds in a paper&#39;s methods section — INT-02) but at lower urgency. → confirms <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a></strong>, <strong>C5</strong>; INT-05 maps it directly to <strong>EU AI Act Art-11</strong> provenance.</p>
+<h3>C-10 · Anon-vs-pseudo scored by separate metric families (AX-004) — confirmed; legally load-bearing for INT-05, persona-stratified salience</h3>
+<p>INT-05 calls AX-004 &quot;the highest-value architectural decision from a compliance standpoint&quot; — a single &quot;redaction quality&quot; score is &quot;legally incoherent.&quot; INT-02 and INT-03 confirm it from the methods side (&quot;collapsing them hides the recognizer being good and the anonymizer leaking context&quot;). <strong>Salience is persona-stratified</strong> (low for the clinical de-id lens INT-01, where de-id is irreversible removal; gating for INT-05). <strong>Threshold signal</strong>: INT-01 and INT-05 both want the <strong>separation rationale written in the report/docs methodology</strong>, not only enforced in code — reviewers will ask &quot;why no combined F1?&quot; and the author needs a one-paragraph answer. → confirms <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> (scoring_family)</strong>, <strong>AX-004</strong>; <code>→ R4 (doc/report requirement: AX-004 rationale prose)</code>.</p>
+<hr>
+<h2>2. Threshold signals (quantified — feed R4 NFR thresholds + R9 validation)</h2>
+<p>These are the concrete numbers/criteria the interviewees attached. They are <strong>agent-simulated and illustrative</strong> (each interviewee flagged their own numbers as needing real-user verification in Pass-2), but they are the directional thresholds the NFR-author should propose and the threshold-validator should pressure-test.</p>
+<table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>Threshold stated</th>
+<th>Source</th>
+<th>Anchors / <code>→ R4</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Smoke runtime (CI gate)</strong></td>
+<td><strong>&lt; 10 min</strong> hard ceiling (&quot;disabled within a sprint&quot; beyond); <strong>&lt; 5 min</strong> preferred; INT-02 wants <strong>&lt; 60 s</strong> for the inner-loop check</td>
+<td>INT-03 (primary), INT-02</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-20" data-trace-id="UC-20" aria-label="Trace UC-20 — — Smoke run for fast iteration (CI / local dev) · SAMPLE /…">UC-20</a> · C4 · <code>→ R4 NFR</code></td>
+</tr>
+<tr>
+<td><strong>Powered run runtime (release-branch gate)</strong></td>
+<td><strong>&lt; 30 min</strong></td>
+<td>INT-03</td>
+<td><a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>/17 · <code>→ R4 NFR</code></td>
+</tr>
+<tr>
+<td><strong>Smoke output contract</strong></td>
+<td>committed reference JSON, <strong>per-entity-type F1 ± tolerance</strong>, <strong>byte-diffable in CI</strong>, all CI/p-value fields suppressed</td>
+<td>INT-03, INT-02</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-20" data-trace-id="UC-20" aria-label="Trace UC-20 — — Smoke run for fast iteration (CI / local dev) · SAMPLE /…">UC-20</a> · C4 · <code>→ R4 FR: smoke reference-output schema spec</code></td>
+</tr>
+<tr>
+<td><strong>Oracle inline latency</strong></td>
+<td><strong>≤ 50 ms p95</strong> per record (synchronous inline calls)</td>
+<td>INT-06</td>
+<td>C9 · <code>→ R4 NFR (oracle track / routes to cycle-1 UC-08)</code></td>
+</tr>
+<tr>
+<td><strong>Oracle batched throughput</strong></td>
+<td><strong>≥ 500 records/sec</strong> (async)</td>
+<td>INT-06</td>
+<td>C9 · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> throughput output · <code>→ R4 NFR</code></td>
+</tr>
+<tr>
+<td><strong>Throughput output format</strong></td>
+<td>p95 latency + rps <strong>published in machine-readable output</strong> under stated <strong>hardware + RNG fingerprint</strong></td>
+<td>INT-06</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> · C9 · <code>make benchmark_throughput.py output machine-readable</code></td>
+</tr>
+<tr>
+<td><strong>Rank-stability</strong></td>
+<td><strong>≥ 2–3 sampling seeds</strong>; report <strong>Kendall-τ</strong> (INT-02 names 3-seed minimum + Kendall-τ; &quot;one draw … is an anecdote&quot;); INT-02 wants τ as a <strong>first-class output field</strong>, not post-hoc</td>
+<td>INT-02, INT-03</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> (<code>seed_variance_scope</code>) · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> · STATS-04/GAME-02</td>
+</tr>
+<tr>
+<td><strong>RD-convergence reporting</strong></td>
+<td>report <strong>achieved max-RD ± 2RD</strong> with <strong>number of Glicko rounds stated</strong>; never &quot;converged&quot; hand-wave</td>
+<td>INT-02</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> (c) · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> · G4</td>
+</tr>
+<tr>
+<td><strong>Operating-point view</strong></td>
+<td><strong>recall-priority Fβ (β&gt;1)</strong> or stated <strong>FN:FP cost</strong> + <strong>threshold-free AUPRC</strong> at the <strong>pre-registered operating point</strong>; never a lone F1. INT-03 ships <strong>F2 + AUPRC</strong> as the actual gate metric; INT-04 needs <strong>precision-at-fixed-recall</strong> (he operates at recall≈0.90–0.93)</td>
+<td>INT-03, INT-04</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (a) · DOM-02 · the false-positive tax</td>
+</tr>
+<tr>
+<td><strong>False-positive tax (the why)</strong></td>
+<td>a real burn: F1=0.91 → at recall 0.93 fixed, precision dropped to <strong>0.71</strong> → &quot;<strong>34k false positives per 10k real entities</strong>&quot; → remediation <strong>3× the license cost</strong> in Q1</td>
+<td>INT-04</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (a) · motivates operating-point requirement</td>
+</tr>
+<tr>
+<td><strong>DOI / persistent identifier</strong></td>
+<td><strong>Zenodo DOI (or equivalent)</strong> is a <strong>HARD citation gate</strong>; a GitHub SHA is <strong>insufficient</strong> and link-rots (INT-01 cites a dead-SHA NeurIPS-D&amp;B proceedings link)</td>
+<td>INT-01 (hard), INT-02 (confirms)</td>
+<td>C2 · <code>→ R4 (MUST-level quality attribute for the P-acad-deid citation cohort)</code></td>
+</tr>
+<tr>
+<td><strong>Filing-grade artifact format</strong></td>
+<td>every metric cell carries its <strong>CI + provenance hash + synthetic-only caveat INLINE</strong>; JSON run-record necessary but <strong>insufficient</strong> — the filed artifact format is itself gated</td>
+<td>INT-05 (hard gate), INT-04 (file-level provenance)</td>
+<td>C3/C7 · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a>/23 · <code>→ R4 (new FR/NFR: filing-grade artifact format)</code></td>
+</tr>
+<tr>
+<td><strong>Academic-vocabulary output</strong></td>
+<td><strong>LaTeX tabular / CSV</strong> with labeled headers; product verdict language (&quot;<strong>SHIP-WITH-CAVEATS</strong>&quot;) must NOT appear verbatim — translate to academic phrasing</td>
+<td>INT-01</td>
+<td>C7 · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> · artifact-first register</td>
+</tr>
+<tr>
+<td><strong>Contamination disclosure</strong></td>
+<td>per-system <code>contamination_status ∈ {disclosed-unseen, disclosed-trained-on-corpus, undisclosed}</code>; <strong>&quot;unknown&quot; rejected/flagged</strong>; INT-03 adds <strong>signed attestation that held-out labels were not exposed</strong> as a 6th AX-005 element; INT-06 wants the flag to <strong>propagate into the oracle API</strong> so callers filter at query time</td>
+<td>INT-02, INT-03, INT-06</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> (d) · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (d) · DF-5 · <code>→ R4 (leaderboard-hygiene FR)</code></td>
+</tr>
+<tr>
+<td><strong>Send-back floor (assurance)</strong></td>
+<td>INT-05&#39;s <strong>first-six hard send-back triggers</strong>: (1) dataset version + record-count + schema fingerprint; (2) seed + code_commit + toolchain; (3) per-metric CI + method; (4) per-slice positive count + power verdict + named shortfall; (5) paired test + Holm-Bonferroni where a comparison is claimed; (6) non-strippable per-metric synthetic-only caveat. Items 7–8 (anon/pseudo separation; convergence statement) required for any comparative ranking</td>
+<td>INT-05 (P-complreviewer)</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a>/22/23 · the AX-005 acceptance checklist from the consumer side</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>3. How the decision-forks resolved (DF-1 … DF-5)</h2>
+<h3>DF-1 · Default mode (powered sample vs full corpus) — <strong>SPLIT BY USE, NOT BY PERSONA. The locked default holds, but the labelling/parity requirements sharpen.</strong></h3>
+<p>This is the <strong>one genuine disagreement</strong> in the study, and it splits on <strong>citable-vs-operational use</strong>, not on persona identity:</p>
+<ul>
+<li><strong>Powered-sample-as-default is CORRECT for the operational/cost-bound path</strong> — confirmed by INT-02 (when LLM-adversary cost binds), INT-03 (per-PR / CI; &quot;I&#39;d probably never run the full corpus&quot;), INT-04 (pre-screen; &quot;a cost I can&#39;t justify … every time&quot;), INT-06 (oracle calibration; &quot;whole corpus every time would be overkill&quot;). The <strong>load-bearing condition all four attached</strong>: the <strong>power verdict must be named per cell</strong> — INT-02: &quot;the wrong default is full-corpus-but-unlabeled-power — that&#39;s false confidence&quot;; INT-03: &quot;if the label says ADEQUATE and the CI is shown, I&#39;ll trust it as a gate.&quot;</li>
+<li><strong>Full-corpus is REQUIRED for the citable/headline/filing number</strong> — INT-01 (a reviewer &quot;will immediately ask &#39;why didn&#39;t you run the whole thing?&#39;&quot;), INT-03 (model-card headline; &quot;&#39;sampled but powered&#39; requires an explanation I&#39;d rather not owe every user&quot;), and most strongly <strong>INT-05 pushed back on the locked brief</strong>: for <strong>filing-grade</strong> evidence he wants <strong>full-corpus as the default</strong>, powered-sample as an explicitly-labelled cost-optimization mode, because power-tier explanation to a regulatory advisor &quot;adds a layer of explanation that should not need to exist.&quot;</li>
+</ul>
+<p><strong>Resolution (consistent with the locked brief + G2/G3):</strong> keep <strong>powered-representative as the CLI default</strong> and <strong>FULL = the citable leaderboard</strong>, but the requirement set must make the <em>citable-vs-pre-screen distinction first-class and unmistakable</em>: (a) the representative run is <strong>ALWAYS</strong> labelled with its power verdict (SMALL/ADEQUATE/LARGE) + named shortfall, <strong>never silently LARGE</strong> (G3); (b) a <strong>run-type / filing-grade designation</strong> selects which mode backs a citable claim (this is the same scoping mechanism DF-2 needs — see below). INT-05&#39;s pushback is <strong>first-contact assurance signal, not a mandate to flip the default</strong> (R2 caveat) — but it <strong>must be carried to R6/R7</strong> as a candidate refinement for the filing-grade run-type, and to Pass-2 (&quot;I&#39;d want to verify whether regulators in practice accept a well-labeled powered-sample artifact&quot; — INT-05&#39;s own hedge). → sharpens <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-19" data-trace-id="UC-19" aria-label="Trace UC-19 — — Full-corpus opt-in run (the “no sampling, score everythin…">UC-19</a></strong>, <strong>Open Items 3,4</strong>, <strong>G2/G3</strong>; <strong>carry INT-05&#39;s full-corpus-for-filing pushback to R6/R7 + Pass-2</strong>.</p>
+<h3>DF-2 · Pre-registration (mandatory vs opt-in) — <strong>RESOLVED: opt-in, run-type-scoped. Universal commitment is manifest-reproducibility.</strong></h3>
+<p><strong>Unanimous</strong> (§1 C-7): opt-in for dev/internal, enforced for the high-stakes run-type. The persona-specific &quot;stakes line&quot;: INT-01/02/03 → <strong>leaderboard/publication submission</strong>; INT-05 → <strong>filing-grade / Art-11</strong>; INT-04 → <strong>formal procurement doc or compliance filing</strong>; INT-06 → <strong>formal comparative security report</strong>. The disconfirming probes paid off: <strong>3 interviewees independently warned mandatory-for-all-runs would cause avoidance</strong> — INT-02 &quot;would kill adoption for the exploratory loop,&quot; INT-03 &quot;developers to bypass the tool,&quot; INT-06 &quot;route around the harness entirely,&quot; and INT-05 warned teams would &quot;<strong>avoid the formal mode and file development outputs instead, which is worse</strong>.&quot; <strong>Requirement (net-new mechanism):</strong> the workflow must support a <strong>run-type designation</strong> (e.g., <code>dev</code> / <code>smoke</code> / <code>leaderboard-submission</code> / <code>filing-grade</code>) that <strong>scopes pre-registration enforcement (and the AX-005 bar — see §5)</strong>, rather than a single global on/off. INT-01/03 want this exposed as a <strong>CLI flag/preset</strong>, &quot;not a philosophy&quot; (INT-03). When on: <strong>git-commit-anchored + pushed-to-remote + hash-chained into the first run-record</strong>, immutable, with <strong>run-lineage count disclosed</strong> (re-roll-until-favorable visibility). → resolves <strong>DF-2 (Open Item 6)</strong>; confirms <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a></strong>; <code>→ R4 (new FR: run-type designation scoping pre-reg + AX-005 enforcement)</code>.</p>
+<h3>DF-3 · Under-powered reporting — <strong>RESOLVED with zero dissent: greyed/flagged + named shortfall in realized positives.</strong> (Full detail in §1 C-5.)</h3>
+<p>The cleanest fork in the study. All 6: show-greyed-with-named-shortfall; reject omit AND show-normally. Realized positives not target labels; UNDER_SAMPLED/CORPUS_LIMITED/EMPTY distinction; structurally non-strippable. → resolves <strong>DF-3 (Open Items 3,5)</strong>; confirms <strong><a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a></strong>, <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (d)</strong>.</p>
+<h3>DF-4 · Real-data correlation slice — <strong>RESOLVED: the named credibility unlock; use synthetic now WITH the ceiling caveat, do NOT block v0.1 on it.</strong></h3>
+<p><strong>Unanimous</strong> that the <strong>real-corpus correlation study (vs i2b2-2014 / TAB; cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a>)</strong> is the single highest-leverage upgrade — and <strong>unanimous</strong> that they&#39;d <strong>use the synthetic numbers now</strong> with an explicit ceiling caveat rather than wait. The persona-specific framing of <em>what the study unlocks</em>:</p>
+<ul>
+<li>INT-01 (clinical): upgrades a <strong>supplementary stress-test</strong> to a <strong>primary result</strong> (&quot;Rankings track i2b2-2014, Spearman ρ=… [CI]&quot; is &quot;publishable as a primary result at ACL or JAMIA&quot;). The synthetic-only ceiling is <strong>the dominant anxiety</strong> and &quot;the single biggest reason a skeptical reviewer could dismiss results.&quot;</li>
+<li>INT-02 (methods): upgrades an ablation-grade claim to a generalization claim; would wait for a primary comparison paper but not for an ablation.</li>
+<li>INT-03 (tool-builder): upgrades <strong>&quot;CI gate only&quot;</strong> to <strong>&quot;citable model-card score&quot;</strong> at <strong>Kendall-τ &gt; 0.8</strong>.</li>
+<li>INT-04 (priv-eng): the unlock is <strong>stakeholder-facing</strong> — moves &quot;we think these numbers are predictive&quot; to &quot;shown to track real-data behavior&quot; for security leadership; he flags that <strong>powered + synthetic is genuinely harder to sell</strong> than powered alone, so the correlation study must at least be <strong>named-and-pending</strong> in the report.</li>
+<li>INT-05 (assurance): upgrades <strong>&quot;evidence scaffolding&quot;</strong> to <strong>&quot;supporting evidence for a real-world capability claim&quot;</strong>; without it the ceiling statement must read &quot;these results do not constitute evidence of real-world re-identification resistance.&quot;</li>
+<li>INT-06 (red-team): the study tells him <strong>how much to trust the oracle floor</strong> (synthetic recall vs real-world adversarial recall); discounts synthetic by an unknown factor until then.</li>
+</ul>
+<p><strong>Resolution:</strong> carry <strong>cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a> real-data correlation</strong> as the <strong>top credibility unlock</strong> to Requirements + Testing Pass-2, <strong>out-of-band, NOT v0.1-blocking</strong> (gated on external DUA). The <strong>non-strippable synthetic-only caveat (C-6)</strong> is the load-bearing v0.1 substitute, and INT-04&#39;s <strong>&quot;correlation study named-and-pending&quot; flag</strong> is a <code>→ R4 (report requirement)</code>. → confirms <strong>Open Item 11</strong>; sharpens <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a></strong>, <strong>C3</strong> (the ceiling-statement template).</p>
+<h3>DF-5 · Leaderboard hygiene / anti-gaming — <strong>RESOLVED: blind submission + held-out-label separation + provenance stamp + contamination disclosure; arms-length governance is a hard gate.</strong></h3>
+<p>Converged across the personas whose threat-model justifies it (INT-02 consumer-side, INT-03 submitter-side, INT-05 assurance-side, INT-06 oracle-side):</p>
+<ul>
+<li><strong>Contamination is the hardest dismissal to disarm</strong> (INT-03; the corpus is public synthetic → train-on-test). Mechanism: <strong>per-system <code>contamination_status</code></strong> with <strong>&quot;unknown&quot; rejected/flagged</strong>, plus a <strong>signed attestation that held-out labels were not exposed</strong> (INT-03&#39;s 6th AX-005 element). INT-02: a leaderboard that accepts <code>contamination_status: unknown</code> &quot;is not trustworthy.&quot;</li>
+<li><strong>Blind submission</strong> (evaluator runs inference, not submitter; held-out labels genuinely held out) — INT-03 would accept signing an attestation rather than open-sourcing weights; the <strong>vendor-gaming sub-archetype&#39;s own incentive</strong> (avoid disclosing training data / held-out set) is the forcing function INT-05 names as the <strong>structural P-tool-vendor / P-complreviewer tension</strong> the governance must resolve explicitly.</li>
+<li><strong>Arms-length / neutral governance is inadmissibility-grade</strong> for the assurance consumer: INT-05 &quot;rejected vendor self-benchmarks as inadmissible on two recent mandates&quot;; &quot;a tool vendor running their own benchmark is inadmissible regardless of methodology quality.&quot; INT-04 (procurement): vendor self-benchmarks are &quot;inadmissible to my procurement process.&quot; Both want a <strong>named neutrality/governance statement</strong> (who controls the corpus, who holds the labels, who runs the eval) <strong>as a field in the run-record + every report page</strong>, not a general caveat. INT-05 adds: a managed conflict (academic group with a system in the leaderboard) needs <strong>explicit disclosure + a recusal record</strong>.</li>
+</ul>
+<p>→ resolves <strong>DF-5 (Open Items 8,9,10)</strong>; confirms <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> (d)</strong>, <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a></strong>; <code>→ R4 (governance NFRs: blind/provenance submission, contamination disclosure, neutrality statement field, recusal record)</code>.</p>
+<hr>
+<h2>4. Disagreements &amp; tensions (→ R6/R7 to adjudicate; Pass-2 to validate)</h2>
+<ol>
+<li><p><strong>DF-1 default mode (the only real fork-level disagreement).</strong> Powered-sample-default (4 operational voices) vs full-corpus-default-for-filing (INT-05). <strong>Adjudication:</strong> keep the locked default; make the citable-vs-pre-screen distinction first-class via the <strong>run-type designation</strong>; carry INT-05&#39;s filing-grade-full-corpus pushback to R6/R7 + Pass-2. (§3 DF-1)</p>
+</li>
+<li><p><strong>AX-pii-anon-005 universality vs run-type scoping.</strong> INT-02 wants the bar (CI + paired test + convergence + provenance + caveat) <strong>enforced unconditionally, including exploratory runs</strong> (&quot;the exploratory run is where people get sloppy and then report the sloppy number&quot;). INT-05 wants it <strong>enforced only on filing-grade designation</strong>, warning universal enforcement makes teams &quot;avoid the formal mode and file development outputs instead.&quot; INT-03/INT-06 sit between (relax convergence + paired-test for internal gates; full bar for published/leaderboard). <strong>Adjudication:</strong> these are reconcilable via the <strong>run-type mechanism</strong> — the <em>full</em> AX-005 bar binds the published/leaderboard/filing run-types (satisfies INT-05), while smoke/dev runs <strong>suppress</strong> CI/p-value emission entirely (<a class="trace-link" href="../01-discovery/04-use-cases.html#uc-20" data-trace-id="UC-20" aria-label="Trace UC-20 — — Smoke run for fast iteration (CI / local dev) · SAMPLE /…">UC-20</a>) rather than emit a sloppy number (satisfies INT-02&#39;s underlying worry — there is no un-rigorous number to mis-cite because there is no number). Confirm the exact per-run-type bar in <strong>R6/R7</strong>. (§5)</p>
+</li>
+<li><p><strong>AX-004 salience is persona-stratified, not universal.</strong> Gating for INT-05 (legal end-states) and valued by INT-02/03 (methods); <strong>low-salience for INT-01</strong> (clinical de-id = irreversible removal, no pseudonymization reasoning) and not relevant to INT-06. <strong>Adjudication:</strong> keep AX-004 MUST (it is architecturally load-bearing and a binding axiom), <strong>document the audience</strong>; do not let the clinical lens&#39;s indifference weaken it. Mirrors the cycle-1 finding that pseudonymization value is persona-stratified, not OUT.</p>
+</li>
+<li><p><strong>Scope boundaries — accepted, but each MEDIUM persona wants its own boundary named.</strong> All accepted the honest bounds, but each surfaced a <strong>different out-of-scope item they care about</strong>: INT-06 → <strong>re-id power</strong> out is fine (&quot;detection/anonymization power only, re-id is cycle-2&quot; — MEI-06 accepted) <strong>and</strong> the <strong>adversarial-distribution gap</strong> (homoglyph/BiDi/encoding) &quot;no statistical powering fixes&quot; — wants a <strong>coverage envelope</strong> naming which (entity-type × language) cells are powered vs <code>NOT_ASSESSED</code>; INT-04 → <strong>re-id / oracle API out</strong> fine, but <strong>regulatory taxonomy crosswalk</strong> must be <strong>in</strong> (see #5 below); INT-05 → <strong>re-id out</strong> fine, but <strong>anon/pseudo separation</strong> and <strong>Art-11 format</strong> must be in. <strong>Adjudication:</strong> the boundaries hold (UC scope-boundary statements + MEI-06); the <strong>net-new in-scope asks</strong> are routed individually in §5. The <strong>coverage envelope / NOT_ASSESSED</strong> ask (INT-06) reinforces <strong><a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a> DOM-03</strong> and should be surfaced as a <strong>first-class artifact consumed by oracle callers</strong>, not just a reporter artifact.</p>
+</li>
+<li><p><strong>Citation-format gate (DOI) is HARD for the academic cohort, silent for others.</strong> INT-01 makes a <strong>Zenodo DOI a hard gate</strong> (won&#39;t cite a SHA in JAMIA/ACL); INT-02 confirms; INT-03/04/05/06 didn&#39;t raise it (CI-gate / procurement / oracle / filing uses don&#39;t need a DOI). <strong>Adjudication:</strong> <strong>C2 is MUST-level for the P-acad-deid citation cohort</strong>, SHOULD elsewhere — carry as a persona-stratified priority, not a universal MUST. → R6/R7.</p>
+</li>
+<li><p><strong>Throughput SLA is a HARD pre-gate for INT-06, absent for everyone else.</strong> INT-06: &quot;latency and throughput … the first thing I&#39;d check before wiring anything in&quot;; <strong>≤50 ms p95 / ≥500 rps</strong> is a gate <em>before</em> any methodological evaluation. The HIGH cohort never raised it (detection is compute-cheap; they don&#39;t call an inline oracle). <strong>Adjudication:</strong> route to the <strong>oracle track (cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-08" data-trace-id="UC-08" aria-label="Trace UC-08 — — PII-recognition oracle + injection-payload seeds for live…">UC-08</a> / C9)</strong>, make <code>benchmark_throughput.py</code> output machine-readable in <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a></strong>; <strong>not a CAP-02-v0.1 blocker</strong> but a named MEDIUM-persona requirement. → R6/R7.</p>
+</li>
+</ol>
+<p><strong>No interviewee challenged the core spine</strong> (<code>load → sample → run → score → rate → report</code>), the <strong>OWNS/CONSUMES boundary</strong>, or the <strong>engine-reuse posture</strong> — in fact INT-01 (G1/G6 probe) said reuse &quot;makes me <strong>substantially more</strong> likely to trust and cite it … Integration of established machinery is the honest framing.&quot; The disagreements are all at the <strong>scoping/priority</strong> layer, not the architecture layer.</p>
+<hr>
+<h2>5. How this sharpens the FR/NFR set (handoff to R4)</h2>
+<p>The R3 signal sharpens the R1 capability set in <strong>seven</strong> ways. (FR/NFR IDs deliberately omitted — R4 mints them from offsets FR→030 / NFR→019.)</p>
+<ol>
+<li><p><strong>Run-type designation is a NET-NEW first-class capability</strong> (no R1 home). It is the mechanism that resolves <strong>DF-2</strong> (pre-reg scoping) AND the <strong>AX-005 universality tension</strong> (§4 #2) AND the <strong>DF-1 citable-vs-pre-screen distinction</strong> (§3). R4 should author an FR: a declared run-type (<code>smoke</code> / <code>dev</code> / <code>leaderboard-submission</code> / <code>filing-grade</code>, names TBD) that selects the enforced rigor bar, the backing sample mode, and the pre-registration gate. This is the single highest-leverage new requirement R3 surfaced. <code>→ R4 (new FR)</code></p>
+</li>
+<li><p><strong>AX-pii-anon-005 should be PROPOSED with two sharpenings the cohort demanded.</strong> Record it in the requirements doc for confirmation, wire NFRs to it, and add: (a) <strong>multiplicity-family declaration is explicit in the axiom text</strong> (exploratory per-cell uncorrected vs confirmatory Holm-Bonferroni <strong>with family size</strong>) — INT-01/02, &quot;reviewers will ask&quot;; (b) <strong>a 6th element: contamination disclosure / signed held-out-non-exposure attestation</strong> for leaderboard entries — INT-03. The axiom&#39;s five-element core (CI + paired test + convergence + provenance + synthetic-only caveat) is confirmed by all who reached probe #17 as <strong>&quot;the right bar.&quot;</strong> Its <strong>enforcement scope</strong> is run-type-bound (§4 #2). The convergence element should specify <strong>achieved max-RD ± 2RD + rounds stated</strong> (INT-02; G4).</p>
+</li>
+<li><p><strong>Three NET-NEW capabilities come ONLY from the MEDIUM personas</strong> — the most valuable MEDIUM contribution, and they would have been missed without the DPO sampling-gap closure + the red-team + priv-eng sections:</p>
+<ul>
+<li><strong>Operating-point reporting</strong> (INT-04 + INT-03): recall-priority Fβ / FN:FP cost + AUPRC at the pre-registered operating point; the <strong>false-positive tax</strong> (34k FPs / 3× license cost) is the quantified &quot;why.&quot; Sharpens <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> (a)</strong>, <strong>DOM-02</strong>. <code>→ R4 (FR + NFR)</code></li>
+<li><strong>Filing-grade artifact format</strong> (INT-05 + INT-04): per-metric inline CI + provenance hash + caveat; <strong>+ named Art-11 alignment</strong> (which fields satisfy EU AI Act Art-10/11, &quot;a time-sensitive hard requirement … clients need … before August&quot; 2026); + <strong>file-level provenance</strong> (C5). Sharpens <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a>/23</strong>, <strong>C3/C7</strong>. <code>→ R4 (FR + NFR)</code></li>
+<li><strong>Oracle throughput SLA + callable-oracle surface</strong> (INT-06): ≤50 ms p95 / ≥500 rps, machine-readable, + <strong>contamination_status propagated into the oracle API</strong> + <strong>coverage envelope as a caller-consumed artifact</strong>. Routes to <strong>C9 / cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-08" data-trace-id="UC-08" aria-label="Trace UC-08 — — PII-recognition oracle + injection-payload seeds for live…">UC-08</a></strong>; make <code>benchmark_throughput.py</code> output machine-readable in <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a></strong>. <code>→ R4 (NFR, oracle track)</code></li>
+</ul>
+</li>
+<li><p><strong>Regulatory taxonomy crosswalk — author it, but make it auditable/updateable (resolves the Open-Item-10 author-vs-defer fork).</strong> INT-04 and INT-05 <strong>both</strong> need a <strong>63-entity-type → regulatory-regime mapping</strong> (GDPR Art-9 special categories / HIPAA PHI / CCPA / GLBA). INT-05 (the probe that owned the fork): &quot;<strong>author it, but make it auditable and updateable</strong>&quot; — he&#39;ll use a workflow-provided crosswalk with caveats rather than rebuild it; INT-04 builds it manually every cycle and calls it &quot;<strong>more load-bearing than the pre-registration question</strong>.&quot; <strong>Resolution: AUTHOR (do not defer)</strong>, with an auditable/updateable mapping artifact. Sharpens <strong><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a></strong>, <strong>Open Item 10</strong>, <strong>AX-004 crosswalk</strong>. <code>→ R4 (FR)</code></p>
+</li>
+<li><p><strong>Several R1 items must move from CODE-enforced to ALSO DOC/REPORT-enforced.</strong> The cohort repeatedly drew a line between <em>enforced by construction</em> (necessary) and <em>explained in prose</em> (also necessary, because reviewers/regulators ask and the author must answer without reading source): (a) <strong>AX-004 separation rationale</strong> (INT-01/05); (b) <strong>multiplicity-family rationale</strong> (INT-01); (c) <strong>LONG_TAIL / NIST §7.2.4.2 power-tier derivation visible in/alongside the report</strong> (INT-01, C10 — &quot;the single best defense against the &#39;arbitrary thresholds&#39; objection&quot;); (d) <strong>academic-vocabulary register</strong> — no product &quot;SHIP-WITH-CAVEATS&quot; in a manuscript (INT-01, C7). <code>→ R4 (report/doc requirements wired to UC-23 + C7/C10)</code></p>
+</li>
+<li><p><strong>Hygiene/governance NFRs are confirmed and quantified</strong> (DF-5, §3): contamination disclosure with &quot;unknown&quot; rejected; blind submission + held-out-label separation; signed attestation; <strong>neutrality/governance statement as a structured run-record + per-report field</strong>; recusal record for managed conflicts. The <strong>arms-length requirement is inadmissibility-grade</strong> for both INT-04 and INT-05. <code>→ R4 (governance NFRs)</code></p>
+</li>
+<li><p><strong>Reproducibility/correctness NFRs gain teeth from confirmed burns.</strong> The dataset-seam regression contract (C-2) and the audited-stats quarantine (C-1) are no longer abstract — two interviewees lost <strong>multi-week-to-multi-month</strong> effort to silent drift, and three demanded <strong>CI-enforcement, not documentation</strong>. R4 should make the <strong>quarantine assertion</strong> (audited path always taken, fabricated path unreachable) and the <strong>regression contract</strong> (incl. content hash + run-record field + delta attribution) <strong>testable NFRs</strong>, not prose. <code>→ R4 (NFRs with verification methods)</code></p>
+</li>
+</ol>
+<hr>
+<h2>6. Net-new requirement candidates (consolidated for R4 — descriptive, un-numbered)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Candidate capability/attribute</th>
+<th>Source(s)</th>
+<th>Anchors</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>N-01</td>
+<td><strong>Run-type designation</strong> scoping pre-reg + AX-005 bar + backing sample mode (highest-leverage new item)</td>
+<td>INT-01/02/03/05/06</td>
+<td>DF-1/DF-2 · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-18" data-trace-id="UC-18" aria-label="Trace UC-18 — — Pre-register the run BEFORE any system is scored · X / RE…">UC-18</a>/19</td>
+</tr>
+<tr>
+<td>N-02</td>
+<td><strong>AX-pii-anon-005</strong> proposed + recorded for confirmation; +multiplicity-family in axiom text; +6th contamination element; run-type-scoped enforcement</td>
+<td>INT-01/02/03</td>
+<td>§5.2</td>
+</tr>
+<tr>
+<td>N-03</td>
+<td><strong>Operating-point reporting</strong> (Fβ β&gt;1 / FN:FP cost + AUPRC @ pre-reg operating point)</td>
+<td>INT-04, INT-03</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a> · DOM-02</td>
+</tr>
+<tr>
+<td>N-04</td>
+<td><strong>Filing-grade artifact format</strong> (per-metric inline CI+hash+caveat) + <strong>Art-11 alignment label</strong> + <strong>file-level provenance</strong></td>
+<td>INT-05, INT-04</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-22" data-trace-id="UC-22" aria-label="Trace UC-22 — — Emit an observability run-record at every dataset operati…">UC-22</a>/23 · C3/C5/C7</td>
+</tr>
+<tr>
+<td>N-05</td>
+<td><strong>Regulatory taxonomy crosswalk</strong> (63 types → GDPR/HIPAA/CCPA/GLBA), auditable/updateable — <strong>AUTHOR not defer</strong></td>
+<td>INT-04, INT-05</td>
+<td>Open Item 10 · AX-004</td>
+</tr>
+<tr>
+<td>N-06</td>
+<td><strong>Oracle throughput SLA + callable surface</strong> (≤50 ms p95 / ≥500 rps, machine-readable; contamination flag in API; coverage envelope caller-consumed)</td>
+<td>INT-06</td>
+<td>C9 · cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-08" data-trace-id="UC-08" aria-label="Trace UC-08 — — PII-recognition oracle + injection-payload seeds for live…">UC-08</a></td>
+</tr>
+<tr>
+<td>N-07</td>
+<td><strong>CI-enforced stats-path quarantine</strong> (audited path always taken; fabricated <code>significance.py</code> unreachable from run surface)</td>
+<td>INT-02, INT-03</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a> · Open Item 1</td>
+</tr>
+<tr>
+<td>N-08</td>
+<td><strong>Regression-contract as run-record field</strong> + content-hash (anti same-count swap) + <strong>corpus-vs-model delta attribution</strong></td>
+<td>INT-02, INT-03</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-21" data-trace-id="UC-21" aria-label="Trace UC-21 — — Reconcile the `pii-rate-elo` dataset seam to v2">UC-21</a> · C1</td>
+</tr>
+<tr>
+<td>N-09</td>
+<td><strong>Rank-stability (Kendall-τ) + max-RD±2RD as first-class output fields</strong> (≥2–3 seeds)</td>
+<td>INT-02, INT-03</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>/23</td>
+</tr>
+<tr>
+<td>N-10</td>
+<td><strong>Smoke reference-output schema spec</strong> (per-type F1±tol, byte-diffable, CI/p suppressed, &lt;10 min)</td>
+<td>INT-03, INT-02</td>
+<td><a class="trace-link" href="../01-discovery/04-use-cases.html#uc-20" data-trace-id="UC-20" aria-label="Trace UC-20 — — Smoke run for fast iteration (CI / local dev) · SAMPLE /…">UC-20</a> · C4</td>
+</tr>
+<tr>
+<td>N-11</td>
+<td><strong>Contamination-status hygiene</strong>: &quot;unknown&quot; rejected/flagged + signed held-out-non-exposure attestation + flag propagation</td>
+<td>INT-02, INT-03, INT-06</td>
+<td>DF-5 · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-17" data-trace-id="UC-17" aria-label="Trace UC-17 — — Run the Elo/Glicko assessment with per-metric CIs, paired…">UC-17</a>/23</td>
+</tr>
+<tr>
+<td>N-12</td>
+<td><strong>Neutrality/governance statement</strong> as structured field (corpus owner / label holder / evaluator) + recusal record</td>
+<td>INT-04, INT-05</td>
+<td>DF-5 · Open Items 9,10</td>
+</tr>
+<tr>
+<td>N-13</td>
+<td><strong>DOI / Zenodo persistent identifier</strong> — MUST for academic-citation cohort, SHOULD elsewhere</td>
+<td>INT-01, INT-02</td>
+<td>C2</td>
+</tr>
+<tr>
+<td>N-14</td>
+<td><strong>Report-prose requirements</strong>: AX-004 rationale, multiplicity rationale, LONG_TAIL/NIST derivation visible, academic vocabulary</td>
+<td>INT-01, INT-05</td>
+<td>C7/C10 · <a class="trace-link" href="../01-discovery/04-use-cases.html#uc-23" data-trace-id="UC-23" aria-label="Trace UC-23 — — Produce a reportable leaderboard + figures with HONEST ve…">UC-23</a></td>
+</tr>
+<tr>
+<td>N-15</td>
+<td><strong>Correlation-study &quot;named-and-pending&quot; flag</strong> in the report (until cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a> lands)</td>
+<td>INT-04, INT-05</td>
+<td>DF-4 · Open Item 11</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>7. Methodology &amp; Epistemic Honesty</h2>
+<ul>
+<li><strong>6 agent-simulated interviewees</strong> (INT-01…INT-06), one per persona, dispatched against the R2 guide (18 core + Layer-2 + sub-archetypes). INT-05 carried the <strong>P-complreviewer</strong> sub-archetype (closing the documented CM-05 / un-sampled-DPO gap from R2); INT-03 carried the <strong>P-tool-vendor</strong> gaming-incentive angle. <strong>Representative-scale, single-session, AGENT_SIMULATED</strong> — directional, not confirmatory or saturated.</li>
+<li><strong>Every quantified threshold in §2 is agent-simulated and illustrative.</strong> Each interviewee flagged its own numbers (McNemar p=0.14, Spearman ρ=0.91, Kendall-τ&gt;0.8, 50 ms/500 rps, 34k FPs/3× license, &lt;10 min smoke) as needing <strong>real-user verification in Pass-2</strong>. They are the directional thresholds the NFR-author proposes and the threshold-validator (R9) pressure-tests — not committed values.</li>
+<li><strong>Two inherited structural caveats</strong> (R2): (1) <strong>DPO/assurance signal is FIRST CONTACT</strong> — a clean INT-05 result does <strong>not</strong> re-confirm the cycle-1 P-dpo priority; real-user DPO interviews remain a Pass-2 must. (2) The <strong>real-data correlation slice</strong> (cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a>, vs i2b2-2014/TAB) is the named citation unlock and remains <strong>out-of-band / not v0.1-blocking</strong>.</li>
+<li><strong>ID discipline honored</strong>: no FR/NFR IDs minted here; the interviewees&#39; clashing <code>FR-030…/NFR-019…</code> numbers were <strong>deliberately not canonicalized</strong> (R4&#39;s job). Synthesis anchored to stable <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>…23, DF-1…5, AX-001/002/003/004/005-candidate, C1…10, Open Items 1–13, G1–G7.</li>
+<li><strong>Disconfirmation worked</strong>: the mandatory rejection probes surfaced the <strong>three walk-away triggers</strong> (fabricated stats / unpinned seam / missing power verdict — named by multiple personas) and the <strong>mandatory-pre-reg avoidance risk</strong> (4 personas) — i.e., the guide elicited rejection signal, not just assent, satisfying the R2 confirmation-bias control.</li>
+<li><strong>Sources read this session (canonical):</strong> <code>01-discovery/discovery-report.md</code> (§8 Open Items 1–13, G1–G7, C1–C10), <code>01-discovery/04-use-cases.md</code> (<a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>…23 + acceptance signals), <code>01-discovery/personas.md</code> (6 personas + 2 sub-archetypes), <code>02-requirements/interview-guide.md</code> (DF-1…5 ownership, AX-005 probe, self-bias-check), <code>02-requirements/interview-synthesis.md</code> cycle-1 (format reference). Both repos available for threshold grounding.</li>
+</ul>
+<p>✅ <strong>R3 simulated-interview synthesis complete (2026-06-01).</strong> 6 interviews synthesized; <strong>DF-3 resolved (zero dissent), DF-2/DF-4/DF-5 resolved, DF-1 split-by-use (locked default holds + run-type distinction; INT-05 filing-grade pushback carried to R6/R7+Pass-2)</strong>; <strong>AX-pii-anon-005 confirmed as the right bar with 2 sharpenings (multiplicity-family-in-text + 6th contamination element) and run-type-scoped enforcement</strong>; <strong>15 net-new requirement candidates</strong> consolidated (3 from MEDIUM personas only). <code>provisional_status: AGENT_SIMULATED</code>; DPO lens first-contact; real-data slice + real-user validation are Pass-2. Ready for R4 (FR/NFR authoring; offsets FR→030, NFR→019).</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/02-requirements/interview-synthesis.md</code> ·
+  content-hash <code>1d7ace149591</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

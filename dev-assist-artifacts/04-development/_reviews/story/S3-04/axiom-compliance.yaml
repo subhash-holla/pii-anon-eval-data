@@ -1,0 +1,113 @@
+# Story-gate axiom-compliance review — S3-04 (Measured-attack RRS scorer)
+schema: dev-assist/review/v1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S3-04
+iteration: 1
+mode: read-only
+timestamp: 2026-05-29
+verdict: APPROVE
+context_bounds_respected: true
+
+scope:
+  owned_paths:
+    - src/pii_anon_datasets/scoring/reidentification.py   # ADDED MeasuredRRS + score_reidentification
+    - src/pii_anon_datasets/scoring/__init__.py            # exports
+    - tests/test_reidentification_measured.py              # NEW
+  axioms_triggered:
+    - AX-pii-anon-003   # stated-statistical-power (named-method CIs on integer counts)
+    - AX-pii-anon-002   # deterministic-reproducible-generation (no RNG/clock in scorer)
+    - AX-pii-anon-004   # anonymization-pseudonymization-separation (RE-ID family only)
+  nfrs_checked: [NFR-004 (purity/stdlib), NFR-005 (family separation), reidx-02 (integer guard), FR-009/gov-01 (non-strippable caveat)]
+  note: >
+    Dispatch named scoring/ paths; canonical tree roots them under
+    src/pii_anon_datasets/scoring/. Reviewed the real files. The __init__ export
+    set grew 9->24, but only score_reidentification + MeasuredRRS are S3-04-owned;
+    the other added symbols (adversary port, offline adversary) belong to the
+    already-DONE deps S3-01/S3-02 and are pre-existing — out of this story's owned
+    surface, inspected only to confirm zero public-export regression.
+
+findings: []   # zero MAJOR+; zero MINOR; zero OBSERVATION
+
+verification_evidence:
+
+  - axiom: AX-pii-anon-003
+    claim: "Every emitted metric carries a CI with a NAMED method on INTEGER counts."
+    status: UPHELD
+    evidence:
+      - "reidentification.py:167-168 — reid_recall_ci = wilson_interval(correct, n_targets, confidence); reid_precision_ci = wilson_interval(correct, n_guesses, confidence). All four operands (correct/n_targets/n_guesses) are Python int (len()/sum-of-1s); confidence is the only float and is the CI parameter, not a count."
+      - "intervals.py:65 — Interval is constructed with method=\"wilson\" (named method, NFR-002); Interval.as_dict (intervals.py:28-36) serializes {point,low,high,n,method,confidence}."
+      - "MeasuredRRS.as_dict (reidentification.py:105-123) nests both CI .as_dict()s, so the named method + integer n travel through serialization. Pinned: test l.156-157 assert reid_recall_ci/reid_precision_ci method == \"wilson\"; l.158 asserts integer correct/n_targets/n_guesses."
+      - "reidx-02 integer guard ENFORCED at the boundary: intervals.py:52-55 raises TypeError unless isinstance(k,int) and isinstance(n,int); line 52 ALSO rejects bool (int subclass) — `or isinstance(k, bool)` — closing the True/False-as-1/0 hole. Fractional->TypeError pinned by test_fr_007_reidx02_fractional_count_raises (test l.162-170: wilson_interval(1.5,4) and (2,4.0) both raise TypeError)."
+      - "score_reidentification passes ONLY integer counts into the CIs; no partial-credit/float count path exists (recall/precision floats are computed separately at l.158-159 and never feed a CI)."
+    note: >
+      AX-003's per-cell lattice-target sample-size obligation (>=1522/753/200) is a
+      corpus+validate.py concern (requirements-coverage hook), not exercised by this
+      pure scorer story; the scorer's duty — emit n + Wilson CI + named method on
+      integer counts — is fully met.
+
+  - axiom: AX-pii-anon-003
+    claim: "wilson_interval(0,0) n=0 edge handled by intervals.py sentinel, NOT fabricated."
+    status: UPHELD
+    evidence:
+      - "intervals.py:58-59 — `if n == 0: return Interval(float('nan'), 0.0, 1.0, 0, 'wilson', confidence)` — a real, documented sentinel internal to intervals.py (point=nan, conservative [0,1], n=0, method named)."
+      - "score_reidentification does NOT invent a CI: recall/precision are defined 0.0 when denom==0 (l.158-159) and the counts pass straight through to wilson_interval (l.167-168), relying on the intervals.py guard. Docstring l.145-150 states this explicitly ('never by fabricating a CI')."
+      - "Pinned by test_fr_007_perfect_attack_rrs_zero_and_no_commit_rrs_one (test l.193-197): all-abstain -> n_guesses==0 -> precision_ci.n==0, low==0.0, high==1.0, method==\"wilson\". No fabricated bounds."
+
+  - axiom: AX-pii-anon-002
+    claim: "Determinism — no RNG/clock/uuid/nondeterministic source in the scorer."
+    status: UPHELD
+    evidence:
+      - "grep across reidentification.py, intervals.py, adversary/base.py, scoring/__init__.py, and the test: ZERO matches for random|secrets|uuid|datetime|time.|.now(|monotonic|perf_counter|urandom."
+      - "reidentification.py imports are stdlib-only-or-intra-package: __future__, collections.abc.Sequence, dataclasses.dataclass, ..stats.intervals, .adversary.base (reidentification.py:19-25)."
+      - "score_reidentification is a pure function of (adversary, targets, candidates, candidate_set_size, confidence): output is sum/len/arithmetic over the adversary's returned guesses — order-independent (sum of equality predicates), no iteration-order-sensitive or time/RNG-sensitive logic. adversary.deterministic is propagated, not generated."
+
+  - axiom: NFR-004
+    claim: "Purity — stdlib only; reuses stats/intervals + S1 RRSResult."
+    status: UPHELD
+    evidence:
+      - "No third-party import anywhere in the module (see import list above). Reuses wilson_interval/Interval from ..stats.intervals and the frozen RRSResult in-file (S1). MeasuredRRS is a frozen dataclass."
+
+  - axiom: AX-pii-anon-004
+    claim: "RE-ID family ONLY — MeasuredRRS merges no anonymization-utility or pseudonymization metric; no combined 'de-id' score."
+    status: UPHELD
+    evidence:
+      - "MeasuredRRS fields (reidentification.py:94-103) are RE-ID-only: rrs(RRSResult), reid_recall_ci, reid_precision_ci, correct, n_targets, n_guesses, candidate_set_size, adversary_id, deterministic, reid_provenance. NO utility/reversal/collision/referential/blast-radius field."
+      - "grep of reidentification.py for pseudonym|reversal|collision|referential|blast.radius|\\butility\\b|de.identif|redaction.score|combined : ZERO matches."
+      - "Package-wide grep for a merged headline (deid_score|combined.score|redaction_quality|merge(anon|pseudo)|average(recall|precision)(reversal|utility)) across src/.../scoring/*.py: ZERO matches."
+      - "Sibling modules confirm separation: scoring/ holds core.py, detection.py, reidentification.py, signals.py, adversary/ — the anonymization-utility (S3-06) and pseudonymization (S3-07) scorers are NOT folded here; RRS=1-r*p is the residual-risk axis only."
+      - "RRS=1-recall*precision identity is pure RE-ID (reidentification.py:60 via RRSResult.from_attack); pinned by test_fr_007_rrs_equals_one_minus_recall_times_precision (test l.104-110)."
+
+  - axiom: FR-009 / gov-01
+    claim: "S1 frozen RRSResult / ANTI_ANONYMITY_CAVEAT byte-intact (only ADDed); caveat non-strippable."
+    status: UPHELD
+    evidence:
+      - "git diff 75e9eed(S1 baseline)..HEAD on reidentification.py has ZERO removed/changed lines (no '-' hunk lines) — the change is purely ADDITIVE (docstring continuation + imports + MeasuredRRS/score_reidentification inserted around the preserved S1 block)."
+      - "Content-level proof (AST/string extract both revs): ANTI_ANONYMITY_CAVEAT string IDENTICAL; RRSResult class body IDENTICAL (1836 chars == 1836 chars). caveat remains MANDATORY + non-defaulted (reidentification.py:42, __post_init__ raises on empty l.44-46)."
+      - "__init__.py: __all__ grew 9->24 with ZERO names dropped (S1-set minus HEAD-set == empty). The diff's two '-' lines were single-line imports re-expressed as expanded multi-symbol blocks (DetectionScore/score_detection/ANTI_ANONYMITY_CAVEAT/RRSResult all still imported + in __all__: __init__.py:20,22,24,34-39)."
+      - "Non-strippable caveat through the NEW serializer: MeasuredRRS.as_dict nests rrs.as_dict() (reidentification.py:110). Pinned by [AUDIT] test_fr_009_caveat_nonstrippable_in_measured_as_dict (test l.144-158): d['rrs']['caveat'] present and contains 'MUST NOT be cited'."
+
+severity_summary:
+  SHOWSTOPPER: 0
+  CATASTROPHIC: 0
+  MAJOR: 0
+  MINOR: 0
+  OBSERVATION: 0
+
+out_of_scope_deferred:
+  - "Numerical CORRECTNESS of recall/precision/RRS values — executor's + traceability's."
+  - "Per-cell lattice sample-size sufficiency (AX-003 corpus target >=1522/753/200) — requirements-coverage / validate.py --lattice, not this pure-scorer story."
+  - "Style/animation of any downstream provenance/coverage rendering — N/A (no UI surface in this story)."
+
+self_attestation:
+  independent: true
+  files_read:
+    - dev-assist-artifacts/00-axioms/project-axioms.yaml
+    - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-04.md
+    - src/pii_anon_datasets/scoring/reidentification.py
+    - src/pii_anon_datasets/scoring/__init__.py
+    - tests/test_reidentification_measured.py
+    - src/pii_anon_datasets/stats/intervals.py
+    - src/pii_anon_datasets/scoring/adversary/base.py
+  no_code_modified: true
+  verdict_basis: "Zero MAJOR-or-above findings across AX-002/AX-003/AX-004 + NFR-004/NFR-005 + FR-009. APPROVE."

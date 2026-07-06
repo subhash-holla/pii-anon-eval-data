@@ -1,0 +1,1450 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>S5-03 — Croissant 1.0 JSON-LD + HF dataset card (NFR-012 loadability) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="04-development">
+<h1>S5-03 — Croissant 1.0 JSON-LD + HF dataset card (<span class="trace-def" id="nfr-012" data-trace-id="NFR-012">NFR-012</span> loadability)</h1>
+<blockquote>
+<p><strong>Cold-pickup</strong>: self-contained; §8b authoritative. <strong>Test names carry <code>fr_024</code>/<code>nfr_012</code> tokens.</strong>
+Emits a Croissant 1.0 JSON-LD description of the corpus + an HF dataset card. The Croissant declares
+the gov-02 <code>reg_*</code> regime columns (from <code>compliance.crosswalk.REGIMES</code>, S5-01) and points at the
+Parquet that S5-02 produces; the card&#39;s counts are pulled from <code>data/pii_anon.metadata.json</code> so they
+<strong>cannot drift</strong>. <code>mlcroissant</code> is ABSENT in this env → full spec-validation is <strong>skip-if-absent</strong>;
+the always-on <code>validate_croissant()</code> schema-shape check is pure-stdlib. CLOSES <strong><a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a></strong>.</p>
+</blockquote>
+<h2>1. Metadata</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Parent epic</strong></td>
+<td>S5-A — Distribution (<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-12" data-trace-id="DC-12" aria-label="Trace DC-12">DC-12</a>)</td>
+</tr>
+<tr>
+<td><strong>Sprint</strong></td>
+<td>S-5 (Exports/CLI + Compliance + doc-drift)</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>Estimated agent-effort</strong></td>
+<td>M (≤3d)</td>
+</tr>
+<tr>
+<td><strong>Owner agent</strong></td>
+<td>dev-assist-development-executor (claimed 2026-05-30)</td>
+</tr>
+<tr>
+<td><strong>Story gate</strong></td>
+<td>APPROVE (iter 1, 5/5 reviewers; <code>_reviews/story/S5-03/synthesis.md</code>)</td>
+</tr>
+<tr>
+<td><strong>provisional_status</strong></td>
+<td>AGENT_SIMULATED</td>
+</tr>
+</tbody></table>
+<h2>2. Goal</h2>
+<p>Ship the Croissant 1.0 JSON-LD emitter (<code>distribution/croissant.py</code>) + HF dataset card builder
+(<code>distribution/dataset_card.py</code>) that make the CC0 corpus <strong>machine-discoverable and loadable</strong>
+(<a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>). Two load-bearing contracts close <strong><a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a></strong> (&quot;Croissant file validates against the spec AND
+loads via the HF <code>datasets</code> loader&quot; — not mere presence):</p>
+<ol>
+<li><strong>Always-on schema-shape validation</strong> — <code>validate_croissant(jsonld)</code> is pure-stdlib (no <code>mlcroissant</code>
+needed) and asserts the Croissant 1.0 shape (required top-level keys, <code>@type</code> Dataset, a
+<code>distribution</code> FileObject, a <code>recordSet</code> of typed <code>Field</code>s, <strong>and the five gov-02 <code>reg_*</code> fields
+declared</strong>). Full <code>mlcroissant</code> spec-validation is <strong>skip-if-absent</strong> (the extra is not installed).</li>
+<li><strong>Loads via HF <code>datasets</code></strong> — the Croissant describes the Parquet that <code>distribution.parquet_export</code>
+(S5-02) writes; the round-trip test exports a tiny Parquet, builds the Croissant for it, validates the
+shape, then <code>datasets.load_dataset(&quot;parquet&quot;, …)</code> loads it back with the <strong><code>reg_*</code> regime columns
+intact</strong> (<code>datasets</code> IS installed). The Croissant <code>recordSet</code> declares those same <code>reg_*</code> fields, so
+the description matches the data.</li>
+</ol>
+<p>Counts (<code>total_records</code>, <code>total_annotations</code>, <code>entity_types</code>, <code>languages</code>, …) are read from the packaged
+<code>pii_anon.metadata.json</code> (the single source <code>stats/lattice.py</code> already reads) so the card/Croissant
+<strong>cannot drift</strong> from canonical (<a class="trace-link" href="../../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a>-adjacent). <code>entity_types</code> is cross-checked against
+<code>taxonomy.ENTITY_TYPE_COUNT</code>. <code>mlcroissant</code> is a LAZY import behind a new <code>[croissant]</code> extra; the
+<code>distribution</code> package imports without it (<a class="trace-link" href="../sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>).</p>
+<h2>3. Traced requirements</h2>
+<p><strong>Primary</strong>: <a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> (CC0 corpus + standard exports — <strong>Croissant validates + loads via HF datasets</strong> + a
+dataset card; deterministic load). <strong><a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a></strong> (Croissant loadability — the literal validate-AND-load
+threshold). <strong>Supporting</strong>: gov-02 (the <code>reg_*</code> columns survive into the Croissant description), <a class="trace-link" href="../../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a>
+(generated card counts derive from canonical metadata, cannot drift), <a class="trace-link" href="../sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a> (pure-stdlib core; heavy
+dep behind extra + lazy guard), AX-002 (deterministic emit).</p>
+<h2>4. Source DC + provisional_status</h2>
+<p><a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-12" data-trace-id="DC-12" aria-label="Trace DC-12">DC-12</a> (distribution) · AGENT_SIMULATED · not DIVERGED. Locked revision #11 (license clarity: data CC0 /
+code Apache-2.0) + DX (Croissant validates + loads via HF <code>datasets</code>). <code>mlcroissant</code> absent → full
+validation is skip-if-absent with documented manual-verification; the always-on shape check + the
+<code>datasets</code> Parquet round-trip ARE the executable <a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a> evidence in this env.</p>
+<h2>5. Dependencies</h2>
+<p><strong>Must be DONE</strong>: S5-01 (<code>compliance.crosswalk.REGIMES</code> — the five regime names the Croissant declares).
+✅ · S5-02 (<code>distribution.parquet_export.export_parquet</code> — the loadable artifact the Croissant
+describes). ✅
+<strong>Blocks</strong>: S5-05 (the CLI <code>export</code> verb emits Croissant + card), S5-07 (doc-drift — the static docs must
+match the metadata the card already pulls).</p>
+<h2>6. Test-first plan (RED→GREEN) — <code>fr_024</code>/<code>nfr_012</code>/<code>nfr_013</code>/<code>nfr004</code> tokened</h2>
+<p><code>tests/test_croissant.py</code>:</p>
+<ol>
+<li><code>test_fr_024_croissant_has_required_jsonld_shape</code> — <code>build_croissant()</code> returns a dict with
+<code>@context</code>, <code>@type</code> (&quot;Dataset&quot;/&quot;sc:Dataset&quot;), <code>name</code>, <code>description</code>, <code>license</code>, <code>conformsTo</code>
+(croissant 1.0), a non-empty <code>distribution</code>, and a non-empty <code>recordSet</code>; <code>validate_croissant()</code>
+passes on it — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_nfr_012_croissant_declares_reg_columns</code> — the <code>recordSet</code> declares one <code>Field</code> per
+<code>crosswalk.REGIMES</code> (the five <code>reg_gdpr</code> … <code>reg_pci_dss</code> fields), each with a <code>dataType</code>; gov-02
+survives into the description, NOT a flattened <code>regulatory_domains</code> field — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_024_croissant_counts_from_metadata_cannot_drift</code> — <code>build_croissant(metadata)</code> embeds
+<code>metadata[&quot;version&quot;]</code> and <code>metadata[&quot;total_records&quot;]</code>; passing a perturbed metadata mapping changes
+the emitted JSON-LD accordingly (the counts are DERIVED, not hardcoded) — <code>[PROPERTY-TEST]</code>.</li>
+<li><code>test_nfr_012_croissant_describes_loadable_parquet</code> — export a tiny record list to Parquet via
+<code>parquet_export.export_parquet</code> (<code>pyarrow</code>+<code>datasets</code> <code>importorskip</code>), <code>build_croissant(..., parquet_filename=…)</code>, assert <code>validate_croissant()</code> passes AND
+<code>datasets.load_dataset(&quot;parquet&quot;, data_files=…, split=&quot;train&quot;)</code> round-trips with the <code>reg_*</code> columns
+present — the <a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a> validate-AND-load round-trip — <code>[INTEGRATION-TEST]</code>.</li>
+<li><code>test_nfr_012_full_validation_skips_without_mlcroissant</code> — <code>validate_with_mlcroissant(jsonld)</code> raises a
+clear <code>RuntimeError</code> naming <code>pip install pii-anon-datasets[croissant]</code> when <code>mlcroissant</code> is absent
+(this env); when present (<code>pytest.importorskip(&quot;mlcroissant&quot;)</code>) it validates a well-formed JSON-LD
+without error — skip-if-absent both directions — <code>[CONTRACT-TEST]</code>.</li>
+<li><code>test_nfr004_croissant_pure_stdlib_imports_without_mlcroissant</code> — <code>import pii_anon_datasets.distribution.croissant</code> succeeds with <code>mlcroissant</code> blocked; AST guard: the module
+imports none of <code>{random, time, uuid, datetime, secrets}</code> (deterministic, pure-stdlib) — <code>[PROPERTY-TEST]</code>.</li>
+</ol>
+<p><code>tests/test_dataset_card.py</code>:
+7. <code>test_fr_024_dataset_card_has_yaml_frontmatter</code> — <code>build_dataset_card()</code> output starts with a <code>---</code>
+   YAML frontmatter block declaring <code>license: cc0-1.0</code>, a <code>size_categories</code>, and a <code>language:</code> list —
+   <code>[UNIT-TEST]</code>.
+8. <code>test_nfr_013_dataset_card_counts_match_metadata</code> — the card body contains the canonical
+   <code>total_records</code> (575,604) and <code>total_annotations</code> (2,486,438) and the <code>entity_types</code> count, which
+   equals BOTH <code>metadata[&quot;entity_types&quot;]</code> AND <code>taxonomy.ENTITY_TYPE_COUNT</code>; it contains NONE of the
+   stale strings <code>&quot;150K&quot;</code>, <code>&quot;65 &quot;</code>, <code>&quot;57 &quot;</code> — counts cannot drift — <code>[PROPERTY-TEST]</code>.
+9. <code>test_fr_024_dataset_card_embeds_caveats</code> — the card embeds (a) the train-vs-eval note (159,891 = the
+   27.8% tier3 EVALUATION substrate), (b) the ~72% <code>synthetic_lattice_enrichment</code> disclosure, (c) the
+   §7 authoritative power sentence, and (d) the CC0-data / Apache-2.0-code split — <code>[UNIT-TEST]</code>.
+10. <code>test_nfr004_dataset_card_pure_stdlib</code> — AST guard banning <code>{random, time, uuid, datetime, secrets}</code>
+    on <code>dataset_card.py</code> — <code>[PROPERTY-TEST]</code>.</p>
+<h2>7. Acceptance criteria (G/W/T from <a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> / <a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a>)</h2>
+<blockquote>
+<p><strong>Given</strong> the canonical packaged metadata + the S5-02 Parquet exporter,
+<strong>When</strong> <code>build_croissant()</code> / <code>build_dataset_card()</code> run and <code>validate_croissant()</code> checks the JSON-LD,
+<strong>Then</strong> a Croissant 1.0 description is produced that passes the always-on schema-shape validation,
+declares the five gov-02 <code>reg_*</code> fields, points at a Parquet that <code>datasets.load_dataset(&quot;parquet&quot;, …)</code>
+loads back with those columns intact, and a dataset card is produced whose counts are pulled from
+<code>metadata.json</code> (== <code>taxonomy.ENTITY_TYPE_COUNT</code> for entity types) with the train-vs-eval + enrichment +
+power caveats embedded.
+<strong>Negative</strong>: <code>validate_with_mlcroissant</code> without the <code>[croissant]</code> extra raises a clear install
+<code>RuntimeError</code> (skip-if-absent); the <code>distribution.croissant</code> module imports without <code>mlcroissant</code>; the
+card contains no stale <code>150K</code>/<code>65</code>/<code>57</code> counts.</p>
+</blockquote>
+<h2>8. Files this story owns</h2>
+<p><strong>NEW</strong>: <code>src/pii_anon_datasets/distribution/croissant.py</code>,
+<code>src/pii_anon_datasets/distribution/dataset_card.py</code>, <code>tests/test_croissant.py</code>,
+<code>tests/test_dataset_card.py</code>
+<strong>MODIFIED</strong>: <code>src/pii_anon_datasets/distribution/__init__.py</code> (export <code>build_croissant</code>,
+<code>validate_croissant</code>, <code>build_dataset_card</code>), <code>pyproject.toml</code> (add <code>croissant = [&quot;mlcroissant&quot;]</code> extra).</p>
+<h2>8b. Implementation spec (authoritative)</h2>
+<p><code>mlcroissant</code> is a LAZY import (only inside <code>validate_with_mlcroissant</code>), never at module top — the
+<code>distribution</code> package imports on a pure-stdlib box (<a class="trace-link" href="../sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>). Counts come from the packaged metadata via
+the same <code>_DATA_DIR</code> pattern <code>stats/lattice.py</code> uses (<code>Path(__file__).resolve().parent.parent / &quot;data&quot; / &quot;pii_anon.metadata.json&quot;</code>). The regime field names come from <code>compliance.crosswalk.REGIMES</code> (single
+source — never re-list the five names).</p>
+<h3><code>distribution/croissant.py</code></h3>
+<pre><code class="language-python">from __future__ import annotations
+import json
+from collections.abc import Mapping
+from pathlib import Path
+from typing import Any
+
+from pii_anon_datasets.compliance.crosswalk import REGIMES
+
+_DATA_DIR = Path(__file__).resolve().parent.parent / &quot;data&quot;
+_METADATA = _DATA_DIR / &quot;pii_anon.metadata.json&quot;
+
+CROISSANT_VERSION = &quot;1.0&quot;
+CROISSANT_CONFORMS_TO = &quot;http://mlcommons.org/croissant/1.0&quot;
+# Locked revision #11 — data is CC0, code is Apache-2.0. The Croissant &#39;license&#39; is the DATA license.
+DATA_LICENSE = &quot;https://creativecommons.org/publicdomain/zero/1.0/&quot;
+
+# The canonical Croissant 1.0 @context (schema.org `sc:` + mlcommons `cr:` + `dct:` namespaces,
+# dataType/field/recordSet/distribution/fileObject term mappings). Use the standard published context.
+_CROISSANT_CONTEXT: dict[str, Any] = { &quot;@language&quot;: &quot;en&quot;, &quot;@vocab&quot;: &quot;https://schema.org/&quot;,
+    &quot;sc&quot;: &quot;https://schema.org/&quot;, &quot;cr&quot;: &quot;http://mlcommons.org/croissant/&quot;,
+    &quot;dct&quot;: &quot;http://purl.org/dc/terms/&quot;, &quot;conformsTo&quot;: &quot;dct:conformsTo&quot;,
+    &quot;citeAs&quot;: &quot;cr:citeAs&quot;, &quot;column&quot;: &quot;cr:column&quot;, &quot;data&quot;: {&quot;@id&quot;: &quot;cr:data&quot;, &quot;@type&quot;: &quot;@json&quot;},
+    &quot;dataType&quot;: {&quot;@id&quot;: &quot;cr:dataType&quot;, &quot;@type&quot;: &quot;@vocab&quot;}, &quot;extract&quot;: &quot;cr:extract&quot;,
+    &quot;field&quot;: &quot;cr:field&quot;, &quot;fileObject&quot;: &quot;cr:fileObject&quot;, &quot;fileSet&quot;: &quot;cr:fileSet&quot;,
+    &quot;format&quot;: &quot;cr:format&quot;, &quot;includes&quot;: &quot;cr:includes&quot;, &quot;isLiveDataset&quot;: &quot;cr:isLiveDataset&quot;,
+    &quot;jsonPath&quot;: &quot;cr:jsonPath&quot;, &quot;key&quot;: &quot;cr:key&quot;, &quot;md5&quot;: &quot;cr:md5&quot;, &quot;parentField&quot;: &quot;cr:parentField&quot;,
+    &quot;path&quot;: &quot;cr:path&quot;, &quot;recordSet&quot;: &quot;cr:recordSet&quot;, &quot;references&quot;: &quot;cr:references&quot;,
+    &quot;regex&quot;: &quot;cr:regex&quot;, &quot;repeated&quot;: &quot;cr:repeated&quot;, &quot;replace&quot;: &quot;cr:replace&quot;, &quot;source&quot;: &quot;cr:source&quot;,
+    &quot;subField&quot;: &quot;cr:subField&quot;, &quot;transform&quot;: &quot;cr:transform&quot; }
+
+# Core scalar fields every record carries (mirrors the Parquet scalar columns); each becomes a
+# Croissant Field with dataType sc:Text. The five reg_* fields are appended from REGIMES.
+_CORE_FIELDS: tuple[tuple[str, str], ...] = (
+    (&quot;record_id&quot;, &quot;sc:Text&quot;), (&quot;text&quot;, &quot;sc:Text&quot;), (&quot;language&quot;, &quot;sc:Text&quot;),
+    (&quot;domain&quot;, &quot;sc:Text&quot;), (&quot;primary_dimension&quot;, &quot;sc:Text&quot;),
+)
+
+def load_metadata(path: Path = _METADATA) -&gt; dict[str, Any]:
+    &quot;&quot;&quot;Load the packaged canonical metadata (the single count source — cannot drift).&quot;&quot;&quot;
+    return json.loads(path.read_text(encoding=&quot;utf-8&quot;))
+
+def build_croissant(metadata: Mapping[str, Any] | None = None, *,
+                    parquet_filename: str = &quot;pii_anon.parquet&quot;) -&gt; dict[str, Any]:
+    &quot;&quot;&quot;Croissant 1.0 JSON-LD for the corpus; counts DERIVED from `metadata` (default: packaged).
+
+    Emits @context + @type Dataset + conformsTo(1.0) + name/description/version/license + a
+    `distribution` FileObject for `parquet_filename` + a `recordSet` whose fields are _CORE_FIELDS
+    followed by one `reg_&lt;regime&gt;` Field per REGIMES (gov-02 survives into the description). The
+    description string interpolates total_records/total_annotations/entity_types/languages from
+    `metadata` so it can never drift from canonical.
+    &quot;&quot;&quot;
+    md = dict(metadata) if metadata is not None else load_metadata()
+    fields = [_field(name, dtype) for name, dtype in _CORE_FIELDS]
+    fields += [_field(f&quot;reg_{regime}&quot;, &quot;sc:Text&quot;) for regime in REGIMES]
+    return { &quot;@context&quot;: _CROISSANT_CONTEXT, &quot;@type&quot;: &quot;sc:Dataset&quot;,
+        &quot;conformsTo&quot;: CROISSANT_CONFORMS_TO, &quot;name&quot;: &quot;pii-anon&quot;, &quot;version&quot;: md[&quot;version&quot;],
+        &quot;license&quot;: DATA_LICENSE, &quot;description&quot;: _describe(md), ...
+        &quot;distribution&quot;: [ _file_object(parquet_filename) ],
+        &quot;recordSet&quot;: [ {&quot;@type&quot;: &quot;cr:RecordSet&quot;, &quot;@id&quot;: &quot;records&quot;, &quot;name&quot;: &quot;records&quot;,
+                        &quot;field&quot;: fields} ] }
+
+def _field(name: str, data_type: str) -&gt; dict[str, Any]: ...   # {@type cr:Field, @id, name, dataType, source→column}
+def _file_object(filename: str) -&gt; dict[str, Any]: ...         # {@type cr:FileObject, @id, name, contentUrl, encodingFormat application/x-parquet}
+def _describe(md: Mapping[str, Any]) -&gt; str: ...               # interpolates the canonical counts
+
+REQUIRED_TOP_LEVEL: tuple[str, ...] = (&quot;@context&quot;, &quot;@type&quot;, &quot;name&quot;, &quot;description&quot;, &quot;license&quot;,
+                                        &quot;distribution&quot;, &quot;recordSet&quot;)
+
+def validate_croissant(jsonld: Mapping[str, Any]) -&gt; None:
+    &quot;&quot;&quot;Always-on Croissant 1.0 schema-SHAPE validation (pure-stdlib). Raise ValueError on the first
+    violation. Checks: REQUIRED_TOP_LEVEL present; @type is Dataset/sc:Dataset; `distribution`
+    non-empty and each entry is a FileObject/FileSet with name+contentUrl/encodingFormat; `recordSet`
+    non-empty and each field is a cr:Field with name+dataType; AND every `reg_&lt;regime&gt;` (REGIMES) is
+    declared as a field (gov-02 must survive).&quot;&quot;&quot;
+    ...
+
+def validate_with_mlcroissant(jsonld: Mapping[str, Any]) -&gt; Any:
+    &quot;&quot;&quot;Full Croissant spec validation via mlcroissant — behind the [croissant] extra (skip-if-absent).
+    Raise RuntimeError naming `pip install pii-anon-datasets[croissant]` if mlcroissant is absent.&quot;&quot;&quot;
+    try:
+        import mlcroissant as mlc  # type: ignore[import-untyped]
+    except ImportError as e:
+        raise RuntimeError(&quot;Full Croissant validation needs the &#39;croissant&#39; extra: &quot;
+                           &quot;pip install pii-anon-datasets[croissant]&quot;) from e
+    return mlc.Dataset(jsonld=dict(jsonld))  # constructing the Dataset runs spec validation
+</code></pre>
+<h3><code>distribution/dataset_card.py</code></h3>
+<pre><code class="language-python">from __future__ import annotations
+from collections.abc import Mapping
+from typing import Any
+
+from pii_anon_datasets import taxonomy
+from pii_anon_datasets.distribution.croissant import load_metadata
+
+# §7 authoritative power sentence (sampling-design.md §7) — embedded verbatim as a non-strippable claim.
+POWER_SENTENCE: str = (&quot;PII-Anon v2 is powered for all single-factor marginal recall claims (95% Wilson &quot;
+    &quot;CIs; credential/financial-critical types to ±0.5pp at recall 0.99, standard to ±1pp at 0.98) and &quot;
+    &quot;for three pre-registered 2-way interactions (language×entity-type on a 12×41 committed rectangle, &quot;
+    &quot;domain×track, adversarial-type×entity-type). It is not powered for the full multilingual×entity-type &quot;
+    &quot;grid or any ≥3-way interaction; those are reported as exploratory. Synthetic-distribution power is &quot;
+    &quot;not external validity — see the real-data correlation slice.&quot;)
+ENRICHMENT_DISCLOSURE: str = (&quot;~72% of records carry provenance.source_type=&quot;
+    &quot;&#39;synthetic_lattice_enrichment&#39; (the S-PWR power fill); synthetic power is not external validity.&quot;)
+TRAIN_VS_EVAL: str = (&quot;The 159,891 tier3_evaluation records are the ~27.8% EVALUATION substrate of the &quot;
+    &quot;575,604-record corpus (behavioral-signal / RRS scoring runs on this substrate), NOT the whole corpus.&quot;)
+
+def build_dataset_card(metadata: Mapping[str, Any] | None = None) -&gt; str:
+    &quot;&quot;&quot;HF dataset card (README.md: YAML frontmatter + Markdown body). ALL counts from `metadata`
+    (default: packaged) so they cannot drift. Frontmatter: license cc0-1.0, size_categories (derived
+    from total_records), language list, task_categories (token-classification), pretty_name, tags.
+    Body: description with canonical total_records / total_annotations / entity_types
+    (== taxonomy.ENTITY_TYPE_COUNT) / languages / dimensions; TRAIN_VS_EVAL; ENRICHMENT_DISCLOSURE;
+    POWER_SENTENCE; the CC0-data / Apache-2.0-code split.
+    &quot;&quot;&quot;
+    md = dict(metadata) if metadata is not None else load_metadata()
+    assert md[&quot;entity_types&quot;] == taxonomy.ENTITY_TYPE_COUNT  # counts cannot drift
+    ...
+</code></pre>
+<p><strong>Load-bearing invariants:</strong> (1) <strong>gov-02</strong> — the Croissant <code>recordSet</code> declares one field per
+<code>crosswalk.REGIMES</code>; <code>validate_croissant</code> FAILS if any <code>reg_*</code> field is missing. (2) <strong><a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a></strong> — the
+described Parquet (from <code>export_parquet</code>) loads via <code>datasets.load_dataset(&quot;parquet&quot;, …)</code> with the
+<code>reg_*</code> columns intact (test #4), and <code>validate_croissant</code> passes the always-on shape check; full
+<code>mlcroissant</code> validation is skip-if-absent. (3) <strong>Counts cannot drift</strong> — every count is read from
+<code>metadata.json</code>; <code>entity_types</code> is asserted <code>== taxonomy.ENTITY_TYPE_COUNT</code>; the card test forbids the
+stale <code>150K</code>/<code>65</code>/<code>57</code> strings. (4) <strong>Lazy import</strong> — <code>import mlcroissant</code> only inside
+<code>validate_with_mlcroissant</code>; the module + package import without it. (5) <strong>Determinism</strong> — no clock/RNG;
+JSON-LD built from sorted/ordered structures (AX-002).</p>
+<h2>9. Test type tags</h2>
+<p><code>[UNIT-TEST]</code> <code>[INTEGRATION-TEST]</code> <code>[PROPERTY-TEST]</code> <code>[CONTRACT-TEST]</code></p>
+<h2>10. Definition of Done</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> TDD RED→GREEN→REFACTOR (10 <code>fr_024</code>/<code>nfr_012</code>/<code>nfr_013</code>/<code>nfr004</code>-tokened tests; RED precedes
+GREEN). <code>datasets</code> 4.8.3 + <code>pyarrow</code> ARE installed → the load round-trip test RUNS;
+<code>mlcroissant</code> is ABSENT → the full-validate test asserts the skip-if-absent install error.</li>
+<li><input checked="" disabled="" type="checkbox"> Croissant 1.0 JSON-LD: <code>@context</code>/<code>@type</code> Dataset/<code>conformsTo</code> 1.0/<code>distribution</code> FileObject/
+<code>recordSet</code> with <code>_CORE_FIELDS</code> + the five <code>reg_*</code> fields; <code>validate_croissant</code> passes;
+<code>validate_with_mlcroissant</code> raises the clear <code>[croissant]</code> install error when absent.</li>
+<li><input checked="" disabled="" type="checkbox"> <a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a> round-trip: the described Parquet loads via HF <code>datasets</code> with <code>reg_*</code> columns intact.</li>
+<li><input checked="" disabled="" type="checkbox"> Dataset card: YAML frontmatter (<code>license: cc0-1.0</code> + size + languages) + canonical counts
+(== <code>taxonomy.ENTITY_TYPE_COUNT</code>) + train-vs-eval + ~72% enrichment + §7 power sentence + CC0/
+Apache-2.0 split; no stale <code>150K</code>/<code>65</code>/<code>57</code>.</li>
+<li><input checked="" disabled="" type="checkbox"> <code>distribution</code> imports without <code>mlcroissant</code> (lazy); <code>croissant</code>/<code>dataset_card</code> pure-stdlib (AST
+guard). <code>ruff</code> + <code>mypy --strict --follow-imports=silent</code> clean on the two new modules; full suite
+0 regressions (223 → 233 passed, 1 pre-existing skip; +1 conditional skip if mlcroissant absent on
+the present-path branch).</li>
+</ul>
+<h2>11. Reviewer agents at story gate</h2>
+<p>code-quality · traceability · requirements-coverage · security-sast · axiom-compliance.
+(security-sast: the emitters read packaged metadata + write a local JSON-LD/markdown string — assert no
+network egress, no HF upload, no real-PII path. axiom-compliance: AX-002 determinism + <a class="trace-link" href="../sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>
+pure-stdlib + the counts-cannot-drift invariant.)</p>
+<h2>12. Evidence on completion</h2>
+<p><strong>provisional_status: AGENT_SIMULATED</strong> — <code>datasets</code> 4.8.3 + <code>pyarrow</code> 23.0.1 ARE installed in this
+env, so the <a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a> validate-AND-load round-trip (test #4) genuinely RAN (real Parquet export → real
+<code>datasets.load_dataset</code>), not stubbed. <code>mlcroissant</code> IS ABSENT, so the full-validate test (#5) took the
+absent-path and asserted the <code>[croissant]</code>-extra <code>RuntimeError</code> (the present-path branch is gated by
+<code>pytest.importorskip(&quot;mlcroissant&quot;)</code> and is documented manual-verification until the extra is installed
+on the Pass-2 CI image). Pass-2 real-CI re-run on the project image is still scheduled (I/O-bound; no
+benchmark hardware needed).</p>
+<h3>TDD cycle (commits on <code>feat/v2-scoring-harness</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>SHA</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RED</td>
+<td><code>bd1de34</code></td>
+<td><code>tests/test_croissant.py</code> (6) + <code>tests/test_dataset_card.py</code> (4) — 10 <code>fr_024</code>/<code>nfr_012</code>/<code>nfr_013</code>/<code>nfr004</code> tests. Failed at <strong>collection</strong> (<code>ImportError: cannot import name &#39;croissant&#39;/&#39;dataset_card&#39; from pii_anon_datasets.distribution</code>) — a true RED on the not-yet-built <a class="trace-link" href="../../../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> surface. Status CLAIMED→IN_PROGRESS.</td>
+</tr>
+<tr>
+<td>GREEN</td>
+<td><code>0268642</code></td>
+<td><code>distribution/{croissant,dataset_card}.py</code> per §8b; <code>__init__</code> exports <code>build_croissant</code>/<code>validate_croissant</code>/<code>build_dataset_card</code>; <code>pyproject</code> <code>croissant = [&quot;mlcroissant&quot;]</code> extra. 10/10 GREEN; full suite 233 passed / 1 skip.</td>
+</tr>
+<tr>
+<td>REFACTOR</td>
+<td><code>c5d2234</code></td>
+<td><code>load_metadata</code> json.loads typed via explicit <code>dict[str, Any]</code> local (no-any-return); the lazy <code>mlcroissant</code> import scoped with <code># type: ignore[import-not-found]</code> (absent dep — cf. <code>llm_adversary.py:50</code> anthropic; §8b deviation justified below); ruff-format collapsed f-strings + isort&#39;d test imports. ruff + mypy --strict clean.</td>
+</tr>
+</tbody></table>
+<h3>Test results (RED→GREEN counts)</h3>
+<ul>
+<li><strong>RED</strong>: <code>python3 -m pytest tests/test_croissant.py tests/test_dataset_card.py</code> → <code>2 errors during collection</code> (<code>ImportError</code> — <code>croissant</code>/<code>dataset_card</code> modules absent; 0 passed) — failing as required before any production code.</li>
+<li><strong>GREEN (files)</strong>: <code>tests/test_croissant.py tests/test_dataset_card.py</code> → <strong>10 passed</strong>.</li>
+<li><strong>Full suite (post-REFACTOR)</strong>: <code>233 passed, 1 skipped in 4.18s</code> — <strong>223 prior + 10 new, 0 regressions, 1 pre-existing skip</strong> (matches §10&#39;s primary expectation). <code>mlcroissant</code> absent → test #5 takes the absent-RuntimeError path (a PASS, not a skip), so no extra conditional skip is added in this env.</li>
+</ul>
+<p>Token selection verified: <code>-k fr_024</code> → 4 tests, <code>-k nfr_012</code> → 3, <code>-k nfr_013</code> → 1, <code>-k nfr004</code> → 2 (every name carries the token WITH an underscore).</p>
+<p>The 10 tests (all <code>fr_024</code>/<code>nfr_012</code>/<code>nfr_013</code>/<code>nfr004</code>-tokened):</p>
+<p><code>tests/test_croissant.py</code>:</p>
+<ol>
+<li><code>test_fr_024_croissant_has_required_jsonld_shape</code> <code>[UNIT]</code> — <code>build_croissant()</code> returns <code>@context</code> + <code>@type</code> sc:Dataset + <code>conformsTo</code> (1.0) + name/description/license + non-empty distribution + non-empty recordSet; <code>validate_croissant</code> passes.</li>
+<li><code>test_nfr_012_croissant_declares_reg_columns</code> <code>[UNIT]</code> — recordSet declares one typed <code>Field</code> per <code>crosswalk.REGIMES</code> (the five <code>reg_*</code>); <strong>no flattened <code>regulatory_domains</code> field</strong>; <code>validate_croissant</code> RAISES <code>ValueError</code> naming <code>reg_gdpr</code> when it is dropped (gov-02 enforced).</li>
+<li><code>test_fr_024_croissant_counts_from_metadata_cannot_drift</code> <code>[PROPERTY]</code> — perturbing <code>metadata</code> (version, total_records) changes the emitted JSON-LD; the canonical count does NOT survive a perturbed input → counts are DERIVED, not hardcoded.</li>
+<li><code>test_nfr_012_croissant_describes_loadable_parquet</code> <code>[INTEGRATION]</code> — exports a tiny Parquet via <code>parquet_export.export_parquet</code>, builds the Croissant pointing at it, <code>validate_croissant</code> passes, AND <code>datasets.load_dataset(&quot;parquet&quot;, …, split=&quot;train&quot;)</code> round-trips 4 rows with <code>reg_*</code> columns intact (<code>reg_gdpr=in_scope</code>). The literal <a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a> validate-AND-load threshold. <strong>RAN</strong> (pyarrow+datasets present).</li>
+<li><code>test_nfr_012_full_validation_skips_without_mlcroissant</code> <code>[CONTRACT]</code> — <code>mlcroissant</code> absent (this env): <code>validate_with_mlcroissant</code> raises <code>RuntimeError</code> naming <code>pip install pii-anon-datasets[croissant]</code>; present path gated by <code>pytest.importorskip(&quot;mlcroissant&quot;)</code>.</li>
+<li><code>test_nfr004_croissant_pure_stdlib_imports_without_mlcroissant</code> <code>[PROPERTY]</code> — module imports with <code>mlcroissant</code> blocked (lazy); AST guard: imports none of <code>{random,time,uuid,datetime,secrets}</code>.</li>
+</ol>
+<p><code>tests/test_dataset_card.py</code>:
+7. <code>test_fr_024_dataset_card_has_yaml_frontmatter</code> <code>[UNIT]</code> — output opens with a <code>---</code> YAML frontmatter declaring <code>license: cc0-1.0</code>, a <code>size_categories</code>, and a <code>language:</code> list.
+8. <code>test_nfr_013_dataset_card_counts_match_metadata</code> <code>[PROPERTY]</code> — body carries canonical <code>575,604</code> + <code>2,486,438</code> + <code>entity_types</code> (== <code>metadata[&quot;entity_types&quot;]</code> == <code>taxonomy.ENTITY_TYPE_COUNT</code> = 63); NONE of the stale <code>&quot;150K&quot;</code>/<code>&quot;65 &quot;</code>/<code>&quot;57 &quot;</code> strings.
+9. <code>test_fr_024_dataset_card_embeds_caveats</code> <code>[UNIT]</code> — train-vs-eval (<code>159,891</code> = <code>27.8%</code> <code>EVALUATION</code> substrate) + <code>~72%</code> <code>synthetic_lattice_enrichment</code> + the §7 power sentence (verbatim) + the CC0 / Apache-2.0 split.
+10. <code>test_nfr004_dataset_card_pure_stdlib</code> <code>[PROPERTY]</code> — AST guard banning <code>{random,time,uuid,datetime,secrets}</code> on <code>dataset_card.py</code>.</p>
+<h3>Lint / type</h3>
+<ul>
+<li><code>ruff check src/pii_anon_datasets/distribution/{croissant,dataset_card,__init__}.py tests/test_croissant.py tests/test_dataset_card.py</code> → <strong>All checks passed!</strong> (ruff 0.15.7); <code>ruff format</code> applied (4 files reformatted).</li>
+<li><code>mypy --strict --follow-imports=silent src/pii_anon_datasets/distribution/{croissant,dataset_card}.py</code> → <strong>Success: no issues found in 2 source files</strong>; <code>__init__.py</code> also clean (mypy 1.19.1).</li>
+</ul>
+<h3>gov-02 / <a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a> / counts-cannot-drift / lazy-import audit (static + dynamic)</h3>
+<ul>
+<li><strong>gov-02</strong>: <code>build_croissant</code> appends one <code>reg_&lt;regime&gt;</code> Field per <code>crosswalk.REGIMES</code> (single source — the five names are NEVER re-listed in <code>croissant.py</code>); dynamic check confirms all five <code>reg_*</code> declared, no <code>regulatory_domains</code> field, and <code>validate_croissant</code> raises <code>ValueError(&quot;…reg_gdpr…&quot;)</code> when a <code>reg_*</code> field is removed. No flattened <code>regulatory_domains</code> field anywhere.</li>
+<li><strong><a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a></strong>: test #4 RAN — real <code>export_parquet</code> → <code>build_croissant(parquet_filename=…)</code> (distribution FileObject <code>contentUrl</code>/<code>encodingFormat application/x-parquet</code> references the file) → <code>validate_croissant</code> passes → <code>datasets.load_dataset(&quot;parquet&quot;, …)</code> returns 4 rows with all five <code>reg_*</code> columns surviving the HF load (<code>reg_gdpr=in_scope</code>).</li>
+<li><strong>Counts cannot drift</strong>: every count is read from <code>data/pii_anon.metadata.json</code> via <code>load_metadata</code> (the same <code>_DATA_DIR</code> source <code>stats/lattice.py</code> reads). <code>build_dataset_card</code> asserts <code>md[&quot;entity_types&quot;] == taxonomy.ENTITY_TYPE_COUNT</code> at runtime. Generated card contains <code>575,604</code> / <code>2,486,438</code> / <code>63</code> / <code>159,891</code> / <code>72%</code> and NONE of <code>150K</code>/<code>65 </code>/<code>57 </code> (dynamically verified). The Croissant description embeds the raw <code>metadata[...]</code> integers (machine-discovery form) — see §8b deviation #2.</li>
+<li><strong><a class="trace-link" href="../sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a> / lazy</strong>: AST of TOP-LEVEL imports — <code>croissant.py</code> = {<code>__future__</code>, <code>collections</code>, <code>json</code>, <code>pathlib</code>, <code>pii_anon_datasets</code>, <code>typing</code>}; <code>dataset_card.py</code> = {<code>__future__</code>, <code>collections</code>, <code>pii_anon_datasets</code>, <code>typing</code>}. <code>mlcroissant</code> appears ONLY inside <code>validate_with_mlcroissant</code>; importing either module / the <code>distribution</code> package with <code>mlcroissant</code> blocked succeeds (test #6, dynamic). <code>mlcroissant</code> confirmed absent (<code>importlib.util.find_spec</code> → None).</li>
+<li><strong>AX-001 / security</strong>: <code>grep</code> for <code>requests|urllib|http|socket|upload|push_to_hub|HfApi|hf_hub|huggingface_hub|boto3</code> in both modules → only docstring/comment lines ASSERTING the absence; the emitters read the packaged metadata and return a local JSON-LD dict / Markdown string — no network egress, no HF upload, no real-PII path (test fixtures are tiny synthetic records).</li>
+<li><strong>AX-002 / determinism</strong>: no clock/RNG anywhere (AST guard); <code>_CROISSANT_CONTEXT</code> is a fixed literal; the field list is core-fields-in-declaration-order then the ordered <code>REGIMES</code> appended last; the card is built from ordered metadata keys (<code>by_language</code> order) — the same metadata always yields the same JSON-LD / card.</li>
+</ul>
+<h3>§8b deviations (justified)</h3>
+<ol>
+<li><strong>Lazy <code>mlcroissant</code> import suppression code</strong> — §8b&#39;s sketch wrote <code># type: ignore[import-untyped]</code>. Under <code>mypy --strict</code> in this env <code>mlcroissant</code> is <strong>absent</strong>, so mypy reports <code>import-not-found</code> (an unresolvable module), NOT <code>import-untyped</code> (which applies to an installed-but-unstubbed dep like pyarrow). Used <code># type: ignore[import-not-found]</code>, mirroring the repo&#39;s own absent-optional-dep precedent <code>scoring/adversary/llm_adversary.py:50</code> (<code>import anthropic  # type: ignore[import-not-found]</code>). Functionally identical to §8b intent (scope-suppress the lazy guard); only the error-code token differs to satisfy strict mypy on a pure-stdlib box.</li>
+<li><strong>Croissant description uses raw (un-grouped) integer counts</strong> — §8b test #3 requires <code>build_croissant(metadata)</code> to embed <code>metadata[&quot;total_records&quot;]</code> such that perturbation is detectable; <code>_describe</code> embeds the bare canonical integers (<code>575604</code>, not <code>575,604</code>) because the Croissant is machine-discovery metadata. The human-facing thousands-grouped form (<code>575,604</code>) lives in the dataset card (test #8), which is unaffected. No contract weakened — both counts still derive solely from <code>metadata</code>.</li>
+<li><strong><code>load_metadata</code> return typing</strong> — §8b sketch <code>return json.loads(...)</code>; under <code>--strict</code> that is a <code>no-any-return</code> on the declared <code>dict[str, Any]</code>. Assigned to an explicit <code>dict[str, Any]</code> local then returned (cf. <code>stats/calibration.py</code>&#39;s cast pattern). Signature unchanged.</li>
+</ol>
+<p>No other deviations: signatures, constants (<code>CROISSANT_VERSION</code>/<code>CROISSANT_CONFORMS_TO</code>/<code>DATA_LICENSE</code>/<code>REQUIRED_TOP_LEVEL</code>/<code>_CORE_FIELDS</code>/<code>POWER_SENTENCE</code>/<code>ENRICHMENT_DISCLOSURE</code>/<code>TRAIN_VS_EVAL</code>), the canonical <code>_CROISSANT_CONTEXT</code>, and the function bodies follow §8b verbatim.</p>
+<h3>Files</h3>
+<ul>
+<li>NEW <code>src/pii_anon_datasets/distribution/croissant.py</code>, <code>src/pii_anon_datasets/distribution/dataset_card.py</code>, <code>tests/test_croissant.py</code>, <code>tests/test_dataset_card.py</code></li>
+<li>MODIFIED <code>src/pii_anon_datasets/distribution/__init__.py</code> (exports <code>build_croissant</code>/<code>validate_croissant</code>/<code>build_dataset_card</code>), <code>pyproject.toml</code> (<code>croissant = [&quot;mlcroissant&quot;]</code> extra)</li>
+<li>Diff stays within §8 owned files; corpus <code>.jsonl.gz</code> / <code>eval_lattice.json</code> / v1.3.0 / pre-lattice-enrichment tags / scoring / stats / compliance UNTOUCHED (S5-01 <code>crosswalk.REGIMES</code> and S5-02 <code>parquet_export.export_parquet</code> imported READ-ONLY; <code>taxonomy.ENTITY_TYPE_COUNT</code> read-only). Corpus/metadata NOT regenerated.</li>
+</ul>
+<h3>Reviewer verdicts</h3>
+<p>Story gate <strong>APPROVE</strong> (iteration 1, 5/5 reviewers; <code>_reviews/story/S5-03/synthesis.md</code>) — zero
+SHOWSTOPPER/CATASTROPHIC/MAJOR; OBSERVATIONs only.</p>
+<table>
+<thead>
+<tr>
+<th>Reviewer</th>
+<th>Verdict</th>
+<th>Findings</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>code-quality</td>
+<td>✅ APPROVE</td>
+<td>1 OBS (<code>validate_with_mlcroissant</code> not re-exported — by design per §8 export list)</td>
+</tr>
+<tr>
+<td>security-sast</td>
+<td>✅ APPROVE</td>
+<td>1 OBS (mlcroissant CVE scan deferred — opt-in, uninstalled <code>[croissant]</code> extra)</td>
+</tr>
+<tr>
+<td>requirements-coverage</td>
+<td>✅ APPROVE</td>
+<td>2 OBS (full mlcroissant spec-validate → Pass-2 CI image; <a class="trace-link" href="../../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> cross-doc sweep → S5-07)</td>
+</tr>
+<tr>
+<td>traceability</td>
+<td>✅ APPROVE</td>
+<td>0 (all 6 declared IDs resolve; 4 tokens <code>-k</code>-selectable above threshold)</td>
+</tr>
+<tr>
+<td>axiom-compliance</td>
+<td>✅ APPROVE</td>
+<td>0 (1 prose-shorthand note on regime enumeration)</td>
+</tr>
+</tbody></table>
+<p><strong>Joint signals:</strong> <a class="trace-link" href="#nfr-012" data-trace-id="NFR-012">NFR-012</a> validate-AND-load VERIFIED (genuinely ran — Parquet export → Croissant
+validate → <code>datasets</code> round-trip with <code>reg_*</code> intact); gov-02 survives into the Croissant recordSet;
+counts-cannot-drift (<code>== taxonomy.ENTITY_TYPE_COUNT</code>); pure-stdlib + lazy mlcroissant + no egress + AX-002
+determinism. <strong>Forwarded (non-blocking):</strong> full mlcroissant conformance → Pass-2 CI; <a class="trace-link" href="../../../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> full
+cross-doc sweep → S5-07; mlcroissant CVE scan at epic/sprint gate when the extra is installed.</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>04-development/02-stories/sprint-5/S5-03.md</code> ·
+  content-hash <code>3cfd4559f1a4</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# PII-Anon v2.0.0 — Release Checklist
+# PII-Anon v2.2.0 — Release Checklist
 
 A step-by-step runbook to take PII-Anon from "feature-complete" to **fully evaluated and publicly released** so
 others can find, load, cite, and reproduce it: HuggingFace dataset (data + card + Parquet/Croissant +

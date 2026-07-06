@@ -1,0 +1,175 @@
+# Canonical reviewer output — axiom-compliance, STORY gate S3-06 (iteration 1)
+schema: dev-assist/reviewer-finding/v1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S3-06
+iteration: 1
+mode: read-only
+timestamp: 2026-05-29
+verdict: APPROVE
+context_bounds_respected: true
+
+summary: >
+  S3-06 (anonymization privacy-utility Pareto scorer, DC-06/FR-006) holds every project
+  axiom triggered by the diff. AX-004/NFR-005 (THE key axiom for this story) is upheld
+  structurally, not by convention: ParetoPoint nests two value objects of DIFFERENT types
+  (MeasuredRRS vs UtilityScore), declares NO combined/overall/overall_score/deid/
+  de_identification_score/score field-or-property, defines NO __float__ (nor any numeric-
+  coercion/__add__ dunder), and its as_dict() emits exactly {privacy, utility, variant, note}
+  — two SEPARATE sub-objects, never a fused scalar. An independent AST re-derivation of the
+  forbidden-name grep confirms the seven banned names occur ONLY in docstrings/comments and
+  the PARETO_SEPARATION_NOTE prose string, never as a def/field/assignment. The permitted-vs-
+  forbidden distinction is respected precisely: the frozen weights (_W_PRESERVATION/_W_INFO_
+  RETAINED/_W_COHERENCE) combine utility COMPONENTS inside UtilityScore (allowed); no weight,
+  sum, or arithmetic anywhere fuses the privacy and utility AXES (forbidden). AX-003: the
+  privacy axis is a genuine MeasuredRRS carrying Wilson CIs (reid_recall_ci / reid_precision_ci),
+  inherited unchanged from S3-04. AX-002/NFR-004: module imports only re + dataclasses (+
+  intra-package adversary/reidentification); the AST import-purity guard bans exactly
+  {random,time,uuid,datetime,secrets} and is GREEN; runtime determinism reconfirmed
+  (score_utility(x)==score_utility(x)). AX-001: test fixtures are synthetic-only (toy names
+  Jane/Alice/Bob, a 4-digit toy account 1234; zero Luhn-valid cards, zero valid SSNs, no real
+  public figure paired with contact data). reidentification.py is git-UNTOUCHED by S3-06 (REUSED
+  via one score_reidentification(...) call), and __init__.py changes are export-only. 7/7 owned
+  tests pass and the full suite is 150 passed / 0 regressions on independent re-run.
+
+axioms_in_scope:
+  - id: AX-pii-anon-004
+    name: anonymization-pseudonymization-separation
+    role: PRIMARY  # THE key axiom for this story (NFR-005) — no privacy+utility axis fusion
+    triggered_by: "story emits the anonymization metric family as a two-axis Pareto point"
+    upheld: true
+  - id: AX-pii-anon-003
+    name: stated-statistical-power
+    role: applied
+    triggered_by: "privacy axis (MeasuredRRS) publishes recall/precision proportions with CIs"
+    upheld: true
+  - id: AX-pii-anon-002
+    name: deterministic-reproducible-generation
+    role: applied
+    triggered_by: "scorer must be deterministic (no RNG/clock); pinned utility probe"
+    upheld: true
+  - id: AX-pii-anon-001
+    name: synthetic-only-no-real-pii
+    role: applied
+    triggered_by: "test fixtures embed original/anonymized text pairs + entity values"
+    upheld: true
+
+axiom_verification:
+
+  - axiom: AX-pii-anon-004
+    claim: >
+      ParetoPoint structurally CANNOT merge the privacy + utility axes: no
+      combined/overall/overall_score/deid/de_identification_score/score field-or-
+      property, no __float__; as_dict keeps two SEPARATE sub-objects. Frozen weights
+      INSIDE UtilityScore combining utility COMPONENTS are allowed (distinction respected).
+    method: grep_plus_ast_rederivation_plus_test_plus_import_scan_plus_runtime_introspection
+    evidence:
+      - "anonymization.py — every occurrence of {combined,overall,overall_score,deid,de_identification_score,deidentification_score,score,__float__} is a DOCSTRING/COMMENT (lines 17-18, 110, 175-176, 195) or the PARETO_SEPARATION_NOTE prose (line 48); NONE is declared as a function/property/field/assignment. Independent grep returned no member-level match; 'score' as a standalone member: none."
+      - "Independent AST re-derivation (walk over FunctionDef/AsyncFunctionDef/AnnAssign/Assign) — forbidden DEFINED names leaked: NONE; numeric-coercion/arithmetic dunders {__float__,__int__,__index__,__add__,__radd__,__round__}: NONE; only dunder defined is __post_init__; properties defined: none. This re-proves test #4 step (C) independently of the test."
+      - "dataclasses.fields(ParetoPoint) == {residual_risk, utility, variant, note}; the two axes are residual_risk: MeasuredRRS and utility: UtilityScore — different types (line 133 test asserts type(...) is not type(...)). hasattr(ParetoPoint,'__float__') is False; float(point) raises TypeError (runtime-confirmed)."
+      - "as_dict (lines 191-202) emits exactly {privacy, utility, variant, note}; privacy nests residual_risk.as_dict() and utility nests utility.as_dict() as two distinct dicts (d['privacy'] is not d['utility']); deliberately no combined key (comment line 195). No arithmetic field anywhere fuses the axes."
+      - "PERMITTED-VS-FORBIDDEN distinction respected: _W_PRESERVATION(0.60)/_W_INFO_RETAINED(0.25)/_W_COHERENCE(0.15) (lines 60-62) and the renormalised weighted mean (score_utility lines 162-167) combine utility COMPONENTS into one utility number INSIDE UtilityScore — explicitly allowed by AX-004/NFR-005 and the story §8b. No weight or sum spans the privacy axis. The executor honored the exact boundary the dispatch flagged."
+      - "tests/test_anonymization.py::test_nfr005_pareto_point_cannot_merge [AUDIT] enforces (A) hasattr-false over the seven-name forbidden set on instance AND class + float() TypeError, (B) as_dict keys exactly {privacy,utility,variant,note} both dicts + forbidden.isdisjoint(keys), (C) AST source grep of the module, (D) empty-note ValueError — GREEN on independent re-run."
+    result: UPHELD
+
+  - axiom: AX-pii-anon-003
+    claim: >
+      The privacy axis (MeasuredRRS) carries Wilson CIs, inherited unchanged from S3-04.
+    method: reused_module_field_inspection_plus_git_history
+    evidence:
+      - "MeasuredRRS (reidentification.py:82-123) declares reid_recall_ci: Interval and reid_precision_ci: Interval, both produced by wilson_interval(correct, n_targets/n_guesses, confidence) at lines 167-168; as_dict serializes both CIs (lines 111-112)."
+      - "S3-06 calls score_reidentification(...) once (anonymization.py:225) and wraps the returned MeasuredRRS verbatim as the privacy axis; the CIs therefore travel through ParetoPoint.as_dict()['privacy'] unchanged. reidentification.py is git-untouched by S3-06."
+      - "test_fr_006_residual_risk_axis_is_measured_rrs [AUDIT] drives the REAL OfflineDeterministicAdversary end-to-end and asserts the privacy axis is a MeasuredRRS (adversary_id == 'offline-deterministic-v1') — GREEN."
+    notes: >
+      AX-003's lattice positive-count targets (>=1522/753/200) govern CORPUS slices via
+      validate.py --lattice, not unit-test fixtures; this scorer's tiny inline targets/
+      candidates set yields correspondingly wide CIs by design — no conflict with the
+      axiom's corpus-slice scope. The CIs are inherited, not (re)computed in the owned file.
+    result: UPHELD
+
+  - axiom: AX-pii-anon-002
+    claim: >
+      Determinism — no RNG/clock; pure-stdlib (re + dataclasses); AST import-purity
+      guard bans {random,time,uuid,datetime,secrets} and the utility probe is pinned.
+    method: import_scan_plus_ast_guard_plus_runtime_determinism
+    evidence:
+      - "Top-level imports of anonymization.py (independent AST scan) = {__future__, re, collections, dataclasses, adversary, reidentification}; NONE of {random,time,uuid,datetime,secrets} present (NFR-004 satisfied with stdlib re + dataclasses)."
+      - "test_fr_006_nfr004_anonymization_imports_no_nondeterminism [PROPERTY-TEST] parses the module via ast with banned={'random','time','uuid','datetime','secrets'} (EXACT spec match, line 252) and asserts banned.isdisjoint(imported) — GREEN."
+      - "Runtime determinism reconfirmed: score_utility(o,a) == score_utility(o,a) is True (frozen dataclass equality on identical inputs); UTILITY_PROBE_VERSION == 'token-preservation-v1' is pinned (line 44); the probe is a deterministic placeholder-stripped Jaccard with no clock/RNG."
+    result: UPHELD
+
+  - axiom: AX-pii-anon-001
+    claim: synthetic-only test data; no real PII in fixtures.
+    method: pattern_scan_plus_luhn_check
+    evidence:
+      - "Fixtures use toy names only: 'Jane Doe', 'Alice'/'Bob' (in this reviewer's runtime probe), placeholder addresses '42 Beacon Street'/'Beacon Hill', 'Boston' — generic, not a named real person paired with contact data."
+      - "All numeric literals >=3 digits in test_anonymization.py are FR/NFR tokens (006/005/004/009) plus a single 4-digit toy account '1234'; Luhn check over all >=13-digit runs returns NONE — zero valid card numbers, zero ddd-dd-dddd SSNs."
+    result: UPHELD
+
+reuse_and_scope_check:
+  reidentification_py_reused_not_modified: true
+  evidence: >
+    git log of src/pii_anon_datasets/scoring/reidentification.py shows its last three commits
+    are S3-04's (379f086 REFACTOR / bfa5cf9 GREEN) + foundation 75e9eed; the S3-06 commits
+    (2149d54 RED / 2e5572d GREEN / 49d0732 REFACTOR) touch ONLY __init__.py, anonymization.py,
+    test_anonymization.py. score_anonymization REUSES the privacy axis via a single
+    score_reidentification(...) call (no RRS re-implementation: anonymization.py contains no
+    RRSResult/wilson_interval/from_attack/recall*precision arithmetic).
+  init_py_export_only: true
+  evidence_init: >
+    The S3-06 __init__.py diff is an import block (PARETO_SEPARATION_NOTE, UTILITY_PROBE_VERSION,
+    ParetoPoint, UtilityScore, score_anonymization, score_utility) plus six __all__ entries —
+    no executable logic that could fuse axes.
+
+independent_verification:
+  owned_test_run: "python3 -m pytest tests/test_anonymization.py -q => 7 passed (independent re-run; story is AGENT_SIMULATED)"
+  full_suite: "python3 -m pytest => 150 passed in ~2.1s; 0 regressions (matches story §12 claim)"
+  ast_forbidden_name_grep: "GREEN — zero forbidden merged-metric names DEFINED; no __float__/numeric/arith dunder"
+  ast_import_purity: "GREEN — banned set exact {random,time,uuid,datetime,secrets}; none imported"
+  runtime_no_merge: "float(ParetoPoint) raises TypeError; as_dict keys == {privacy,utility,variant,note}; two distinct dicts"
+  reidentification_untouched: true
+
+findings: []   # zero MAJOR+; zero of any severity
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+
+observations:
+  - id: OBS-1
+    severity: OBSERVATION
+    note: >
+      The privacy/utility no-merge guarantee is enforced inside ParetoPoint, but the
+      structural absence of a fused scalar is not yet asserted against a Parquet/JSON
+      LEADERBOARD serializer the way the FR-009 caveat's non-strippability is for RRS.
+      ParetoPoint.as_dict() is merge-free today (verified), so there is no axiom violation;
+      flagged only so that when S3-08 wires anonymization into the cross-module report,
+      the no-merge invariant is re-checked at the report/leaderboard boundary (where a
+      downstream component might be tempted to derive a single "de-id score" column). No
+      action required for S3-06; the structural guard at the value-object level is complete.
+
+out_of_scope_deferrals:
+  - "reidentification.py:69 mypy dict type-arg — PRE-EXISTING in the NOT-OWNED reused S3-04 file (also surfaced by the merged pseudonymization.py); correctly left untouched. Not an axiom finding."
+  - "Whether the token-preservation-v1 Jaccard is the CORRECT utility measure — executor's + traceability's remit."
+  - "Numerical adequacy of the renormalised component weights — requirements-coverage / code-quality remit."
+  - "Source-grep / AST-guard adequacy AS a security control — security-sast remit."
+  - "Whether FR-006 should exist — SME / W8, not a per-story reviewer."
+
+pack_extensions_applied: []   # developer-assistant.yaml domain_packs: [] (and extends.domain_packs: []); no agentic-runtime pack
+
+self_attestation:
+  independent: true
+  read_only_confirmed: true
+  no_peer_review_consulted: true   # the sibling requirements-coverage.yaml in this dir was read AFTER forming the verdict, solely to match canonical schema; no judgment was borrowed from it
+  context_bounds_respected: true
+  basis: >
+    Verdict formed only from: project-axioms.yaml, S3-06.md, the owned files
+    (anonymization.py, scoring/__init__.py, test_anonymization.py), the REUSED-not-modified
+    reidentification.py (MeasuredRRS/score_reidentification + its Wilson-CI contract),
+    developer-assistant.yaml domain-pack config, git history of the owned/reused files, an
+    independent AST re-derivation of the AX-004 and NFR-004 guards, runtime introspection of
+    ParetoPoint, and independent pytest runs (owned 7/7, full suite 150/150). No reliance on
+    the executor's self-report; no fields outside the axiom-compliance remit were judged.

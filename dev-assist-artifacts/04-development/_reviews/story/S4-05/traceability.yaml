@@ -1,0 +1,177 @@
+# Traceability reviewer — STORY gate
+reviewer: traceability
+gate: story
+story_id: S4-05
+iteration: 1
+mode: read-only
+timestamp: 2026-05-30
+verdict: APPROVE
+context_bounds_respected: true
+self_attestation: >
+  I reviewed only forward traceability of the FR/NFR -> Story -> Test -> DC chain for S4-05
+  (FR-005, FR-006, NFR-003; supporting NFR-004/NFR-005/AX-004; DC-09). I did not assess test
+  quality, idiomaticity, NFR threshold attainment, or semantic-beyond-G/W/T validation — those
+  belong to code-quality / requirements-coverage / axiom-compliance. Findings are independent.
+
+scope_reviewed:
+  story_file: dev-assist-artifacts/04-development/02-stories/sprint-4/S4-05.md
+  owned_files:
+    - src/pii_anon_datasets/reporting/viz.py
+    - src/pii_anon_datasets/reporting/__init__.py
+    - pyproject.toml
+    - tests/test_viz.py
+
+# ── Forward-trace verification matrix ───────────────────────────────────────────
+checks:
+  requirement_ids_exist:
+    FR-005:
+      exists: true
+      source: dev-assist-artifacts/02-requirements/functional-requirements.md:13
+      note: >
+        FR-005 explicitly names "a reliability diagram per entity class AND an abstention
+        coverage-risk curve" — both facets present in the requirement text.
+    FR-006:
+      exists: true
+      source: dev-assist-artifacts/02-requirements/functional-requirements.md:16
+      note: 'privacy-utility Pareto point, never merged into one number (MUST, closes M6).'
+    NFR-003:
+      exists: true
+      source: dev-assist-artifacts/02-requirements/non-functional-requirements.md:9
+      note: 'per-(language×type) power matrix published, emitted by the DC-09 power-table reporter.'
+    NFR-004:
+      exists: true
+      source: dev-assist-artifacts/02-requirements/non-functional-requirements.md:13
+    NFR-005:
+      exists: true
+      source: dev-assist-artifacts/02-requirements/non-functional-requirements.md:14
+    AX-004:
+      exists: true
+      source: dev-assist-artifacts/02-requirements/traceability-matrix.md:32
+    result: PASS  # zero declared IDs absent from 02-requirements (no SHOWSTOPPER)
+
+  test_tokens_select_nonzero:
+    cmd_fr_005: 'python3 -m pytest tests/test_viz.py -k fr_005 -q --co'
+    fr_005_count: 3
+    fr_005_fns:
+      - test_fr_005_reliability_diagram_writes_png
+      - test_fr_005_coverage_risk_curve_writes_png
+      - test_fr_005_agent_leakage_sankey_writes_png
+    cmd_fr_006: 'python3 -m pytest tests/test_viz.py -k fr_006 -q --co'
+    fr_006_count: 1
+    fr_006_fns: [test_fr_006_pareto_plot_writes_png]
+    cmd_nfr_003: 'python3 -m pytest tests/test_viz.py -k nfr_003 -q --co'
+    nfr_003_count: 1
+    nfr_003_fns: [test_nfr_003_slice_heatmap_writes_png]
+    nfr004_count: 3      # story spec uses bare token nfr004 for the lazy-import family
+    nfr004_fns:
+      - test_nfr004_viz_behind_extra_import_guards
+      - test_nfr004_reporting_core_imports_without_matplotlib
+      - test_nfr004_viz_no_toplevel_matplotlib_import
+    fr005_count: 1       # bare token fr005
+    fr005_fns: [test_fr005_pyproject_declares_viz_extra]
+    result: PASS  # every required selector (fr_005, fr_006, nfr_003) selects > 0
+
+  test_run:
+    cmd: 'python3 -m pytest tests/test_viz.py -q'
+    outcome: '9 passed'
+    result: PASS
+
+  docstrings_cite_requirements:
+    reliability_diagram: 'FR-005 (viz.py:78-83)'
+    pareto_plot: 'FR-006; NFR-005 / AX-004 (viz.py:106)'
+    slice_heatmap: 'NFR-003 (viz.py:131)'
+    coverage_risk_curve: 'FR-005; cites S4-03-flagged facet (viz.py:170-177)'
+    agent_leakage_sankey: 'leakage-flow facet (FR-005 family per module docstring)'
+    _require_matplotlib: 'NFR-004 lazy-import guard (viz.py:49)'
+    result: PASS  # every render symbol's docstring carries its FR/NFR citation
+
+  contract_realized:
+    render_fns_present: 5
+    fns: [reliability_diagram, pareto_plot, slice_heatmap, agent_leakage_sankey, coverage_risk_curve]
+    reexported_in_init: true     # reporting/__init__.py:14-21 + __all__:34-39
+    pyproject_viz_extra: 'viz = ["matplotlib"] (pyproject.toml:37) — resolves power.py::heatmap install hint'
+    no_hard_scoring_import: true # viz.py imports only stdlib (collections.abc/dataclasses/typing); ParetoPoint/CalibrationResult/scoring appear in docstring prose only
+    result: PASS
+
+  s4_03_abstention_facet_closure:
+    flagged_open_at: dev-assist-artifacts/04-development/_reviews/story/S4-03/traceability.yaml:134
+    corroborating:
+      - dev-assist-artifacts/04-development/_reviews/story/S4-03/requirements-coverage.yaml:130
+      - 'dev-assist-artifacts/04-development/_reviews/story/S4-03/synthesis.md:23 (directive: fold into S4-05)'
+    closed_by:
+      symbol: coverage_risk_curve  # src/pii_anon_datasets/reporting/viz.py:167
+      test: test_fr_005_coverage_risk_curve_writes_png  # tests/test_viz.py:126 (PASS)
+      docstring_back_reference: true  # viz.py:15-17 + 170-177 name the S4-03 gate + FR-005
+    result: PASS  # FR-005 abstention coverage-risk facet GENUINELY CLOSED
+
+  name_says_x_asserts_x:
+    test_fr_005_reliability_diagram_writes_png: 'asserts reliability_diagram writes non-empty PNG — aligned'
+    test_fr_006_pareto_plot_writes_png: 'asserts pareto_plot on (risk,utility,label) tuples writes PNG — aligned (FR-006 two-axis)'
+    test_nfr_003_slice_heatmap_writes_png: 'asserts slice_heatmap delegates to PowerMatrix.heatmap + writes PNG — aligned (NFR-003 power-matrix render)'
+    test_fr_005_coverage_risk_curve_writes_png: 'asserts coverage_risk_curve (selective prediction) writes PNG — aligned (FR-005 abstention facet)'
+    test_fr_005_agent_leakage_sankey_writes_png: 'asserts agent_leakage_sankey writes PNG — aligned'
+    result: PASS  # no name-says-X / asserts-Y mismatch
+
+  dependencies_done:
+    S4-03:
+      status: DONE   # sprint-4/S4-03.md:13
+      realized_symbol: 'stats.calibration.CalibrationResult (duck-typed by reliability_diagram)'
+    S3-06:
+      status: DONE   # sprint-3/S3-06.md:13
+      realized_symbol: 'scoring.anonymization.ParetoPoint (unpacked by caller; viz takes thin tuples)'
+    S-PWR:
+      realized_symbol: 'stats.power.PowerMatrix.heatmap (power.py:397) — slice_heatmap delegates'
+      note: 'No discrete S-PWR story file under 02-stories; dependency is realized at the code symbol.'
+    result: PASS  # all declared deps DONE / realized; none IN_PROGRESS or REVIEW
+
+  provisional_status_cascade:
+    story_value: AGENT_SIMULATED   # S4-05.md:17
+    source_dc: 'DC-09 · AGENT_SIMULATED · not DIVERGED'  # S4-05.md:35
+    diverged: false
+    result: PASS  # status matches source DC; no DIVERGED cascade obligation triggered
+
+  traceability_matrix_row:
+    fr_005_present: true   # traceability-matrix.md:10 (UC-03 -> FR-005)
+    fr_006_present: true   # traceability-matrix.md:11 (UC-04 -> FR-006)
+    nfr_003_present: true  # traceability-matrix.md:9 (UC-02 -> ... NFR-003)
+    result: PASS_WITH_NOTE
+    note: >
+      FR-005/006 + NFR-003 already carry matrix rows from upstream UC mapping; no per-story row
+      is required by the matrix structure for S4-05 specifically. (See OBS-1.)
+
+findings: []
+
+observations:
+  - id: OBS-1
+    severity: OBSERVATION
+    title: 'No S4-05-specific Status Change Log entry in traceability-matrix.md'
+    detail: >
+      FR-005/006/NFR-003 are traced at the UC row level (matrix lines 9-11), which satisfies forward
+      traceability. The matrix has no per-story changelog row recording that S4-05 closes the FR-005
+      abstention facet flagged at the S4-03 gate. Optional cross-link only — closure is fully
+      evidenced in the S4-03 review artifacts + viz.py docstrings. Not gate-blocking.
+    action: 'Optionally append a Status Change Log line at the S4 sprint gate noting S4-05 closes the FR-005 abstention coverage-risk facet.'
+  - id: OBS-2
+    severity: OBSERVATION
+    title: 'S-PWR dependency has no discrete story file'
+    detail: >
+      S4-05 §5 lists S-PWR (PowerMatrix.heatmap) as a DONE dependency, but no S-PWR.md exists under
+      02-stories. The dependency is genuinely realized at the code symbol (stats/power.py:397), so
+      forward trace holds; the missing story artifact is a planning-ledger gap, not a trace defect.
+    action: 'Confirm the S-PWR work item is captured in the S4 epic catalog or an earlier sprint ledger.'
+
+summary:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 2
+  verdict: APPROVE
+  rationale: >
+    All declared IDs (FR-005, FR-006, NFR-003, plus supporting NFR-004/005, AX-004) exist in
+    02-requirements. Required token selectors fr_005/fr_006/nfr_003 each select >0 (3/1/1) and the
+    full file runs 9 passed. Five render fns realize the DC-09 contract, re-exported lazily, with the
+    [viz] extra declared. Every render symbol's docstring cites its FR/NFR. The FR-005 abstention
+    coverage-risk curve facet flagged OPEN at the S4-03 gate is genuinely CLOSED by coverage_risk_curve
+    + its passing test + an explicit back-reference. No name-says-X/asserts-Y mismatch. Dependencies
+    DONE/realized; provisional_status matches source DC-09 (not DIVERGED). Zero MAJOR+ findings.

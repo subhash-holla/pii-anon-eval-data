@@ -1,0 +1,118 @@
+# Axiom-compliance review — STORY gate S4-02 (iteration 1)
+schema: dev-assist/reviewer-finding/v1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S4-02
+story_title: "Paired stats: McNemar (exact + continuity-χ²) + seeded paired bootstrap"
+iteration: 1
+branch: feat/v2-scoring-harness
+verdict: APPROVE
+mode: read-only
+context_bounds_respected: true
+
+scope:
+  owned_paths:
+    - src/pii_anon_datasets/stats/paired.py     # NEW (story §8 root-relative path resolves under src/)
+    - src/pii_anon_datasets/stats/__init__.py    # MODIFIED (4 exports added)
+    - tests/test_paired.py                        # NEW
+  axioms_triggered: [AX-pii-anon-002, AX-pii-anon-003, AX-pii-anon-001, AX-pii-anon-004]
+  axioms_not_triggered: []
+  note: >
+    Story §8 lists owned paths as stats/paired.py etc.; the actual committed files live under
+    src/pii_anon_datasets/stats/ (per story §8 NEW/MODIFIED block and the package layout, pythonpath=src).
+    Reviewed the real files. No path discrepancy finding — §8 header is shorthand; §8 body is authoritative.
+
+# ── AX-pii-anon-002 — deterministic-reproducible-generation (THE LOAD-BEARING ONE) ──
+axiom_AX_pii_anon_002:
+  status: UPHELD
+  what_checked: >
+    Bootstrap must be byte-reproducible via a LOCAL random.Random(seed), never the module-global
+    RNG; McNemar must be RNG-free (deterministic by construction).
+  evidence:
+    - "paired.py:140 — `rng = random.Random(seed)` is a LOCAL instance; the only draw is `rng.randrange(n)` (line 147) off that local rng. No `random.seed`, `random.random`, `random.sample`, `random.choice` anywhere."
+    - "AST guard (reviewer re-ran statically over the real source): all `random.<attr>` accesses == ['Random'] only; banned-module intersection {time,uuid,datetime,secrets} = empty. Matches test_fr_002_nfr004_paired_imports_no_uncontrolled_nondeterminism."
+    - "Runtime invariance (reviewer re-ran): result is byte-identical under caller `random.seed(0)`, `random.seed(999999)`, AND a 1234-draw perturbation of the global stream mid-flight → proves the module-global RNG is provably never consulted."
+    - "Same seed (42) twice → as_dict() equal; different seed (7) → endpoints differ (-0.10,0.28) vs (-0.12,0.26)."
+    - "McNemar (mcnemar_exact / mcnemar_chi2) imports/uses no RNG → deterministic; reproduced exact p-values bit-for-bit (see AX-003)."
+  ax_guard_present: true     # tests/test_paired.py:127-159 (AST) — confirmed real and passing
+  runtime_guard_present: true # tests/test_paired.py:92-98 (global-RNG invariance) — confirmed real and passing
+
+# ── AX-pii-anon-003 — stated-statistical-power / statistical rigor ──
+axiom_AX_pii_anon_003:
+  status: UPHELD
+  what_checked: >
+    McNemar over discordant pairs is the correct PAIRED test (vs CI-overlap); every result
+    carries a NAMED method (NFR-002); the two-gate distinction (FR-002 detector-regression gate
+    vs NFR-018 corpus-power gate) is respected.
+  evidence:
+    - "Correct paired test: McNemar conditions on the discordant pairs (b,c) over the SAME gold spans (paired bootstrap resamples pair INDICES preserving A/B pairing, paired.py:121-124,145-148) — not a CI-overlap heuristic. Aligned with sampling-design.md §3.2 two-gate distinction cited in module docstring (paired.py:1-19)."
+    - "Named method on EVERY result (NFR-002): McNemarResult.method ∈ {mcnemar-exact, mcnemar-chi2-continuity, mcnemar-chi2}; Interval.method == 'paired-bootstrap'. Verified at runtime; round-trips via as_dict()."
+    - "Two-gate distinction respected: paired.py is the MEASUREMENT side of the FR-002 detector-regression gate; it contains NO reference to the lattice / validate.py --lattice / wilson / clopper / reid corpus-power path (NFR-018). It only PAIRS WITH the design-time sizer power.py::required_discordant_pairs (named in docstring) without merging gates. grep confirms zero lattice/validate/wilson/clopper coupling."
+    - "Math honesty (reviewer recomputed independently): mcnemar_exact(10,0).p_value == 0.001953125 == 2·C(10,0)·0.5^10 ✓; statistic==min(b,c)==0.0 ✓. mcnemar_chi2(20,10): χ²==(|10|-1)²/30==2.7 ✓, p==erfc(sqrt(2.7/2))==0.10034824646229071 ✓ (≈0.1003). continuity=False → χ²==100/30==3.3333… ✓. mcnemar_exact(5,5).p_value==1.0 (symmetric) ✓. b+c==0 → (statistic 0.0, p 1.0) for both ✓. odds_ratio==b/c, None when c==0 ✓."
+  no_bare_point_scores: true  # this module is the test/CI machinery itself; the NFR-018 per-slice n+Wilson requirement lives in the corpus/validate path, correctly out of this module's scope.
+
+# ── AX-pii-anon-001 — synthetic-only-no-real-pii ──
+axiom_AX_pii_anon_001:
+  status: UPHELD
+  what_checked: "Test data must be synthetic; no real PII in fixtures/examples."
+  evidence:
+    - "All test inputs are synthetic boolean (A_hit, B_hit) tuples — e.g. [(True,False)]*18 + [(True,True)]*2 (test_paired.py:82,104,116). Zero PII strings, names, identifiers, or corpus rows anywhere in paired.py or test_paired.py."
+
+# ── AX-pii-anon-004 — anonymization/pseudonymization separation ──
+axiom_AX_pii_anon_004:
+  status: UPHELD
+  what_checked: "No collapse of distinct metric families into one redaction/de-id score."
+  evidence:
+    - "Module scores ONE thing: detector recall difference Δ = recall(A) − recall(B) for the A/B-detection regression gate. grep for redaction/de-identification/anonymiz/pseudonym in paired.py → none. No metric-family merge introduced."
+
+# ── NFR-004 purity ──
+nfr_004_purity:
+  status: UPHELD
+  evidence:
+    - "Imports: __future__, math, random (used only as random.Random), collections.abc.Sequence, dataclasses, .intervals (S1, read-only reuse). No scipy/numpy/pandas; no nondeterministic stdlib. χ² tail uses closed-form math.erfc; exact tail uses math.comb. Percentile is a hand-rolled deterministic linear interpolation."
+    - "n_boot is a FIXED iteration count (default 10000); no convergence-dependent early exit → platform-stable."
+
+# ── DoD / TDD provenance (corroborated, not re-attested) ──
+tdd_provenance:
+  red:  "5568608 [RED] — tests precede impl (paired.py absent → collection ImportError)"
+  green: "1e34f7b [GREEN] — implement paired.py; 8/8 green"
+  refactor: "d5cafe7 [REFACTOR] — ruff I001 import-order on test file only; no production change"
+  diff_scope: "342 insertions across exactly the 3 owned files (git diff --stat 5568608^..d5cafe7) — zero out-of-scope edits; intervals.py/power.py/lattice/corpus untouched."
+  owned_tests: "tests/test_paired.py 8 passed (reviewer re-ran); all fn names token fr_002/nfr_002."
+
+findings: []
+
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+  total: 0
+
+observations_noted:
+  - >
+    (Non-finding, FYI only — out of THIS reviewer's scope and pre-existing) the story §-Lint/type
+    block self-discloses a pre-existing mypy --strict [type-arg] on intervals.py:28 from S1 (acac5a8),
+    an out-of-scope untouched file. Correctly excluded from S4-02 scope; flagged here only because the
+    story surfaced it. Belongs to code-quality, not axiom-compliance.
+
+self_attestation:
+  independent_review: true
+  read_only_enforced: true
+  no_files_modified_outside_review_dir: true
+  recomputed_load_bearing_math: true       # McNemar exact/chi2 values recomputed from first principles
+  reran_determinism_guard: true            # AST + runtime global-RNG invariance independently re-executed
+  context_bounds_respected: true
+  catalog: "project-axioms.yaml (4 axioms) + reviewer reasoning-visibility/replay-determinism patterns; no domain-pack axiom-compliance extension found active for this repo."
+
+verdict_rationale: >
+  Zero MAJOR+ findings. The load-bearing AX-002 determinism axiom is upheld three ways
+  (local random.Random(seed); AST guard proving no module-global random.* and no banned
+  modules; runtime invariance under caller random.seed perturbation — all independently
+  re-executed by the reviewer). AX-003 statistical rigor holds: McNemar over discordant
+  pairs is the correct paired test, every result is NAMED-method tagged (NFR-002), the
+  FR-002↔NFR-018 two-gate distinction is respected with zero corpus-power coupling, and the
+  pinned worked values (mcnemar_exact(10,0)=0.001953125; mcnemar_chi2(20,10) χ²=2.7,
+  p=0.10034824646229071) recompute exactly. NFR-004 purity, AX-001 synthetic data, and
+  AX-004 no-conflation all clean. APPROVE.

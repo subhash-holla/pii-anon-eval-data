@@ -1,0 +1,77 @@
+reviewer: dev-assist-development-requirements-coverage
+scope_id: S7-02
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: coverage-S7-02-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/scoring/adversary/payloads.py:152
+    description: |
+      FR-017 qualifies the payloads as "(multilingual/obfuscated)". The library DOES ship
+      6 multilingual carriers (CARRIER_TEMPLATES: en/es/fr/de/ja/ar, lines 103-106), but
+      build_payloads(span) defaults to carrier=CARRIER_TEMPLATES[0] (English "Please note:")
+      and no test in tests/test_payloads.py asserts the multilingual property — the 5
+      non-English carriers are never exercised. The "multilingual" sub-clause of FR-017's
+      payload half is implemented-but-untested. Every other payload-library sub-clause
+      (tuple shape, 3 committed transforms, faithful, inert, validation, pure-stdlib) has a
+      named passing test. Non-blocking: FR-017 is a SHOULD and DC-10 is a bounded COULD;
+      the carrier-substitution mechanism itself is covered by the tuple/render test.
+    suggested_resolution: |
+      At or before the S7 sprint gate, add one assertion (or a parametrized test) that
+      build_payloads(span, carrier=...) accepts a non-ASCII carrier and that
+      CARRIER_TEMPLATES spans >1 language, so the FR-017 "multilingual" sub-clause carries
+      explicit test evidence before FR-017 is marked verified at the sprint gate.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-017
+
+notes: |
+  STORY-gate coverage check for S7-02 (injection payload library, iteration 1), FR-017 primary
+  (AX-001 / NFR-004 / AX-002 supporting). Coverage proper runs at epic/sprint gate; at story
+  scope this is a slice confirmation that FR-017's payload-library clause has named passing
+  tests, per the dispatch brief.
+
+  Test run — `python3 -m pytest tests/test_payloads.py -k "fr_017 or nfr004" -q` -> 6 passed
+  in 0.13s (expected 6). Named tests, all PASSED, 1:1 with story §6:
+    - test_fr_017_payload_is_obfuscated_carrier_intent_tuple   (tuple shape + render)
+    - test_fr_017_three_committed_transforms                    (exactly base64/ocr/zero_width)
+    - test_fr_017_transforms_are_faithful                       (deterministic + recoverable)
+    - test_fr_017_payloads_are_inert                            (AX-001; non-strippable disclaimer)
+    - test_fr_017_invalid_payload_rejected                      (negative: bad tag / no {span})
+    - test_nfr004_payloads_pure_stdlib                          (AST guard; no clock/RNG)
+
+  FR-017 payload-library sub-clause -> test map (S7-02 owns the payload half):
+    tuple (obfuscated-span + carrier-template + intent-tag) ... COVERED  (test #1)
+    obfuscated / 3 committed transforms ..................... COVERED  (test #2)
+    faithful (deterministic + recoverable) ................. COVERED  (test #3)
+    inert / "never agent-leakage scoring" .................. COVERED  (test #4)
+    validation (negative path) ............................. COVERED  (test #5)
+    pure-stdlib + deterministic (NFR-004 / AX-002) ......... COVERED  (test #6)
+    multilingual ........................................... IMPLEMENTED, UNTESTED (finding -01, OBSERVATION)
+
+  FR-017 NOW FULLY COVERED (both halves landed) — markable verified at the S7 sprint gate:
+    - Oracle half  (S7-01, DONE, story-gate APPROVE 5/5, _reviews/story/S7-01/synthesis.md):
+        callable recognize() -> labeled-entity verdicts, span point-query, non-strippable
+        recognition disclaimer — test_fr_017_recognize_returns_labeled_verdicts /
+        test_fr_017_recognize_span_point_query / test_fr_017_oracle_disclaimer_non_strippable
+        in tests/test_oracle.py.
+    - Payload half (S7-02, this review): the 6 tests above.
+    S7-01 dependency claim verified DONE (not stale) — finding pattern #5 cleared.
+
+  Orphan / duplication scan: the only test_fr_017_* definitions live in test_oracle.py (oracle)
+  and test_payloads.py (payloads) — a clean oracle/payload split, no competing or duplicate
+  test claims for the same sub-clause (finding pattern #13 cleared).
+
+  Pass-2 / provisional status: S7-02 is AGENT_SIMULATED, NOT DIVERGED; pytest/ruff/mypy ran
+  in-agent on the dev host (not a CI runner), with a Pass-2 canonical-runner re-run scheduled
+  at the S7 sprint gate (story §12). No DIVERGED Pass-2 commitment is outstanding, so no
+  DIVERGED cross-check violation at this gate. Note for the sprint gate: FR-017's verified
+  mark there is contingent on that scheduled Pass-2 CI re-run completing.
+
+  Config: developer-assistant.yaml extends.domain_packs == [] and domain_packs == [] — no
+  reviewer pack extensions to merge; FR-017 evaluated against the base requirements-coverage
+  catalog only.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

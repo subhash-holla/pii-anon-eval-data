@@ -1,0 +1,87 @@
+# Axiom-compliance review — STORY gate
+schema: dev-assist/reviewer-finding/v1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S4-04
+iteration: 1
+mode: read-only
+verdict: APPROVE
+context_bounds_respected: true
+
+scope:
+  axioms_path: dev-assist-artifacts/00-axioms/project-axioms.yaml
+  story_path: dev-assist-artifacts/04-development/02-stories/sprint-4/S4-04.md
+  owned_files:
+    - src/pii_anon_datasets/reporting/language_power.py
+    - src/pii_anon_datasets/reporting/__init__.py
+    - tests/test_language_power.py
+  axioms_triggered: [AX-pii-anon-001, AX-pii-anon-002, AX-pii-anon-003]
+
+summary: >
+  S4-04 is a thin, pure reporter over the FROZEN eval_lattice.json + reporting/power_table.
+  All triggered axioms upheld and independently verified against the real on-disk lattice (730
+  cells): it selects the 60 marginal:language cells (the "60-language" claim's backing) and the
+  492 language_x_entity_type cells, reuses power_table._power_class so power_class labels are
+  byte-consistent with the published per-cell table, and labels every below-target cell low-power
+  (0 mislabelled cells out of 552). AST + runtime checks confirm no corpus read, no
+  build_committed_lattice/write_lattice/load_lattice call, no {random,time,uuid,datetime,secrets,
+  gzip} import, deterministic sorted ordering (3-run hash-identical), and the lattice arg is never
+  mutated. Test fixtures are synthetic (language codes + type labels + integer counts; no real PII).
+  Zero MAJOR+ findings.
+
+findings: []
+
+axiom_checks:
+  - axiom: AX-pii-anon-003
+    name: stated-statistical-power / NFR-003 transparency
+    layer: system
+    status: UPHELD
+    evidence: >
+      per_language_table filters interaction=="marginal:language" -> 60 rows (matches frozen
+      lattice); language_x_type_matrix filters interaction=="language_x_entity_type" -> 492 rows.
+      power_class reuses power_table._power_class (label set {empty,under_powered,well_powered} —
+      identical to the published per-cell power table). Below-target cells: 0/552 mislabelled
+      (well_powered iff positives>=target_n). render_markdown emits a low_power column ("⚠ LOW" for
+      any non-well_powered cell); render_csv emits a low_power boolean. Each row carries
+      {language[, entity_type], positives, target_n, tier, power_class} so no aggregate ships
+      without the per-language / per-(language×type) breakdown.
+  - axiom: FROZEN-lattice-guardrail (CRITICAL)
+    name: reporter must not rebuild/mutate eval_lattice.json or read corpus
+    layer: architecture
+    status: UPHELD
+    evidence: >
+      lattice + observed_counts arrive as ARGUMENTS. AST scan of language_power.py: imports
+      {__future__, csv, io, power_table, typing} only; calls contain none of
+      {build_committed_lattice, write_lattice, load_lattice, load_dataset, open}. Runtime: lattice
+      cell count unchanged (730) after repeated runs; no in-place mutation of cell dicts. Mirrors
+      reporting/power_table.py src-purity discipline. test_nfr_003_no_corpus_read asserts the same.
+  - axiom: AX-pii-anon-002
+    name: deterministic-reproducible-generation / NFR-004 purity
+    layer: system
+    status: UPHELD
+    evidence: >
+      No nondeterminism imports (AST: {random,time,uuid,datetime,secrets} absent; gzip absent).
+      per_language_table sorts by language; language_x_type_matrix sorts by (language, entity_type)
+      — group-by-language contiguous + reverse-navigable. render_csv/render_markdown use a fixed
+      column order (_BASE_COLUMNS). 3 independent runs over the real lattice produced a single
+      identical output hash (57749a1b…). test_nfr_003_nfr004_imports_no_nondeterminism guards this.
+  - axiom: AX-pii-anon-001
+    name: synthetic-only-no-real-pii
+    layer: workflow
+    status: UPHELD
+    evidence: >
+      tests/test_language_power.py uses a tiny inline lattice (language codes en/fr, type LABELS
+      IBAN/EMAIL, integer positive counts). No long digit-runs (SSN/card-like), no literal email
+      addresses, no real personal data. Reporter reads NO corpus, so no record content is touched.
+
+self_attestation:
+  independent: true
+  statement: >
+    Findings derived solely from first-hand reading of the owned source + tests, the project axiom
+    registry, and the dependency modules (power_table.py, stats/lattice.py), cross-checked against
+    the real frozen eval_lattice.json via independent AST and runtime probes. I did not read or
+    defer to other reviewers' verdicts for this gate.
+  out_of_scope_deferred:
+    - "Statistical correctness of target_n tiers / Wilson-CI math (requirements-coverage/traceability)"
+    - "Whether observed_counts are themselves accurate (audit: scripts/validate.py / lattice_audit.py)"
+    - "Code style / typing ergonomics (code-quality)"

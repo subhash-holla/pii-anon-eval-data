@@ -1,0 +1,1333 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 — D3 CONVERGE: Preferred Surface (Minimalist-CLI + Info-Dense-Reports) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 — D3 CONVERGE: Preferred Surface (Minimalist-CLI + Info-Dense-Reports)</h1>
+<p><strong>Capability</strong>: CAP-02 — academically-sound, repeatable, reportable assessment <strong>workflow</strong> that runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0 / 575,604 / CC0 / <code>annotations</code></strong> over a <strong>powered-representative sample (CLI default)</strong> / <strong>full corpus (opt-in, citable)</strong> / <strong>smoke (fast CI)</strong>, with statistical/epistemic observability + reporting at every spine stage <code>load → sample → run → score → rate → report</code>.
+<strong>Stage</strong>: assessment-workflow / 03-Design · <strong>Diamond 3 (UI / Surface) — CONVERGE</strong>
+<strong>Date</strong>: 2026-06-01
+<strong>provisional_status</strong>: AGENT_SIMULATED — the surface metaphor is selected by agent-simulated Pugh scoring against the requirements + the D2-locked workflow (Linear-batch, two-CLI, manifest seam, no per-stage consent). The one high-stakes UI commitment inherited from D2 — <em>&quot;non-interactive by default; the single human decision (preset + run-type) is upfront; no interactive per-stage consent&quot;</em> (SP-W4) — remains flagged for Pass-2 cognitive-walkthrough with a real single-operator research user.</p>
+<blockquote>
+<p><strong>Vocabulary remap.</strong> DC = <strong>Benchmark Component</strong>; FR = Assessment Capability; UC = Evaluation Scenario; NFR = Quality Attribute; AX = binding axiom.</p>
+</blockquote>
+<blockquote>
+<p><strong>Locked architecture this diamond honors.</strong> eval-data <strong>OWNS</strong> sampling + observability + reporting; <code>pii-rate-elo</code> <strong>CONSUMES</strong> (extend, do <strong>NOT</strong> rebuild the engine / metrics / convergence). <strong>Two CLI entrypoints (L3):</strong> (a) eval-data <code>python -m pii_anon_datasets.assessment.sample</code>; (b) <code>pii-rate-elo assessment</code>. The <strong>sample-manifest is the L1 SEAM</strong> (the only cross-process coupling). a11y is <strong>N/A</strong> (library + two CLIs, no web UI) per the brief + cycle-1 precedent. Cycle-1 surface precedent for this diamond = <strong>Minimalist-CLI + Info-Dense-reports</strong>.</p>
+</blockquote>
+<hr>
+<h2>1. The three surface-metaphor proposals (DIVERGE recap)</h2>
+<table>
+<thead>
+<tr>
+<th>Frame</th>
+<th>Metaphor</th>
+<th>CLI register</th>
+<th>Report register</th>
+<th>Signature move</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>A</strong></td>
+<td><strong>Minimalist-CLI + Info-Dense-Reports</strong></td>
+<td>terse: only the upfront decision is exposed; everything else defaulted</td>
+<td>Info-Dense LaTeX/CSV (the deliverable)</td>
+<td><strong>Two registers, one frame</strong> — the CLI shows only preset + run-type + verdict banner; the <em>report</em> is the only data-per-pixel surface. Complexity (audited stats, Holm, lattice) stays behind sane defaults.</td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td><strong>Information-Dense (both surfaces)</strong></td>
+<td>dense per-cell stderr tables at every stage</td>
+<td>Info-Dense LaTeX/CSV</td>
+<td>The operator must <em>read</em> dense provenance at every spine boundary; every number labelled, nothing inferred; stdout = manifest path only (pipeable), stderr = the dense draw/stage tables.</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td><strong>Conversational (transcript-as-deliverable)</strong></td>
+<td>turn-card per stage; gate = verdict-card</td>
+<td>Info-Dense LaTeX/CSV (deliberately <em>not</em> chat)</td>
+<td>Reframes the chained run-record set as a conversation <em>transcript</em>; each spine stage = one machine-authored turn-card; the transcript IS the audit deliverable. (Read-only projection — not interactive, to honor SP-W4.)</td>
+</tr>
+</tbody></table>
+<p>All three: ride the <strong>same</strong> two-CLI L1 manifest seam; expose the <strong>same</strong> upfront <code>--preset / --seed / --run-type / --sample / --config / --out</code> controls; render the <strong>same</strong> PowerMatrix verdict banner + fail-red gate vocabulary + non-strippable synthetic-only caveat; treat the <strong>LaTeX tabular + CSV</strong> as the primary citable register (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a>); and emit one run-record per stage (L5/<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>) as a first-class audit deliverable (SP-W5).</p>
+<hr>
+<h2>2. Pugh comparison (the brief&#39;s five named criteria)</h2>
+<p><strong>Datum</strong> = Frame A (Minimalist-CLI + Info-Dense-Reports) — the <strong>cycle-1 surface precedent</strong> (named in the locked hybrid) and the conservative baseline the brief names. Scores: <strong>+1</strong> better than datum / <strong>0</strong> equal / <strong>−1</strong> worse.</p>
+<p>Weights are the brief&#39;s five D3 criteria, normalized to sum 1.00. <strong>Honest-verdict legibility</strong> carries the highest weight: the entire capability exists to emit <em>honest</em> power-labelled / tie-gated / caveat-bearing verdicts (G3, AX-003, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>), and a surface that lets a verdict be misread as stronger than it is, is a requirements failure, not a preference. <strong>Reproducibility-from-CLI</strong> is weighted next (AX-002 byte-identity is reachable only if the operator can re-issue the exact command — the CLI <em>is</em> the reproduction interface). <strong>Artifact-first reporting</strong> is third (the LaTeX/CSV register is the actual deliverable — <a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a>/050). <strong>Researcher ergonomics</strong> and <strong>simplicity</strong> are real but secondary — and, decisively, the D2 winner already locked <strong>non-interactive batch with one upfront decision</strong> (SP-W4), which bounds how much ergonomics any frame can add at the CLI.</p>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th align="right">Weight</th>
+<th align="center">A (Minimalist+Dense) = datum</th>
+<th align="center">B (Info-Dense both)</th>
+<th align="center">C (Conversational)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Honest-verdict legibility</strong> (G3 never silently LARGE; AX-003 stated power; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a> closed honesty set; <a class="trace-link" href="../../02-requirements/audit-report.html#fr-037" data-trace-id="FR-037" aria-label="Trace FR-037 — — PASS">FR-037</a> smoke suppression)</td>
+<td align="right">0.30</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">+1</td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td><strong>Reproducibility-from-CLI</strong> (AX-002; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> byte-identity; the command IS the repro surface; seed/run-type echoed)</td>
+<td align="right">0.26</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">0</td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Artifact-first reporting</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a> LaTeX/CSV primary; <a class="trace-link" href="../../02-requirements/audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a> self-verifying; forbidden-token lint)</td>
+<td align="right">0.22</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">0</td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td><strong>Researcher ergonomics</strong> (low cognitive load on the hot path; progressive disclosure; one upfront decision per SP-W4)</td>
+<td align="right">0.14</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">−1</td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Simplicity / reproduce-from-CLI build cost</strong> (fewest render surfaces; reuse-not-rebuild; cycle-1 consistency)</td>
+<td align="right">0.08</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">−1</td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Weighted total</strong></td>
+<td align="right">1.00</td>
+<td align="center"><strong>0.00</strong></td>
+<td align="center"><strong>+0.08</strong></td>
+<td align="center"><strong>−0.40</strong></td>
+</tr>
+</tbody></table>
+<h3>Score rationale (per criterion)</h3>
+<ul>
+<li><p><strong>Honest-verdict legibility — A datum; B +1; C 0.</strong> This is <strong>B&#39;s genuine strength.</strong> Honest verdicts depend on <em>labelled, closed-set, non-inferred</em> presentation: every cell&#39;s <code>power_class ∈ {WELL_POWERED, UNDER_SAMPLED, CORPUS_LIMITED, EMPTY}</code> against <strong>realized positives</strong>, the corpus <code>PowerMatrix.verdict() ∈ {SMALL, ADEQUATE, LARGE}</code> (LARGE only at well-powered fraction ≥ 0.999, ADEQUATE ≥ 0.80 — never silently LARGE, G3/<a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>), and the full <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a> honesty set surfaced inline. <strong>B</strong> maximizes this <em>at the CLI too</em> — its dense per-cell stderr draw table (<code>cell-id · tier · target_n · realized-pos · power_class · shortfall</code>) makes the under-tier story visible at the boundary, before any inference is computed (AX-003). <strong>A</strong> is equal-to-datum, not worse: it renders the identical closed-set verdict banner + worst-3 named shortfalls at the CLI and the <em>full</em> dense honesty bundle in the report — A simply moves the <em>per-cell exhaustive</em> table off the terminal hot path into the report/manifest (where <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a> actually requires it to live non-strippably). <strong>C</strong> is equal: the verdict-card carries the same closed-set tokens, and C&#39;s one real risk (a &quot;conversation&quot; implying a product recommendation) is neutralized because the forbidden-token lint (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a>, <code>{SHIP-WITH-CAVEATS, SHIP, DEFER, GO/NO-GO}</code>) bites the artifact regardless of surface metaphor. So legibility is a wash between A and C; B&#39;s edge is real but bounded — see ergonomics.</p>
+</li>
+<li><p><strong>Reproducibility-from-CLI — A datum; B 0; C −1.</strong> The CLI <em>is</em> the reproduction interface: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> byte-identity is only useful if a consumer can re-issue the exact invocation, so the surface must make <code>{preset, seed, run-type}</code> legible and the command copy-pasteable. <strong>A</strong> realizes this cleanly — the terse command IS the reproduction unit; the run-type contract line (<code>run-type=X → rigor=… prereg=… sample_mode=…</code>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>) and the sealed manifest sha256 are stamped on exit, so &quot;what produced this&quot; is one echoed line. <strong>B</strong> is equal — same command surface; the dense stderr is <em>additional</em> output, not a different reproduction contract (and B routes machine output to stdout = manifest path only, which is actually <em>better</em> for piping, offsetting the heavier stderr). <strong>C</strong> is <strong>−1</strong>: a transcript interleaves machine turn-cards into the primary surface, so the reproduction question shifts from &quot;re-run this one command&quot; toward &quot;replay this transcript&quot; — a strictly larger artifact to point at, even when (as here) the transcript is a read-only projection of the run-records. The D2 Pugh already penalized C&#39;s replay surface (−1 on determinism); the same liability re-appears at the surface layer.</p>
+</li>
+<li><p><strong>Artifact-first reporting — A datum; B 0; C 0.</strong> All three treat the <strong>LaTeX tabular + CSV as the primary citable register</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a>) with CI + provenance-hash + synthetic-only caveat inline per cell, tie-greyed ranks (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a>), anon/pseudo never merged (AX-004), the self-verifying header embedding pre-reg hash + run id (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a>), and the forbidden product-verdict tokens linted out. This is a <strong>requirements-fixed</strong> surface — none of the three metaphors changes the deliverable&#39;s shape, so all score equal. (C explicitly keeps the report <em>non</em>-conversational, which is the correct call and why it does not lose here.)</p>
+</li>
+<li><p><strong>Researcher ergonomics — A datum; B −1; C −1.</strong> With SP-W4 locking <em>one upfront decision + non-interactive batch</em>, ergonomics reduces to &quot;how little must the operator read/parse on the hot path.&quot; <strong>A</strong> wins by construction: <code>--help</code> shows 3 common flags, advanced levers (alpha, span-match-mode, cutoffs) are disclosed behind <code>--help-advanced</code> because they live in pre-reg/config, not the hot path. <strong>B</strong> is <strong>−1</strong>: forcing a dense per-cell table to stderr at <em>every</em> stage is high cognitive load for the common case (the operator usually wants the verdict banner, not 730 cell rows) — B&#39;s density is right for the <em>report</em>, over-applied to the <em>CLI</em>. <strong>C</strong> is <strong>−1</strong>: a turn-card-per-stage stream is more to read than a terse progress line + banner, and (its inherent risk) the non-conversational power flows (<code>--block-on-underpower</code>, <code>full-corpus</code> opt-in, run-type profiles) are flags, not chat-discoverable — so C pays the conversational reading cost without the conversational discovery benefit.</p>
+</li>
+<li><p><strong>Simplicity / build cost — A datum; B −1; C −1.</strong> A&#39;s render surfaces: a terse progress/banner printer + the Info-Dense report renderer (LaTeX/CSV) + a run-record writer. <strong>B</strong> adds a dense per-stage table renderer with closed-set enum columns and a quiet/<code>--json-only</code> mode toggle for CI — real machinery duplicating, on the terminal, what the report already renders. <strong>C</strong> adds a turn-card renderer-per-stage + a transcript serializer (<code>transcript.jsonl</code>) as a <em>view</em> over the run-records — extra surface for a projection the run-record set already is. The locked architecture says <strong>consume, do not rebuild</strong>; A adds the least new surface around the reused engine/stats/report.</p>
+</li>
+</ul>
+<p><strong>Pugh verdict: the totals are within noise (A 0.00, B +0.08, C −0.40); the preferred surface is Frame A (Minimalist-CLI + Info-Dense-Reports) — the cycle-1-consistent datum — enriched with B&#39;s one winning idea as a named switch-point.</strong> B edges A by +0.08 on a single criterion (honest-verdict legibility) at the cost of −1 on <em>both</em> ergonomics and simplicity; that is not a frame win, it is <strong>one good idea (dense, closed-set, machine-readable per-cell power output) attached to the wrong primary surface.</strong> We adopt that idea precisely where it belongs — see SP-U1 (dense per-cell power table available on demand / to stderr / always in the manifest+report, never forced onto the default hot path). The result is A&#39;s two-register frame, not a fourth metaphor. C&#39;s keepable insight (the run-record trail <em>is</em> the audit deliverable) was already absorbed at D2 (SP-W5) and is retained here as the run-record sidecar, not as a conversational primary surface.</p>
+<hr>
+<h2>3. Switch-points (named, per the brief)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Switch-point</th>
+<th>Frames in tension</th>
+<th>Resolution (locked for D4–D5)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SP-U1</strong></td>
+<td><strong>Per-cell power detail placement</strong>: dense per-cell table forced to stderr at every stage (B) vs verdict-banner-only on the hot path (A)</td>
+<td>A vs B</td>
+<td><strong>ADOPT B&#39;s CONTENT, A&#39;s PLACEMENT.</strong> The dense, closed-set per-cell power table (<code>cell-id · tier · target_n · realized-pos · power_class · shortfall</code>) is <strong>always written to the manifest + report</strong> (where <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/047 require it non-strippably) and is <strong>available at the CLI on demand</strong> via <code>--show-cells</code> (and to stderr under <code>--verbose</code>), but the <strong>default hot path prints only the verdict banner + worst-3 named shortfalls</strong> (B&#39;s density, A&#39;s restraint). This captures B&#39;s +1 legibility edge without B&#39;s −1 ergonomics/simplicity cost.</td>
+</tr>
+<tr>
+<td><strong>SP-U2</strong></td>
+<td><strong>Machine vs human stdout split</strong>: stdout = manifest path only / dense tables to stderr (B) vs human-readable stdout (A)</td>
+<td>A vs B</td>
+<td><strong>ADOPT B&#39;s STREAM DISCIPLINE.</strong> The sampler CLI writes the <strong>manifest path (and only the path) to stdout</strong> so the one-command chain pipes cleanly (`A --out …</td>
+</tr>
+<tr>
+<td><strong>SP-U3</strong></td>
+<td><strong>Advanced-flag disclosure</strong>: flat <code>--help</code> listing every lever (B-leaning) vs progressive disclosure (A)</td>
+<td>A vs B</td>
+<td><strong>PROGRESSIVE DISCLOSURE (A).</strong> <code>--help</code> shows the common flags (<code>--preset / --seed / --run-type / --out</code> for ENTRY-A; <code>--sample / --config / --run-type / --out</code> for ENTRY-B); <code>--help-advanced</code> discloses <code>--alpha</code>, <code>--lattice</code>, <code>--small-n-cutoff</code>, <code>--span-match-mode</code>, <code>--seeds</code>. Advanced levers live in pre-reg/config (the audited contract), not the hot path.</td>
+</tr>
+<tr>
+<td><strong>SP-U4</strong></td>
+<td><strong><code>--block-on-underpower</code></strong> present (converts default&#39;s non-fatal power flag → hard halt)</td>
+<td>inherited from D2 SP-W2</td>
+<td><strong>PRESENT on BOTH CLIs.</strong> On the <code>powered-representative</code> default, <code>UNDER_SAMPLED</code>/<code>CORPUS_LIMITED</code> is a non-fatal honesty flag that <strong>continues</strong> (DF-1/<a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/037); <code>--block-on-underpower</code> flips that boundary to fail-closed (non-zero exit) for stricter callers. On <code>full-corpus</code>/leaderboard, the power gate already exits non-zero on shortfall (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>) — the flag is then a no-op-equivalent (already fatal).</td>
+</tr>
+<tr>
+<td><strong>SP-U5</strong></td>
+<td><strong>No <code>--from-stage</code></strong> resume flag</td>
+<td>inherited from D2 SP-W3</td>
+<td><strong>ABSENT.</strong> There is no resume requirement; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> makes re-run byte-identical. Recovery = re-invoke the failed CLI stage, which re-consumes the prior sealed artifact. No <code>--from-stage</code> flag is surfaced (descoped over-build).</td>
+</tr>
+<tr>
+<td><strong>SP-U6</strong></td>
+<td><strong>Non-interactive default</strong> (no per-stage consent)</td>
+<td>inherited from D2 SP-W4</td>
+<td><strong>NON-INTERACTIVE BY DEFAULT.</strong> Default + smoke run unattended in CI (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/033/034); the default invocation <strong>is</strong> the onboarding path. No prompts, no <code>--yes</code> escape hatch needed. <strong>This is the high-stakes commitment flagged for Pass-2.</strong></td>
+</tr>
+<tr>
+<td><strong>SP-U7</strong></td>
+<td><strong>Color signalling</strong>: color-coded gates (all frames) vs color-only risk</td>
+<td>(all 3 agree)</td>
+<td><strong>TEXT TOKEN + COLOR; <code>--no-color</code> honored.</strong> Every gate carries a text token (<code>FAIL</code> / <code>FLAG</code> / <code>OK</code>) so no signal is color-only (a11y-of-text discipline even though web-a11y is N/A); <code>--no-color</code> and a non-TTY stdout both drop ANSI.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>4. The preferred surface — Minimalist-CLI + Info-Dense-Reports (LOCKED)</h2>
+<p>Two terse CLI entrypoints over the L1 manifest seam; the citable deliverable is an Info-Dense LaTeX/CSV register. The CLI exposes <strong>only the one upfront decision</strong> (preset + run-type) plus the seam/output paths; all statistical complexity stays behind audited defaults. Two registers, one frame: <strong>terse CLI, dense report.</strong></p>
+<h3>4.1 The two CLI command signatures (L3)</h3>
+<h4>ENTRY-A — eval-data sampler (emits the L1 sample-manifest)</h4>
+<pre><code>python -m pii_anon_datasets.assessment.sample \
+    [--preset {powered-representative|full-corpus|smoke}]   # DEFAULT: powered-representative (FR-035)
+    [--seed INT]                                            # required for non-default reproducibility (NFR-021)
+    [--run-type {smoke|dev|leaderboard-submission|filing-grade}]  # designation; stamped into the manifest (FR-038)
+    --out PATH                                              # sample-manifest.json (L1 seam, sha256-sealed)
+    [--block-on-underpower]                                 # SP-U4: non-fatal power flag -&gt; hard halt
+    [--show-cells]                                          # SP-U1: print full per-cell power table to stderr
+    [--quiet | --json-only]                                 # SP-U2: stdout=manifest path only; suppress stderr (CI)
+    [--no-color]                                            # SP-U7
+    [--help | --help-advanced]                              # SP-U3: advanced = --alpha --lattice --small-n-cutoff --seeds
+</code></pre>
+<ul>
+<li><strong>stdout (SP-U2):</strong> the <strong>manifest path only</strong> (one line), so <code>--out</code> can be piped straight into ENTRY-B&#39;s <code>--sample</code>.</li>
+<li><strong>stderr:</strong> per-stage progress (<code>LOAD</code>, <code>SAMPLE</code>); the <strong>PowerMatrix verdict banner</strong> (<code>VERDICT: SMALL|ADEQUATE|LARGE (well-powered &lt;frac&gt;, N/730 cells)</code>) + worst-3 named shortfalls in <strong>realized positive counts</strong>; on <code>--show-cells</code>, the full dense per-cell table. <strong>Never silently LARGE</strong> (G3/<a class="trace-link" href="../../02-requirements/audit-report.html#fr-035" data-trace-id="FR-035" aria-label="Trace FR-035 — — STRENGTHENED (undefined &quot;results-bearing&quot; predicate)">FR-035</a>).</li>
+<li><strong>Gates:</strong> <strong>GATE-P2</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a>) 5-tuple <code>{version, record-count, 63-type count, schema-fingerprint, content-hash}</code> mismatch ⇒ fail-red, non-zero exit, no manifest. <strong>GATE-P3</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>) run-type-scoped (SP-U4/SP-W2).</li>
+<li><strong>States:</strong> empty (no corpus / no positives ⇒ fail-red) / drawing (streaming counter) / sealed (prints manifest sha256 + non-strippable caveat to stderr, path to stdout) / halted (red <code>FAIL</code> reason line, non-zero exit).</li>
+<li><strong>Serves:</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a>/17/18/19 · <a class="trace-link" href="../../02-requirements/audit-report.html#fr-032" data-trace-id="FR-032" aria-label="Trace FR-032 — — STRENGTHENED (oracle for &quot;never head-truncation&quot;)">FR-032</a>/033/034/035/036/037.</li>
+</ul>
+<h4>ENTRY-B — pii-rate-elo assessment (thin orchestrator → eval-data report)</h4>
+<pre><code>pii-rate-elo assessment \
+    --sample PATH                                          # sample-manifest.json (L1 seam, required)
+    [--config configs/assessment.yaml]                     # pins run_significance_tests:false (P1)
+    [--run-type {smoke|dev|leaderboard-submission|filing-grade}]  # rigor bar + prereg gate + backing sample mode (FR-038)
+    [--systems ...]                                         # systems under test
+    --out DIR/                                             # results/ (LaTeX + CSV + run-records + figures)
+    [--block-on-underpower]                                # SP-U4: parity with ENTRY-A
+    [--no-color] [--quiet]                                 # SP-U7 / CI
+    [--help | --help-advanced]                             # SP-U3: advanced = --span-match-mode --alpha --seeds
+</code></pre>
+<ul>
+<li><strong>No <code>--from-stage</code></strong> (SP-U5/SP-W3): recovery is re-invoke-the-stage (byte-identical, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>).</li>
+<li><strong>stdout/stderr:</strong> per-stage progress <code>PREREG → RUN → SCORE → RATE → REPORT</code>; the <strong>run-type contract line</strong> stamped at launch (<code>run-type=X → rigor={full-AX005|suppressed}, prereg={enforced|opt-in|off}, sample_mode={full|sample}</code>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>) so the operator sees the rigor contract <em>before</em> scoring; gate lines in the closed vocabulary — <strong>GATE-P1</strong> (showstopper: <code>run_significance_tests=false</code> + <code>significance.py UNREACHABLE</code> import-graph guard + fab-regex lint), <strong>GATE-AX5</strong> (prereg, run-type-scoped), <strong>GATE-CONV</strong> (NOT-CONVERGED ⇒ blocking honesty flag, not a crash) — each rendered as a <code>FAIL</code> / <code>FLAG</code> / <code>OK</code> line (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>). Terminal <strong>report pointers</strong> (absolute paths to the LaTeX / CSV / JSON deliverables).</li>
+<li><strong>Serves:</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a>/22/23/24/26/27/28/29/30/31 · <a class="trace-link" href="../../02-requirements/audit-report.html#fr-039" data-trace-id="FR-039" aria-label="Trace FR-039 — — STRENGTHENED (span-match mode value-space unpinned)">FR-039</a>/044/047/049/050.</li>
+</ul>
+<h4>The one-command chain (onboarding default path)</h4>
+<pre><code>python -m pii_anon_datasets.assessment.sample --preset powered-representative --seed 7 --out sample-manifest.json \
+  &amp;&amp; pii-rate-elo assessment --sample sample-manifest.json --config configs/assessment.yaml --out results/
+</code></pre>
+<p>Bare <code>python -m pii_anon_datasets.assessment.sample --out m.json</code> (no <code>--preset</code>) IS onboarding: it draws the <code>powered-representative</code> sample and labels it with its PowerMatrix verdict (DF-1/<a class="trace-link" href="../../02-requirements/audit-report.html#fr-035" data-trace-id="FR-035" aria-label="Trace FR-035 — — STRENGTHENED (undefined &quot;results-bearing&quot; predicate)">FR-035</a>). <code>smoke</code> is the fast-CI on-ramp (every CI/p-value field suppressed, banner reads <code>NOT STATISTICALLY VALID</code>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-037" data-trace-id="FR-037" aria-label="Trace FR-037 — — PASS">FR-037</a>).</p>
+<h3>4.2 Report layout — Info-Dense register (<code>results/</code>)</h3>
+<p>The deliverable is <strong>artifact-first</strong>: LaTeX <code>tabular</code> + CSV are primary; the JSON run-records are the reproduction substrate (necessary-but-insufficient as the <em>filed</em> artifact, INT-05/<a class="trace-link" href="../../02-requirements/audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a>).</p>
+<pre><code>results/
+├── leaderboard.tex            # PRIMARY citable register (FR-047)
+├── leaderboard.csv            # machine register (same content, same gating)
+├── report.{tex,pdf}           # full info-dense report (header + tables + figures + honesty bundle)
+├── figures/                   # AUPRC / Fβ-asymmetry / per-language-recall (matplotlib, lazy-imported)
+├── run-records/               # 6 chained records {load,sample,run,score,rate,report}, shared run_id (L5/NFR-042)
+│   └── run-&lt;run_id&gt;.jsonl     # one record per spine stage (audit deliverable, SP-W5)
+├── prereg.json                # pre-registration {hash, commit_sha} (FR-044), embedded into the report header
+└── manifest.copy.json         # the consumed L1 manifest (provenance closure)
+</code></pre>
+<p><strong>Self-verifying report header (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a>):</strong> embeds <code>pre_registration.hash</code> + <code>commit_sha</code> + <code>run_id</code> so any consumer reproduces the result from the manifest end-to-end, plus the run-lineage count, the <code>run-type</code> contract triple, the seed + RNG fingerprint, and the corpus <code>PowerMatrix.verdict()</code>.</p>
+<p><strong>Leaderboard <code>tabular</code> layout (the Info-Dense core):</strong></p>
+<table>
+<thead>
+<tr>
+<th>column</th>
+<th>content</th>
+<th>requirement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>system</td>
+<td>system id + <code>contamination_status ∈ {disclosed-unseen, disclosed-trained-on-corpus, undisclosed}</code> (<code>unknown</code> ⇒ flagged)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a></td>
+</tr>
+<tr>
+<td>family</td>
+<td><strong>anon</strong> | <strong>pseudo</strong> rendered as <strong>separate metric families — never merged</strong> into one &quot;redaction quality&quot; number</td>
+<td>AX-004 / <a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a></td>
+</tr>
+<tr>
+<td>metric (per family)</td>
+<td>recall / precision / Fβ / AUPRC, each <strong>with its CI</strong> + the <code>method ∈ {wilson, clopper-pearson, paired-bootstrap}</code> named inline + <code>scope: conditional-on-this-sample</code></td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-040" data-trace-id="FR-040" aria-label="Trace FR-040 — — STRENGTHENED (un-pinned small-n threshold)">FR-040</a> / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a></td>
+</tr>
+<tr>
+<td>rank</td>
+<td><strong>gated by the paired-test verdict</strong> — pairs not significant after <strong>Holm–Bonferroni</strong> (family size stated) are <strong>greyed / grouped as statistical ties</strong> (no rank out-runs the paired evidence)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-041" data-trace-id="FR-041" aria-label="Trace FR-041 — — STRENGTHENED (prose-only &quot;stated in report text&quot; has no o…">FR-041</a> / <a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a> / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a></td>
+</tr>
+<tr>
+<td>power</td>
+<td>per-cell <code>power_class</code> roll-up + corpus verdict; under-tier carries <strong>named shortfall in realized positives</strong></td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-033" data-trace-id="FR-033" aria-label="Trace FR-033 — — PASS">FR-033</a> / <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/037</td>
+</tr>
+<tr>
+<td>caveat</td>
+<td>the <strong>non-strippable synthetic-only / anti-anonymity caveat</strong>, inline per metric (cannot be stripped to a removable footer)</td>
+<td>AX-001/003 / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a></td>
+</tr>
+</tbody></table>
+<p><strong>Honesty bundle (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a> closed set — rendered inline, non-strippably; stripping any one invalidates the artifact):</strong>
+<code>RD-NOT-CONVERGED</code> (achieved max-RD ± 2RD + Glicko rounds + stopping rule — never an extrapolated round count) · per-cell <code>UNDER-POWERED / UNDER-SAMPLED / CORPUS-LIMITED</code> · <code>contamination-uncontrolled</code> (per non-<code>disclosed-unseen</code> system) · <code>rank-volatility: UNMEASURED</code> (if single-seed; else Kendall-τ over ≥3 seeds) · <strong>worst-language recall</strong> = <code>argmin</code> over languages in the coverage envelope <strong>with the language label</strong> · <strong>low-resource recall</strong> = recall over the committed set of languages with realized positives <code>&lt; 200</code> · <code>correlation-study: named-and-pending</code> · <code>NOT_ASSESSED</code> for critical types outside the coverage envelope.</p>
+<p><strong>Forbidden-token lint (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a> / C7):</strong> a scan of the LaTeX + CSV registers finds <strong>none</strong> of <code>{&quot;SHIP-WITH-CAVEATS&quot;, &quot;SHIP&quot;, &quot;DEFER&quot;, &quot;GO/NO-GO&quot;}</code> (extensible). A register containing any listed token ⇒ invalid. Academic vocabulary only — no product-verdict language.</p>
+<p><strong>Smoke register (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-037" data-trace-id="FR-037" aria-label="Trace FR-037 — — PASS">FR-037</a>):</strong> every CI field and every p-value field is <strong>suppressed / null</strong>; the artifact carries <code>not_statistically_valid: true</code>; the banner reads <code>NOT STATISTICALLY VALID</code>. A smoke result can neither be mistaken for, nor surface numbers that look like, a powered result.</p>
+<h3>4.3 Interaction patterns</h3>
+<ul>
+<li><strong>Primary:</strong> the one-command chain (ENTRY-A <code>--out</code> → ENTRY-B <code>--sample</code>); fully unattended in CI (SP-U6).</li>
+<li><strong>Error:</strong> fail-closed, non-zero exit, single red <code>FAIL</code> reason line; recovery = re-invoke the stage (byte-identical, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>) — no resume (SP-U5).</li>
+<li><strong>Help / onboarding:</strong> the default invocation IS onboarding; <code>--help</code> minimal, <code>--help-advanced</code> discloses the audited levers (SP-U3).</li>
+<li><strong>Run-type surface:</strong> echoed once as a stamped contract line before scoring (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>), and re-stamped into every run-record and the report header.</li>
+</ul>
+<h3>4.4 Discoverability &amp; accessibility</h3>
+<ul>
+<li><strong>Discoverability: medium-high.</strong> The 3 common flags + verdict banner are docs-free findable; the one-command chain is documented inline; run-type profiles + <code>--block-on-underpower</code> need <code>--help</code>. Weakness (carried): advanced levers (alpha, span-match-mode, cutoffs) hidden — acceptable because they live in pre-reg/config (the audited contract), not the hot path.</li>
+<li><strong>Accessibility: N/A (text/two-CLI, no web UI).</strong> But: gates carry a text token (<code>FAIL</code>/<code>FLAG</code>/<code>OK</code>) so no signal is color-only; <code>--no-color</code> and non-TTY both drop ANSI (SP-U7); run-records + transcript-equivalent are plain JSON/JSONL (screen-reader-trivial by default).</li>
+</ul>
+<hr>
+<h2>5. Axiom considerations (surface layer)</h2>
+<ul>
+<li><strong>AX-001 (synthetic-only):</strong> the non-strippable caveat is printed at manifest-seal (stderr) and rendered inline-per-metric in every register (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a>) — never a removable footer.</li>
+<li><strong>AX-002 (deterministic/seeded/byte-reproducible):</strong> the CLI <strong>is</strong> the reproduction interface — the terse copy-pasteable command + the echoed <code>{seed, run-type, manifest sha256}</code> make re-run byte-identical (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>); SP-U2&#39;s machine-stdout keeps the seam scriptable.</li>
+<li><strong>AX-003 (stated power):</strong> the PowerMatrix verdict banner is printed <strong>before any inference is computed</strong> (Stage-1 output) and re-rendered in the report header; never silently LARGE (G3).</li>
+<li><strong>AX-004 (separate families):</strong> the leaderboard renders <strong>anon</strong> and <strong>pseudo</strong> as separate metric-family columns — the surface contains no merge affordance.</li>
+<li><strong>AX-005 (pre-registered/reproducible):</strong> the run-type contract line surfaces the rigor bar <strong>before</strong> scoring (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>); the self-verifying header embeds the pre-reg hash + run id (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a>); smoke/dev suppress inferential output rather than emit an un-rigorous number (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-037" data-trace-id="FR-037" aria-label="Trace FR-037 — — PASS">FR-037</a>).</li>
+</ul>
+<hr>
+<h2>6. Constraints on downstream diamonds</h2>
+<ul>
+<li><strong>D4 (System):</strong> a <strong>stage sequencer</strong> emits per-stage stderr progress + one run-record per boundary (L5); a <strong>banner renderer</strong> reads the PowerMatrix verdict off the manifest (no recompute); <strong>closed-set enum tokens</strong> for <code>power_class</code> / verdict / honesty-flags / <code>contamination_status</code> are the render contract; <code>--block-on-underpower</code> toggles GATE-P3 fatality (SP-U4); <code>--show-cells</code>/<code>--verbose</code> gate the dense per-cell table (SP-U1); stdout = manifest path only on ENTRY-A (SP-U2); <strong>pure-stdlib CLI cores + lazy heavy-dep guards</strong> (numpy/matplotlib lazy-imported <strong>only</strong> in figure code, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a>).</li>
+<li><strong>D5 (Architecture):</strong> the CLI is a <strong>thin adapter</strong> over <code>pii_anon_datasets.assessment</code> (sampler + report); the <strong>report renderer (LaTeX/CSV) owns the Info-Dense register</strong>; the <strong>sample-manifest schema is the seam contract</strong> (L1, the only cross-process coupling); the forbidden-token + honesty-set + tie-gating linters are report-side functions (eval-data owns reporting, L2).</li>
+</ul>
+<hr>
+<h2>7. What feeds the next diamond (D4 System)</h2>
+<p>D4 inherits a <strong>two-register surface</strong>: a terse non-interactive two-CLI front (one upfront decision: preset + run-type) and an Info-Dense LaTeX/CSV deliverable. The load-bearing UI affordances are: the <strong>PowerMatrix verdict banner</strong> (closed-set, never silently LARGE), the <strong>fail-red gate vocabulary</strong> (P1 showstopper / P2 / P3 / prereg / NOT-CONVERGED as <code>FAIL</code>/<code>FLAG</code>/<code>OK</code>), the <strong>run-type contract line</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>), the <strong>machine-stdout seam</strong> (SP-U2), and the <strong>inline non-strippable honesty bundle</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>). The two named UI switch-points carried forward are <strong><code>--block-on-underpower</code> present</strong> (SP-U4) and <strong>no <code>--from-stage</code></strong> (SP-U5). <code>provisional_status: AGENT_SIMULATED</code>; the <strong>non-interactive-default</strong> commitment (SP-U6) is flagged for Pass-2 real-operator cognitive walkthrough.</p>
+<hr>
+<p>✅ <strong>D3 CONVERGE complete (2026-06-01).</strong> Pugh-compared 3 surface metaphors (A Minimalist-CLI+Info-Dense-Reports / B Info-Dense-both / C Conversational) against the brief&#39;s five criteria; <strong>Frame A preferred (datum; totals within noise A 0.00 / B +0.08 / C −0.40)</strong> — cycle-1-consistent and a clean fit to the D2-locked non-interactive two-CLI batch. Enriched with <strong>B&#39;s one winning idea</strong> (dense, closed-set, machine-readable per-cell power output) as named switch-points: per-cell detail placed in manifest+report + on-demand at the CLI, not forced onto the hot path (SP-U1), and machine-stdout stream discipline at the seam (SP-U2). Seven switch-points named + resolved (SP-U1…U7). Concrete <strong>two CLI signatures + Info-Dense report layout</strong> written. High-stakes commitment flagged for Pass-2: <strong>non-interactive default, no per-stage consent</strong> (SP-U6). <code>provisional_status: AGENT_SIMULATED</code>. Ready for D4 (System).</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/03-design/03-ui/preferred.md</code> ·
+  content-hash <code>4dcb0a9c30f7</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

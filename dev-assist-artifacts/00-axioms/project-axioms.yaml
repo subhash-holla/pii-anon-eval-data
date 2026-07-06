@@ -1,0 +1,164 @@
+# Project Axioms Registry — pii-anon-eval-data
+#
+# Cross-cutting design principles this benchmark commits to. Read by the
+# dev-assist-development-axiom-compliance reviewer at every applicable gate.
+# Grounded in the two research briefs (pii_enterprise_landscape_may26.md,
+# pii_eval_may26.md) and standard de-identification guidance.
+#
+# Schema: see ${CLAUDE_PLUGIN_ROOT}/references/project-axiom-spec.md
+# Stage 3 D0 prep may extend this set.
+
+schema_version: 1
+
+axioms:
+
+  - id: AX-pii-anon-001
+    name: synthetic-only-no-real-pii
+    definition: |
+      Every record in the corpus contains ONLY synthetic PII. No real natural
+      person's identifiable data may appear in any split, subset, fixture,
+      example, doc snippet, or test. This is the load-bearing ethical/legal
+      invariant of a publishable PII benchmark: it is what lets the dataset be
+      released without itself being regulated personal data.
+    source: project
+    applicable_stages: [02-requirements, 03-design, 04-development, 05-testing]
+    verification:
+      method: pattern_scan_plus_provenance
+      passing_criteria: >
+        Zero matches for real-PII heuristics (valid-checksum SSNs/credit cards
+        outside synthetic generators, real public-figure full names paired with
+        contact data, etc.) on /dev-assist-validate --sensitive-data; every
+        generated entity traces to a synthetic generator or surrogate pool.
+    reviewer_hooks:
+      - reviewer: dev-assist-development-security-sast
+        check: |
+          Scan corpus + fixtures for real-PII leakage: Luhn-valid card numbers
+          and structurally-valid SSNs that are NOT produced by a declared
+          synthetic generator; real API keys / tokens; real email domains tied
+          to named individuals. Any finding is a release blocker.
+        severity_default: CATASTROPHIC
+
+  - id: AX-pii-anon-002
+    name: deterministic-reproducible-generation
+    definition: |
+      Dataset generation and scoring must be reproducible. Deterministic
+      generators are seeded; any LLM-based generation, sanitization, or
+      LLM-as-judge scoring records model id + prompt + decoding params + seed
+      so a third party can reproduce (or audit) the artifact. "Re-running the
+      pipeline yields the same corpus (or a documented, hash-pinned delta)."
+    source: project
+    applicable_stages: [03-design, 04-development, 05-testing]
+    verification:
+      method: rerun_hash_equivalence
+      passing_criteria: >
+        Re-running a generator with the same seed reproduces byte-identical
+        records (deterministic path) OR the LLM path records full provenance and
+        a pinned content hash. CI re-run diff is empty or documented.
+    reviewer_hooks:
+      - reviewer: dev-assist-development-code-quality
+        check: |
+          Verify generators accept and thread an explicit seed; verify no
+          unseeded random/uuid/time calls leak into record content; verify
+          LLM-based steps persist model+prompt+params+seed alongside outputs.
+        severity_default: MAJOR
+
+  - id: AX-pii-anon-003
+    name: stated-statistical-power
+    definition: |
+      Every reported metric on a slice declares its sample size and the
+      resulting confidence interval. High-risk entity classes meet the
+      sample-size bar from NIST proportion guidance (≈753 positives estimate a
+      recall≈0.98 at ±1pp; ≈1,522 for ≈0.99 at ±0.5pp; ≈200 for ≈0.95 at ±~3pp
+      long-tail) PER SLICE, or are explicitly flagged for stratified enrichment.
+      This holds at CROSSED-CELL granularity: every cell of the committed
+      evaluation lattice (main effects + the named 2-way interactions; see
+      03-design/sampling-design.md + src/pii_anon_datasets/data/eval_lattice.json)
+      meets its risk-tiered target or is labeled exploratory. No bare point scores.
+    source: project
+    applicable_stages: [02-requirements, 04-development, 05-testing]
+    verification:
+      method: per_slice_count_and_ci_check
+      passing_criteria: >
+        Each committed cell in eval_lattice.json meets its risk-tiered positive
+        target (>=1,522 / >=753 / >=200) — enforced by validate.py --lattice
+        (CI-blocking, NFR-018) — or is labeled exploratory/low-power; every
+        published per-cell metric carries n + a Wilson CI + design provenance.
+    reviewer_hooks:
+      - reviewer: dev-assist-development-requirements-coverage
+        check: |
+          For each committed lattice cell, confirm corpus positives meet the
+          tiered target (validate.py --lattice green) and that per-cell scoring
+          output emits n + Wilson CI + design provenance (cell id, tier, target_n).
+        severity_default: MAJOR
+
+  - id: AX-pii-anon-004
+    name: anonymization-pseudonymization-separation
+    definition: |
+      Anonymization and pseudonymization are scored by DIFFERENT metric families
+      and are never collapsed into a single "redaction quality" or
+      "de-identification accuracy" score. Anonymization → residual
+      re-identification risk + utility preservation. Pseudonymization →
+      unauthorized-reversal rate, authorized-reversal success, collision rate,
+      referential integrity, key-compromise blast radius.
+    source: project
+    applicable_stages: [03-design, 04-development, 05-testing]
+    verification:
+      method: scoring_api_separation_check
+      passing_criteria: >
+        The harness exposes distinct scoring entry points / metric schemas for
+        anonymization vs pseudonymization; no code path averages or merges the
+        two families into one headline number.
+    reviewer_hooks:
+      - reviewer: dev-assist-development-traceability
+        check: |
+          Confirm anonymization metrics and pseudonymization metrics map to
+          distinct FRs/Quality-Attributes and distinct harness modules; flag any
+          shared "redaction score" that conflates them.
+        severity_default: MAJOR
+
+  - id: AX-pii-anon-005
+    name: pre-registered-reproducible-assessment
+    definition: |
+      (Added by CAP-02 Requirements R7, CONFIRMED.) No published ASSESSMENT
+      metric ships without ALL of: (1) a confidence interval with the
+      interval-selection method named; (2) for every system-vs-system claim, a
+      paired significance test under an explicitly declared multiplicity family
+      (two inference families: exploratory per-cell uncorrected vs confirmatory
+      pairwise Holm-Bonferroni with the family size stated in report text); (3) a
+      convergence statement reported as achieved max-RD ± 2RD (95%) with rounds /
+      stopping rule, never an extrapolated round count; (4) provenance sufficient
+      to reproduce the run from the manifest ({dataset_version, record_count,
+      schema_fingerprint, seed, stage, code_commit, toolchain} + file-level
+      provenance); (5) a non-strippable synthetic-only / anti-anonymity caveat on
+      every metric and figure (reinforces AX-001/003); and (6) for leaderboard /
+      published entries, a contamination disclosure (contamination_status;
+      'unknown' rejected) + a signed attestation that held-out labels were not
+      exposed. Enforcement is RUN-TYPE-SCOPED (full bar on leaderboard-submission
+      / filing-grade; CI + p-value fields suppressed on smoke/dev).
+      Manifest-reproducibility is UNIVERSAL; pre-registration is opt-in rigor.
+      The assessment run path computes ALL statistics with the AUDITED
+      eval-data/stats core; pii-rate-elo analysis/significance.py (fabricated:
+      se=metric*(1-metric)/100 bootstrap + n_approx=100 McNemar) is quarantined
+      and unreachable on the call graph.
+    source: project
+    applicable_stages: [02-requirements, 03-design, 04-development, 05-testing]
+    verification:
+      method: published_metric_completeness_plus_runpath_import_check
+      passing_criteria: >
+        Every published metric/figure in an assessment report carries a CI (method
+        named) + (for system-vs-system) a paired test with a declared family +
+        convergence as max-RD ± 2RD + manifest provenance + a non-strippable
+        synthetic-only caveat; leaderboard entries add contamination_status +
+        held-out-non-exposure attestation. The assessment run path imports ONLY
+        eval-data/stats for inference (no pii_rate_elo.analysis.significance on the
+        call graph); run-type scoping honored; same-seed run byte-reproducible.
+    reviewer_hooks:
+      - reviewer: dev-assist-development-axiom-compliance
+        check: |
+          Confirm no published metric lacks a CI / paired-test / convergence /
+          provenance / caveat per its run-type; confirm the assessment call graph
+          never reaches pii_rate_elo.analysis.significance.SignificanceTester
+          (quarantine); confirm seeded LOCAL-RNG (no numpy / module-global RNG) on
+          the run path; confirm contamination_status + held-out attestation on
+          leaderboard entries.
+        severity_default: MAJOR

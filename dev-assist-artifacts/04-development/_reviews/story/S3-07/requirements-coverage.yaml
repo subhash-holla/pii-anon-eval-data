@@ -1,0 +1,165 @@
+reviewer: requirements-coverage
+gate: story
+story_id: S3-07
+iteration: 1
+mode: read-only
+verdict: APPROVE
+context_bounds_respected: true
+independence_attestation: >-
+  Findings derived solely from first-hand reading of the story spec, the test
+  module, the scorer implementation, the package __init__ exports, and a live
+  re-run of the test suite. No reliance on the story's self-reported pytest
+  excerpt or coverage table; every claim independently reproduced.
+
+scope:
+  description: >-
+    DC-08 pseudonymization-integrity moat. Verify each §7 acceptance clause and
+    each §6 test-first item maps to a passing, correctly-asserting test in
+    tests/test_pseudonymization.py, with emphasis on three CRITICAL coverage
+    checks (FR-012 collision separation, FR-013 EDPB Art 4(5), FR-011 reversal
+    rates integer→Wilson conditioned on threat model).
+  requirements_in_scope: [FR-011, FR-012, FR-013, NFR-005, AX-004, NFR-004]
+  story_gate_note: >-
+    Per protocol, requirements-coverage normally NEVER participates at story
+    gate (a single story verifies only a slice). This run was explicitly
+    dispatched for S3-07 to confirm the three CRITICAL coverage checks before
+    the sprint gate; it does NOT substitute for the S-3 sprint-gate Tier-1/2/3
+    snapshot. Treated as a targeted slice-coverage confirmation.
+
+evidence:
+  test_command: "python3 -m pytest tests/test_pseudonymization.py -q"
+  test_result: "10 passed in 0.12s"
+  full_suite: "143 passed in 1.96s (0 regressions; matches story §12 claim)"
+  files_examined:
+    - src/pii_anon_datasets/scoring/pseudonymization.py
+    - tests/test_pseudonymization.py
+    - src/pii_anon_datasets/scoring/__init__.py
+    - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-07.md
+
+critical_coverage_checks:
+  - id: CRIT-A
+    requirement: FR-012
+    claim: >-
+      The two collision counts are SEPARATE; a correct deterministic
+      pseudonymizer has unintended_crypto_collisions == 0 with NO
+      total_collisions field.
+    status: VERIFIED
+    test: test_fr_012_correct_deterministic_has_zero_crypto_collisions
+    evidence: >-
+      tests/test_pseudonymization.py:161-165 asserts unintended_crypto_collisions==0,
+      intended_linkage_collisions>0, `not hasattr(report,'total_collisions')`, and
+      `"total_collisions" not in report.as_dict()`. pseudonymization.py:173-174
+      declares the two as distinct int fields; as_dict (182-216) emits them
+      separately and never a sum; _collision_counts (240-275) computes them as
+      independent integers. Faulty path covered by
+      test_fr_012_faulty_pseudonymizer_flags_crypto_collisions (crypto>0 with a
+      wilson Interval, integer n).
+  - id: CRIT-B
+    requirement: FR-013
+    claim: >-
+      bare-md5 → rejoinable_from_artifact_alone == True (Art 4(5) failure
+      expressed); salted → False.
+    status: VERIFIED
+    test: test_fr_013_key_state_separation_edpb_art4_5
+    evidence: >-
+      tests/test_pseudonymization.py:278-289 asserts _BareMd5 →
+      rejoinable_from_artifact_alone is True with "art"/"4(5)" in note, and
+      _ReversibleKeyed → False with "4(5)" in note. pseudonymization.py
+      _keyless_rejoinable (301-321) re-derives keyless md5/sha256 digests over the
+      closed-world candidate space and matches artifact tokens; score_pseudonymization
+      (451-466) sets a non-empty note citing _EDPB_ART_4_5_CITATION
+      ("EDPB / GDPR Art. 4(5)"). Finding is EXPRESSED in the verdict note, not
+      suppressed; real PseudonymGenerator named as the in-repo example.
+  - id: CRIT-C
+    requirement: FR-011
+    claim: >-
+      reversal rates integer→Wilson conditioned on the threat model.
+    status: VERIFIED
+    test: test_fr_011_reversal_rates_are_threat_conditioned
+    evidence: >-
+      tests/test_pseudonymization.py:196-202 asserts unauthorized_reversal and
+      authorized_reversal are Interval with integer .n and method=="wilson", and
+      report.threat_model.model_id=="pseudo-threat-v1". pseudonymization.py
+      _unauthorized_reversal (324-344) and _authorized_reversal (347-371) build
+      integer (k,n) → wilson_interval(...); model_id pinned onto the report at
+      line 469. Authorized≈1.0 / unauthorized≈0.0 for the keyed scheme separately
+      proven by test_fr_011_authorized_succeeds_unauthorized_fails_for_keyed (214-215).
+
+acceptance_clause_coverage:  # §7 G/W/T
+  - clause: "FR-011 unauthorized + authorized reversal emitted vs named ThreatModel"
+    status: COVERED
+    tests: [test_fr_011_reversal_rates_are_threat_conditioned, test_fr_011_authorized_succeeds_unauthorized_fails_for_keyed]
+  - clause: "FR-012 intended-linkage vs unintended-crypto reported as SEPARATE integers, never summed"
+    status: COVERED
+    tests: [test_fr_012_correct_deterministic_has_zero_crypto_collisions, test_fr_012_faulty_pseudonymizer_flags_crypto_collisions]
+  - clause: "FR-013 referential integrity + key-rotation + key/state separation (Art 4(5)) verdicts emitted"
+    status: COVERED
+    tests: [test_fr_013_referential_integrity_join_stable, test_fr_013_key_rotation, test_fr_013_key_state_separation_edpb_art4_5]
+  - clause: "Negative: correct deterministic pseudonymizer not penalized; no total_collisions/combined/deid field"
+    status: COVERED
+    tests: [test_fr_012_correct_deterministic_has_zero_crypto_collisions, test_nfr005_report_has_no_anonymization_or_combined_field]
+
+test_plan_coverage:  # §6 1..10 each maps to a passing test
+  mapped: 10
+  passing: 10
+  unmapped: 0
+  silently_missing: 0
+  notes: >-
+    All 10 §6 items present as fr_NNN/nfr0NN-tokened functions and all pass.
+    NFR-005/AX-004 within-module guard (test 9) and NFR-004 import-purity AST
+    guard (test 10) present; cross-module NFR-005 guard correctly deferred to
+    S3-08 (named successor in §5 Blocks) — a valid deferral-with-successor, not a
+    silent gap. §8 exports all present in scoring/__init__.py (lines 21-31, 67-76).
+
+findings:
+  showstopper: []
+  catastrophic: []
+  major: []
+  minor: []
+  observation:
+    - id: OBS-1
+      requirement: NFR-004
+      summary: >-
+        reidentification.py:69 carries a pre-existing untyped `dict` (mypy
+        --strict under --follow-imports=silent). Out of S3-07's §8 owned-files
+        scope and not a coverage gap for any MUST in scope; flagged only so the
+        sprint-gate ledger can track the suggested one-line chore. No action
+        required of S3-07.
+    - id: OBS-2
+      requirement: FR-011
+      summary: >-
+        Unauthorized-reversal and rejoinability use a closed-world dictionary
+        over the artifact's own distinct real values (documented Deviation #3).
+        Coverage-correct for the MUST as written; the broader ARTIFACT_PLUS_AUX
+        auxiliary-data attack surface is a deliberate post-MVP extension, not a
+        deferred MUST. Noted for sprint-gate threat-model completeness tracking.
+
+sprint_gate_note: >-
+  FR-011 / FR-012 / FR-013 MUSTs are now substantively covered by S3-07 with
+  passing test evidence. For the S-3 sprint gate: mark these three FRs
+  verified-by-S3-07 in the coverage snapshot, pending Pass-2 (real-CI)
+  confirmation — provisional_status is AGENT_SIMULATED (§12), so DONE is not
+  finalized until the orchestrator's Pass-2 real run completes. No DIVERGED
+  status on any of the three (story §4); no Pass-2 sample-size protocol required
+  beyond the standard real-CI re-run.
+
+deferrals_validated:
+  - requirement: NFR-005 (cross-module no-merge guard)
+    deferred_to: S3-08
+    valid: true
+    reason: >-
+      Story §5 names S3-08 as the successor that pairs pseudonymization.py with
+      anonymization.py for the cross-module separation test. Within-module guard
+      is covered here (test_nfr005_report_has_no_anonymization_or_combined_field).
+      S3-08 is within sprint S-3, earlier than any release sprint → valid deferral.
+
+summary:
+  major_plus_count: 0
+  minor_count: 0
+  observation_count: 2
+  verdict_rationale: >-
+    All three CRITICAL coverage checks VERIFIED against first-hand reading of the
+    implementation and a live test run; all 10 §6 tests present, tokened, and
+    passing; all four §7 acceptance clauses covered; §8 exports complete; the one
+    deferral (cross-module NFR-005) has a named in-sprint successor (S3-08). Zero
+    MAJOR-or-above findings → APPROVE.

@@ -1,0 +1,154 @@
+# Canonical reviewer output — axiom-compliance, STORY gate S3-07 (iteration 1)
+schema: dev-assist/reviewer-finding/v1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S3-07
+iteration: 1
+mode: read-only
+timestamp: 2026-05-29
+verdict: APPROVE
+context_bounds_respected: true
+
+summary: >
+  S3-07 (pseudonymization-integrity scorer, "the moat", DC-08) holds every project
+  axiom triggered by the diff. AX-004/NFR-005 (the key axiom for this story) is upheld
+  with belt-and-braces: PseudonymizationReport is its OWN module, declares no
+  utility/residual_risk/combined/deid/overall/total_collisions field, its as_dict emits
+  no merged key, and the module imports neither anonymization.py nor reidentification's
+  residual-risk machinery. AX-003/reidx-02: all three reversal/collision rates are Wilson
+  Intervals (method named) on genuine integer (k,n) counts. AX-002: the module imports
+  only hashlib + pure-stdlib typing/dataclasses; the AST import-purity guard bans exactly
+  {random,time,uuid,datetime,secrets} and is GREEN. NFR-004 stdlib-only and AX-001
+  synthetic-only test data both hold. The EDPB Art 4(5) verdict is a faithful, non-
+  flattering application: the scorer correctly fails the keyless bare-md5 scheme and the
+  cited in-repo offender (scripts/enrich_context_preservation.py::PseudonymGenerator)
+  genuinely has that shape. 10/10 owned tests pass on independent re-run.
+
+axioms_in_scope:
+  - id: AX-pii-anon-004
+    name: anonymization-pseudonymization-separation
+    role: PRIMARY  # THE key axiom for this story (NFR-005)
+    triggered_by: "story emits a pseudonymization metric family in its own module"
+    upheld: true
+  - id: AX-pii-anon-003
+    name: stated-statistical-power
+    role: applied
+    triggered_by: "reversal + crypto-collision rates published as proportions"
+    upheld: true
+  - id: AX-pii-anon-002
+    name: deterministic-reproducible-generation
+    role: applied
+    triggered_by: "scorer must be deterministic (no RNG/clock)"
+    upheld: true
+  - id: AX-pii-anon-001
+    name: synthetic-only-no-real-pii
+    role: applied
+    triggered_by: "test fixtures embed candidate plaintexts / entity values"
+    upheld: true
+
+axiom_verification:
+
+  - axiom: AX-pii-anon-004
+    claim: >
+      Pseudonymization is its own metric family / module; ZERO
+      anonymization-utility / residual-risk / combined / deid / overall /
+      total_collisions field on PseudonymizationReport or its as_dict; no merge.
+    method: grep_plus_test_plus_import_scan
+    evidence:
+      - "src/pii_anon_datasets/scoring/pseudonymization.py — every match for {utility,residual_risk,combined,deid,overall,total_collisions} is a DOCSTRING/COMMENT documenting deliberate ABSENCE (lines 5-7, 159, 165-166, 183, 436); NO field declaration carries any of these names."
+      - "PseudonymizationReport fields (lines 170-180): threat_model, unauthorized_reversal, authorized_reversal, intended_linkage_collisions, unintended_crypto_collisions, crypto_collision_ci, referential_integrity, key_rotation, key_state_separation, pseudonymizer_id, scorer_version — the two collision integers are SEPARATE; no sum field."
+      - "as_dict (lines 182-216) emits intended_linkage_collisions and unintended_crypto_collisions as two distinct keys; no merged key; comment at 193 reaffirms 'never a sum'."
+      - "Imports (lines 36-42) = {hashlib, collections.abc, dataclasses, enum, typing, ..stats.intervals}; the module does NOT import anonymization.py nor reidentification residual-risk — within-module separation is structural, not just nominal."
+      - "tests/test_pseudonymization.py::test_nfr005_report_has_no_anonymization_or_combined_field [AUDIT] asserts hasattr-false for the full forbidden set incl. total_collisions AND forbidden.isdisjoint(as_dict().keys()) — GREEN."
+    result: UPHELD
+
+  - axiom: AX-pii-anon-003
+    claim: >
+      Reversal rates + crypto-collision rate carry Wilson CIs (method named) on
+      INTEGER counts (reidx-02).
+    method: call_site_inspection_plus_typeerror_guard
+    evidence:
+      - "Three wilson_interval call sites (pseudonymization.py:344 recovered/n, :371 ok/n, :443 crypto_collisions/n_distinct); all args are sum(...)/len(...) integers over distinct tokens/reals."
+      - "stats/intervals.py:52-55 hard-TypeErrors on non-int (and rejects bool) — a GREEN suite is positive proof the (k,n) are ints (reidx-02 honored)."
+      - "Interval carries method='wilson' + integer n (intervals.py:65); tests assert .method=='wilson' and isinstance(.n,int) for crypto_collision_ci and both reversal rates."
+    notes: >
+      AX-003's lattice positive-count target (>=1522/753/200) governs CORPUS slices
+      via validate.py --lattice, not unit-test fixtures. This scorer scores a
+      CONTRIBUTED pseudonymizer's record set, so fixture n is small by design and the
+      CIs are correspondingly wide — no conflict with the axiom's corpus-slice scope.
+    result: UPHELD
+
+  - axiom: AX-pii-anon-002
+    claim: >
+      Determinism — no RNG/clock; hashlib is deterministic and allowed; AST
+      import-purity guard bans {random,time,uuid,datetime,secrets}.
+    method: import_scan_plus_ast_guard
+    evidence:
+      - "Module imports (pseudonymization.py:34-42) contain none of {random,time,uuid,datetime,secrets}; only hashlib provides crypto primitives (deterministic)."
+      - "tests/test_pseudonymization.py:330-346 [PROPERTY-TEST] parses the module via ast, banned={'random','time','uuid','datetime','secrets'} (EXACT spec match, line 335), asserts banned.isdisjoint(imported) AND 'hashlib' in imported — GREEN."
+      - "No time/clock calls; story attests clock-free 0.0s; independent re-run confirms 10 passed deterministically."
+    result: UPHELD
+
+  - axiom: AX-pii-anon-001
+    claim: synthetic-only test data; no real PII in fixtures.
+    method: pattern_scan
+    evidence:
+      - "Fixtures use toy names only: _CANDIDATE_PLAINTEXTS=('Alice','Bob','Carol','Dave','Erin','Frank'); records all PERSON_NAME with these surrogates."
+      - "No SSN (ddd-dd-dddd), no 13-16 digit card sequences, no real consumer-email domains in tests or module."
+    result: UPHELD
+
+honesty_epistemic_check:
+  question: >
+    Is the EDPB Art 4(5) verdict a faithful application (bare-md5 self-rejoinable ->
+    fails separation; salted+keyed -> passes), expressing the finding rather than
+    flattering the pseudonymizer?
+  result: FAITHFUL
+  evidence:
+    - "_keyless_rejoinable (pseudonymization.py:301-321) re-derives keyless md5/sha256 digests over the closed-world candidate plaintext space and matches artifact tokens; a hit => rejoinable_from_artifact_alone=True => FAILS separation. Adverse-to-the-scheme by construction."
+    - "score_pseudonymization (452-466) emits a substantive KeyStateSeparationResult.note citing 'EDPB / GDPR Art. 4(5)' and the 'additional information held separately' safeguard; the note for the keyless case explicitly states it does NOT satisfy the requirement and NAMES the in-repo offender."
+    - "Cited real example is REAL: scripts/enrich_context_preservation.py::PseudonymGenerator._hash_to_index (line 91) = int(hashlib.md5(value.encode()).hexdigest(),16) % max_idx — keyless, secret-less, deterministic; exactly the _BareMd5Pseudonymizer shape. The citation is not fabricated."
+    - "test_fr_013_key_state_separation_edpb_art4_5 [AUDIT] asserts bare-md5 -> True (correctly fails) and salted+keyed -> False, with note citing '4(5)' in both. The scorer expresses the adverse verdict; it does not soften or hide it."
+
+independent_verification:
+  test_run: "python -m pytest tests/test_pseudonymization.py -q => 10 passed (independent re-run; story is AGENT_SIMULATED)"
+  ast_guard: "GREEN — banned set exact, hashlib present"
+  ax004_grep: "no merged-field declaration; as_dict merge-free; no anonymization import"
+  cited_example_exists: true
+
+findings: []   # zero MAJOR+; zero of any severity
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+
+observations:
+  - id: OBS-1
+    severity: OBSERVATION
+    note: >
+      crypto_collision_ci uses n=distinct-real-inputs as the Wilson denominator
+      (documented, reidx-02-correct). On the tiny _DEFAULT_RECORDS fixture (4 distinct
+      reals) the CI is necessarily very wide. Not an axiom issue (AX-003 binds corpus
+      slices, not contract-test fixtures) — flagged only so downstream corpus-level
+      pseudonymization scoring keeps an eye on per-cell n when this scorer runs against
+      real slices. No action required for S3-07.
+
+out_of_scope_deferrals:
+  - "reidentification.py:69 mypy dict type-arg — PRE-EXISTING (foundation commit 75e9eed), outside S3-07 §8 owned files; correctly not touched. Not an axiom finding."
+  - "Correctness of the dictionary-attack recovery math — executor's + traceability's remit."
+  - "Whether collision/Wilson semantics meet finer numerical spec — requirements-coverage / code-quality remit."
+
+pack_extensions_applied: []   # domain_packs: [] in developer-assistant.yaml; no agentic-runtime pack
+
+self_attestation:
+  independent: true
+  read_only_confirmed: true
+  no_peer_review_consulted: true   # S3-07 peer reviewer YAMLs not yet present; verdict formed solely from artifacts
+  context_bounds_respected: true
+  basis: >
+    Verdict formed only from: project-axioms.yaml, S3-07.md, the three owned files
+    (pseudonymization.py, scoring/__init__.py, test_pseudonymization.py), the
+    Interval/wilson_interval contract, the cited real PseudonymGenerator, and an
+    independent pytest run. No fields outside the axiom-compliance remit were judged.

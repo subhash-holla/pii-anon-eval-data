@@ -1,0 +1,84 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S5-04
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  Security review of the S5-04 export modules at the STORY gate (conditional fire:
+  none of the security story-signals — capability registry, trust boundary, HSM port,
+  event-signing, network egress, unsafe block — are actually tripped by this diff;
+  reviewed defensively per dispatch). Scope: the 3 new src modules in
+  `git diff 39f90d0 HEAD`:
+    - src/pii_anon_datasets/integrations/conll_format.py
+    - src/pii_anon_datasets/distribution/conll_export.py
+    - src/pii_anon_datasets/distribution/spacy_export.py
+  Domain packs: developer-assistant.yaml `domain_packs: []` — the `financial` pack's
+  PII/secrets patterns are NOT active (project encodes no-real-PII as a project axiom),
+  so no pack-extension catalog was merged. No `source_pack` findings.
+
+  EVIDENCE (all greps run on the 3 new modules only):
+
+  1. No network egress / no upload (AX-001). grep for
+     requests|urllib|http|socket|upload|push_to_hub|HfApi|hf_hub|huggingface_hub|boto3|
+     smtplib|ftplib|paramiko|websocket|aiohttp|httpx returned ONE hit:
+     spacy_export.py:18 — the docstring phrase "no HF upload (AX-001)", i.e. prose
+     ASSERTING the absence of upload, not a call site. Zero remote call sites.
+     Imports are stdlib only (collections.abc, typing) plus the LAZY `import spacy` /
+     `from spacy.tokens import DocBin` and the internal package import
+     `pii_anon_datasets.integrations.conll_format`. No egress route opened ⇒ no
+     egress-manifest entry required (common-finding #7 N/A; no egress-manifest in repo).
+
+  2. Local-only write sinks. The only output sinks are
+     `open(out_path, "w", encoding="utf-8")` (conll_export.py:42) and
+     `db.to_disk(out_path)` (spacy_export.py:98). Both write exactly to the
+     caller-provided `out_path` with no path manipulation/traversal beyond the given
+     path — acceptable for a library export API (dispatch-confirmed).
+
+  3. No dynamic exec / untrusted deserialization. grep for
+     eval|exec|compile|pickle|marshal|__import__|subprocess|popen|os.system|os.popen|
+     loads|yaml.load returned nothing in src. spacy.blank()/make_doc/char_span/
+     filter_spans/DocBin are local NLP ops over in-memory synthetic records — no
+     eval/exec/pickle of untrusted data. `DocBin().from_disk(...)` appears ONLY in the
+     TEST (tests/test_spacy_export.py:86,119), reading a file that same test just wrote
+     under `tmp_path` (trusted, self-written) — test-only, not a source deserialization
+     sink.
+
+  4. No real-PII path (AX-001). The exporters transform char-offset `annotations`
+     (start/end/entity_type) on synthetic in-memory corpus records into BIO/BILOU tags /
+     spaCy offset tuples / a DocBin; fixtures are tiny synthetic `tmp_path` records.
+     No embedded real PII; no PII-at-rest beyond the synthetic corpus this library is
+     designed to emit.
+
+  5. Lazy optional-dep safety (NFR-004). `import spacy` occurs only inside
+     `_require_spacy` (spacy_export.py:53) and `from spacy.tokens import DocBin`
+     function-locally (line 82); both behind a guard so the module imports without the
+     [baselines] extra, raising a clear `RuntimeError` (no silent failure / no fallback
+     to an untrusted shim).
+
+  6. Secrets. No hardcoded credentials. All secret-shape grep hits are the literal word
+     "secrets" inside the NFR-004 pure-stdlib docstrings ("none of {random, time, uuid,
+     datetime, secrets}") and the token "spacy.tokens" — prose, not values.
+
+  7. Weak crypto. No md5/sha1/hashlib (common-finding #15 N/A).
+
+  8. Supply chain / CVE. No pyproject.toml change in this diff; `spacy` is already
+     declared in the `[baselines]` extra as a plain registry dependency
+     (`baselines = ["presidio-analyzer", "presidio-anonymizer", "spacy"]`) — NOT a
+     `git = "..."` pin (common-finding #10 N/A). No NEW dependency introduced by this
+     story ⇒ no CVE-introduction surface at this gate. (cargo/pnpm/pip audit + SBOM diff
+     are epic/sprint-gate activities, not story.)
+
+  9. `unsafe`. N/A — Python; no `unsafe` construct exists.
+
+  Out of scope for this dimension (handled by sibling reviewers): byte-determinism /
+  pure-stdlib AST guards (axiom-compliance: AX-002 / NFR-004), thin-wrap & streaming
+  invariants (code-quality), FR-024 trace (traceability/requirements-coverage).
+
+review_time_seconds: 200
+
+context_bounds_respected: true

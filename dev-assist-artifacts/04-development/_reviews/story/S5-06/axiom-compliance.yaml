@@ -1,0 +1,106 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S5-06
+
+gate: story
+
+verdict: APPROVE
+
+# Story S5-06 — DPIA-input end-state bundle (DC-11 / FR-021). LOAD-BEARING axiom: NFR-005 / AX-004
+# (anon residual-risk+utility family is NEVER fused with the pseudonymization integrity family into
+# one de-identification score). All axiom slices triggered by this diff verified HOLD; zero
+# SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR. Findings list intentionally empty.
+
+findings: []
+
+notes: |
+  Axiom slice triggered by the S5-06 diff (a value-object composing DC-06 ParetoPoint + DC-08
+  PseudonymizationReport + S5-01 RegulatoryCrosswalk into a DPIA INPUT bundle): AX-004/NFR-005
+  metric-family separation (the crux), AX-002/NFR-004 determinism + pure-stdlib, AX-001 synthetic-only.
+  Every one verified HELD by independent runtime + AST introspection (not merely by reading the tests).
+
+  ── AX-004 / NFR-005 — metric-family SEPARATION (the load-bearing crux) — HELD ──────────────────────
+  The two evidence families are kept as two SEPARATE as_dict keys and are structurally unmergeable.
+  Independently confirmed (not via the story's own test, re-derived here):
+    * EndStateBundle.as_dict() keys == {anonymization_evidence, pseudonymization_evidence,
+      regulatory_crosswalk, disclaimer}. The two evidence sub-objects are distinct dicts; the
+      forbidden merged-name set {combined, overall, overall_score, deid, de_identification_score,
+      score} is disjoint from the as_dict keys.
+    * NO __float__: `hasattr(EndStateBundle, "__float__")` is False AND `float(bundle)` raises
+      TypeError at runtime on a real two-axis instance ("float() argument must be a string or a real
+      number, not 'EndStateBundle'") — the bundle cannot collapse to a single de-id scalar.
+    * Dataclass fields == {regulatory_crosswalk, anonymization_evidence, pseudonymization_evidence,
+      disclaimer}; `_FORBIDDEN_MERGE_NAMES.isdisjoint(field_names)` is True. The module-bottom
+      `assert _FORBIDDEN_MERGE_NAMES.isdisjoint({f.name for f in fields(EndStateBundle)})` enforces
+      this at IMPORT time (fail-fast structural guard) — verified to execute on import.
+    * AST + raw-grep of end_state_bundle.py: the six merged-verdict names appear ONLY in (a) the
+      module/class docstrings that document their DELIBERATE absence and (b) the
+      `_FORBIDDEN_MERGE_NAMES` guard frozenset itself — NEVER as a defined symbol (0 FunctionDef /
+      AnnAssign / Assign targets) and NEVER as an attribute access (0 ast.Attribute `.attr` matches).
+      So the guard names are inert data, exactly as required.
+    * Pseudo collision integers stay separate downstream: as_dict carries `intended_linkage_collisions`
+      + `unintended_crypto_collisions` and NO `total_collisions` (the FR-012 moat is not re-summed by
+      the bundle). The bundle nests the scorers' own as_dict verbatim and never re-projects.
+    This mirrors — at the composition layer — the SAME structural separation the sibling scorers already
+    enforce within their own modules: scoring/anonymization.py::ParetoPoint (privacy MeasuredRRS vs
+    utility UtilityScore, no __float__, no combined field) and scoring/pseudonymization.py::
+    PseudonymizationReport (two collision integers never summed, no utility/residual_risk/combined/deid
+    field). The bundle is faithful to the family-separation discipline at the layer that would be most
+    tempting to fuse, and the crosswalk sibling (compliance/crosswalk.py) likewise carries no merged
+    "compliant" verdict — so AX-004 holds end-to-end across the compliance surface.
+    Test `test_nfr_005_bundle_has_no_merged_verdict` PASSES (`pytest -k nfr_005 -q` → 1 passed).
+
+  ── FR-009 + EDPB Art 4(5) caveats travel UNSTRIPPED — HELD ─────────────────────────────────────────
+    On a real two-axis bundle, as_dict carries the FR-009 anti-anonymity caveat at
+    anonymization_evidence → privacy → rrs → caveat ("…MUST NOT be cited…") AND the EDPB Art 4(5)
+    note at pseudonymization_evidence → key_state_separation → note (contains "4(5)" + "art"). Because
+    as_dict nests the scorers' own as_dict rather than re-projecting selected fields, neither caveat
+    can be stripped on assembly. `test_fr_021_caveats_travel_with_each_axis` asserts BOTH (confirmed
+    present in the test body, lines 270-275) and PASSES.
+
+  ── Non-strippable DPIA disclaimer — HELD ──────────────────────────────────────────────────────────
+    DPIA_DISCLAIMER module constant; `disclaimer` is a validated field; __post_init__ raises
+    ValueError on empty/whitespace (confirmed at runtime for both "" and "   "); text (lower-cased)
+    contains "input" + "inform" + "does not make" + "determination". Travels onto as_dict unstripped.
+    Follows the crosswalk's non-strippable pattern (constant + validated field + __post_init__ check).
+
+  ── ≥1 axis required — HELD ─────────────────────────────────────────────────────────────────────────
+    EndStateBundle with both evidence axes None raises ValueError at runtime ("needs at least one
+    evidence axis"); a single axis is accepted. `test_fr_021_bundle_requires_at_least_one_axis` passes.
+
+  ── AX-002 / NFR-004 — determinism + pure-stdlib — HELD ─────────────────────────────────────────────
+    AST import-purity guard: end_state_bundle.py top-level imports == {__future__, collections,
+    dataclasses, pii_anon_datasets}; the banned nondeterminism set {random, time, uuid, datetime,
+    secrets} is disjoint from imports (no clock, no RNG). Determinism spot-check: two independent
+    assemblies of identical inputs produced a byte-identical as_dict (sha256 45d9fef2625c… == …).
+    `test_nfr004_end_state_bundle_pure_stdlib` PASSES (`pytest -k nfr004 -q` → 1 passed).
+    (The AST guard scopes to this module; its only first-party imports are the READ-ONLY, separately
+    NFR-004-guarded crosswalk + scorer value objects — untouched by this story.)
+
+  ── AX-001 — synthetic-only / no real-PII — HELD (in scope for this module) ─────────────────────────
+    end_state_bundle.py introduces NO PII-shaped literal: it is a pure value-object over
+    already-computed scorer outputs + a record's regulatory_domains tags. No SSN/email/phone/identifier
+    pattern, no real public-figure data, no embedded fixtures. (The deeper corpus-level AX-001/NFR-006
+    audit is security-sast's province; from the axiom-form angle the module is clean.)
+
+  Full S5-06 file: `pytest tests/test_end_state_bundle.py -q` → 7 passed. Full project suite green
+  with the single expected pre-existing skip (no regressions). All 7 tests carry the
+  fr_021 / nfr_005 / nfr004 tokens (traceability-mappable).
+
+  Scope discipline: per the gate's out-of-scope rule, I did NOT assess whether the scorer outputs are
+  numerically correct (executor's + traceability's), the prose/UX of the disclaimer wording (executor's
+  design judgment), or RRS/integrity computation (re-tested in the scorer stories, not here).
+
+  §12 note acknowledged: AX-001/002/004 live in 02-requirements/non-functional-requirements.md
+  (NFR-006→AX-001, NFR-004→AX-002, NFR-005→AX-004), not the requirements-document.md summary, and the
+  project-level axiom-candidates file does not enumerate them — consistent with the canonical NFR
+  surface I reviewed against. The provisional_status remains AGENT_SIMULATED; this value-object has no
+  real-PII / network / clock / RNG path, so agent-simulated execution is faithful, but the §12
+  Pass-2 (real CI runner) caveat carries forward and is the executor's/orchestrator's to schedule —
+  it does not affect the axiom verdict.
+
+review_time_seconds: 300
+
+context_bounds_respected: true
+
+discipline_mode: n/a

@@ -19,8 +19,8 @@ def test_risk_tiers_partition_63_types():
     crit = [t for t, r in tiers.items() if r == "critical"]
     std = [t for t, r in tiers.items() if r == "standard"]
     lt = [t for t, r in tiers.items() if r == "long_tail"]
-    assert len(crit) == 22 and len(std) == 31 and len(lt) == 10
-    assert len(crit) + len(std) + len(lt) == tx.ENTITY_TYPE_COUNT == 63
+    assert len(crit) == 22 and len(std) == 31 and len(lt) == 13
+    assert len(crit) + len(std) + len(lt) == tx.ENTITY_TYPE_COUNT == 66
 
 
 def test_risk_tier_membership():

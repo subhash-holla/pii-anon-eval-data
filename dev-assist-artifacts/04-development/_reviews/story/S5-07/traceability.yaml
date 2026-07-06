@@ -1,0 +1,121 @@
+reviewer: dev-assist-development-traceability
+scope_id: S5-07
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: traceability-S5-07-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-5/S5-07.md:30
+    description: |
+      Story §2/§4 cite the canonical source as `data/pii_anon.metadata.json`, but the
+      file that actually carries the constants on disk is
+      `src/pii_anon_datasets/data/pii_anon.metadata.json`. The constants match exactly
+      (version 2.0.0 / total_records 575604 / total_annotations 2486438 / entity_types 63),
+      so the trace is sound — this is a path-shorthand nit, not a divergence. The doc-test
+      asserts the literals (575,604 / 2,486,438 / 2.0.0) directly and derives the entity
+      count from `taxonomy.ENTITY_TYPE_COUNT`, so the single-source guarantee holds
+      regardless of the prose path.
+    suggested_resolution: |
+      Optional: write the path as `src/pii_anon_datasets/data/pii_anon.metadata.json`
+      (or "(packaged) data/pii_anon.metadata.json") in §2/§4 for precision. Non-blocking.
+    references:
+      - dev-assist-artifacts/02-requirements/requirements-document.md#NFR-013
+
+  - id: traceability-S5-07-02
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:19
+    description: |
+      The traceability matrix already carries NFR-013 under the UC-12 row
+      (FR-024/025/028 · NFR-011/012/013) and the M1→NFR-013 mapping (line 36), but it
+      does not yet name S5-07 as the verifying story for the NFR-013 zero-drift measure.
+      Per the dispatch note this is a SPRINT-CLOSE action (same bucket as the S5-06
+      FR-021 row), NOT an S5-07 deliverable — and S5-07's diff correctly does NOT touch
+      traceability-matrix.md. Logged so the sprint gate adds an "NFR-013 verified-by
+      S5-07 (tests/test_doc_drift.py, pytest -k nfr_013 = 6 passed)" annotation.
+    suggested_resolution: |
+      At the sprint gate, add an NFR-013 → S5-07 verification annotation to
+      traceability-matrix.md (alongside the queued FR-021 → S5-06 row). No S5-07 change.
+    references:
+      - dev-assist-artifacts/02-requirements/requirements-document.md#NFR-013
+
+notes: |
+  Forward chain NFR-013 → S5-07 → tests/test_doc_drift.py → DC-02 fully verified; APPROVE.
+
+  ID existence:
+    - NFR-013 EXISTS in requirements-document.md:20 ("NFR-013 no doc/data drift"). No
+      phantom ID.
+    - M1 EXISTS (requirements-document.md:36 "doc/data drift fix (M1)"); maps to NFR-013
+      in both requirements (:36) and traceability-matrix.md:36 ("M1 (doc/data drift) →
+      NFR-013"). Correctly cited as a "supporting" single-source-of-truth constraint
+      (entity count == taxonomy.ENTITY_TYPE_COUNT), not as a primary FR/NFR ID.
+    - AX-002 EXISTS as a design-layer axiom (D-implementation-ready-design.md:85 "AX-002 →
+      DC-02/03 (determinism tests)"); §3 invokes it as "supporting (deterministic
+      doc-test)", which is the correct register — it is not claimed as a requirements-doc
+      NFR/FR, so no SHOWSTOPPER.
+
+  Test pinning (token WITH underscore):
+    - `grep -nE "def test_nfr_013_" tests/test_doc_drift.py` => 6 tests (>= 6 required).
+      Names: docs_use_canonical_record_count / docs_use_canonical_entity_count /
+      doc_titles_are_v2 / taxonomy_body_matches_registry / migration_has_v2_section /
+      changelog_has_spwr_entry. All carry the `nfr_013` token; `pytest -k nfr_013`
+      selects exactly these 6.
+    - Semantic check (finding #9 pattern): each test body asserts what its name claims
+      — record-count test forbids the 5 stale record strings + requires 575,604; entity
+      test derives count from tx.ENTITY_TYPE_COUNT and forbids 65/57; title test forbids
+      v1.1.0/v1.3.0 in the header; taxonomy test compares backticked tokens to
+      tx.CANONICAL_ENTITY_TYPES (0 extra/0 missing); migration test requires the
+      v1.3.0→v2.0.0 section + tier3_evaluation/record_id/compat.to_v1_record; changelog
+      test scopes to the [2.0.0] section and requires 575,604 +
+      synthetic_lattice_enrichment. No name/body mismatch.
+
+  Single-source-of-truth (M1) — derived, not re-hardcoded:
+    - test_doc_drift.py:26 `CANONICAL_ENTITY_COUNT = tx.ENTITY_TYPE_COUNT` and :90
+      `registry = set(tx.CANONICAL_ENTITY_TYPES)`. taxonomy.py:61
+      `ENTITY_TYPE_COUNT = len(CANONICAL_ENTITY_TYPES)` (derived from ENTITY_REGISTRY).
+      Runtime: ENTITY_TYPE_COUNT == 63, len(CANONICAL_ENTITY_TYPES) == 63.
+    - The only literal `63`s in the test file are in the module docstring (line 7) and
+      two test docstrings/comments (lines 26, 86) — NONE in a load-bearing assertion.
+      __init__.py docstring annotates "63 entity types (canonical:
+      taxonomy.ENTITY_TYPE_COUNT)". M1 satisfied.
+
+  Canonical source single-derivation:
+    - Divergent-constant scan across the 5 current-state docs (README/DATASHEET/
+      COMPARISON/TAXONOMY/__init__): ZERO stale record strings
+      (117,752/919,000/150K+/~1.24M/160K/159K) and ZERO stale entity strings (65/57).
+    - The remaining non-63 "N types" hits are all legitimate: COMPARISON 14/11 are
+      COMPETITOR (PIILO/SPY) counts — PII-Anon's own column is 63 (COMPARISON:24 table +
+      all advantage lines); TAXONOMY per-category counts sum EXACTLY to 63
+      (2+10+4+12+10+6+6+8+5). No current-state doc re-declares a divergent corpus-wide
+      entity/record/version constant.
+
+  DC-02 linkage + provisional_status cascade:
+    - DC-02 authoritative card (D-implementation-ready-design.md:19): "DC-02 | Schema &
+      annotation model (v2.0.0 unified) + v1.3.0→v2.0.0 migration | (schema) NFR-013,
+      AX-002 | MUST". §4's "DC-02 (schema; NFR-013 reconciliation)" matches exactly.
+    - DC-02 is NOT marked DIVERGED (development-log.md:11 "DC-02 ... DONE"); §4 declares
+      provisional_status AGENT_SIMULATED · not DIVERGED, and §1 metadata shows
+      AGENT_SIMULATED. Cascade consistent — no DIVERGED Pass-2 obligation triggered.
+      (§12 schedules CI = Pass 2 at the sprint gate, appropriate for AGENT_SIMULATED.)
+
+  Ownership / orphans:
+    - NFR-013 PRIMARY owner = S5-07 only. S5-03 references NFR-013 but as the DONE
+      upstream dependency (dataset-card pulls canonical counts; §5), not a competing
+      primary owner — no finding-#12 dual-ownership ambiguity.
+    - No orphan: every ID claimed in §3/§4 (NFR-013, M1, AX-002, DC-02) resolves to a
+      real artifact. Parent epic field populated (S5-C). No deferred/renamed IDs claimed.
+
+  Status + SHAs:
+    - Status == REVIEW (§1).
+    - RED 58a4a15 / GREEN e8dbe77 / REFACTOR 6cdf4d0 all present and all on
+      feat/v2-scoring-harness; their combined diff (58a4a15~1..6cdf4d0) touches exactly
+      the 8 owned files + the S5-07 story doc — no out-of-scope trace surface.
+    - Live re-run at HEAD: `pytest -k nfr_013` => 6 passed; full suite => all pass + 1
+      pre-existing skip (consistent with §10's "263 passed, 1 skip").
+
+  Sprint-gate carry-forward: the S5-06 FR-021→S5-06 traceability-matrix row remains a
+  sprint-close action; S5-07 correctly does not pre-empt it and introduces no broken
+  trace links of its own.
+
+review_time_seconds: 240
+context_bounds_respected: true

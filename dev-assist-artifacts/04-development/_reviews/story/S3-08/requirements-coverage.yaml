@@ -1,0 +1,147 @@
+# requirements-coverage reviewer — STORY gate
+schema: dev-assist/reviewer-finding/v1
+reviewer: requirements-coverage
+gate: story
+story_id: S3-08
+iteration: 1
+mode: read-only
+provisional_status: AGENT_SIMULATED
+verdict: APPROVE
+context_bounds_respected: true
+
+summary: >
+  S3-08 delivers two scoped slices and every §7 acceptance clause + every §6 test (1-7) maps to
+  a passing test. Re-ran `python3 -m pytest tests/test_reid_power.py tests/test_nfr005_separation.py
+  -q` → 7 passed; full suite re-run → 167 passed, 1 skipped (the pre-existing anthropic optional
+  skip), matching the §12 claim with zero regressions. All four CRITICAL items independently
+  confirmed: (a) reid_required_n(0.30,0.030)==897 and (0.10,0.030)==385, equal to required_n(...)
+  (one z-table); (b) REID_TIER_SPECS targets DERIVED via reid_required_n (no baked literals —
+  property test #2 + source inspection); (c) the seam adds NO cells to the FROZEN eval_lattice.json
+  (cell_count==len(cells)==730, regression guard test #5 passes, and `git diff --name-only
+  d9bcecb~1..HEAD` touches only the 5 §8 files plus this story's review artifacts — eval_lattice.json
+  / lattice_freq_snapshot.json / corpus untouched); (d) NFR-005 cross-module — anon + pseudo are
+  distinct modules, neither imports the other's result type, and an AST-anchored + live-namespace +
+  __all__ audit finds NO forbidden merged-metric symbol (tests #6/#7). Correctly scoped as a SEAM:
+  no per-cell reid PowerMatrix is over-claimed; the full reid-track per-cell power audit is the
+  documented S4 deferral (sampling-design.md §5 + story §5/§8b). Zero MAJOR+ findings.
+
+scope_coverage:
+  in_scope_requirements:
+    - id: NFR-018
+      role: primary
+      requirement: >
+        Track-specific re-id-operating-point power ladder (sampling-design.md §5 / R10
+        refinement #2) — parallel to detection recall tiers, attaching to MeasuredRRS,
+        WITHOUT modifying the frozen detection eval_lattice.json.
+      disposition: verified
+      evidence:
+        - test: test_nfr_018_reid_required_n_pins_section5_numbers
+          asserts: "reid_required_n(0.30,0.030)==897; (0.10,0.030)==385; ==required_n(...)"
+          run: PASS
+        - test: test_nfr_018_reid_tier_specs_are_derived_not_typed
+          asserts: "REID_TIER_SPECS[t].target_n_pairs == reid_required_n(spec.p_ref, spec.half_width) for every tier; lands on 897/385 (anti-drift)"
+          run: PASS
+        - test: test_nfr_018_reid_provenance_shape
+          asserts: "track=='reidentification'; |C|, adversary_id, target/observed recorded; powered==(observed>=target); empty caveat rejected by __post_init__; serialized via as_dict()"
+          run: PASS
+        - test: test_nfr_018_reid_provenance_attaches_to_measured_rrs
+          asserts: "MeasuredRRS.reid_provenance carries ReidProvenance; survives as_dict(); rides score_reidentification passthrough"
+          run: PASS
+        - test: test_nfr_018_seam_does_not_mutate_frozen_lattice
+          asserts: "eval_lattice.json cell_count==len(cells)==730 (regression guard; code-only seam adds no cells)"
+          run: PASS
+        - independent_check: "git diff --name-only d9bcecb~1..HEAD = 5 §8 files + S3-08/S3-03 review artifacts only; eval_lattice.json / lattice_freq_snapshot.json / corpus NOT in the diff"
+          run: CONFIRMED
+        - independent_check: "detection ladder preserved verbatim — required_n(0.99,0.005)==1522; Tier/required_n/PowerMatrix untouched"
+          run: CONFIRMED
+    - id: NFR-005
+      role: primary
+      requirement: >
+        AX-004 cross-module separation — anonymization (DC-06) and pseudonymization (DC-08)
+        metric families are never fused into a single de-identification/combined/overall score.
+      disposition: verified
+      evidence:
+        - test: test_nfr_005_anon_and_pseudo_are_separate_modules
+          asserts: "distinct modules; neither imports the other's result type; AST-anchored source grep + live namespaces find no forbidden merged symbol; ParetoPoint/PseudonymizationReport not float-coercible; collision integers stay separate (no total_collisions)"
+          run: PASS
+        - test: test_nfr_005_no_combined_deid_callable_in_scoring_public_api
+          asserts: "no scoring.__all__ export name carries a fused-de-id token; score_anonymization vs score_pseudonymization return DISTINCT types; no public callable returns a bare scalar de-id score"
+          run: PASS
+        - independent_check: "re-ran the AST audit out-of-band — forbidden-public-defs empty in both modules; live-ns offenders empty; __all__ fused-token offenders empty; teeth confirmed (prose disclaimers allowed, definitions/injections flagged)"
+          run: CONFIRMED
+    - id: FR-029
+      role: supporting
+      requirement: per-cell design provenance, here surfaced at the re-id operating point (ReidProvenance analogous to DesignProvenance)
+      disposition: verified
+      evidence:
+        - note: "ReidProvenance records target/observed/|C|/adversary_id/tier/powered and serializes via as_dict(); tests #3/#4 cover shape + attachment"
+    - id: FR-009
+      role: supporting
+      requirement: ReidProvenance reuses the non-strippable anti-anonymity caveat
+      disposition: verified
+      evidence:
+        - note: "caveat default sourced lazily from the canonical ANTI_ANONYMITY_CAVEAT; __post_init__ rejects empty; always serialized — tests #3/#4 assert equality + presence in as_dict()"
+
+  acceptance_clause_to_test_map:
+    - clause: "§7 G/W/T — reid_required_n + ReidTier/REID_TIER_SPECS + ReidProvenance give a re-id-operating-point power statement (897/385), derived from NIST sizing, attaching to MeasuredRRS, WITHOUT modifying frozen eval_lattice.json"
+      tests: [test_nfr_018_reid_required_n_pins_section5_numbers, test_nfr_018_reid_tier_specs_are_derived_not_typed, test_nfr_018_reid_provenance_shape, test_nfr_018_reid_provenance_attaches_to_measured_rrs, test_nfr_018_seam_does_not_mutate_frozen_lattice]
+      status: covered
+    - clause: "§7 And-Given — no code path merges anon + pseudo into a single de-identification score (NFR-005/AX-004)"
+      tests: [test_nfr_005_anon_and_pseudo_are_separate_modules, test_nfr_005_no_combined_deid_callable_in_scoring_public_api]
+      status: covered
+    - clause: "§7 Negative — frozen lattice cell count unchanged; no merged de-id symbol exists"
+      tests: [test_nfr_018_seam_does_not_mutate_frozen_lattice, test_nfr_005_anon_and_pseudo_are_separate_modules, test_nfr_005_no_combined_deid_callable_in_scoring_public_api]
+      status: covered
+
+  orphaned_requirements: []
+  silently_missing_musts: []
+
+seam_scoping_assessment:
+  classification: correctly_scoped_as_seam
+  note: >
+    §2/§5/§8b explicitly frame this as the DOCUMENTED seam (sampling-design.md §5: "the RRS/utility
+    power ladder is a documented seam filled when the S3/S4 scorers land"). Confirmed NOT over-claimed
+    as a complete reid power matrix: power.py adds a reid LADDER (reid_required_n + 2-tier REID_TIER_SPECS
+    + ReidProvenance) but NO per-cell ReidPowerMatrix class — grep for ReidPowerMatrix/reid_power_matrix
+    returns nothing. The full reid-track per-cell power audit is the S4 successor (story §5 "Blocks: S4").
+  sprint_gate_note: >
+    For the S3 sprint gate: record this as the reid-power SEAM, with the full reid-track per-cell power
+    audit landing in S4. Do not count S3-08 toward a "complete reid power matrix" line item.
+
+diverged_pass2_crosscheck:
+  applicable: false
+  reason: "provisional_status AGENT_SIMULATED, not DIVERGED (story §4). No DIVERGED MUST in this story's scope, so no Pass-2-by-release-gate obligation arises here. (The repo-wide AGENT_SIMULATED → real-CI Pass 2 remains an orchestrator-scheduled concern, not a per-story coverage gap.)"
+
+findings: []
+
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+  total: 0
+
+evidence_runs:
+  - cmd: "PYTHONPATH=src python3 -m pytest tests/test_reid_power.py tests/test_nfr005_separation.py -q"
+    result: "7 passed"
+  - cmd: "PYTHONPATH=src python3 -m pytest -q"
+    result: "167 passed, 1 skipped (pre-existing anthropic optional skip) — 0 regressions"
+  - cmd: "reid_required_n / REID_TIER_SPECS introspection"
+    result: "897 / 385 confirmed; both tiers target_n_pairs == reid_required_n(p_ref, half_width) (derived)"
+  - cmd: "eval_lattice.json cell_count introspection"
+    result: "cell_count == len(cells) == 730"
+  - cmd: "git diff --name-only d9bcecb~1..HEAD"
+    result: "5 §8 files + S3-08/S3-03 review artifacts only; frozen lattice / snapshot / corpus untouched"
+
+independence_attestation:
+  independent_review: true
+  read_only_confirmed: true
+  no_code_modified: true
+  statement: >
+    I reviewed S3-08 solely against its traced MUST/supporting requirements (NFR-018, NFR-005, FR-029,
+    FR-009), the §7 acceptance clauses, the §6 test plan, and sampling-design.md §5. I re-ran the named
+    tests and the full suite and independently re-derived the 897/385 numbers, the derived-not-typed
+    property, the frozen-lattice cell count, the git non-mutation of the lattice, and the NFR-005 AST
+    audit teeth rather than relying on the story's §12 self-report. Out-of-scope concerns (test-writing
+    quality, FR semantics, whether a requirement should exist) were deferred to their owning reviewers.

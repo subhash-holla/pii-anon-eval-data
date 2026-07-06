@@ -1,0 +1,287 @@
+{
+  "assessment_tracks": {
+    "anonymization": [],
+    "detection": {
+      "caveat": "Synthetic-only (AX-001): every scored record contains ONLY synthetic PII. Per-cell power is statistical precision on the SYNTHETIC distribution, conditional on THIS sample \u2014 NOT external validity and NOT a standalone recall claim absent the real-data correlation slice (cycle-1 UC-13). AX-003.",
+      "converged": false,
+      "holm_family_size": 2,
+      "honest_flags": [
+        "Synthetic-only (AX-001): every scored record contains ONLY synthetic PII. Per-cell power is statistical precision on the SYNTHETIC distribution, conditional on THIS sample \u2014 NOT external validity and NOT a standalone recall claim absent the real-data correlation slice (cycle-1 UC-13). AX-003.",
+        "RD-NOT-CONVERGED: achieved max-RD 156.5 > threshold 100.0 (tournament-rating convergence only; blocks ranking, NOT recall-CI validity)"
+      ],
+      "inferential_suppressed": false,
+      "inferential_target": "super-population",
+      "pair_verdicts": [
+        {
+          "delta_ci": [
+            0.050356477615775,
+            0.0667351788811098
+          ],
+          "delta_recall": 0.058192562142719506,
+          "mcnemar_b": 2722,
+          "mcnemar_c": 1816,
+          "mcnemar_method": "mcnemar-chi2-continuity",
+          "mcnemar_p": 3.80445414518776e-41,
+          "mcnemar_p_holm": 3.80445414518776e-41,
+          "significant": true,
+          "system_a": "presidio",
+          "system_b": "gliner"
+        },
+        {
+          "delta_ci": [
+            0.2652048943413193,
+            0.2811998201554371
+          ],
+          "delta_recall": 0.27323527522641144,
+          "mcnemar_b": 4614,
+          "mcnemar_c": 360,
+          "mcnemar_method": "mcnemar-chi2-continuity",
+          "mcnemar_p": 0.0,
+          "mcnemar_p_holm": 0.0,
+          "significant": true,
+          "system_a": "gliner",
+          "system_b": "piiranha"
+        }
+      ],
+      "rigor_bar": "full-AX005",
+      "rows": [
+        {
+          "elo": 1585.7727328444762,
+          "n_positives": 15569,
+          "rank": 1,
+          "rd": 156.52475842498527,
+          "recall": 0.6159676279786755,
+          "recall_ci": [
+            0.6083001347856978,
+            0.6235779081230788
+          ],
+          "recall_ci_method": "wilson",
+          "system": "presidio",
+          "tie_group": 0
+        },
+        {
+          "elo": 1542.5286795263996,
+          "n_positives": 15569,
+          "rank": 2,
+          "rd": 156.52475842498527,
+          "recall": 0.557775065835956,
+          "recall_ci": [
+            0.5499604289355272,
+            0.5655611991987538
+          ],
+          "recall_ci_method": "wilson",
+          "system": "gliner",
+          "tie_group": 1
+        },
+        {
+          "elo": 1372.9079574926402,
+          "n_positives": 15569,
+          "rank": 3,
+          "rd": 156.52475842498527,
+          "recall": 0.2845397906095446,
+          "recall_ci": [
+            0.2775062955731235,
+            0.2916795837193212
+          ],
+          "recall_ci_method": "wilson",
+          "system": "piiranha",
+          "tie_group": 2
+        }
+      ]
+    },
+    "pseudonymization": [],
+    "separation_note": "Detection, anonymization, and pseudonymization are DIFFERENT metric families (AX-004 / NFR-005) and are never merged into a single de-identification score: anonymization -> residual re-id risk + utility (a two-axis Pareto point); pseudonymization -> unauthorized/authorized reversal + collision separation + referential integrity. A merged ranking is structurally impossible in this container.",
+    "tracks": [
+      "detection",
+      "anonymization",
+      "pseudonymization"
+    ]
+  },
+  "caveat": "Synthetic-only (AX-001): every scored record contains ONLY synthetic PII. Per-cell power is statistical precision on the SYNTHETIC distribution, conditional on THIS sample \u2014 NOT external validity and NOT a standalone recall claim absent the real-data correlation slice (cycle-1 UC-13). AX-003.",
+  "converged": false,
+  "governance": {
+    "attestations": {
+      "gliner": null,
+      "piiranha": null,
+      "presidio": null
+    },
+    "contamination": {
+      "gliner": "synthetic-bundled",
+      "piiranha": "synthetic-bundled",
+      "presidio": "synthetic-bundled"
+    },
+    "governance": {
+      "corpus_owner": "PII-Anon maintainers (CC0 synthetic corpus)",
+      "disclaimer": "Governance block is a NEUTRALITY / PROVENANCE statement (who controls the corpus, who holds the held-out labels, who runs the eval) \u2014 NOT an endorsement. A vendor self-benchmark without it is inadmissible (FR-052).",
+      "evaluator": "pii-rate-elo assessment harness (neutral; no system entrant)",
+      "label_holder": "PII-Anon maintainers (held-out gold labels)"
+    },
+    "recusal_records": {}
+  },
+  "holm_family_size": 2,
+  "honest_flags": [
+    "Synthetic-only (AX-001): every scored record contains ONLY synthetic PII. Per-cell power is statistical precision on the SYNTHETIC distribution, conditional on THIS sample \u2014 NOT external validity and NOT a standalone recall claim absent the real-data correlation slice (cycle-1 UC-13). AX-003.",
+    "RD-NOT-CONVERGED: achieved max-RD 156.5 > threshold 100.0 (tournament-rating convergence only; blocks ranking, NOT recall-CI validity)"
+  ],
+  "honesty_set": {
+    "flags": [
+      "WORST-LANGUAGE recall floor: ko at 0.429 (the per-language minimum; NFR-047 honesty-set)",
+      "rank-volatility UNMEASURED: 0 seed(s) < 3 required \u2014 single/under-replicated run makes NO rank-stability claim (NFR-047)"
+    ],
+    "rank_volatility": {
+      "mean_tau": null,
+      "measured": false,
+      "min_tau": null,
+      "n_seeds": 0,
+      "note": "rank-volatility UNMEASURED: 0 seed(s) < 3 required \u2014 single/under-replicated run makes NO rank-stability claim (NFR-047)"
+    },
+    "worst_language_recall": [
+      "ko",
+      0.42857142857142855
+    ]
+  },
+  "inferential_suppressed": false,
+  "inferential_target": "super-population",
+  "manifest": {
+    "caveat": "Synthetic-only (AX-001): every scored record contains ONLY synthetic PII. Per-cell power is statistical precision on the SYNTHETIC distribution, conditional on THIS sample \u2014 NOT external validity and NOT a standalone recall claim absent the real-data correlation slice (cycle-1 UC-13). AX-003.",
+    "power_verdict": "SMALL",
+    "preset": "powered-representative",
+    "record_count": 1822
+  },
+  "n_gold_positives": 15569,
+  "operating_points": {
+    "gliner": {
+      "auprc": 0.3809751983419414,
+      "auprc_degenerate": true,
+      "beta": 2.0,
+      "fbeta": 0.579010534737965,
+      "fn_fp_cost": null,
+      "matches_prereg": true,
+      "n_curve_points": 1,
+      "precision": 0.6830265848670757,
+      "precision_at_recall": 0.6830265848670757,
+      "recall": 0.557775065835956,
+      "recall_target": 0.9,
+      "recall_target_reached": false,
+      "threshold_rule": "argmax-fbeta@prereg"
+    },
+    "piiranha": {
+      "auprc": 0.1238101632845774,
+      "auprc_degenerate": true,
+      "beta": 2.0,
+      "fbeta": 0.3056985522447797,
+      "fn_fp_cost": null,
+      "matches_prereg": true,
+      "n_curve_points": 1,
+      "precision": 0.4351242510558884,
+      "precision_at_recall": 0.4351242510558884,
+      "recall": 0.2845397906095446,
+      "recall_target": 0.9,
+      "recall_target_reached": false,
+      "threshold_rule": "argmax-fbeta@prereg"
+    },
+    "presidio": {
+      "auprc": 0.2654293216048303,
+      "auprc_degenerate": true,
+      "beta": 2.0,
+      "fbeta": 0.5672475186617928,
+      "fn_fp_cost": null,
+      "matches_prereg": true,
+      "n_curve_points": 1,
+      "precision": 0.43091440125814423,
+      "precision_at_recall": 0.43091440125814423,
+      "recall": 0.6159676279786755,
+      "recall_target": 0.9,
+      "recall_target_reached": false,
+      "threshold_rule": "argmax-fbeta@prereg"
+    }
+  },
+  "pair_verdicts": [
+    {
+      "delta_ci": [
+        0.050356477615775,
+        0.0667351788811098
+      ],
+      "delta_recall": 0.058192562142719506,
+      "mcnemar_b": 2722,
+      "mcnemar_c": 1816,
+      "mcnemar_method": "mcnemar-chi2-continuity",
+      "mcnemar_p": 3.80445414518776e-41,
+      "mcnemar_p_holm": 3.80445414518776e-41,
+      "significant": true,
+      "system_a": "presidio",
+      "system_b": "gliner"
+    },
+    {
+      "delta_ci": [
+        0.2652048943413193,
+        0.2811998201554371
+      ],
+      "delta_recall": 0.27323527522641144,
+      "mcnemar_b": 4614,
+      "mcnemar_c": 360,
+      "mcnemar_method": "mcnemar-chi2-continuity",
+      "mcnemar_p": 0.0,
+      "mcnemar_p_holm": 0.0,
+      "significant": true,
+      "system_a": "gliner",
+      "system_b": "piiranha"
+    }
+  ],
+  "pre_registration": {
+    "design_point": {
+      "beta": 2.0,
+      "recall_target": 0.9,
+      "threshold_rule": "argmax-fbeta@prereg"
+    },
+    "prereg_hash": "4c5609c3a67a359d667b873f9a65c9ee8f321a78b6b8d26b4f4b0ba9a57a6fb1",
+    "verified": true
+  },
+  "rigor_bar": "full-AX005",
+  "rows": [
+    {
+      "elo": 1585.7727328444762,
+      "n_positives": 15569,
+      "rank": 1,
+      "rd": 156.52475842498527,
+      "recall": 0.6159676279786755,
+      "recall_ci": [
+        0.6083001347856978,
+        0.6235779081230788
+      ],
+      "recall_ci_method": "wilson",
+      "system": "presidio",
+      "tie_group": 0
+    },
+    {
+      "elo": 1542.5286795263996,
+      "n_positives": 15569,
+      "rank": 2,
+      "rd": 156.52475842498527,
+      "recall": 0.557775065835956,
+      "recall_ci": [
+        0.5499604289355272,
+        0.5655611991987538
+      ],
+      "recall_ci_method": "wilson",
+      "system": "gliner",
+      "tie_group": 1
+    },
+    {
+      "elo": 1372.9079574926402,
+      "n_positives": 15569,
+      "rank": 3,
+      "rd": 156.52475842498527,
+      "recall": 0.2845397906095446,
+      "recall_ci": [
+        0.2775062955731235,
+        0.2916795837193212
+      ],
+      "recall_ci_method": "wilson",
+      "system": "piiranha",
+      "tie_group": 2
+    }
+  ],
+  "run_id": "asmt-7-94b92c4c",
+  "run_type": "leaderboard-submission"
+}

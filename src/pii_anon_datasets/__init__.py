@@ -1,7 +1,7 @@
 """PII-Anon Evaluation Dataset
 
 Comprehensive multilingual benchmark for PII detection and de-identification
-evaluation. 575,604 records across 60 languages, 63 entity types (canonical:
+evaluation. 782,677 records across 60 languages, 66 entity types (canonical:
 taxonomy.ENTITY_TYPE_COUNT), 40 document formats, and 7 evaluation dimensions.
 
 Usage:

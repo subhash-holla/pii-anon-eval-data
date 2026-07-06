@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>S3-01 — Adversary port + value objects + paired-set assembler — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="04-development">
+<h1>S3-01 — Adversary port + value objects + paired-set assembler</h1>
+<blockquote>
+<p><strong>Cold-pickup invariant</strong>: any executor agent can pick up this file cold and execute it. The full
+implementation spec is in §8b — build to it. If anything is ambiguous, escalate, don&#39;t guess.</p>
+</blockquote>
+<h2>1. Metadata</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Parent epic</strong></td>
+<td>S3 — Scorer trio (<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-06" data-trace-id="DC-06" aria-label="Trace DC-06">DC-06</a>/07/08)</td>
+</tr>
+<tr>
+<td><strong>Sprint</strong></td>
+<td>S-3 (Scorers)</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>Estimated agent-effort</strong></td>
+<td>M (≤3d)</td>
+</tr>
+<tr>
+<td><strong>Owner agent</strong></td>
+<td>dev-assist-development-executor (claimed 2026-05-29)</td>
+</tr>
+<tr>
+<td><strong>Story gate</strong></td>
+<td>APPROVE (iter 2; <code>_reviews/story/S3-01/synthesis.md</code>); amendment <code>e5a35d4</code></td>
+</tr>
+<tr>
+<td><strong>provisional_status</strong></td>
+<td>AGENT_SIMULATED</td>
+</tr>
+</tbody></table>
+<h2>2. Goal</h2>
+<p>Establish the <strong>outbound adversary port</strong> that the measured-attack re-identification scorer (<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a>),
+the anonymization residual-risk scorer (<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-06" data-trace-id="DC-06" aria-label="Trace DC-06">DC-06</a>), and the LLM adversary (S3-03) all plug into. After
+this story, the scoring core defines: the <code>Adversary</code> Protocol (an interchangeable re-identification
+attacker), the frozen <code>Persona</code>/<code>Target</code>/<code>Guess</code> value objects, a deterministic <code>assemble_paired_set()</code>
+that builds the paired <em>pseudonymous↔real</em> set from the tier3 corpus substrate, and a pure-stdlib
+<code>scoring/signals.py</code> (the behavioral-signal extractor, ported out of <code>scripts/</code> so <code>src/</code> stays
+import-pure). No adversary <em>implementation</em> yet (that&#39;s S3-02/03) — only the contract + the data plumbing.</p>
+<h2>3. Traced requirements</h2>
+<p><strong>Primary</strong>:</p>
+<ul>
+<li><span class="trace-def" id="fr-010" data-trace-id="FR-010">FR-010</span> — Adversary pluggability (consumer-named adversary, version-pinned &quot;vs adversary@version&quot;; ≥1 distractor-augmented variant) — <code>02-requirements/functional-requirements.md</code> (the port + version-pinning contract this story establishes).</li>
+</ul>
+<p><strong>Supporting</strong> (consume this port; implemented in later stories):</p>
+<ul>
+<li><a class="trace-link" href="S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a> — Measured-attack RRS (S3-04 consumes <code>Adversary</code> + <code>assemble_paired_set</code>).</li>
+<li><a class="trace-link" href="S3-05.html#fr-008" data-trace-id="FR-008" aria-label="Trace FR-008 — S3-05 — Deterministic exposure index (pre-screen prior) + i…">FR-008</a> — Exposure-index pre-screen (S3-05 consumes <code>signals.py</code>).</li>
+</ul>
+<h2>4. Source DC + provisional_status cascade</h2>
+<ul>
+<li><strong>Source Design Case</strong>: <a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a> (Re-identification scorer + pluggable adversary) — <code>03-design/06-synthesis/D-implementation-ready-design.md</code> §D1, module <code>scoring/adversary/</code>.</li>
+<li><strong>DC <code>provisional_status</code></strong>: AGENT_SIMULATED (design revision #1 reidx-01: deterministic offline adversary is the headline; LLM secondary).</li>
+<li>Not DIVERGED → no Pass-2 commitment on this story.</li>
+</ul>
+<h2>5. Dependencies</h2>
+<p><strong>Must be DONE before this story can start</strong>: none (first story of S3).</p>
+<p><strong>Blocks</strong>: S3-02 (offline adversary), S3-03 (LLM adversary), S3-04 (measured RRS), S3-06 (anon Pareto), S3-07 (pseudo, uses the Protocol idiom).</p>
+<h2>6. Test-first plan (RED before GREEN)</h2>
+<p>Tests written FIRST, committed in <code>[RED]</code> (must fail), then implementation in <code>[GREEN]</code>, then <code>[REFACTOR]</code>.</p>
+<ol>
+<li><strong>Test</strong> <code>tests/test_adversary_port.py::test_persona_target_guess_are_frozen</code> — <code>Persona</code>/<code>Target</code>/<code>Guess</code> are frozen dataclasses (mutating a field raises) — <code>[UNIT-TEST]</code>.</li>
+<li><strong>Test</strong> <code>::test_guess_abstain_is_none_not_wrong</code> — a <code>Guess</code> with <code>guessed_persona_id=None</code> is an abstention (distinct from a wrong guess) — <code>[UNIT-TEST]</code>.</li>
+<li><strong>Test</strong> <code>::test_adversary_protocol_is_runtime_checkable</code> — a minimal stub class with <code>adversary_id</code>, <code>deterministic</code>, <code>attack()</code> satisfies <code>isinstance(stub, Adversary)</code>; one missing member fails it — <code>[CONTRACT-TEST]</code>.</li>
+<li><strong>Test</strong> <code>::test_assemble_paired_set_deterministic</code> — <code>assemble_paired_set(records, candidate_set_size=N)</code> twice → identical <code>(targets, candidates)</code> (same order, same ids) — <code>[PROPERTY-TEST]</code>.</li>
+<li><strong>Test</strong> <code>::test_assemble_filters_to_tier3_substrate</code> — records lacking <code>tier3_evaluation.behavioral_signals</code> or <code>context_preservation</code> are excluded; a record with neither raises no error but is skipped; an all-empty input yields empty sets — <code>[UNIT-TEST]</code>.</li>
+<li><strong>Test</strong> <code>::test_candidate_set_size_is_first_class</code> — <code>|C|</code> is honored: <code>len(candidates) == min(candidate_set_size, n_available)</code>; <code>DEFAULT_CANDIDATE_SET_SIZE == 2500</code> — <code>[UNIT-TEST]</code>.</li>
+<li><strong>Test</strong> <code>::test_target_observed_signals_reextracted_not_gold</code> (the de-circularization guard) — for a record whose <code>anonymized_*</code> variant strips a behavioral signal, the assembled <code>Target.observed_signals</code> differ from the source <code>Persona.behavioral_signals</code> (i.e. signals are re-extracted from the anonymized text, NOT copied from gold) — <code>[PROPERTY-TEST]</code>.</li>
+<li><strong>Test</strong> <code>tests/test_signals.py::test_uniqueness_weight_table_matches_source</code> — <code>UNIQUENESS_WEIGHT == {none:0, low:0.15, moderate:0.35, high:0.65, very_high:1.0}</code> (golden, ported faithfully) — <code>[UNIT-TEST]</code>.</li>
+<li><strong>Test</strong> <code>::test_compute_signal_density_golden</code> — <code>compute_signal_density(signals)</code> reproduces <code>0.6*max(w_c)+0.4*mean(w_c)</code> on a fixed signals block to 1e-9 — <code>[UNIT-TEST]</code>.</li>
+<li><strong>Test</strong> <code>::test_detect_signals_pure_and_deterministic</code> — <code>detect_*</code> on the same text twice → identical output; no network/file/RNG — <code>[PROPERTY-TEST]</code>.</li>
+</ol>
+<p><strong>Test-data discipline</strong>: synthetic <code>Persona</code>/<code>Target</code> fixtures inline (tiny); the corpus-assembly test uses a ≤200-record slice via <code>load_dataset(...)</code> (keep fast), never the full 575K. Deterministic — no seeds needed (the assembler is sort-based, not sampled).</p>
+<h2>7. Acceptance criteria (Given/When/Then from <a class="trace-link" href="#fr-010" data-trace-id="FR-010">FR-010</a>)</h2>
+<blockquote>
+<p><strong>Given</strong> a consumer-supplied adversary object exposing <code>adversary_id</code>, <code>deterministic</code>, and <code>attack(targets, candidates, candidate_set_size)</code>,
+<strong>When</strong> the scoring core type-checks it against the <code>Adversary</code> Protocol,
+<strong>Then</strong> it is accepted as a pluggable adversary and its <code>adversary_id</code> is available for version-pinning (&quot;vs adversary@version&quot;).
+<strong>And Given</strong> the tier3 corpus substrate, <strong>When</strong> <code>assemble_paired_set</code> runs, <strong>Then</strong> it deterministically yields aligned <code>(targets, candidates)</code> with <code>target_id == persona_id</code> ground-truth links and <code>|C|</code> honored.
+<strong>Negative test</strong>: an object missing any of the three members is NOT an <code>Adversary</code> (isinstance False); <code>assemble_paired_set</code> skips records lacking the tier3 substrate.</p>
+</blockquote>
+<h2>8. Files this story owns</h2>
+<p><strong>NEW</strong>:</p>
+<ul>
+<li><code>src/pii_anon_datasets/scoring/adversary/__init__.py</code> (exports + <code>assemble_paired_set</code> + <code>DEFAULT_CANDIDATE_SET_SIZE</code>)</li>
+<li><code>src/pii_anon_datasets/scoring/adversary/base.py</code> (<code>Persona</code>, <code>Target</code>, <code>Guess</code>, <code>Adversary</code> Protocol, <code>ADVERSARY_PORT_VERSION</code>)</li>
+<li><code>src/pii_anon_datasets/scoring/signals.py</code> (ported <code>detect_*</code>, <code>UNIQUENESS_WEIGHT</code>, <code>compute_signal_density</code>, <code>SIGNAL_EXTRACTOR_VERSION</code>)</li>
+<li><code>tests/test_adversary_port.py</code>, <code>tests/test_signals.py</code></li>
+</ul>
+<p><strong>MODIFIED</strong>:</p>
+<ul>
+<li><code>src/pii_anon_datasets/scoring/__init__.py</code> (export <code>Persona</code>, <code>Target</code>, <code>Guess</code>, <code>Adversary</code>, <code>assemble_paired_set</code>)</li>
+</ul>
+<h2>8b. Implementation spec (authoritative — build to this)</h2>
+<p>Pure-stdlib (<a class="trace-link" href="S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>). Frozen dataclasses. Type hints everywhere; <code>ruff</code>/<code>mypy --strict</code> clean.</p>
+<pre><code class="language-python"># scoring/adversary/base.py
+ADVERSARY_PORT_VERSION = &quot;adversary-port-v1&quot;
+
+@dataclass(frozen=True)
+class Persona:                      # the REAL side
+    persona_id: str                 # == record_id (stable)
+    record_id: str
+    quasi_identifiers: tuple[tuple[str, str], ...]   # ((entity_type, value), ...) sorted
+    behavioral_signals: dict        # tier3_evaluation.behavioral_signals (read-only, GOLD)
+    source_text: str                # original real text
+
+@dataclass(frozen=True)
+class Target:                       # the PSEUDONYMOUS side the adversary attacks
+    target_id: str                  # == persona_id of its true source (ground-truth link)
+    anonymized_text: str            # e.g. context_preservation.anonymized_pseudonymized
+    observed_signals: dict          # RE-EXTRACTED from anonymized_text via signals.py — NOT gold
+
+@dataclass(frozen=True)
+class Guess:
+    target_id: str
+    guessed_persona_id: str | None  # None == abstain (excluded from precision denominator)
+    score: float                    # similarity/confidence for ranking
+
+@runtime_checkable
+class Adversary(Protocol):
+    adversary_id: str               # version-pinned, e.g. &quot;offline-deterministic-v1&quot;
+    deterministic: bool
+    def attack(self, targets: Sequence[Target], candidates: Sequence[Persona],
+               candidate_set_size: int) -&gt; list[Guess]: ...
+</code></pre>
+<pre><code class="language-python"># scoring/adversary/__init__.py
+DEFAULT_CANDIDATE_SET_SIZE = 2500   # documented default sample of the ~159,891 tier3 personas;
+                                    # |C| is a first-class parameter — any N &lt;= n_available is valid.
+
+def assemble_paired_set(records, *, candidate_set_size=DEFAULT_CANDIDATE_SET_SIZE,
+                        variant=&quot;pseudonymized&quot;) -&gt; tuple[list[Target], list[Persona]]:
+    # 1. filter to records with BOTH tier3_evaluation.behavioral_signals AND context_preservation
+    # 2. sort deterministically by record_id; take first min(candidate_set_size, n) as candidates
+    # 3. Persona: persona_id=record_id, quasi_identifiers=sorted((a[&quot;entity_type&quot;],a[&quot;text&quot;]) for
+    #    a in annotations), behavioral_signals=tier3_evaluation.behavioral_signals, source_text=text
+    # 4. Target: anonymized_text=context_preservation[f&quot;anonymized_{variant}&quot;],
+    #    observed_signals=signals.extract(anonymized_text)  ← RE-EXTRACT, never copy gold,
+    #    target_id=persona_id (ground-truth link)
+</code></pre>
+<p><strong>De-circularization rule (reidx-01, LOAD-BEARING):</strong> <code>Target.observed_signals</code> MUST come from
+<code>signals.extract(anonymized_text)</code>. Copying <code>Persona.behavioral_signals</code> would make a downstream RRS
+collapse back into the precomputed heuristic — the exact defect the SME panel flagged. Test #7 guards this.</p>
+<pre><code class="language-python"># scoring/signals.py  (ported from scripts/enrich_behavioral_signals.py — keep src/ pure;
+#                      that script becomes a thin caller in a later cleanup, NOT this story)
+SIGNAL_EXTRACTOR_VERSION = &quot;signal-extractor-v1&quot;
+UNIQUENESS_WEIGHT = {&quot;none&quot;: 0.0, &quot;low&quot;: 0.15, &quot;moderate&quot;: 0.35, &quot;high&quot;: 0.65, &quot;very_high&quot;: 1.0}
+# detect_interest_topics / detect_location_signals / detect_professional_domain /
+# detect_temporal_patterns / detect_writing_style / detect_personal_anecdote — each returns
+# {&quot;present&quot;: bool, &quot;uniqueness&quot;: str, &quot;indicators&quot;: list[str]} — port the regex/keyword logic verbatim.
+def compute_signal_density(signals: dict) -&gt; float:   # 0.6*max(w_c)+0.4*mean(w_c) over the 6 categories
+def extract(text: str) -&gt; dict:                       # → the behavioral_signals block shape from `text`
+</code></pre>
+<p>Read <code>scripts/enrich_behavioral_signals.py</code> for the exact <code>detect_*</code> bodies + <code>UNIQUENESS_WEIGHT</code> +
+<code>compute_signal_density</code> to port faithfully. Do NOT <code>import</code> from <code>scripts/</code> (src must stay pure).</p>
+<h2>9. Test type tags</h2>
+<p><code>[UNIT-TEST]</code> <code>[CONTRACT-TEST]</code> <code>[PROPERTY-TEST]</code></p>
+<h2>10. Definition of Done (DoD) checklist</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <strong>TDD</strong>: RED commit precedes GREEN; the 10 tests above were committed failing first (git log shows it — <code>3b1a952</code> RED → <code>dc8cd7f</code> GREEN).</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Acceptance</strong>: Given/When/Then verified positively AND negatively (<code>test_adversary_protocol_is_runtime_checkable</code> checks isinstance both ways; <code>test_assemble_filters_to_tier3_substrate</code> covers the negative skip path).</li>
+<li>[~] <strong>CI green</strong>: <code>mypy --strict src/pii_anon_datasets/scoring</code> clean on the 3 new files (6 residual errors PRE-EXISTING, out of §8 scope); <code>ruff check</code> clean on owned files; <code>pytest</code> 114 passed, zero warnings. NOTE: repo-wide <code>ruff check .</code> has 341 pre-existing findings (none in owned files). Real-CI confirmation = AGENT_SIMULATED this pass.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Axiom slice</strong>: AX-002 — sort-based assembler (sort by <code>record_id</code>, no RNG), frozen dataclasses, deterministic <code>detect_*</code>/<code>extract</code>; pure-stdlib (<a class="trace-link" href="S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>, no numpy/scipy/pandas, no import from <code>scripts/</code>). <em>(awaits <code>axiom-compliance</code> reviewer APPROVE)</em></li>
+<li><input checked="" disabled="" type="checkbox"> <strong>De-circularization</strong>: test #7 (<code>test_target_observed_signals_reextracted_not_gold</code>) proves <code>observed_signals</code> are re-extracted from anonymized text, not gold-copied (empirically verified — see Evidence).</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Traceability</strong>: <a class="trace-link" href="#fr-010" data-trace-id="FR-010">FR-010</a> + <a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a> + reidx-01 cited in every module/class docstring; test files carry grep-able <code>fr_010</code>/<code>fr_008</code>/<code>dc_07</code>/<code>reidx_01</code> traceability markers + port tokens (<code>adversary_port</code>, <code>assemble_paired_set</code>, <code>observed_signals_reextracted</code>).</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Docs slice</strong>: docstrings on every public symbol (Persona/Target/Guess fields, Adversary Protocol, assemble_paired_set, all signals functions); module docstrings cite <a class="trace-link" href="#fr-010" data-trace-id="FR-010">FR-010</a>/<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a>/reidx-01.</li>
+<li><input disabled="" type="checkbox"> <strong>Code review</strong>: story-gate reviewer set (per §11) all APPROVE; YAML aggregated per 5-severity rule. <em>(pending orchestrator dispatch)</em></li>
+</ul>
+<h2>11. Reviewer agents to run at story gate</h2>
+<p>Per <code>developer-assistant.yaml</code> (<code>reviewers.default_set</code> + story <code>gate_overrides</code>):</p>
+<ul>
+<li><code>dev-assist-development-code-quality</code> (always)</li>
+<li><code>dev-assist-development-traceability</code> (always)</li>
+<li><code>dev-assist-development-requirements-coverage</code> (always — default_set)</li>
+<li><code>dev-assist-development-security-sast</code> (always — default_set; AX-001 no-real-PII over corpus reads)</li>
+<li><code>dev-assist-development-axiom-compliance</code> (story gate override — AX-002 determinism, <a class="trace-link" href="S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a> purity)</li>
+</ul>
+<h2>12. Evidence on completion</h2>
+<blockquote>
+<p><strong>provisional_status: AGENT_SIMULATED</strong> — executed by <code>dev-assist-development-executor</code> on
+2026-05-29 against the real repo working tree (real pytest 9.0.2 / ruff 0.15.7 / mypy 1.19.1 on
+Python 3.10.6). No real CI runner / benchmark hardware in this pass; <a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a> is AGENT_SIMULATED and
+NOT DIVERGED, so no Pass-2 commitment attaches to this story (§4).</p>
+</blockquote>
+<h3>TDD commit trail (RED → GREEN → REFACTOR)</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>SHA</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>RED</strong></td>
+<td><code>3b1a952f5f7f1cd095d6c8470b7291ec5f3e131c</code></td>
+<td>10 §6 tests committed FAILING (ModuleNotFoundError/ImportError — both modules absent). Status CLAIMED→IN_PROGRESS.</td>
+</tr>
+<tr>
+<td><strong>GREEN</strong></td>
+<td><code>dc8cd7f69dc53919c1d270be85b96b9721c65668</code></td>
+<td>Implemented §8b: <code>adversary/base.py</code> (frozen Persona/Target/Guess + <code>Adversary</code> Protocol + <code>ADVERSARY_PORT_VERSION</code>), <code>adversary/__init__.py</code> (<code>DEFAULT_CANDIDATE_SET_SIZE=2500</code> + <code>assemble_paired_set</code>), <code>signals.py</code> (faithful pure-stdlib port of <code>detect_*</code>/<code>UNIQUENESS_WEIGHT</code>/<code>compute_signal_density</code>/<code>extract</code>); exported from <code>scoring/__init__.py</code>. 11 GREEN.</td>
+</tr>
+<tr>
+<td><strong>REFACTOR</strong></td>
+<td><code>3827d897eca50ef445a03c86849a30a2fc106cc5</code></td>
+<td><code>mypy --strict</code> clean on the 3 new files (<code>SignalsBlock</code>/<code>Record</code> aliases, full type params); ruff <code>UP035</code>/import-sort fixes.</td>
+</tr>
+</tbody></table>
+<h3>Test results (real run)</h3>
+<p><code>python3 -m pytest tests/test_adversary_port.py tests/test_signals.py</code> → <strong>11 passed</strong> (≈0.13s).
+Maps to §6 #1–#10 (+ <code>test_signal_extractor_version_pinned</code>):</p>
+<pre><code>test_adversary_port.py::test_persona_target_guess_are_frozen ............ PASSED  (#1)
+test_adversary_port.py::test_guess_abstain_is_none_not_wrong ............ PASSED  (#2)
+test_adversary_port.py::test_adversary_protocol_is_runtime_checkable .... PASSED  (#3)
+test_adversary_port.py::test_assemble_paired_set_deterministic .......... PASSED  (#4)
+test_adversary_port.py::test_assemble_filters_to_tier3_substrate ........ PASSED  (#5)
+test_adversary_port.py::test_candidate_set_size_is_first_class .......... PASSED  (#6)
+test_adversary_port.py::test_target_observed_signals_reextracted_not_gold PASSED  (#7 de-circ)
+test_signals.py::test_uniqueness_weight_table_matches_source ............ PASSED  (#8)
+test_signals.py::test_compute_signal_density_golden ..................... PASSED  (#9)
+test_signals.py::test_detect_signals_pure_and_deterministic ............. PASSED  (#10)
+test_signals.py::test_signal_extractor_version_pinned ................... PASSED
+</code></pre>
+<p>Full suite (regression): <code>python3 -m pytest</code> → <strong>114 passed</strong> (103 pre-existing + 11 new; 0 regressions).</p>
+<h3>Lint / type gates</h3>
+<ul>
+<li><code>ruff check</code> on owned files (<code>signals.py</code>, <code>adversary/</code>, <code>scoring/__init__.py</code>, both tests): <strong>All checks passed!</strong></li>
+<li><code>mypy --strict src/pii_anon_datasets/scoring</code>: <strong>0 errors in the 3 new files</strong> (reduced from 21→6; the 6
+residual <code>[type-arg]</code> errors are PRE-EXISTING in <code>core.py</code>/<code>detection.py</code>/<code>reidentification.py</code> — out of
+this story&#39;s §8 owned-files scope; documented as a deviation below).</li>
+<li><code>ruff format --check</code>: NOT applied. The entire existing <code>scoring/</code> package is not <code>ruff format</code>-clean and
+the repo enforces no format gate (DoD §10 lists <code>ruff check</code> + <code>mypy --strict</code> + <code>pytest</code>, not
+<code>ruff format</code>). Reformatting only the new files would diverge from house style; a repo-wide reformat is
+out of §8 scope. Deviation noted below.</li>
+</ul>
+<h3>De-circularization guard (reidx-01, LOAD-BEARING)</h3>
+<p>Test #7 proves <code>Target.observed_signals</code> are RE-EXTRACTED from the anonymized text, never copied from gold.
+Empirically: source <code>&quot;…the T into Beacon Hill…&quot;</code> → <code>location_signals{present:True, uniqueness:high}</code>; the
+pseudonymized variant <code>&quot;…commute downtown…&quot;</code> (signal stripped) → <code>location_signals{present:False, uniqueness:none}</code>. The assembled <code>Target.observed_signals != Persona.behavioral_signals</code>, and the gold
+<code>Persona.behavioral_signals</code> retains <code>very_high</code> — the two genuinely diverge. The assembler routes the
+anonymized text through <code>signals.extract()</code>, NOT a copy of <code>tier3_evaluation.behavioral_signals</code>.</p>
+<h3>Deviations from §8b (with justification)</h3>
+<ol>
+<li><strong><code>detect_professional_domain(text, record_domain=&quot;general&quot;)</code></strong> — the source script signature is
+<code>(text, record_domain)</code>; §8b&#39;s <code>extract(text)</code> takes text only. Added a <code>&quot;general&quot;</code> default so
+<code>extract</code> is a pure function of text alone (the adversary re-extracts from anonymized text and has no
+record-domain side channel — required for Test #10 purity and reidx-01). Only the domain-gated
+SOAP/legal <em>structural</em> indicator is affected (not asserted under the default); the dominant text-based
+<code>INDUSTRY_JARGON</code> detection is byte-for-byte faithful.</li>
+<li><strong>Type aliases instead of bare <code>dict</code></strong> — §8b literally writes <code>behavioral_signals: dict</code> /
+<code>observed_signals: dict</code>. To satisfy the DoD §10 <code>mypy --strict</code> gate, introduced
+<code>SignalsBlock = dict[str, object]</code> (the JSON-shaped signals block) and <code>Record = dict[str, Any]</code>
+(a loaded corpus record). Semantically identical to §8b&#39;s intent; strict-clean.</li>
+<li><strong><code>ruff format --check</code> not applied</strong> (see Lint gates above) — informational only; no format gate exists
+and reformatting only owned files would break house-style consistency.</li>
+</ol>
+<p><em>(Reviewer verdicts appended by orchestrator-dispatched story-gate reviewer set per §11.)</em></p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>04-development/02-stories/sprint-3/S3-01.md</code> ·
+  content-hash <code>a942086196d3</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

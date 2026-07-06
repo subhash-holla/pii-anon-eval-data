@@ -1,0 +1,130 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S5-03
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S5-03-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/non-functional-requirements.md:29
+    description: |
+      NFR-013's literal threshold is CROSS-DOCUMENT — "record count, entity-type count, version
+      identical across README/TAXONOMY/DATASHEET/COMPARISON/Croissant (zero drift)" measured by a
+      cross-doc consistency check (/dev-assist-validate). S5-03 verifies only the CARD-INTERNAL
+      slice: test_nfr_013_dataset_card_counts_match_metadata (1 passing test) proves the generated
+      card's total_records (575,604) / total_annotations (2,486,438) / entity_types (63 ==
+      taxonomy.ENTITY_TYPE_COUNT) derive from packaged metadata and that the stale v1.x strings
+      "150K"/"65 "/"57 " are absent. The full README/TAXONOMY/DATASHEET/COMPARISON↔Croissant drift
+      sweep is NOT closed here. This is correct, explicit scoping — NFR-013 is listed as a SUPPORTING
+      (not primary/closed) requirement in S5-03 §3, and the story explicitly routes the full
+      cross-doc check to its named downstream blocker S5-07 (doc-drift: "the static docs must match
+      the metadata the card already pulls", §5). NFR-013 is therefore deferred-with-successor
+      (S5-07), not silently missing — no coverage gap. Logged so the sprint/epic gate confirms S5-07
+      actually lands the cross-doc sweep before NFR-013 is marked fully verified.
+    suggested_resolution: |
+      No change required at this story gate. At the S5 sprint gate, confirm S5-07 carries an
+      executable cross-document consistency check (README/TAXONOMY/DATASHEET/COMPARISON vs the
+      Croissant + card counts) so NFR-013's literal cross-doc threshold is closed by its successor.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-013
+      - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-03.md#5
+
+  - id: coverage-S5-03-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/distribution/croissant.py:263
+    description: |
+      Full mlcroissant spec-validation (validate_with_mlcroissant) is DEFERRED skip-if-absent in this
+      env: mlcroissant is confirmed absent (importlib.util.find_spec -> None). The deferral is
+      explicit AND acceptable — the binding NFR-012 threshold is met without it by two always-on
+      stand-ins that BOTH ran here: (1) the pure-stdlib validate_croissant() shape check (the
+      "validates" half — exercised inside the round-trip at test_croissant.py:177), and (2) the real
+      HF datasets round-trip (the "loads" half — test_croissant.py:184). The absent-path is itself
+      pinned by a passing CONTRACT test (test_nfr_012_full_validation_skips_without_mlcroissant)
+      asserting validate_with_mlcroissant raises a RuntimeError naming
+      "pip install pii-anon-datasets[croissant]"; the present-path branch is gated by
+      pytest.importorskip("mlcroissant") with documented manual-verification on the Pass-2 CI image
+      (§12). NFR-012's literal "validates against the spec AND loads via the HF datasets loader" is
+      satisfied executably in this env by the shape check + datasets load; full mlcommons spec
+      conformance is the strictly-stronger Pass-2 add-on, not a gap in the bound threshold.
+    suggested_resolution: |
+      No change at this story gate. The provisional_status is AGENT_SIMULATED; ensure the scheduled
+      Pass-2 CI image installs the [croissant] extra so the present-path
+      test_nfr_012_full_validation_skips_without_mlcroissant branch executes (rather than importorskip)
+      and full mlcroissant conformance is recorded as confirmed in the traceability Status Change Log.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-012
+      - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-03.md#12
+
+notes: |
+  Ask answered: are there gaps in what S5-03 has claimed? No. Every MUST in scope is either fully
+  verified by a named passing test (with run output) or explicitly deferred-with-named-successor.
+
+  Tier-1 binding requirement — NFR-012 (the literal validate-AND-load threshold): VERIFIED.
+  test_nfr_012_croissant_describes_loadable_parquet does the literal round-trip and ran (not skipped):
+    - real export_parquet(_synthetic_records(), out) writes a real Parquet (S5-02 dep present:
+      pii_anon_datasets.distribution.parquet_export.export_parquet imports);
+    - validate_croissant(jsonld) passes (the "validates" half) — croissant.py:177;
+    - datasets.load_dataset("parquet", data_files=str(out), split="train") loads 4 rows back
+      (the "loads" half) — croissant.py:184 — with ALL five reg_* columns intact
+      (reg_gdpr == "in_scope" asserted, lines 186-189);
+    - importorskip is on pyarrow/datasets (BOTH present -> it RUNS); load_dataset is NOT stubbed/
+      monkeypatched (monkeypatch appears only in the separate NFR-004 lazy-import guard test #6).
+    Run: `python3 -m pytest tests/test_croissant.py -k nfr_012 -q` -> 3 passed, 3 deselected;
+    `...::test_nfr_012_croissant_describes_loadable_parquet -rsx -q` -> 1 passed (a `.`, not an `s`).
+
+  Coverage matrix — every traced FR/NFR maps to >=1 named passing test (token-selection verified):
+    - FR-024 (primary; Croissant validates+loads + dataset card + deterministic): 4 tests, all PASS
+        `-k fr_024` -> 4 passed, 6 deselected. test_fr_024_croissant_has_required_jsonld_shape (1.0
+        @context/@type Dataset/conformsTo/non-empty distribution+recordSet);
+        test_fr_024_croissant_counts_from_metadata_cannot_drift (counts DERIVED — perturbation
+        propagates, canonical count absent on perturbed input -> determinism/AX-002);
+        test_fr_024_dataset_card_has_yaml_frontmatter (cc0-1.0 + size_categories + language list);
+        test_fr_024_dataset_card_embeds_caveats (train-vs-eval 159,891/27.8% + ~72% enrichment +
+        §7 power sentence verbatim + CC0/Apache-2.0 split). Both artifacts (Croissant + card)
+        produced + deterministic -> FR-024 surface covered.
+    - NFR-012 (primary, binding): 3 tests, all PASS (`-k nfr_012` -> 3 passed). The round-trip above
+        + test_nfr_012_croissant_declares_reg_columns (gov-02: five reg_* declared, no flattened
+        regulatory_domains, validate_croissant raises ValueError naming reg_gdpr when dropped) +
+        test_nfr_012_full_validation_skips_without_mlcroissant (skip-if-absent contract).
+    - NFR-013 (supporting; card-internal slice — full cross-doc deferred to S5-07, finding -01):
+        1 test, PASS (`-k nfr_013` -> 1 passed). test_nfr_013_dataset_card_counts_match_metadata.
+    - NFR-004 (supporting; pure-stdlib core, heavy dep behind extra + lazy guard): 2 tests, PASS
+        (`-k nfr004` -> 2 passed). test_nfr004_croissant_pure_stdlib_imports_without_mlcroissant
+        (lazy import + AST ban {random,time,uuid,datetime,secrets}) +
+        test_nfr004_dataset_card_pure_stdlib (AST ban).
+    - gov-02 (supporting; reg_* survive into Croissant): covered by
+        test_nfr_012_croissant_declares_reg_columns + enforced inside validate_croissant
+        (croissant.py:253-260) and re-checked in the round-trip's surviving HF columns.
+    - AX-002 (supporting; deterministic emit): covered transitively by
+        test_fr_024_croissant_counts_from_metadata_cannot_drift + the two NFR-004 AST guards
+        (no clock/RNG). (Deep determinism/byte-identity is axiom-compliance's lane, not coverage's.)
+    No MUST in scope is without a named passing test. No orphaned in-scope requirement.
+
+  Canonical-count integrity (drift surface): metadata entity_types = 63 == taxonomy.ENTITY_TYPE_COUNT
+  = 63 (verified live); total_records 575,604 / total_annotations 2,486,438 match the card-test
+  literals; build_dataset_card asserts the taxonomy equality at runtime (dataset_card.py:112).
+
+  Full file run: `python3 -m pytest tests/test_croissant.py tests/test_dataset_card.py -q` -> 10
+  passed (10 `.`). Matches §12's claimed 10/10 GREEN; consistent with the full-suite 233 passed / 1
+  pre-existing skip cited in §10/§12.
+
+  DIVERGED / Pass-2 cross-check: DC-12 is AGENT_SIMULATED, NOT DIVERGED (S5-03 §4) -> no
+  provisional-threshold Pass-2 commitment is REQUIRED for a DIVERGED NFR here. Separately, the
+  story's own AGENT_SIMULATED Pass-2 re-run (real-CI image; install [croissant] so the
+  present-path mlcroissant branch executes) is scheduled (§12) and tracked under finding -02 — not
+  a blocker for this story gate, but the sprint gate should confirm it lands before NFR-012 is
+  marked fully (spec-conformance) verified.
+
+  Verdict basis: zero SHOWSTOPPER / CATASTROPHIC / MAJOR. Two OBSERVATIONs (both non-blocking,
+  documenting correct explicit deferrals with named successors). APPROVE.
+
+  Out of scope for this reviewer (routed elsewhere, per dispatch): test-quality/well-writtenness
+  (code-quality); FR semantic-hold + deep AX-002 byte-identity (axiom-compliance); network-egress /
+  no-real-PII (security-sast); requirement-should-exist (SME, not per-story).
+
+review_time_seconds: 432
+
+context_bounds_respected: true

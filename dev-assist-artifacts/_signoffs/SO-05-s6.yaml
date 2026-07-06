@@ -1,0 +1,49 @@
+signoff_id: SO-05-s6
+date: 2026-05-31
+type: work-stream-close
+stage: 04-development
+scope: >
+  Sprint S6 — Leaderboard & governance (DC-13). 5 stories S6-01..S6-05, every story gate + the S6
+  sprint gate APPROVE. FR-023 (neutral leaderboard — append-only hash-chained held-out store with
+  held-out gold never stored + verify_chain; opt-in publish + anti-gaming rate-limit/rotation-epoch/
+  contamination; CoI recusal), FR-025 (contribution pipeline — CONTRIBUTING.md: PR template + CC0
+  license-compat checklist + synthetic-only provenance gate + deprecation/erratum + semver dated
+  releases), FR-026 (governance charter — gov-03 CoIRecord with non-strippable no-pre-publication
+  attestation + recusal for maintainer/pii-anon-core; GOVERNANCE.md with charter + aspirational/
+  AGENT_SIMULATED advisory roster + CoI naming pii-anon-core + honest bus-factor=1), and NFR-014
+  (governance neutrality auditable) all verified. No hosted service in v1 — the append-only
+  hash-chained store IS the governance seam.
+signer: AGENT_SIMULATED (developer-assistant); real-CI Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-0{1..5}.md
+  - src/pii_anon_datasets/leaderboard/{__init__,store,policy,coi}.py
+  - GOVERNANCE.md, CONTRIBUTING.md
+  - tests/{test_leaderboard_store,test_leaderboard_policy,test_coi,test_governance,test_contributing}.py
+  - pyproject.toml ([tool.coverage.run] source += leaderboard)
+  - dev-assist-artifacts/04-development/_reviews/story/{S6-01,S6-02,S6-03,S6-04-05}/ + _reviews/sprint/S6/
+
+decisions_acknowledged:
+  - "Held-out store is APPEND-ONLY + event-sourced (submitted/scored/published) with a sha256 content-hash chain (prev_hash links, GENESIS_HASH first); verify_chain() recomputes + detects any line mutation. It is tamper-EVIDENT, not tamper-PROOF against the log owner (honest framing)."
+  - "Held-out GOLD is NEVER stored (FR-023): append() rejects {gold,gold_labels,held_out,held_out_labels,answers,ground_truth} BEFORE any write. The store records scores + config-version + the CoI attestation (provenance) only."
+  - "Determinism (AX-002): the store uses a monotonic seq for ordering and NO clock/RNG (no time/datetime import) — a wall-clock timestamp, if any, is an optional caller payload field, never generated. Re-appending the same events yields identical hashes."
+  - "Anti-gaming (NFR-014): opt-in publish (published requires allowed AND publish_opt_in — a disallowed submission is never published) + rate-limit (per submitter per current epoch) + held-out rotation epoch (stale-epoch rejected) + contamination/duplicate (re-used submission_hash flagged), each a distinct reason; the policy is read-only over the store."
+  - "gov-03 recusal (FR-026): CoIRecord carries a non-strippable NO_PREPUB_ATTESTATION (__post_init__ rejects empty) + requires_recusal True for maintainer / any pii-anon-core affiliation (lower+strip+substring, evasion-resistant for casing/whitespace/suffix). as_dict() rides in a `submitted` store event."
+  - "Epistemic honesty (S6-04): GOVERNANCE.md flags the advisory roster ASPIRATIONAL / AGENT_SIMULATED (zero fabricated members) and states bus-factor = 1 / single maintainer plainly; every CoI/neutrality claim maps to real code (verify_chain, opt-in publish + anti-gaming policy, recusal). v1 is a governance SEAM, not a hosted service."
+  - "The two governance DOC stories (S6-04 GOVERNANCE.md / S6-05 CONTRIBUTING.md) were authored directly by the orchestrator with strict RED→GREEN (a property test pins each doc's required sections) and reviewed jointly in one combined 5-reviewer story gate (_reviews/story/S6-04-05/) for efficiency — per-story FR mapping + RED/GREEN evidence preserved."
+
+evidence:
+  - "pytest 325 passed / 1 skipped (the anthropic-absent contract skip); 0 regressions; the leaderboard package 99% line (store 97%, policy/coi/__init__ 100%) out of the gate — NO coverage-hardening needed; coverage source extended to add pii_anon_datasets.leaderboard."
+  - "All 5 story gates APPROVE (S6-01/02/03 each 5/5; combined S6-04-05 5/5); S6 sprint gate APPROVE (requirements-coverage + performance + axiom-compliance), carrying forward unanimous per-story code-quality/traceability/security-sast."
+  - "Axiom-compliance behaviorally verified: forbidden-key reject on all 6 gold keys; verify_chain clean-True / tamper-False on a 1-byte mutation; 3 anti-gaming controls fire as distinct reasons; CoIRecord rejects empty attestation; recusal True for maintainer + pii-anon-core, False for external; AST purity green on all 4 leaderboard modules."
+  - "Performance (advisory): the store's O(N^2)-over-N-appends + the policy's O(N)-per-evaluation are single-digit-ms at the intended tens/hundreds-of-submissions seam scale; no corpus hot-path leakage; pure-stdlib (no pandas/pyarrow/numpy)."
+  - "Guardrail HELD: corpus .jsonl.gz / eval_lattice.json (730 cells, frozen at 47c3a8f) / metadata.json / MANIFEST.sha256 / tags v1.3.0 + pre-lattice-enrichment ALL untouched across S6 (git diff --name-only empty for those paths); NFR-013 doc-drift still 0 (test_doc_drift green)."
+
+findings_waived_to_pass2:
+  - "All S6 work AGENT_SIMULATED — real-CI Pass-2 owed before any S6 MUST counts RELEASE-verified (no DIVERGED DC; NFR-014 is boolean/auditable, not in the R10 threshold-stress set, so no statistical Pass-2)."
+  - "A HOSTED leaderboard (append-without-full-reread, indexed submitter/epoch counts, identity-normalization for the submitter-id / recusal evasion: hyphen-drop 'piianoncore' / unicode look-alikes) is a documented v1.x hardening — out of the v1 governance-seam scope."
+  - "Top-level-only forbidden-gold-key screen (a nested {'scores':{'gold':...}} is accepted) — a recursive screen is a cheap v1.x defense-in-depth upgrade."
+  - "Optional: a .github/PULL_REQUEST_TEMPLATE.md (the PR template currently lives inline in CONTRIBUTING.md, referenced 'when present')."
+
+next: "S7 — extension seams (DC-10/14/01 v1.1): agentic PII-recognition oracle + injection payloads (FR-017); real-data correlation harness with a 'real data not present' sentinel (FR-027); coreference + quasi-id slices (FR-015/016); roadmap stub (FR-018/019/020). Then Stage 5 Testing → release-readiness verdict."

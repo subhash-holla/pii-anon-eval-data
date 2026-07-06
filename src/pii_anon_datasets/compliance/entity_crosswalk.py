@@ -1,7 +1,7 @@
 """Per-ENTITY-TYPE regulatory taxonomy crosswalk (FR-053 / DC-30).
 
 C5 — extends the cycle-1 record-tag crosswalk (``compliance.crosswalk``, FR-022 / gov-02) DOWN
-to the per-entity-type level and ADDS GLBA. Each of the canonical **63** entity types
+to the per-entity-type level and ADDS GLBA. Each of the canonical **66** entity types
 (``taxonomy.ENTITY_REGISTRY`` — derived, never a stale hand-list so it cannot drift; DC-02/M1)
 maps to a record of FIVE SEPARATE, legally-distinct regime fields:
 
@@ -49,7 +49,7 @@ REGIME_KEYS: tuple[str, ...] = (
 
 # Non-strippable proof that each flag is a SIGNAL about subject-matter, not a determination.
 CROSSWALK_DISCLAIMER: str = (
-    "This per-entity-type regulatory crosswalk maps each of the 63 canonical entity types to a "
+    "This per-entity-type regulatory crosswalk maps each of the 66 canonical entity types to a "
     "per-regime IN-SCOPE / special-category SIGNAL about the type's subject-matter (GDPR, GDPR "
     "Art-9, HIPAA PHI, CCPA, GLBA). It INFORMS but does NOT MAKE a compliance determination; the "
     "regimes are kept legally distinct with NO cross-regime equivalence (FR-053 / DC-30)."
@@ -59,18 +59,22 @@ CROSSWALK_DISCLAIMER: str = (
 # These are deliberately conservative subject-matter SIGNALS, not determinations.
 
 # GDPR Art-9 "special category" data: health / genetic / biometric-for-unique-id / racial-ethnic
-# / political opinions / religious-or-philosophical beliefs / sex life. (Trade-union membership is
-# not a corpus type.) DERIVED set, asserted ⊆ registry below.
+# / political opinions / religious-or-philosophical beliefs / sex life / trade-union membership.
+# DERIVED set, asserted ⊆ registry below.
 _ART9_SPECIAL_CATEGORY: frozenset[str] = frozenset({
     # health (medical_biological category — health-context content)
     "HEALTH_CONDITION", "HEALTH_INSURANCE_ID", "MEDICAL_RECORD_NUMBER", "MEDICATION_NAME",
     "PRESCRIPTION_NUMBER", "PROCEDURE_NAME",
     # biometric-for-unique-identification + genetic
-    "BIOMETRIC_ID",
+    "BIOMETRIC_ID", "GENETIC_DATA",
     # racial / ethnic origin
     "ETHNICITY",
     # political opinions / religious-or-philosophical beliefs
     "POLITICAL_OPINION", "RELIGIOUS_BELIEF",
+    # trade-union membership (Art. 9(2)(d))
+    "TRADE_UNION_MEMBERSHIP",
+    # sex life / sexual orientation
+    "SEXUAL_ORIENTATION",
 })
 
 # HIPAA PHI: health-context identifiers — the medical/biological category plus its insurance id.
@@ -149,7 +153,7 @@ class EntityCrosswalkBundle:
 
 
 def build_entity_crosswalk(*, generated_at: str = DEFAULT_GENERATED_AT) -> dict[str, object]:
-    """Build the per-entity-type crosswalk over EXACTLY the canonical 63 taxonomy types.
+    """Build the per-entity-type crosswalk over EXACTLY the canonical 66 taxonomy types.
 
     Returns ``{schema, version, disclaimer, provenance, entries:{type: {<5 regime keys>}}}``. The
     entries are derived from ``taxonomy.ENTITY_REGISTRY`` (never a stale list); ``generated_at`` is
@@ -158,7 +162,7 @@ def build_entity_crosswalk(*, generated_at: str = DEFAULT_GENERATED_AT) -> dict[
     entries = {etype: _entry_for(etype) for etype in sorted(CANONICAL_ENTITY_TYPES)}
     provenance = {
         "version": ENTITY_REGULATORY_CROSSWALK_VERSION,
-        "source": "taxonomy.ENTITY_REGISTRY (63 canonical types) + FR-053/DC-30 legal mapping",
+        "source": "taxonomy.ENTITY_REGISTRY (66 canonical types) + FR-053/DC-30 legal mapping",
         "generated_at": generated_at,
     }
     bundle = EntityCrosswalkBundle(

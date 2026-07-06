@@ -1,0 +1,47 @@
+signoff_id: SO-06-s7
+date: 2026-05-31
+type: work-stream-close
+stage: 04-development
+scope: >
+  Sprint S7 — Extension seams (DC-10 / DC-14 / DC-01, mostly v1.1). 5 stories S7-01..S7-05, every story
+  gate + the S7 sprint gate APPROVE. FR-017 FULLY covered (PII-recognition oracle S7-01 + injection
+  payload library S7-02). FR-027 (real-data correlation harness S7-03) + FR-015/016 (coreference +
+  quasi-id slice loaders S7-04) ship their v1 SEAMS with non-strippable honesty guards; the real-data
+  correlation + the full coref/qid scoring are SHOULD / v1.1 / PERSONA-CONDITIONAL Pass-2 items. FR-018/
+  019/020 (cross-turn fragmented leakage / transcript-residual / live-harness adapter) documented as v1.x
+  ROADMAP (S7-05 ROADMAP.md), NOT shipped. This closes the developer-assistant Development stage (S1 +
+  S2 + S-PWR + S3 + S4 + S5 + S6 + S7 all DONE).
+signer: AGENT_SIMULATED (developer-assistant); real-CI + real-data Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-0{1..5}.md
+  - src/pii_anon_datasets/scoring/adversary/{oracle,payloads}.py
+  - src/pii_anon_datasets/validation/{__init__,correlation}.py
+  - src/pii_anon_datasets/subsets/{__init__,slices}.py
+  - ROADMAP.md
+  - tests/{test_oracle,test_payloads,test_correlation,test_slices,test_roadmap}.py
+  - pyproject.toml ([tool.coverage.run] source += validation + subsets)
+  - dev-assist-artifacts/04-development/_reviews/story/{S7-01,S7-02,S7-03-04}/ + _reviews/sprint/S7/
+
+decisions_acknowledged:
+  - "FR-017 is bipartite (callable oracle API + injection-payload library) and is now FULLY covered: S7-01 ships recognize/recognize_span with a type-enforced, stress-verified-non-droppable 'never marketed as agent-leakage scoring' scope guard; S7-02 ships InjectionPayload=(obfuscated_span, carrier_template, intent_tag) with the 3 committed FAITHFUL transforms (base64 decodes back / zero_width strips U+200B back / ocr fixed homoglyph map) as INERT synthetic fixtures (benign carriers, no weaponized content, non-strippable inertness disclaimer)."
+  - "FR-027 (DC-14) is a v1.1 SEAM: correlation.py computes Kendall-tau / Spearman + seeded bootstrap CI + Bland-Altman, BUT real i2b2-2014/TAB data is ABSENT, so correlate() returns a RealDataAbsent SENTINEL (available=False) and NEVER fabricates a correlation — the short-circuit precedes any result construction (non-bypassable). The synthetic->real transfer delta is the binding Stage-5 Pass-2 item."
+  - "FR-015/016 (DC-01) are v1.1 SEAMS: subsets/slices.py ships coreference_slice (non-empty entity_tracking.coreference_chains) + quasi_identifier_slice (>= min_qids privacy_risk.quasi_identifiers) loaders with a non-strippable ~72%-formulaic v1.1 low-power caveat; the actual chain-as-a-unit / quasi-id-combination SCORING is v1.1/Pass-2."
+  - "FR-018/019/020 are documented as v1.x ROADMAP (S7-05), explicitly NOT implemented in v1; ROADMAP.md anchors them to the v1 oracle/payload seams and states the honest 'never agent-leakage scoring' + 'synthetic != external validity' framing."
+  - "Determinism (AX-002 / NFR-004): correlation's bootstrap uses a LOCAL random.Random(seed) only (no module-global RNG; AST-guarded; mirrors stats/paired.py); same seed -> byte-identical CIs; oracle/payloads/slices are clock/RNG-free pure-stdlib."
+  - "S7-03 + S7-04 executors ran CONCURRENTLY on disjoint dirs (validation/ vs subsets/) — interleaved RED/GREEN/REFACTOR commits, no file conflict, each diff scoped to its owned files; both deferred the pyproject coverage-source edit to this sprint close (now landed)."
+
+evidence:
+  - "pytest 346 passed / 1 skipped (the anthropic-absent contract skip); 0 regressions; every new S7 module >=85% line (oracle 94%, payloads 98%, slices 97%, correlation 94%) out of the gate — NO coverage-hardening needed; coverage source extended (validation + subsets); overall TOTAL 94% line."
+  - "All S7 story gates APPROVE (S7-01 5/5; S7-02 5/5; combined S7-03-04 5/5); S7 sprint gate APPROVE (requirements-coverage + performance + axiom-compliance), carrying forward unanimous per-story code-quality/traceability/security-sast."
+  - "Axiom-compliance verified at ground truth: 5/5 scope-honesty disclaimers non-strippable (__post_init__ empty guards / doc-pinned); an independent weaponization regex over all S7 artifacts returned ZERO matches; AST purity green on all 4 modules; correlation RealDataAbsent never-fabricate confirmed non-bypassable."
+  - "Performance (advisory): slices/oracle/payloads O(n)/O(1); the Kendall-tau bootstrap is O(n^2 * n_boot) — sub-second to a few seconds at the intended dozens-hundreds validation-slice scale; no 575K corpus hot-path leakage."
+  - "Guardrail HELD: the full S7 diff is NEW/additive only; corpus .jsonl.gz / eval_lattice.json (730 cells, frozen at 47c3a8f) / tags v1.3.0 + pre-lattice-enrichment NOT in the diff; NFR-013 doc-drift still 0 (test_doc_drift green)."
+
+findings_waived_to_pass2:
+  - "Stage-5 release-gate Pass-2 roster (binding external-validity items): FR-027 synthetic->real transfer delta (real i2b2-2014/TAB correlation); FR-015/016 coreference/quasi-id FULL scoring. The v1 seams ship; the real-data/full-feature work is Pass-2. The traceability-matrix keeps FR-015/016/027 PERSONA-CONDITIONAL / Pass-2."
+  - "All S7 work AGENT_SIMULATED — real-CI Pass-2 owed before any S7 item counts RELEASE-verified."
+  - "v1.x niceties (non-blocking): a multilingual-carrier test (build_payloads defaults to English); a faster Kendall-tau / sub-sampling for large-n bootstrap; a single-source constant for the synthetic!=external-validity caveat (currently duplicated byte-consistent across 3 modules + ROADMAP)."
+
+next: "Stage 5 Testing (/dev-assist-testing — 6 waves T1-T6 -> SHIP / SHIP-WITH-CAVEATS / DEFER release-readiness verdict). T4 a11y = SKIP/N-A (no UI). T5 Pass-2 roster = FR-027 synthetic->real transfer delta + the design-never-real-user-trialed (R10 10-persona simulated) + the ~72% formulaic-template monoculture — non-strippable caveats, NEVER fabricated. Expected verdict: SHIP-WITH-CAVEATS."

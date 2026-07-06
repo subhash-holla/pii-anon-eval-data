@@ -92,12 +92,44 @@ def render_baseline_leaderboard(results: Any) -> str:
         parts.append("_Not run (detector library or credentials unavailable): " + ", ".join(unavailable) + "._\n")
 
     parts.append(f"> {data.get('span_matching_disclosure', '')}\n")
+    # Denominator tracks the corpus the run scored against (the canonical taxonomy has grown over time,
+    # 63 -> 66), so read it from the data rather than hard-coding a stale literal.
+    of_total = max((d.get("coverage", {}).get("of_total", 0)
+                    for d in data.get("detectors", {}).values()), default=0)
     parts.append(
-        "Coverage = the count of canonical PII types reachable through a detector's native→63-type label "
-        f"map (its projection ceiling). Matching policy: `{data.get('matching_policy', '')}`. Precision is "
-        "shown beside recall so the false-positive tax of recall-weighted (F2) ranking stays visible.\n"
+        f"Coverage = the count of canonical PII types reachable through a detector's native→{of_total}-type "
+        f"label map (its projection ceiling). Matching policy: `{data.get('matching_policy', '')}`. Precision "
+        "is shown beside recall so the false-positive tax of recall-weighted (F2) ranking stays visible.\n"
     )
     return "\n".join(parts)
+
+
+def render_cost_table(data: dict, cost_per_detector: dict) -> str:
+    """Cost-normalized companion: rank, detector, F2, $/1k records, cost per F2-point.
+
+    Local detectors are 'free'; cloud detectors carry the June-2026 list-price estimate (×2 safety,
+    CLOUD_DLP_COST.md). This is a SECOND lens beside the F2 ranking, not a re-ranking.
+    """
+    out = [
+        "| Rank | Detector | F2 | $/1k records | Cost per F2-point |",
+        "|---|---|---:|---:|---:|",
+    ]
+    for row in data.get("ranking", []):
+        name = row["detector"]
+        f2 = float(data["detectors"][name]["micro"]["f2"])
+        info = cost_per_detector.get(name) or {}
+        per_1k = info.get("usd_per_1k")
+        if per_1k is None:
+            cost_s, cpf = "n/a", "n/a"
+        elif float(per_1k) == 0.0:
+            # A cloud provider at $0 is FREE-TIER (under the provider's quota at this corpus size),
+            # NOT free like an on-host local model — keep the distinction honest.
+            cost_s = cpf = "free-tier*" if info.get("cloud") else "free"
+        else:
+            cost_s = f"${float(per_1k):.4f}"
+            cpf = f"${float(per_1k) / f2:.4f}" if f2 > 0 else "n/a"
+        out.append(f"| {row['rank']} | {name} | {f2:.3f} | {cost_s} | {cpf} |")
+    return "\n".join(out) + "\n"
 
 
 def _require_matplotlib() -> Any:

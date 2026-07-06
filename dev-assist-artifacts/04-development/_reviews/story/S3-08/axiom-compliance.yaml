@@ -1,0 +1,152 @@
+# Axiom-compliance review — STORY gate S3-08 (iteration 1)
+schema_version: 1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S3-08
+iteration: 1
+reviewed_at: "2026-05-29"
+branch: feat/v2-scoring-harness
+mode: read-only
+verdict: APPROVE
+summary: >
+  S3-08 is the S3 integration closer for the two load-bearing axioms and the
+  S-PWR FROZEN-lattice guardrail. All four axiom obligations are upheld and
+  independently verified. AX-pii-anon-004 / NFR-005 (anon + pseudo never merged)
+  is now genuinely checkable ACROSS both modules: tests #6/#7 are AST + live-
+  introspection anchored (not naive substring greps), confirm anonymization.py
+  (ParetoPoint: residual_risk + utility, no __float__) and pseudonymization.py
+  (PseudonymizationReport: two SEPARATE collision ints, explicitly no
+  total_collisions) define no merged-metric public symbol, neither imports the
+  other's result type, and scoring.__all__ exposes no fused de-id/combined/
+  overall callable. AX-pii-anon-003 / NFR-018: the re-id ladder is DERIVED from
+  the NIST closed form (reid_required_n(0.30,0.030)==897, (0.10,0.030)==385 —
+  independently recomputed; REID_TIER_SPECS round-trips via test #2, never hand-
+  typed) and ReidProvenance carries |C| (candidate_set_size), the re-id tier, and
+  a NON-STRIPPABLE caveat reusing the canonical FR-009 ANTI_ANONYMITY_CAVEAT
+  (rejected empty by __post_init__; serialized by as_dict; attaches to
+  MeasuredRRS + rides score_reidentification). S-PWR guardrail (CRITICAL):
+  confirmed via git diff that eval_lattice.json / lattice_freq_snapshot.json /
+  corpus are UNTOUCHED across all 3 story commits; build_committed_lattice /
+  write_lattice are not called; the reid seam is code-only; regression guard
+  test #5 pins cell_count == len(cells) == 730 (verified against the live file).
+  AX-pii-anon-002 / NFR-004: the seam is additive — detection Tier / required_n /
+  TIER_SPECS / PowerMatrix / CellAudit / audit_crossing blocks are byte-identical
+  before vs after (verified by per-anchor byte-compare; the one initial
+  CHANGED flag was a false positive from a fixed-window heuristic — target_for_tier
+  is byte-identical). The lazy default_factory import-cycle fix is SOUND: stats
+  imports no scoring symbol at module-load time (leaf subsystem preserved), the
+  caveat resolves to the canonical constant at construction, and non-strippability
+  is independently enforced by the __post_init__ guard. Pure-stdlib. Owned tests
+  7/7 green; full suite exit 0 (167 passed, 1 pre-existing skip, 0 regressions).
+  Zero MAJOR+ findings.
+
+context_bounds_respected: true
+
+axioms_in_scope:
+  - id: AX-pii-anon-004
+    name: anonymization-pseudonymization-separation
+    traced_to: [NFR-005, AX-004]
+    status: upheld
+    evidence: >
+      tests/test_nfr005_separation.py #6/#7. _defined_names() walks the AST and
+      ignores docstring/comment/string-literal prose, so the deliberate disclaimer
+      mentions of 'combined'/'deid'/'total_collisions' (present in both module
+      docstrings) do NOT trip the audit while a DEFINED public symbol would. Teeth
+      confirmed: checks (a) definition-anchored source grep of BOTH module sources,
+      (b) live module namespaces (catches re-export), (c) absence of __float__ and
+      forbidden attributes on ParetoPoint + PseudonymizationReport, (d) the two
+      collision integers stay separate with 'total_collisions' NOT in the
+      dataclass fields, (e) scoring.__all__ exports no fused-named symbol and the
+      two family entry points return DISTINCT result types (anon_ret != pseudo_ret).
+      Independently re-ran: scoring.__all__ fused-named exports == NONE;
+      score_anonymization + score_pseudonymization both present. Cross-module
+      no-merge is now genuinely enforceable because S3-06 + S3-07 both exist.
+  - id: AX-pii-anon-003
+    name: stated-statistical-power
+    traced_to: [NFR-018]
+    status: upheld
+    evidence: >
+      reid_required_n routes through the same required_n / _z closed form (one
+      z-table, two semantic entry points). Independently recomputed via
+      statistics.NormalDist inv_cdf: (0.30,0.030)->897 and (0.10,0.030)->385 —
+      exact match; detection ladder also reproduces 1522/753/200. REID_TIER_SPECS
+      targets are DERIVED (target_n_pairs == reid_required_n(spec.p_ref,
+      spec.half_width) for every tier — test #2 round-trip; the 897/385 in trailing
+      comments are documentation only, not literals baked into the table).
+      ReidProvenance records candidate_set_size (|C|), reid_tier, adversary_id
+      (reidx-01), powered == (observed_pairs >= target_n_pairs), and a caveat that
+      __post_init__ rejects when blank and as_dict always serializes.
+  - id: AX-pii-anon-002
+    name: deterministic-reproducible-generation
+    traced_to: [NFR-004]
+    status: upheld
+    evidence: >
+      Pure-stdlib (only dataclasses.field added; the FR-009 caveat is a lazy intra-
+      package import inside a default_factory — no third-party dependency). Detection
+      Tier / required_n / TIER_SPECS / target_for_tier / PowerMatrix / CellAudit /
+      audit_crossing / projected_* / required_discordant_pairs /
+      paired_vs_independent_ratio / classify / default_tier_of verified byte-identical
+      before vs after the story (per-anchor byte-compare against d9bcecb~1). The reid
+      seam is strictly additive. No unseeded random/uuid/time enters record content.
+  - id: AX-pii-anon-001
+    name: synthetic-only-no-real-pii
+    traced_to: []
+    status: upheld
+    evidence: >
+      Not a primary axiom for this code-only stats/test seam, but scanned the 4
+      owned files for real-PII heuristics (SSN-shaped, Luhn/card-shaped, real-email):
+      NONE. Test fixtures use synthetic identifiers (adversary_id
+      'offline-deterministic-v1') and small synthetic integers only.
+
+guardrails:
+  - id: S-PWR-frozen-lattice
+    status: upheld
+    evidence: >
+      CRITICAL guardrail. git diff --name-only d9bcecb~1..HEAD shows the only code
+      touched is stats/power.py, stats/__init__.py, tests/test_reid_power.py,
+      tests/test_nfr005_separation.py (remaining diff entries are S3-03 review
+      artifacts that landed on-branch, plus the S3-08 story file itself — no source
+      overlap). eval_lattice.json, lattice_freq_snapshot.json, and the corpus are
+      UNTOUCHED. No call to build_committed_lattice / write_lattice. Regression guard
+      test #5 (test_nfr_018_seam_does_not_mutate_frozen_lattice) pins
+      cell_count == len(cells) == 730; verified against the live file (730/730).
+
+findings: []
+
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+  total: 0
+
+verification_performed:
+  - "Read project-axioms.yaml (AX-pii-anon-001..004) + S3-08 story (§8b authoritative)."
+  - "Read all 4 owned files: stats/power.py, stats/__init__.py, tests/test_reid_power.py, tests/test_nfr005_separation.py."
+  - "Independently recomputed NIST sizing (NormalDist inv_cdf): reid 897/385 + detection 1522/753/200 — exact match."
+  - "git diff --name-only d9bcecb~1..HEAD — confirmed lattice/snapshot/corpus untouched; no build_committed_lattice/write_lattice."
+  - "Per-anchor byte-compare of detection symbols before(d9bcecb~1) vs after — all byte-identical (target_for_tier false-positive cleared)."
+  - "Live verification: ReidProvenance default caveat == canonical ANTI_ANONYMITY_CAVEAT (len 220); empty caveat raises ValueError; as_dict serializes it."
+  - "AST check: stats.power has NO module-load scoring import (leaf subsystem preserved); the caveat import is lazy inside _anti_anonymity_caveat()."
+  - "Confirmed upstream surface: MeasuredRRS.reid_provenance field + as_dict threading; score_reidentification(reid_provenance=...) passthrough."
+  - "Confirmed anon (ParetoPoint residual_risk+utility, no PseudonymizationReport) + pseudo (PseudonymizationReport two separate collision ints, no total_collisions/ParetoPoint) module shapes."
+  - "Ran owned tests (7 passed) + full suite (exit 0, 1 skip = pre-existing anthropic optional skip, 0 regressions)."
+  - "Scanned owned files for real-PII heuristics — none."
+
+out_of_scope:
+  - "Numerical correctness of the McNemar / Wilson math beyond the NIST sizing pin (requirements-coverage / traceability)."
+  - "Pre-existing ruff (UP035 / E702 in pragma-no-cover heatmap) and mypy [type-arg] baseline on power.py (code-quality; not introduced by this story)."
+  - "Whether re-id scores are CORRECT at runtime (executor / traceability)."
+
+self_attestation:
+  independent: true
+  no_collusion_with_executor: true
+  read_only_respected: true
+  statement: >
+    This review was produced independently from the executor's self-report. Every
+    load-bearing claim (the 897/385 NIST numbers, the frozen-lattice 730 cell count,
+    the byte-preservation of detection symbols, the lazy import-cycle break, the
+    non-strippable canonical caveat, and the cross-module no-merge) was re-derived
+    or re-executed against the repository rather than accepted from the story's
+    Evidence section. No files were modified.

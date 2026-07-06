@@ -5,8 +5,8 @@ contain exactly one positive annotation of a requested ``entity_type`` in a requ
 (language, domain, difficulty, adversarial-type) cell — so ``records_to_generate(cell) ==
 deficit(cell)`` (no generate-and-pray).
 
-``EMITTERS`` covers ALL 63 canonical types (reusing ``PIIFactory`` for the 35 it already
-emits; local emitters for the 28 gaps), validated complete against the canonical registry at
+``EMITTERS`` covers ALL canonical types (reusing ``PIIFactory`` for the 35 it already
+emits; local emitters for the remaining gaps), validated complete against the canonical registry at
 import (fail-loud — AX-001: never scrape real data to fill a gap). Adversarial cells apply a
 FAITHFUL value-level obfuscation (the target value is genuinely transformed, offsets stay
 valid), so an enrichment adversarial record is a real attack, not a bare tag.
@@ -117,6 +117,16 @@ _RELIGION = ["Christian", "Muslim", "Jewish", "Hindu", "Buddhist", "Atheist", "A
 _VEHICLES = ["Toyota Camry", "Honda Civic", "Ford F-150", "Tesla Model 3", "BMW X5", "Subaru Outback"]
 _TLDS = ["com", "org", "net", "io", "co.uk"]
 _VIN_CHARS = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789"  # no I,O,Q per VIN spec
+_SEXUAL_ORIENTATION = ["heterosexual", "gay", "lesbian", "bisexual", "asexual", "pansexual", "queer"]
+_TRADE_UNION = [
+    "Unite the Union", "SEIU Local 1000", "IG Metall", "CGT", "UAW Local 600",
+    "Teamsters Local 25", "NUT member", "Verdi", "AFL-CIO affiliate", "RMT union member",
+]
+_GENETIC_DATA = [
+    "BRCA1 c.68_69delAG pathogenic variant", "APOE ε4/ε4 genotype", "HLA-B*57:01 positive",
+    "CFTR ΔF508 homozygous", "MTHFR C677T heterozygous", "Factor V Leiden carrier",
+    "23-marker STR profile", "HTT CAG-repeat expansion (42)", "rs53576 GG genotype",
+]
 
 
 def _h(rng: random.Random, n: int) -> str:
@@ -155,10 +165,13 @@ _LOCAL_EMITTERS: dict[str, Callable[[PIIFactory], PIIValue]] = {
     "NPI_NUMBER": lambda f: _pv("NPI_NUMBER", "".join(str(f.rng.randint(0, 9)) for _ in range(10)), "direct_identifier"),
     "PRESCRIPTION_NUMBER": lambda f: _pv("PRESCRIPTION_NUMBER", "RX-" + "".join(str(f.rng.randint(0, 9)) for _ in range(8)), "direct_identifier"),
     # special_category
+    "GENETIC_DATA": lambda f: _pv("GENETIC_DATA", f.rng.choice(_GENETIC_DATA), "sensitive_attribute"),
     "HOUSEHOLD_SIZE": lambda f: _pv("HOUSEHOLD_SIZE", str(f.rng.randint(1, 8)), "sensitive_attribute"),
     "MARITAL_STATUS": lambda f: _pv("MARITAL_STATUS", f.rng.choice(_MARITAL), "sensitive_attribute"),
     "POLITICAL_OPINION": lambda f: _pv("POLITICAL_OPINION", f.rng.choice(_POLITICAL), "sensitive_attribute"),
     "RELIGIOUS_BELIEF": lambda f: _pv("RELIGIOUS_BELIEF", f.rng.choice(_RELIGION), "sensitive_attribute"),
+    "SEXUAL_ORIENTATION": lambda f: _pv("SEXUAL_ORIENTATION", f.rng.choice(_SEXUAL_ORIENTATION), "sensitive_attribute"),
+    "TRADE_UNION_MEMBERSHIP": lambda f: _pv("TRADE_UNION_MEMBERSHIP", f.rng.choice(_TRADE_UNION), "sensitive_attribute"),
     "VEHICLE_MODEL": lambda f: _pv("VEHICLE_MODEL", f.rng.choice(_VEHICLES), "quasi_identifier"),
 }
 
@@ -196,7 +209,7 @@ def _validate_emitters_complete() -> None:
     extra = set(EMITTERS) - taxonomy.CANONICAL_ENTITY_TYPES
     if missing or extra:
         raise RuntimeError(
-            f"EMITTERS must cover EXACTLY the 63 canonical types (AX-001 fail-loud). "
+            f"EMITTERS must cover EXACTLY the {len(taxonomy.CANONICAL_ENTITY_TYPES)} canonical types (AX-001 fail-loud). "
             f"missing={sorted(missing)} extra={sorted(extra)}"
         )
 

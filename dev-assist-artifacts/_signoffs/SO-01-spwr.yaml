@@ -1,0 +1,42 @@
+signoff_id: SO-01-spwr
+date: 2026-05-29
+type: work-stream-close
+stage: 04-development
+scope: >
+  S-PWR statistical-power & sampling-design work-stream — Requirements amendment
+  (NFR-001/003/018, FR-029, AX-003 extension), Design note (sampling-design.md),
+  and Development sprint S-PWR (P1–P7: power.py, lattice.py, lattice_targeting.py,
+  lattice_audit.py, generate_lattice_fill.py, write_manifest.py, validate.py power gate,
+  DesignProvenance + reporting/power_table.py) + Full-Broad committed-lattice enrichment.
+signer: AGENT_SIMULATED (developer-assistant); real-user Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/03-design/sampling-design.md
+  - src/pii_anon_datasets/data/eval_lattice.json (730 committed cells)
+  - src/pii_anon_datasets/data/lattice_freq_snapshot.json (pinned design-time freqs)
+  - src/pii_anon_datasets/data/MANIFEST.sha256 (28 files; v1.3.0 commit 19ce769)
+  - src/pii_anon_datasets/data/enrichment-report.json
+
+decisions_acknowledged:
+  - "domain×track committed for BOTH readings (evaluation-family + adversarial-track)."
+  - "2-way ambition = Broad; enrichment magnitude (Full Broad, ×3.60) approved at the dry-run checkpoint."
+  - "Tier targets 1,522 / 753 / 200 DERIVED from NIST proportion sizing; R10 10-persona ACCEPTED-WITH-CAVEATS (numbers locked, 0 REVISE)."
+  - "Committed-cell power gate (NFR-018) is a corpus-power floor (count-based, non-flaky), distinct from the FR-002 detector A/B McNemar regression gate."
+
+evidence:
+  - "pytest 103 passed; coverage 95% line on scoring+stats (NFR-016)."
+  - "validate.py → 0 errors; NFR-018 gate PASS (710/710 committed cells powered)."
+  - "Power matrix BEFORE: 251 well / 200 under / 259 empty, shortfall 424,144, verdict SMALL."
+  - "Power matrix AFTER: 710 well / 0 under / 0 empty, shortfall 0, verdict LARGE."
+  - "Corpus 159,891 → 575,604 records / 1,239,637 → 2,486,438 annotations."
+  - "Determinism verified (re-fill identical record_ids); lattice + manifest anti-drift OK; v1.3.0 tag intact."
+  - "Cross-artifact validation APPROVE (00-validation/validation-report-2026-05-29-1200.md)."
+
+findings_waived_to_pass2:
+  - "Enrichment records are formulaic (~72% of corpus); template diversity is a follow-on."
+  - "Domain distribution skews to 'general'; committed domain cells are individually powered."
+  - "Synthetic-cell power ≠ external validity (non-strippable caveat; real-data slice FR-027)."
+  - "adv×type committed to 3 reliably-faithful transforms; effective near-dup counts a reserved seam (reidx-04)."
+
+next: "Resume scorer sprints S3–S7 → Stage 5 Testing → deferred doc-drift."

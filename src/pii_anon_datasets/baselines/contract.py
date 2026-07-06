@@ -4,7 +4,7 @@ This is the seam that lets the pure-stdlib orchestrator drive any detector — l
 (presidio/spacy/gliner/piiranha/scrubadub/stanza/flair) or cloud — without importing a single detector
 library at module-load time (NFR-050). An adapter:
 
-  * declares a ``label_map`` (native label -> canonical-63 type, or ``None`` == intentional drop),
+  * declares a ``label_map`` (native label -> canonical type, or ``None`` == intentional drop),
   * probes ``available()`` WITHOUT importing its heavy library (use ``importlib.util.find_spec``),
   * lazily ``build()``s its model/engine (the heavy import happens HERE only),
   * ``detect()``s on one record's text and returns :class:`AdapterSpan`\\ s,
@@ -46,7 +46,7 @@ class DetectorAdapter(Protocol):
     adapter need not import this module).
 
     ``available()`` MUST NOT import the heavy library (probe with ``importlib.util.find_spec``); the heavy
-    import happens only inside ``build()`` (NFR-050). ``map_label`` returns a canonical-63 type or ``None``
+    import happens only inside ``build()`` (NFR-050). ``map_label`` returns a canonical type or ``None``
     (drop); ``detect`` returns only mapped, canonical spans.
     """
 
@@ -68,7 +68,7 @@ class DetectorAdapter(Protocol):
 def to_scoring_spans(spans: Iterable[AdapterSpan]) -> list[Span]:
     """Convert adapter spans to the scorer's canonical :class:`Span`\\ s — the SINGLE convert seam.
 
-    Drops the debug ``text``; validates every type against the canonical 63 and FAILS LOUD on a
+    Drops the debug ``text``; validates every type against the canonical taxonomy and FAILS LOUD on a
     non-canonical type (DX-02 — an adapter must map or drop, never leak an unknown label).
     """
     out: list[Span] = []
@@ -76,14 +76,15 @@ def to_scoring_spans(spans: Iterable[AdapterSpan]) -> list[Span]:
         if s.entity_type not in taxonomy.CANONICAL_ENTITY_TYPES:
             raise ValueError(
                 f"non-canonical entity_type {s.entity_type!r} reached the scorer "
-                "(adapters must map to one of the 63 canonical types or drop the span; DX-02)"
+                f"(adapters must map to one of the {taxonomy.ENTITY_TYPE_COUNT} canonical types "
+                "or drop the span; DX-02)"
             )
         out.append(Span(start=s.start, end=s.end, entity_type=s.entity_type))
     return out
 
 
 def coverage_of(label_map: Mapping[str, str | None]) -> int:
-    """The number of DISTINCT canonical-63 types a label map can reach (``None`` values are drops)."""
+    """The number of DISTINCT canonical types a label map can reach (``None`` values are drops)."""
     return len(_reachable(label_map))
 
 
@@ -102,5 +103,5 @@ def lossiness(label_map: Mapping[str, str | None]) -> dict:
 
 
 def _reachable(label_map: Mapping[str, str | None]) -> set[str]:
-    """The set of canonical-63 types a label map maps onto (ignores ``None`` drops + stray non-canonical)."""
+    """The set of canonical types a label map maps onto (ignores ``None`` drops + stray non-canonical)."""
     return {v for v in label_map.values() if v is not None and v in taxonomy.CANONICAL_ENTITY_TYPES}

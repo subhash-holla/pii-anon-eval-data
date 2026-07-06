@@ -1,0 +1,146 @@
+# Axiom-compliance review — STORY gate S3-05 (iteration 1)
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S3-05
+iteration: 1
+verdict: APPROVE
+mode: read-only
+timestamp: 2026-05-29
+
+scope:
+  story: dev-assist-artifacts/04-development/02-stories/sprint-3/S3-05.md
+  axiom_registry: dev-assist-artifacts/00-axioms/project-axioms.yaml
+  owned_files:
+    # NOTE: story §8 places these under src/pii_anon_datasets/scoring/ (not top-level scoring/).
+    - src/pii_anon_datasets/scoring/reidentification.py   # appended (FR-008 block)
+    - src/pii_anon_datasets/scoring/__init__.py           # appended exports
+    - tests/test_exposure_index.py                        # new
+  domain_packs_active: []        # developer-assistant.yaml -> none; base catalog only, no pack-extension merge
+  axioms_triggered: [AX-pii-anon-001, AX-pii-anon-002, FR-008-epistemic-honesty, NFR-004]
+
+context_bounds_respected: true
+
+axiom_findings: []   # zero MAJOR or above; zero of any severity
+
+axioms_verified:
+
+  - axiom: AX-pii-anon-002
+    name: deterministic-reproducible-generation
+    label_in_story: AX-002 determinism
+    status: UPHELD
+    evidence: >
+      exposure_index + correlate_index_vs_rrs are pure functions of their inputs — no RNG,
+      no clock, no I/O. Independent AST parse of reidentification.py imports ONLY
+      {__future__, collections, dataclasses, math, adversary, stats} — the banned set
+      {random,time,uuid,datetime,secrets} (extended in-test with numpy/scipy/pandas) is
+      disjoint (verified out-of-band, not just via the in-repo test). Live determinism
+      check: 5 repeated exposure_index() calls byte-identical (value=0.7333); 5 repeated
+      correlate_index_vs_rrs() calls identical (spearman_rho==1.0 on the monotone set).
+      Pearson/Spearman are stdlib-by-hand (covariance/stddev; Pearson-on-fractional-ranks).
+    test_present: true
+    test: tests/test_exposure_index.py::test_fr_008_nfr004_exposure_imports_no_nondeterminism  # PASS
+
+  - axiom: NFR-004
+    name: purity-stdlib-only
+    status: UPHELD
+    evidence: >
+      stdlib only — no numpy/scipy/pandas anywhere on the path. _pearson_r and _rank are
+      hand-rolled (math + comprehensions). The S3-01 signals module is reused
+      (`from . import signals`; value = signals.compute_signal_density; per_signal weights =
+      signals.UNIQUENESS_WEIGHT) rather than re-implemented. signals.py is itself import-pure
+      (imports only {__future__, re, statistics}). The AST guard additionally bans the
+      third-party numeric stack and holds.
+    test_present: true
+    test: tests/test_exposure_index.py::test_fr_008_nfr004_exposure_imports_no_nondeterminism  # PASS
+
+  - axiom: FR-008-epistemic-honesty
+    name: exposure-index-is-PRIOR-not-RRS (de-circularization honesty guarantee)
+    status: UPHELD
+    severity_if_violated: SHOWSTOPPER
+    evidence: >
+      The structural honesty guarantee holds on all four limbs, verified live:
+      (1) DISTINCT TYPE — ExposureIndex is not a MeasuredRRS and not an RRSResult
+      (isinstance False for both); dataclasses.fields carries NO rrs/reid_recall/reid_precision
+      and hasattr is False for each — the heuristic is structurally uncitable as a re-id result.
+      (2) NON-EMPTY VALIDATED NOTE — note is the module-level EXPOSURE_INDEX_NOTE, contains the
+      literal "NOT measured RRS" and "prior"; __post_init__ raises on an empty note; as_dict()
+      always serializes the note so the disclaimer travels with the number (mirrors the FR-009
+      caveat discipline on RRSResult).
+      (3) TRANSPARENT RECOMPUTE — value == signals.compute_signal_density(block) to 1e-9
+      (=0.7333), computed from the per-category uniqueness annotations (0.6*peak+0.4*mean),
+      NOT read from any precomputed scalar.
+      (4) POISON TEST PASSES — injecting a lying behavioral_signal_density=0.123456 (and
+      reidentification_contribution="low") into the block is IGNORED; the recomputed value
+      stays 0.7333. correlate_index_vs_rrs is the EVIDENCE limb (Pearson+Spearman; n=0 and
+      zero-variance -> nan, never raised).
+    tests_present: true
+    tests:
+      - tests/test_exposure_index.py::test_fr_008_exposure_index_is_prior_not_rrs            # PASS
+      - tests/test_exposure_index.py::test_fr_008_exposure_index_recomputes_density_transparently  # PASS (poison)
+      - tests/test_exposure_index.py::test_fr_008_exposure_index_per_signal_transparent      # PASS
+      - tests/test_exposure_index.py::test_fr_008_correlation_pearson_and_spearman           # PASS
+      - tests/test_exposure_index.py::test_fr_008_correlation_n_zero_graceful                # PASS
+
+  - axiom: AX-pii-anon-001
+    name: synthetic-only-no-real-pii
+    status: UPHELD
+    evidence: >
+      The only new corpus-adjacent artifact is the test fixture FIXED_SIGNALS_BLOCK, which
+      contains ONLY synthetic category labels and lexical indicator tokens
+      (industry_jargon:medical:3, topic:fitness:1, rich_vocabulary) plus uniqueness enums.
+      Pattern scan for real-PII shapes (SSN / 16-digit card / email / phone) over
+      tests/test_exposure_index.py: ZERO matches. No natural-person identifiers introduced.
+    test_present: false   # invariant satisfied by construction; covered by sast hook at corpus scope
+
+append_only_preservation:
+  status: VERIFIED
+  method: git diff 2fda0ef~1..HEAD (and 379f086..HEAD for __init__)
+  reidentification_py:
+    existing_symbols_byte_preserved: true
+    note: >
+      Diff shows ZERO removed/modified lines in the pre-existing region. Only changes are
+      two import additions (import math; from . import signals) + a wholly-appended FR-008
+      block after the original line 178. ANTI_ANONYMITY_CAVEAT, RRSResult (incl. from_attack,
+      as_dict, __post_init__), MeasuredRRS, and score_reidentification bodies are untouched.
+  init_py:
+    existing_exports_preserved: true
+    note: zero exports removed; new symbols added to imports + __all__ only.
+  signals_py:
+    touched: false   # S3-01 dependency reused, not edited
+  behavioral_proof:
+    existing_rrs_contract_tests: tests/test_reidentification_measured.py  # 9 passed (unchanged)
+
+verification_log:
+  - check: AST purity/determinism guard (independent re-parse)
+    result: "imports {__future__,collections,dataclasses,math,adversary,stats}; banned-hit NONE"
+  - check: FR-008 story tests
+    result: "6 passed (tests/test_exposure_index.py)"
+  - check: existing RRS contract tests (append-only behavioral)
+    result: "9 passed (tests/test_reidentification_measured.py)"
+  - check: live FR-008 epistemic + AX-002 determinism (out-of-band script)
+    result: "distinct-type OK; note OK; recompute==density OK; poison ignored OK; 5x determinism OK; n=0 graceful OK"
+  - check: signals.py import purity
+    result: "imports {__future__,re,statistics}; banned-hit NONE"
+  - check: AX-001 fixture real-PII scan
+    result: "NONE (only synthetic category labels + lexical tokens)"
+  - check: full suite
+    result: "156 passed (150 prior + 6 new, 0 regressions)"
+
+severity_summary:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+
+decision_rule: "APPROVE iff zero MAJOR+. Result: 0 findings at any severity."
+
+self_attestation:
+  independent: true
+  statement: >
+    Reviewed solely against the project axiom registry and the FR-008 epistemic-honesty
+    requirement within this story's owned diff. Did not author or modify the code under
+    review. Did not assess AI-output correctness (executor/traceability), provenance-chip
+    styling, performance, or accessibility — out of scope. Findings derive from direct
+    file reads, git-diff preservation analysis, an independent AST guard, live behavioral
+    re-execution of the FR-008 honesty + AX-002 determinism guarantees, and a full-suite run.

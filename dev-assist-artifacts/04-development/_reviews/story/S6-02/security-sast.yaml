@@ -1,0 +1,101 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S6-02
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: security-S6-02-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/leaderboard/policy.py:72-76
+    description: |
+      Anti-gaming evasion to monitor (NOT a story-scope breach): the rate-limit and
+      contamination checks compare the `submitter` and `submission_hash` strings by exact
+      equality, with no normalization. A submitter who controls the casing/whitespace of
+      their own identity string ("Alice" vs "alice") is counted as a DISTINCT submitter and
+      can therefore reset their per-epoch rate-limit count. Verified behaviorally: after 5
+      in-epoch `submitted` events by "alice", a 6th by "Alice" returns allowed=True (the
+      "alice" count is 5, the "Alice" count is 0). This is consistent with the §8b spec
+      (which keys on the literal `submitter` field and mandates no canonicalization) and the
+      store records identity as caller-supplied, so it is correct per the contract — but it
+      is a real anti-gaming weakness at the identity layer. The primary controls are sound:
+      changing `declared_epoch` to dodge the in-epoch rate count does NOT evade enforcement,
+      because the held-out-rotation check (exact equality) blocks the stale epoch first
+      (observed reasons=('stale_epoch','rate_limit')). Hash-based contamination relies on a
+      collision-resistant content hash upstream; an attacker who could mint a colliding
+      `submission_hash` could mask a duplicate, but that is an upstream-hash concern, not a
+      policy-layer defect.
+    suggested_resolution: |
+      No change required for this story (the behavior matches the authoritative §8b spec and
+      the load-bearing invariants all hold). For a future hardening story, consider keying the
+      rate-limit/dedup on a normalized submitter identity (e.g. casefold + strip, or an
+      attested identity from S6-03) and documenting the assumed collision-resistance of the
+      upstream `submission_hash`. Track as governance-neutrality hardening, not a story-gate
+      blocker.
+    references:
+      - dev-assist-artifacts/02-requirements/requirements.md#NFR-014
+      - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-02.md#8b
+
+notes: |
+  Load-bearing security review of the anti-gaming control as a security control. All five
+  required checks PASS; verdict APPROVE (zero SHOWSTOPPER/CATASTROPHIC/MAJOR/MINOR).
+
+  1. NO PUBLISH OF A DISALLOWED SUBMISSION (FR-023) — CONFIRMED.
+     `published = allowed and submission.publish_opt_in` (policy.py:85), with
+     `allowed = not reasons` (policy.py:84). There is no other assignment to `published` and
+     no early-return that could set it True. Exhaustive truth table over (allowed, opt_in)
+     yields zero cases where published=True while allowed=False. Behavioral proof: a
+     rate-limited submitter and a duplicate-hash submitter, BOTH with publish_opt_in=True,
+     return published=False (allowed=False); a clean opt-OUT submission returns
+     allowed=True/published=False; only clean + opt-IN publishes. The publish gate is
+     unreachable by any blocked submission, for any single/combined block reason.
+
+  2. ANTI-GAMING NOT TRIVIALLY BYPASSABLE (NFR-014) — CONFIRMED (one OBSERVATION above).
+     - rate-limit is keyed on (submitter, current_epoch): the count filters
+       `p.get("submitter") == submission.submitter AND p.get("declared_epoch") == current_epoch`
+       (policy.py:72-76). It is NOT spoofable by changing `declared_epoch`: a submitter who
+       declares a different epoch to dodge the in-epoch count instead trips the stale_epoch
+       block (exact-equality held-out rotation, policy.py:68), confirmed
+       reasons=('stale_epoch','rate_limit'). The count uses the CURRENT epoch, not the
+       declared one, so the gaming vector is closed.
+     - held-out rotation rejects stale epochs by EXACT equality
+       (`declared_epoch != current_epoch`, policy.py:68) — no off-by-one / range window.
+     - contamination flags a re-used `submission_hash` by EXACT match over all prior
+       `submitted` events (policy.py:81) — novel hashes pass, re-used hashes block.
+     - Obvious evasions considered: (a) declared_epoch spoof — defeated (see above);
+       (b) case-variation in submitter id — logged as OBSERVATION security-S6-02-01;
+       (c) hash collision — out-of-scope upstream-hash concern, noted in the OBSERVATION.
+
+  3. READ-ONLY OVER THE STORE — CONFIRMED. `evaluate_submission` reads only via
+     `store.events()` (through `_prior_submitted`, policy.py:59); the only `.append` calls in
+     the module (lines 69, 78, 82) all target the local `reasons: list[str]`. Static AST
+     audit: no `store.append`, no `.open`/`.write`/`.flush`/file mutation. Behavioral audit:
+     the JSONL log is byte-identical (same SHA-256) before/after 4 evaluations including a
+     blocked, a duplicate, a clean opt-in, and a clean opt-out, and the event count is
+     unchanged (5 -> 5). The caller, not the policy, records the outcome event — the
+     append-only store's single-writer surface is preserved.
+
+  4. NO EGRESS / SECRETS / UNSAFE DESERIALIZATION — CONFIRMED. Pure-stdlib decision function.
+     AST scan of dangerous primitives {eval, exec, compile, __import__, pickle, marshal, open,
+     system, popen, subprocess, socket, urlopen, requests} = empty. Call surface is only
+     {PolicyDecision, _prior_submitted, any, dataclass, events, get, sum, tuple, list.append}.
+     No network, no shell, no deserialization of untrusted bytes, no hard-coded credential or
+     API-key-shaped literal. Import roots: {__future__, collections, dataclasses,
+     pii_anon_datasets}; banned-import set {random,time,uuid,datetime,secrets} ∩ imports = ∅.
+
+  5. NO REAL PII — CONFIRMED. The decision function operates on submitter ids (str),
+     submission_hash (str), epoch ints, and a publish_opt_in bool. It never reads corpus
+     text or held-out gold; the upstream store additionally rejects forbidden gold-bearing
+     payload keys (store.py:_FORBIDDEN_PAYLOAD_KEYS), so no PII / gold can reach this layer.
+
+  Cross-checks: GREEN commit 5b6e19c diff is confined to policy.py (+89) and
+  leaderboard/__init__.py (exports) — store.py untouched (no writer-surface change).
+  tests/test_leaderboard_policy.py: 6 passed. The TDD trail (RED 3f5fbe2 -> GREEN 5b6e19c ->
+  REFACTOR 14d9f8d) is informational here; TDD-discipline adjudication is the code-quality
+  reviewer's remit.
+
+review_time_seconds: 320
+
+context_bounds_respected: true

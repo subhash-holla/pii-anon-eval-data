@@ -20,13 +20,13 @@ def test_to_scoring_spans_converts_and_drops_text() -> None:
 
 
 def test_to_scoring_spans_fails_loud_on_non_canonical() -> None:
-    """DX-02: a span whose type is not one of the canonical 63 must fail loud, never pass through."""
+    """DX-02: a span whose type is not one of the canonical types must fail loud, never pass through."""
     with pytest.raises(ValueError):
         contract.to_scoring_spans([contract.AdapterSpan(0, 3, "NOT_A_REAL_TYPE", "xxx")])
 
 
 def test_coverage_of_counts_distinct_canonical_targets() -> None:
-    """Coverage = number of DISTINCT canonical-63 types a label map can reach (None == drop)."""
+    """Coverage = number of DISTINCT canonical types a label map can reach (None == drop)."""
     label_map = {"PER": "PERSON_NAME", "PERSON": "PERSON_NAME", "MAIL": "EMAIL_ADDRESS", "MISC": None}
     assert contract.coverage_of(label_map) == 2  # PERSON_NAME + EMAIL_ADDRESS; MISC dropped
 

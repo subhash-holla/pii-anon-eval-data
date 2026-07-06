@@ -19,6 +19,12 @@ than a naive chars/unit calc. Azure therefore dominates total cost.
 
 ## Actual billable volume (computed from the corpus)
 
+> **Provenance:** these are the **pre-spend go/no-go estimates** computed on the v2.0.0 corpus (English test
+> 30,995; full corpus 575,604). The frozen v2.2.0 corpus is larger (English test **31,048**, full test
+> **157,045**, full corpus **782,677**), but every figure below is ×2-safety-buffered and carries a
+> "VERIFY at run time" caveat, and the cloud spend has already occurred — so the ~0.17%–36% growth does
+> not change any go/no-go conclusion. Per-run actuals are in the re-scored `results/tier-a/cost_axis.md`.
+
 | Scope | Docs | Chars | AWS units (100c, 3-min) | Azure text-records (1000c, per-doc) | GCP GB |
 |---|---:|---:|---:|---:|---:|
 | **English test** | 30,995 | 9,143,672 | 127,919 | 31,419 | 0.0091 |

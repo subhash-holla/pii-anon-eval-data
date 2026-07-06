@@ -1,0 +1,136 @@
+reviewer: dev-assist-development-axiom-compliance
+scope_id: S7
+gate: sprint
+verdict: APPROVE
+
+findings:
+  - id: axiom-S7-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/validation/correlation.py:33
+    description: |
+      Cross-story consistency of the epistemic-honesty axiom is excellent across the S7 v1.1
+      seams. Three independent honesty surfaces all converge on the same invariant — "synthetic
+      coverage is NOT external validity": CORRELATION_CAVEAT (correlation.py:33), SLICE_CAVEAT
+      (slices.py:25), and ROADMAP.md "Honesty note" all state it verbatim. This is a strength,
+      not a defect. One micro-observation only: the synthetic≠external-validity sentence is
+      duplicated as a literal across three modules + one doc rather than sourced from a single
+      shared constant. For a benchmark whose load-bearing property is that these caveats stay
+      truthful and in lock-step, a future refactor could hoist the shared clause to one
+      project-level constant so the four copies cannot drift apart. Non-blocking; the four copies
+      are currently byte-consistent and each is independently non-strippable.
+    suggested_resolution: |
+      No action required for S7. Optional future hygiene: introduce a single
+      SYNTHETIC_IS_NOT_EXTERNAL_VALIDITY clause constant (e.g. in a shared honesty module) and
+      compose the per-surface caveats from it, so the invariant has one source of truth. Keep the
+      per-dataclass non-strippable __post_init__ guards regardless.
+    references:
+      - dev-assist-artifacts/00-axioms/project-axioms.yaml#AX-pii-anon-003
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-03.md
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-04.md
+
+  - id: axiom-S7-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/data/eval_lattice.json
+    description: |
+      Guardrail confirmed clean: the entire S7 sprint diff (S6-close 58e1edb..HEAD 42af894,
+      excluding dev-assist-artifacts) is 13 files / +1217 insertions / 0 deletions — exactly 8
+      source + 5 test files + ROADMAP.md, all NEW or additive-export-only. corpus / eval_lattice.json
+      / tags / generators / surrogate pools are NOT in the diff (verified via git diff --name-only
+      with a corpus|lattice|tags|metadata|parquet|generators filter → empty). The v1.3.0
+      pre-lattice-enrichment frozen data substrate is untouched, as the sprint contract requires.
+      Note: no metadata.json file exists in the repo tree (the corpus version is pinned via the
+      lattice/tags artifacts, not a top-level metadata.json); the git-diff guardrail is the
+      authoritative check and it is green. Logged as an OBSERVATION solely to record the positive
+      guardrail evidence; no remediation needed.
+    suggested_resolution: |
+      None. Continue to keep all corpus/lattice/tags mutations out of seam-only sprints.
+    references:
+      - dev-assist-artifacts/00-axioms/project-axioms.yaml#AX-pii-anon-001
+
+notes: |
+  SPRINT S7 FULL AXIOM AUDIT — Extension seams (DC-10 / DC-14 / DC-01, v1.1). Read-only review of
+  the 5 stories (S7-01..05) at ground truth: I read every shipped source + test artifact and
+  re-derived the load-bearing invariants myself rather than trusting the story §12 prose. All four
+  project axioms (AX-pii-anon-001 synthetic-only/INERT, -002 determinism, -003 stated-power,
+  -004 anon/pseudo-separation) plus the per-story epistemic-honesty / scope-discipline invariants
+  hold. APPROVE — zero SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR.
+
+  SCOPE-HONESTY DISCLAIMERS (5 of 5 present, non-strippable, validated at ground truth):
+   - S7-01 oracle  — ORACLE_DISCLAIMER (oracle.py:23): "recognition oracle ... NEVER marketed as
+     agent-leakage scoring (FR-017)"; non-defaulted field on frozen OracleVerdict; __post_init__
+     (oracle.py:45-47) raises ValueError on empty/whitespace. Recognition-only confirmed: the
+     module contains NO scoring/leak/cross-turn/residual/live-harness logic — the only
+     "agent-leakage"/"harness" tokens are the explicit OUT-OF-SCOPE disclaimer text. ✔
+   - S7-02 payloads — INERT_DISCLAIMER (payloads.py:57): "Inert synthetic ... NOT a weaponized
+     prompt injection ... NEVER marketed as agent-leakage scoring (FR-017 / AX-001)"; validated in
+     __post_init__ (payloads.py:90-96). Inertness independently confirmed: my weaponization regex
+     (ignore-previous-instructions / disregard / jailbreak / <script / onerror / exfiltrate /
+     DROP TABLE / rm -rf) over all shipped artifacts → ZERO matches; the test_fr_017_payloads_are_inert
+     [AUDIT] test asserts the same over render()+carrier+obfuscated_span. Carriers are 6 benign
+     multilingual "Please note: {span}" templates. ✔
+   - S7-03 correlation — REAL_DATA_ABSENT_NOTE + CORRELATION_CAVEAT (correlation.py:29,33). The
+     RealDataAbsent SENTINEL is the never-fabricate crux: correlate(..., None|[]) returns
+     RealDataAbsent (correlation.py:205-206), NEVER a CorrelationResult; both note and caveat are
+     non-defaulted-validated fields with __post_init__ guards. Caveat states "NOT external
+     validity (FR-027)"; note states "NOT present ... REFUSES to fabricate". ✔
+   - S7-04 slices  — SLICE_CAVEAT (slices.py:25): "~72% ... formulaic synthetic_lattice_enrichment
+     ... power and external validity are LIMITED ... not external validity"; validated in
+     __post_init__ (slices.py:40-42). Contains 72% + v1.1 + LIMITED + external-validity tokens. ✔
+   - S7-05 ROADMAP — ROADMAP.md frames FR-018/019/020 each as "Status: roadmap (v1.x), not
+     implemented", with a closing Honesty note ("Nothing in this roadmap is implemented in v1";
+     "never agent-leakage scoring"; "Synthetic-distribution coverage is not external validity").
+     No over-claiming. ✔
+
+  AX-pii-anon-001 (synthetic-only / INERT): no real PII anywhere in S7. Oracle reads a record's
+  own gold annotations (synthetic); payloads obfuscate a caller-supplied span into INERT benign
+  carriers (no weaponized content — verified); correlation operates on numeric float score
+  vectors; slices filter on entity_tracking/privacy_risk structural fields. Test fixtures are tiny
+  fabricated records. Security-SAST is the primary owner of the corpus PII scan (AX-001
+  reviewer_hook); its S7-02 story-gate verdict was APPROVE/0 (INERT confirmed).
+
+  NFR-004 (pure-stdlib) — INDEPENDENTLY RE-DERIVED via my own ast.walk over all four modules:
+    oracle.py   imports {__future__, collections, dataclasses}            — banned-hit NONE
+    payloads.py imports {__future__, base64, dataclasses}                 — banned-hit NONE
+    slices.py   imports {__future__, collections, dataclasses}            — banned-hit NONE
+    correlation.py imports {__future__, collections, dataclasses, math, random} — banned-hit NONE,
+      and module-global random.<fn> calls = NONE (only random.Random) → the bootstrap owns a LOCAL
+      random.Random(seed) (correlation.py:185), mirroring stats/paired.py exactly as specified.
+    The per-module AST purity guards (test_nfr004_*) are real property tests, not assertions of
+    convenience; the correlation guard (test_correlation.py:170-180) walks every random.<attr>
+    access and rejects any non-Random module-global call. My independent run: PURITY VERDICT PASS.
+
+  AX-pii-anon-002 (determinism): correlation bootstrap is seed-deterministic via the LOCAL RNG
+  (story §12 shows seed=42 → byte-identical CIs across runs, and module-global random.seed(123456)
+  perturbation leaves the result unchanged — proving the global RNG is never consulted). Oracle /
+  payloads / slices have zero clock/RNG (AST-confirmed). All transforms (base64/ocr/zero_width)
+  are deterministic + faithful (recoverable).
+
+  AX-pii-anon-004 (anon/pseudo separation): not triggered by S7 (no new headline redaction/de-id
+  score; these are recognition + fixture + statistics + filter seams). No conflation introduced.
+
+  DC-10/14/01 BOUNDED SCOPE / no over-claiming: the agentic oracle is recognition-only (FR-017
+  half) + the payload library (FR-017 half) — both carry the non-strippable "never agent-leakage
+  scoring" guard; FR-018/019/020 (cross-turn / transcript-residual / live-harness) are documented
+  as v1.x roadmap, NOT shipped. FR-015/016 ship the slice loaders (the seam) with the actual
+  chain/qid SCORING explicitly deferred to v1.1/Pass-2; FR-027 ships the correlation harness with
+  the real-data correlation deferred to Pass-2 behind the never-fabricate sentinel. The bounded
+  claims match the shipped surface exactly — no recognition tool is dressed up as a leakage scorer.
+
+  STATISTICAL-POWER HONESTY (AX-pii-anon-003 spirit): the S7-04 slices are SHOULD/v1.1 and self-
+  declare their ~72%-formulaic low-power / limited-external-validity status non-strippably — this
+  is the coverage-self-awareness analogue for this benchmark, upheld. No bare point scores are
+  emitted by any S7 module (slices return record subsets; correlation always pairs each estimate
+  with a seeded bootstrap CI + Bland-Altman limits + the caveat).
+
+  PRIOR STORY-GATE AXIOM-COMPLIANCE: S7-01 APPROVE (0 findings), S7-02 APPROVE (1 OBSERVATION,
+  test-docstring nit), S7-03-04 APPROVE (0 findings) — all consistent with this sprint-level audit.
+
+  INDEPENDENCE / SELF-ATTESTATION: I reached every verdict by reading the shipped artifacts and
+  re-running the AST purity derivation + the 5 S7 test files myself (21 passed). I did not rely
+  on the story authors' claims where ground truth was checkable. No coordination with other
+  reviewers; the cross-references to prior story-gate verdicts above are corroboration, not basis.
+  Independent S7 test run: tests/test_{oracle,payloads,correlation,slices,roadmap}.py → 21 passed.
+
+review_time_seconds: 2280
+
+context_bounds_respected: true

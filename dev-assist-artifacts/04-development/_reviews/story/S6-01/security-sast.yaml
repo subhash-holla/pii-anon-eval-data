@@ -1,0 +1,97 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S6-01
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: security-S6-01-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/leaderboard/store.py:143
+    description: |
+      FR-023 forbidden-gold reject is a TOP-LEVEL-key check only:
+      `bad = _FORBIDDEN_PAYLOAD_KEYS & set(payload)`. Empirically confirmed
+      that a NESTED forbidden key slips through, e.g.
+      `append(EventType.SCORED, "sub-1", {"scores": {"gold": "..."}})` is
+      ACCEPTED and written — `set(payload)` sees only `{"scores"}`, not the
+      inner `gold`. This is NOT a breach of the stated contract: FR-023 / §8b /
+      the test plan (#2) and the module docstring all scope the control as a
+      top-level forbidden-PAYLOAD-key reject, and the store's intended payload
+      shape is flat scores/config_version/attestation/provenance, so no current
+      caller nests gold. Flagged as defense-in-depth surface to monitor: a
+      future caller that nests a `scores`/`provenance` sub-mapping carrying a
+      forbidden key would bypass the screen. The crux invariant — a TOP-LEVEL
+      forbidden key is rejected and the rejected append writes NOTHING — holds
+      (verified: 6/6 forbidden keys raise ValueError and leave NO file on disk).
+    suggested_resolution: |
+      No change required for this story (contract is top-level-key reject and is
+      met). If hardening is desired in a later iteration, recurse the forbidden-key
+      screen through nested Mappings (walk `payload` values that are Mapping
+      instances and re-apply `_FORBIDDEN_PAYLOAD_KEYS &`), or assert a flat
+      payload schema. Keep it an OBSERVATION until a nesting caller actually exists.
+    references:
+      - requirements-document.md#FR-023
+      - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-01.md#8b
+
+notes: |
+  STORY-gate security-sast review of S6-01 (append-only hash-chained leaderboard
+  store) — LOAD-BEARING (the held-out store is a security control). Read-only.
+  Bounded context: S6-01.md (§11 names me load-bearing) + leaderboard/store.py +
+  leaderboard/__init__.py. domain_packs: [] in developer-assistant.yaml, so no
+  pack-extension patterns were merged and no source_pack tagging applies.
+  sensitive_data_scan is configured true, but this module holds scores +
+  submission ids + attestations only — no corpus PII path — so it is not in
+  scope of a PII-leak finding.
+
+  CRUX — no held-out-gold leak (FR-023): VERIFIED. `append` computes the
+  forbidden-key intersection and raises ValueError at store.py:143-145, which is
+  strictly BEFORE `self.events()` (line 146) and BEFORE the `open("a")...write`
+  (lines 150-151). A raised ValueError exits the method before any file handle is
+  opened. Empirically: 6/6 forbidden top-level keys
+  ({gold, gold_labels, held_out, held_out_labels, answers, ground_truth}) raise
+  ValueError, and after 6 rejected appends the log file does not exist — a
+  rejected append writes NOTHING. (Nested-gold gap noted as OBSERVATION-01.)
+
+  Tamper-evidence (NFR-014): SOUND. sha256 (hashlib) content-hash chain;
+  `prev_hash` links each event to the prior event's `content_hash()`; first
+  prev_hash == GENESIS_HASH (confirmed "0"*64, len 64). `verify_chain` recomputes
+  seq-monotonicity + every link → False on any mutated line. hashlib.sha256 is the
+  right primitive: this is an integrity / tamper-EVIDENCE control (detect mutation),
+  honestly NOT a tamper-PROOF claim — the log owner can recompute the whole chain,
+  which is the correct and stated framing for an unsigned local hash chain. No
+  unforgeability claim is made or implied.
+
+  Append-only: STRUCTURALLY ENFORCED. The only write in the module is the single
+  `self.path.open("a", ...)` + `f.write(...)` at store.py:150-151; grep for
+  unlink/remove/replace/truncate/seek/shutil across the module returns nothing.
+  Public API of LeaderboardStore is exactly {append, events, verify_chain} — zero
+  of {update, delete, remove, pop, set, edit, mutate, replace, __setitem__,
+  __delitem__}. A rejected/failed append leaves the log unchanged (no handle opened
+  on the reject path).
+
+  No egress / no secrets / no unsafe deser / no unsafe: VERIFIED. grep for
+  eval/exec/pickle/marshal/os.system/subprocess/socket/urllib/requests/httpx/
+  __import__/yaml.load → no matches. json.loads parses only the store's OWN log
+  lines (its own append output; trusted-ish) — no untrusted-source deserialization,
+  and json has no code-exec surface. No `unsafe` (Python; no ctypes/cffi either).
+  No hard-coded credential / api-key / md5 / sha1 — the single "secrets" grep hit
+  is the docstring naming the stdlib module the store deliberately does NOT import.
+  The CLI `main` reads a user-supplied log path (`verify <log>`) — acceptable for a
+  local read-only CLI verb (no network, no write, returns rc 0/1/2).
+
+  No new dependency, no Cargo/pnpm/pip manifest change in the diff (pure stdlib:
+  json + hashlib + enum + dataclasses + pathlib + collections.abc), so no CVE /
+  supply-chain / license surface at this story gate. Diff scope confirmed = §8
+  owned files (leaderboard/__init__.py, leaderboard/store.py,
+  tests/test_leaderboard_store.py) + the contracted tests/test_cli.py successor
+  edit; no out-of-scope production edit.
+
+  Verdict APPROVE: zero SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR. One OBSERVATION
+  (non-blocking, nested-gold defense-in-depth) per the dispatch's instruction to
+  note the top-level-key-check gap.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

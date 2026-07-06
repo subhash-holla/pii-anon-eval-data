@@ -1,0 +1,29 @@
+signoff_id: SO-11-cap02-testing
+date: 2026-06-01
+type: stage-close
+stage: 05-testing
+capability: CAP-02
+scope: >
+  CAP-02 Testing (Stage 5). Release-readiness verdict for the Powered Assessment Workflow.
+verdict: SHIP-WITH-CAVEATS
+signer: AGENT_SIMULATED (developer-assistant); real-detector + real-data Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/assessment-workflow/05-testing/release-readiness-report.md
+  - dev-assist-artifacts/assessment-workflow/05-testing/example-leaderboard.md
+  - dev-assist-artifacts/assessment-workflow/ONE-COMMAND-EXAMPLE.md
+  - scripts/run_powered_assessment.sh
+
+decisions_acknowledged:
+  - "NFR-019..055 verification matrix: 18 PASS (+1 inherited) / 4 PARTIAL / 2 DEFERRED-roadmap / 0 FAIL. No MUST-track failure -> no DEFER."
+  - "Final guardrail sweep GREEN: eval-data 394 passed / 6 skipped (dep-gated); pii-rate-elo 268 passed / 1 skipped + ruff clean; lattice --check 730@47c3a8f; doc-drift NFR-013 0; NFR-018 committed-cell power gate PASS on the full 575,604-record corpus (all cells meet tiered target, 0 errors)."
+  - "Real-data E2E PROVEN on real v2.0.0 (splits/test_technology): powered sample (1822 rec, verdict SMALL, 122 named CORPUS_LIMITED shortfalls) -> assessment (15,569 gold positives) -> Wilson CIs + Holm-significant paired McNemar + RD-NOT-CONVERGED + verified pre-registration + non-strippable synthetic-only caveat. One-command wrapper validated."
+
+findings_waived_to_pass2:
+  - "INDICATIVE: bundled detector systems are lightweight synthetic; real detectors (Presidio/GLiNER/Piiranha) are pluggable -> Pass-2."
+  - "Real-data external-validity correlation slice (cycle-1 UC-13) -> Pass-2 (named pending honesty flag)."
+  - "Roadmap (honest, not shipped): operating-point Fbeta/AUPRC figures (NFR-046), governance/contamination attestation (NFR-048/049), regulatory crosswalk (DC-30), DOI release (DC-31), run-type rigor-bar ENFORCEMENT (smoke/descriptive-census CI-suppression), full honesty-set (worst-language/rank-volatility), per-artifact sha index, formal OutcomeDTO contract test."
+  - "NFR-010b throughput stays INSUFFICIENT_EVIDENCE (agent sandbox != reference host)."
+
+next: "CAP-02 capability COMPLETE through Stage 5 (SHIP-WITH-CAVEATS). Render artifacts with /dev-assist-html. Pluggable real-detector + real-data runs are the Pass-2 follow-ups."

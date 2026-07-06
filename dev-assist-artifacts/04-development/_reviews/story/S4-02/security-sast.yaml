@@ -1,0 +1,166 @@
+# security-sast reviewer — STORY gate (conditional fire: new numeric kernel with a seeded RNG)
+# S4-02 — paired stats: McNemar (exact binomial + continuity-χ²) + seeded paired bootstrap (FR-002/NFR-002/NFR-004).
+reviewer: security-sast
+gate: story
+story_id: S4-02
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+
+independence:
+  bounded_context: true
+  shared_state: none
+  self_attested: true
+
+domain_pack_extensions:
+  developer_assistant_domain_packs: []          # developer-assistant.yaml -> domain_packs: [] (neither financial nor agentic-runtime active)
+  pack_patterns_merged: none                    # no reviewer-extensions catalog to merge; no finding carries source_pack
+  note: >
+    Project ships no domain pack; the no-real-PII invariant is a project-authored axiom
+    (project-axioms.yaml AX-001) + hooks.sensitive_data_scan: true, which this reviewer
+    verified directly against the owned files rather than via a pack pattern set.
+
+scope_reviewed:
+  owned_files:
+    - src/pii_anon_datasets/stats/paired.py        # NEW — McNemarResult (frozen) + mcnemar_exact/mcnemar_chi2 + paired_bootstrap_recall_delta + helpers _odds_ratio/_recall_delta/_percentile
+    - src/pii_anon_datasets/stats/__init__.py       # MODIFIED — export-only: adds the 4 symbols to the import block + __all__
+    - tests/test_paired.py                          # 8 fr_002/nfr_002-tokened tests (RED 5568608 -> GREEN 1e34f7b -> REFACTOR d5cafe7)
+  diff_range: 1e34f7b   # GREEN is the load-bearing change; REFACTOR d5cafe7 is ruff I001 import-order on the test file only (no production-code change)
+  story_diff_is_code_only: true   # only the 3 owned files + story doc changed; no dependency manifest, no data/corpus/snapshot/lattice/tag
+  note: >
+    Story §8 names the paths as stats/paired.py & stats/__init__.py; the real source tree roots
+    them at src/pii_anon_datasets/stats/ (pythonpath=src). Reviewed the real files. intervals.py
+    (S1, reused read-only) was NOT modified and is out of this story's scope.
+
+threat_surface:
+  classification: pure-numerical-compute   # paired-test math over (b,c) integers + boolean pairs; no trust boundary, no capability, no egress, no I/O
+  inputs: "two ints (b, c); a Sequence[tuple[bool,bool]] of A/B hit flags; n_boot:int, seed:int, confidence:float. No strings, no paths, no network, no deserialization."
+  trust_boundary_touched: false
+  capability_registry_touched: false
+  composition_root_ban_relevant: false   # Python pure-stdlib module; no SDK/crate dependency edge introduced
+  hsm_signing_path_touched: false
+  network_egress_added: false
+  unsafe_block_added: false               # Python; n/a — no ctypes/FFI/cffi either
+
+pure_stdlib_no_new_dependency:   # NFR-004 — PRIMARY dispatch concern
+  confirmed: true
+  paired_py_imports: "math, random, collections.abc.Sequence, dataclasses, .intervals (intra-package). NOTHING else."
+  init_py_imports: "intra-package only (.intervals, .paired, .power)."
+  test_py_imports: "ast, math, pathlib, pytest, intra-package. (pathlib is used read-only on paired_mod.__file__ to AST-self-inspect the source — not a runtime filesystem dependency of the module under test.)"
+  banned_modules_absent: true   # NONE of numpy / scipy / socket / requests / urllib / httpx / subprocess / pickle / marshal / yaml / secrets / os.system / open() present in paired.py
+  eval_exec_dynimport_absent: true   # no eval / exec / compile / __import__ / input anywhere in paired.py
+  note: >
+    grep 'hits' for the banned-token sweep resolve to docstring prose only — line 19 'evaluates'
+    (substring 'eval') in the module docstring; there is no executable eval/exec/import-dynamic.
+
+rng_determinism_analysis:   # PRIMARY dispatch concern — seeded LOCAL random.Random, NOT module-global, NOT secrets
+  random_used: true
+  uses_local_random_Random_seed: true       # line 140: `rng = random.Random(seed)` — a LOCAL instance owned by the call
+  uses_module_global_rng: false             # the ONLY executable random.<attr> access in paired.py is `random.Random`; no random.random()/randrange()/sample()/seed() at module level
+  uses_secrets_module: false                # `secrets` is NOT imported and MUST NOT be — see crypto-context determination below
+  ast_guard_present: true                   # test_fr_002_nfr004_paired_imports_no_uncontrolled_nondeterminism statically asserts (a) {time,uuid,datetime,secrets} disjoint from imports, (b) every `random.<attr>` access == `random.Random`
+  runtime_global_rng_isolation_proven: true # test seeds the module-global RNG to 0 then 999999 and asserts byte-identical results -> the global RNG is provably never consulted
+  weak_crypto_finding: false
+  crypto_context_determination: >
+    NOT-A-WEAK-CRYPTO-FINDING. The seeded random.Random(seed) here is a DETERMINISM control for a
+    statistical bootstrap (NFR-004: two runs with the same seed must be byte-identical and
+    reproducible for scientific auditability), NOT a security/cryptographic context. There is no
+    key generation, token/nonce/salt minting, password, session id, or any secret derived from this
+    RNG — it only selects resample indices (rng.randrange(n)) for a percentile CI over boolean
+    detector-hit flags. Mandating `secrets` here would be WRONG: it would destroy the reproducibility
+    the requirement demands. stdlib `random.Random` is the correct and required primitive. Catalog
+    pattern #15 (weak hash for non-checksum purpose) and the weak-RNG family do NOT apply.
+
+dos_hang_analysis:   # dispatch ask — note if n_boot is unbounded
+  while_loops_anywhere: 0          # static: zero `while` in paired.py; every loop is `for _ in range(...)`
+  loops_present:
+    - "paired_bootstrap_recall_delta: outer `for _ in range(n_boot)` x inner `for _ in range(n)` -> O(n_boot * n) resample work"
+    - "mcnemar_exact: `sum(math.comb(n,i) for i in range(0, min(b,c)+1))` -> O(min(b,c)) terms, each a math.comb on n=b+c"
+  n_boot_default_bounded: true     # default n_boot = 10000 (a sane, finite default)
+  n_boot_caller_controlled_unbounded_param: true   # NOTED per dispatch: n_boot (and len(pairs), and b/c) have NO upper clamp; a caller passing n_boot=10**9 or a huge pairs list would run long
+  untrusted_input_path_exists: false   # only caller is the __init__ re-export; no network/CLI/file entrypoint in THIS story wires external/untrusted input into n_boot or pairs. This is a library-internal numeric kernel invoked by trusted in-process callers with literal/sized arguments.
+  worst_case_is_long_not_infinite: true   # no infinite-loop path; worst case is a long-but-terminating computation proportional to caller-supplied sizes
+  verdict: >
+    No DoS/hang vulnerability at this story's trust scope: there is no untrusted-input path that
+    reaches n_boot/pairs, and there is no unbounded/infinite loop (worst case is a terminating
+    O(n_boot*n) cost the trusted caller explicitly sizes). The absence of an upper clamp on n_boot
+    is recorded as OBSERVATION-1 for whoever later wires a public/remote caller, not a current breach.
+
+ax_001_no_real_pii:
+  confirmed: true
+  detail: >
+    The paired API consumes ONLY booleans (A_hit, B_hit) and integers (b, c) — never PII-bearing
+    strings. test_paired.py fixtures are exclusively boolean tuples ([(True,False)]*k etc.) and
+    small integer counts. Zero email/SSN/PAN/phone/name/private-key/API-key literal in any owned
+    file (regex sweep clean). The no-real-PII invariant (AX-001 / sensitive_data_scan) holds.
+
+catalog_pattern_scan:   # 15-pattern catalog + financial-pack PII patterns (pack inactive -> PII checked via AX-001 above)
+  composition_root_ban_violation: none        # #1  — Python module; no production-crate -> disallowed-SDK edge
+  capability_granted_outside_registry: none   # #2  — new pub fns are pure math, grant no capability/IO
+  trust_boundary_mediator_bypass: none        # #3  — no mediator/adapter layer in scope
+  unsafe_without_safety_comment: none         # #4  — no `unsafe` (Python; no FFI)
+  high_cve_new_transitive_dep: none           # #5  — zero new dependencies (no manifest touched)
+  hsm_port_signing_contract_bypass: none      # #6  — no HSM/signing path
+  new_egress_not_in_manifest: none            # #7  — no network egress added
+  hardcoded_credential_shape: none            # #8  — regex sweep for api_key/secret/token/password/AKIA/PRIVATE KEY clean
+  sql_nosql_string_interpolation: none        # #9  — no DB access / query string built
+  git_pinned_dependency: none                 # #10 — no dependency manifest change
+  denied_license_dependency: none             # #11 — no dependency added
+  wildcard_capability_scope: none             # #12 — no capability/scope grant
+  thread_spawn_crossing_boundary: none        # #13 — no tokio/thread/async-task spawn; single-threaded synchronous loops
+  architectural_egress_forbidden_import: none # #14 — imports are stdlib + intra-stats only (.intervals); no cross-subsystem reach
+  weak_hash_md5_sha1: none                     # #15 — no hashlib/md5/sha1; the only randomness is the seeded statistical bootstrap (see rng_determinism_analysis)
+  pickle_marshal_yaml_load: none
+  cve_surface: "no new dependency introduced -> no new CVE / SBOM-diff surface at this story"
+
+test_execution:
+  owned_suite: "tests/test_paired.py — 8 fr_002/nfr_002-tokened tests (per story §12: 8 passed; full suite 184 passed / 1 skipped, 0 regressions)"
+  ast_self_guard_test: "test_fr_002_nfr004_paired_imports_no_uncontrolled_nondeterminism — statically enforces the stdlib/determinism contract this reviewer relies on"
+  note: "AGENT_SIMULATED env per story §12 (Python 3.10, miniforge). Security verdict rests on static analysis of the owned source + the in-tree AST guard, both of which are env-independent."
+
+findings:
+  - id: S4-02-SAST-OBS-1
+    severity: OBSERVATION
+    title: "n_boot / len(pairs) / b,c have no upper clamp — long-but-terminating cost if a future untrusted caller is wired in"
+    file: src/pii_anon_datasets/stats/paired.py
+    detail: >
+      paired_bootstrap_recall_delta runs O(n_boot * len(pairs)) work and mcnemar_exact sums
+      O(min(b,c)) math.comb terms, with no maximum enforced on n_boot, len(pairs), or b/c. At THIS
+      story's trust scope this is NOT a vulnerability: the only caller is the trusted in-process
+      __init__ re-export, no network/CLI/file entrypoint passes untrusted input into these sizes,
+      there are ZERO while-loops, and every loop is a finite `for _ in range(...)` (worst case is a
+      long-but-terminating computation, never an infinite hang). The sane defaults (n_boot=10000)
+      are appropriate. Recorded only so that IF a future story exposes this kernel behind a public
+      or remote surface, an input-size guard is added at that boundary then. No action at the
+      security gate now.
+    breach: false
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+
+summary: >
+  S4-02 adds the paired-statistics measurement side of the FR-002 detector A/B regression gate:
+  McNemar's test over the discordant pairs (b,c) — exact two-sided binomial tail via math.comb and
+  Edwards continuity-corrected χ² via math.erfc, each NFR-002 named-method — plus a seeded paired
+  bootstrap recall-Δ CI returned as an Interval(method="paired-bootstrap"). The dispatch's load-bearing
+  determination is confirmed: the bootstrap drives every draw from a LOCAL random.Random(seed) (line
+  140) and NEVER the module-global RNG and NEVER secrets — and this is correct, because the seeded RNG
+  is a DETERMINISM/reproducibility control for a statistical bootstrap (NFR-004), not a cryptographic
+  context (no keys/nonces/tokens/secrets derive from it; it only picks resample indices over boolean
+  hit-flags). Therefore stdlib `random.Random` is the right primitive and this is explicitly NOT a
+  weak-crypto finding; demanding `secrets` would destroy the required byte-identical reproducibility.
+  The in-tree AST guard statically proves paired.py imports none of {time,uuid,datetime,secrets} and
+  that the sole executable random.<attr> access is `random.Random`, and a runtime test proves the
+  module-global RNG (seeded 0 / 999999 by the caller) does not affect the result. Pure-stdlib (math +
+  random.Random + dataclasses + intra-package Interval) with ZERO new dependencies -> no CVE/SBOM/egress
+  surface; no eval/exec/subprocess/pickle/yaml/socket/filesystem; no weak hash; no SQL; no capability,
+  trust-boundary, HSM, or composition-root edge (pure numeric Python). AX-001 holds — the API consumes
+  only booleans/ints and the test fixtures are boolean tuples, with zero PII literals. No DoS/hang:
+  zero while-loops, all loops finite `for _ in range(...)`; n_boot is bounded-by-default and only
+  reached by a trusted in-process caller, so the absence of an upper clamp is a forward-looking
+  OBSERVATION (not a breach) for any future untrusted-input wiring. Zero MAJOR+ findings (1 OBSERVATION)
+  -> APPROVE.

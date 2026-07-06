@@ -1,0 +1,80 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S4-03
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  Review performed 2026-05-29 against branch feat/v2-scoring-harness, commits
+  6f13d97 (RED) → 483af11 (GREEN) → a6c1cf6 (REFACTOR).
+
+  TDD RED-BEFORE-GREEN verified:
+    - RED commit 6f13d97 adds tests/test_calibration.py (207 lines, 8 tokened tests)
+      and the story file skeleton; calibration.py is ABSENT from that commit's tree
+      (confirmed via `git ls-tree 6f13d97 src/pii_anon_datasets/stats/` — no calibration.py
+      entry). Genuine ImportError RED.
+    - GREEN commit 483af11 adds calibration.py + __init__.py exports; all 8 tests pass.
+    - REFACTOR commit a6c1cf6 tightens calibration.py only (zip strict=True + cast typings);
+      no test changes, no scope creep.
+
+  Lint / type re-run:
+    - `ruff check src/pii_anon_datasets/stats/calibration.py tests/test_calibration.py` →
+      "All checks passed!" (exit 0).
+    - `mypy --strict --follow-imports=silent src/pii_anon_datasets/stats/calibration.py` →
+      zero errors referencing calibration.py. The one error surfaced is intervals.py:28
+      (`-> dict` missing type params), which is a confirmed PRE-EXISTING finding from a prior
+      HEAD, not owned or touched by this story (not in §8). Out of scope; not counted.
+
+  pytest re-run:
+    - `python3 -m pytest tests/test_calibration.py -q` → 8 passed, exit 0.
+    - Full suite `python3 -m pytest tests/ --tb=no` → 192 passed, 1 skipped, 0 failures.
+      Zero regressions against the 184-test baseline.
+
+  cast() soundness confirmed:
+    `typing.cast(SupportsFloat, x)` and `cast(SupportsInt, x)` are pure static annotations
+    — `cast` is the identity function at runtime (`cast(T, x) is x` is True). This is a
+    correct mypy fix: the Mapping value type is `object`, which mypy --strict refuses to
+    pass to `float()` / `int()` directly (no matching overload). The cast narrows the type
+    for the type-checker without altering any runtime behaviour. Behaviour-equivalence
+    verified with a live Python invocation.
+
+  Spec compliance verified (§8b authoritative):
+    - Bin: frozen dataclass, fields lo/hi/conf_mean/acc/count — exact match.
+    - CalibrationResult: frozen dataclass, meets_reference is a @property (line 79),
+      NOT a stored field — correct. reference_ece defaults to _REFERENCE_ECE = 0.05.
+    - expected_calibration_error: equal-width bins, pinned idx = min(n_bins-1, int(conf*n_bins)),
+      docstring + _bin_index helper pin the convention.
+    - brier_score: mean((conf − correct)²) via statistics.fmean.
+    - calibrate: sole raising path is len mismatch → ValueError; high ECE returns normally.
+    - calibration_by_entity_class: groups by entity_type, calibrates each class independently,
+      sets entity_class on each CalibrationResult. Insertion-ordered dict → deterministic.
+
+  All 8 test names carry fr_005 or nfr_008 tokens, satisfying the requirement in §6.
+  Tests are deterministic: no real-time, network, filesystem (only pathlib.Path on the source
+  file itself for the AST guard, which is reproducible). No tempdir needed.
+  All public symbols (Bin, CalibrationResult, expected_calibration_error, brier_score,
+  calibrate, calibration_by_entity_class, plus private helpers _check_lengths, _bin_index,
+  _reliability_bins) carry full docstrings. Module-level docstring is comprehensive.
+
+  Scope discipline: diff touches only calibration.py (NEW), __init__.py (export addition),
+  tests/test_calibration.py (NEW) — exactly the §8 "Files this story owns" set. No other
+  source files were modified across the three commits.
+
+  Pure-stdlib (NFR-004): imports are `statistics`, `collections.abc`, `dataclasses`,
+  `typing`, `math` (via _REFERENCE_ECE arithmetic only; not actually imported — math is
+  referenced only in the docstring). AST guard test pins out {random,time,uuid,datetime,secrets}.
+  Confirmed: no non-stdlib runtime import.
+
+  No unwrap()/expect()/non-null-assertion patterns applicable (Python).
+  No `Any` type usage in production code; cast() to SupportsFloat/SupportsInt carries a
+  justifying comment in the REFACTOR commit message and is consistent with the
+  `Sequence[Mapping[str, object]]` parameter type.
+  No dead code detected; no dev-dependency on a production path.
+
+review_time_seconds: 312
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

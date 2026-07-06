@@ -1,0 +1,76 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S5-06
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  requirements-coverage @ STORY gate for S5-06 (DPIA-input end-state bundle, FR-021).
+  Bounded context only: S5-06.md, functional-requirements.md (FR-021), non-functional-requirements.md
+  (NFR-005), tests/test_end_state_bundle.py, src/.../compliance/end_state_bundle.py. domain_packs: []
+  (no pack reviewer-extensions to merge).
+
+  GAP SCAN RESULT: no gaps. Every MUST clause of FR-021 (MUST, UC-10) maps to a NAMED PASSING test;
+  no clause is silently missing.
+
+  FR-021 clause -> named passing test (clause-by-clause):
+    1. "separates anonymization (residual-risk+utility) from pseudonymization (integrity)"
+         -> test_fr_021_bundle_separates_anon_and_pseudo  (two SEPARATE as_dict keys; anon nests
+            privacy+utility, no `combined`; pseudo keeps the two collision integers separate, no
+            `total_collisions`)
+         + test_nfr_005_bundle_has_no_merged_verdict  (NFR-005/AX-004: no combined/overall/
+            overall_score/deid/de_identification_score/score attr on instance+class; no __float__
+            (float(bundle)->TypeError); AST source-grep of end_state_bundle.py finds no merged symbol;
+            module-bottom `assert _FORBIDDEN_MERGE_NAMES.isdisjoint({f.name for f in fields(...)})`).
+    2. "DPIA INPUT ... labeled 'informs, does not make, a determination'"
+         -> test_fr_021_disclaimer_is_non_strippable  (empty/whitespace disclaimer -> ValueError;
+            DPIA_DISCLAIMER carries input/inform/does-not-make/determination; survives onto as_dict()
+            unstripped).
+    3. caveats travel (FR-009 anti-anonymity + EDPB Art 4(5) key-state, supporting)
+         -> test_fr_021_caveats_travel_with_each_axis  (real ParetoPoint+PseudonymizationReport:
+            FR-009 "MUST NOT be cited" at anonymization_evidence->privacy->rrs->caveat; "4(5)" note at
+            pseudonymization_evidence->key_state_separation->note; both unstripped).
+    4. >=1 evidence axis (bundle meaningfulness)
+         -> test_fr_021_bundle_requires_at_least_one_axis  (both axes None -> ValueError; single axis ok).
+    5. surfaces per-record regulatory crosswalk (S5-01)
+         -> test_fr_021_bundle_surfaces_regulatory_crosswalk  (hipaa-tag -> BOTH hipaa_safe_harbor +
+            hipaa_expert_determination in_scope; untagged regime out_of_scope_of_dataset).
+  Supporting NFR-004/AX-002 (pure-stdlib, deterministic) -> test_nfr004_end_state_bundle_pure_stdlib
+  (AST guard: no {random,time,uuid,datetime,secrets}).
+
+  VERIFICATION EVIDENCE (re-executed live, read-only, this gate):
+    - `python3 -m pytest tests/test_end_state_bundle.py -k "fr_021 or nfr_005 or nfr004" -q` -> 7 passed
+      in 0.13s. Token selection fr_021/nfr_005/nfr004 selects EXACTLY the 7 tests (file has exactly 7
+      test defs; no over-claim).
+    - All 4 dispatch-mandated test names PRESENT and passing:
+      test_fr_021_bundle_separates_anon_and_pseudo, test_nfr_005_bundle_has_no_merged_verdict,
+      test_fr_021_disclaimer_is_non_strippable, test_fr_021_caveats_travel_with_each_axis.
+    - Production module src/pii_anon_datasets/compliance/end_state_bundle.py present with the
+      load-bearing structural invariant (module-bottom isdisjoint assert; no __float__; DPIA_DISCLAIMER).
+    - NFR-005 (non-functional-requirements.md:14, AX-004): "zero code paths merge anonymization and
+      pseudonymization metric families into one headline score" -- structurally enforced + audited.
+
+  ORPHAN / DUPLICATE-CLAIM SCAN: FR-021 is claimed by S5-06 ONLY (grep of 02-stories/). The DPIA-input
+  bundle is the WHOLE of FR-021 -> FR-021 (MUST, UC-10) is fully closed by S5-06. No competing/duplicate
+  test claim. Claimed RED..REFACTOR diff scope (8f167b2^..e70e355) = exactly the §8 owned files
+  (end_state_bundle.py NEW, test_end_state_bundle.py NEW, compliance/__init__.py exports, story file);
+  no out-of-scope production edit; scorers + crosswalk imported READ-ONLY.
+
+  DIVERGED / Pass-2: FR-021 carries provisional_status AGENT_SIMULATED, NOT DIVERGED -> no provisional-
+  threshold cross-check applies at this gate. The story correctly schedules a Pass-2 real-CI run before
+  the evidence is treated as production-grade (§12); the bundle is a pure value-object composition over
+  already-computed scorer outputs + record tags (no real-PII path, no network, no clock/RNG), so the
+  AGENT_SIMULATED execution is faithful. Logged for the release-gate Status Change Log; non-blocking at
+  the story gate.
+
+  Out of scope for this reviewer (deferred to sibling reviewers): test quality / assertion strength
+  (code-quality, traceability); whether the FR semantically holds (axiom-compliance owns the NFR-005/
+  AX-004 separation crux + non-strippable disclaimer semantics); whether the requirement should exist.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

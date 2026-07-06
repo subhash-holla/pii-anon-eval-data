@@ -65,7 +65,7 @@ SEED_BENCHMARK = 20260531
 RUNRECORD_SCHEMA = "pii-anon-nfr010-runrecord/v1"
 HARNESS_VERSION = "1.0.0"
 NFR_010B_FLOOR = 5000          # rec/sec, lightweight detection path on an 8-core reference host
-CANONICAL_RECORDS = 575604     # full corpus, for the NFR-010c full-scan extrapolation
+CANONICAL_RECORDS = 782677     # full corpus (v2.2.0), for the NFR-010c full-scan extrapolation
 
 DEFAULT_CORPUS = _REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon.jsonl.gz"
 

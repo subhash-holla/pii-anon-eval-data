@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 — D2 CONVERGE: Preferred Workflow archetype — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 — D2 CONVERGE: Preferred Workflow archetype</h1>
+<p><strong>Capability</strong>: CAP-02 — academically-sound, repeatable, reportable assessment <strong>workflow</strong> that runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0 / 575,604 / CC0 / <code>annotations</code></strong> over a <strong>powered-representative sample (CLI default)</strong> / <strong>full corpus (opt-in, citable)</strong> / <strong>smoke (fast CI)</strong>, with statistical/epistemic observability + reporting at every spine stage <code>load → sample → run → score → rate → report</code>.
+<strong>Stage</strong>: assessment-workflow / 03-Design · <strong>Diamond 2 (Workflow) — CONVERGE</strong>
+<strong>Date</strong>: 2026-06-01
+<strong>provisional_status</strong>: AGENT_SIMULATED — the workflow archetype is selected by agent-simulated Pugh scoring against the requirements + the verified code seams (read at HEAD 2026-06-01). The one high-stakes commitment — <em>&quot;every assessment run is a fail-closed linear batch across the two-CLI manifest seam, with no interactive per-stage consent&quot;</em> — is flagged for Pass-2 cognitive-walkthrough validation with a real single-operator research user.</p>
+<blockquote>
+<p><strong>Vocabulary remap.</strong> DC = <strong>Benchmark Component</strong>; FR = Assessment Capability; UC = Evaluation Scenario; NFR = Quality Attribute; AX = binding axiom.</p>
+</blockquote>
+<blockquote>
+<p><strong>Locked architecture this diamond honors.</strong> eval-data <strong>OWNS</strong> sampling + observability + reporting; <code>pii-rate-elo</code> <strong>CONSUMES</strong> (extend, do <strong>NOT</strong> rebuild the engine / metrics / convergence). Two CLI entrypoints (L3): (a) eval-data <code>python -m pii_anon_datasets.assessment.sample --preset … --seed … --out sample-manifest.json</code>; (b) <code>pii-rate-elo assessment --sample sample-manifest.json --config configs/assessment.yaml --out results/</code>. The <strong>sample-manifest is the L1 SEAM</strong> (the only cross-process coupling). Cycle-1 precedent for this diamond = <strong>Linear-batch-data-prep</strong>.</p>
+</blockquote>
+<hr>
+<h2>1. The three archetype proposals (DIVERGE recap)</h2>
+<table>
+<thead>
+<tr>
+<th>Frame</th>
+<th>Archetype</th>
+<th>Surface shape</th>
+<th>Navigation</th>
+<th>Signature move</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>A</strong></td>
+<td><strong>Linear-batch-pipeline</strong></td>
+<td>non-interactive batch (upfront choices only)</td>
+<td>linear, checkpoint-resume</td>
+<td>Spine ordering IS the control flow; each stage boundary is a durable hashed checkpoint with a fail-closed gate; observability + governance are a <strong>sidecar</strong>, not stages</td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td><strong>Event-Driven</strong></td>
+<td>event/stage status surface + gate-verdict cards</td>
+<td>spoke-and-hub (run-record bus = hub)</td>
+<td>The artifact-on-disk <strong>is the event</strong>; gates are <strong>event-consumers</strong> (<code>proceed</code>/<code>halt</code>) not inline steps; resume = re-fire last unconsumed event</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td><strong>Agent-Conversation</strong></td>
+<td>conversation (transcript = audit trail)</td>
+<td>conversational, turn-per-stage</td>
+<td>Each spine stage = one operator turn; each gate = a <strong>blocking card</strong> the operator must clear; transcript IS the provenance deliverable</td>
+</tr>
+</tbody></table>
+<p>All three: map onto the same <code>load→…→report</code> spine + the same two-CLI L1 manifest seam; emit one run-record per stage (L5); carry the non-strippable synthetic-only caveat; honor P1/P2/P3 as gates and the no-regression rails.</p>
+<hr>
+<h2>2. Pugh comparison (the brief&#39;s five named criteria)</h2>
+<p><strong>Datum</strong> = Frame A (Linear-batch) — the <strong>cycle-1 precedent</strong> (<code>Linear-batch-data-prep</code> in the locked hybrid) and the conservative baseline the brief names. Scores: <strong>+1</strong> better than datum / <strong>0</strong> equal / <strong>−1</strong> worse.</p>
+<p>Weights are the brief&#39;s five criteria, normalized to sum 1.00. <strong>Fit to the linear spine</strong> and <strong>determinism/reproducibility</strong> carry the highest weight: the capability <em>is literally</em> the <code>load→…→report</code> pipeline (D1 chose the Workflow-arc lens for exactly this reason), and AX-002 byte-reproducibility (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>/021/038/042) is a binding axiom, not a nicety. <strong>Observability-gate placement</strong> is weighted next because the three precondition gates (P1/P2/P3) are the spine&#39;s load-bearing integrity surfaces. Simplicity and resume/failure handling are real but secondary (and, as §3 shows, the requirements set contains <strong>no resume requirement</strong> — only an honest-halt + byte-identical-re-run contract).</p>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th align="right">Weight</th>
+<th align="center">A (Linear) = datum</th>
+<th align="center">B (Event-Driven)</th>
+<th align="center">C (Agent-Conversation)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Fit to the linear spine</strong> (the capability IS <code>load→…→report</code>)</td>
+<td align="right">0.28</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">−1</td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Determinism / reproducibility</strong> (AX-002; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>/021/038/042; same-seed byte-identity)</td>
+<td align="right">0.24</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">0</td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Observability-gate placement</strong> (P1/P2/P3 fire as CI-blocking boundary predicates; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> &quot;green requires no human&quot;)</td>
+<td align="right">0.22</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">+1</td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Simplicity</strong> (fewest moving parts; reuse-not-rebuild; cycle-1 consistency)</td>
+<td align="right">0.16</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">−1</td>
+<td align="center">−1</td>
+</tr>
+<tr>
+<td><strong>Resume / failure handling</strong> (halt-closed + re-run from sealed artifact; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> makes re-run byte-identical)</td>
+<td align="right">0.10</td>
+<td align="center"><strong>0 (datum)</strong></td>
+<td align="center">+1</td>
+<td align="center">0</td>
+</tr>
+<tr>
+<td><strong>Weighted total</strong></td>
+<td align="right">1.00</td>
+<td align="center"><strong>0.00</strong></td>
+<td align="center"><strong>−0.10</strong></td>
+<td align="center"><strong>−0.84</strong></td>
+</tr>
+</tbody></table>
+<h3>Score rationale (per criterion)</h3>
+<ul>
+<li><p><strong>Fit to the linear spine — A datum; B −1; C −1.</strong> The capability is a six-stage pipeline whose ordering is fixed and total; D1 already locked the <strong>Workflow-arc</strong> lens <em>because</em> &quot;the capability IS the pipeline&quot; and the DC set is &quot;already the spine.&quot; A Linear-batch archetype is a 1:1 structural match — stage <em>N</em> consumes stage <em>N−1</em>&#39;s sealed artifact, no more. <strong>B</strong> re-expresses the same fixed total order as a pub/sub event graph: this is <em>expressive</em> but adds an event vocabulary (<code>*.emitted/consumed</code>, a bus, handler subscriptions) for a control flow that never actually branches or fans out at runtime except at the single manifest seam — accidental complexity over a linear reality. <strong>C</strong> actively fights the spine: turning a fixed pipeline into a turn-by-turn conversation imposes a navigation model (operator turns) the pipeline does not need; the spine has exactly one human decision point (preset + run-type, upfront — DF-1/<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>), not six.</p>
+</li>
+<li><p><strong>Determinism / reproducibility — A datum; B 0; C −1.</strong> AX-002 + <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> make manifest + run byte-reproducible from <code>{seed, RNG fingerprint, sampler version}</code>; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-021" data-trace-id="NFR-021" aria-label="Trace NFR-021 — — PASS">NFR-021</a> pins seeded LOCAL RNG; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a> emits one provenance-complete record per stage under a shared run id. <strong>A</strong> realizes this cleanly: each checkpoint is a pure function of the prior sealed artifact + seed, so re-running from any boundary is byte-identical by construction — determinism is a property of the linear data dependency. <strong>B</strong> is equal: idempotent content-hash-keyed handlers also reproduce byte-identically, but the event bus adds no reproducibility A lacks (the manifest seam already carries the seed + fingerprint). <strong>C</strong> is <strong>−1</strong>: a conversation interleaves operator turns with computation, so reproducibility now depends on faithfully replaying a <em>transcript</em> (operator decisions + tool returns), a strictly larger and more fragile replay surface than &quot;re-run the batch with the recorded seed.&quot; The conversation adds a human-decision dimension to a contract that <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> defines as a pure function of the manifest.</p>
+</li>
+<li><p><strong>Observability-gate placement — A datum; B +1; C −1.</strong> This is <strong>B&#39;s genuine strength and C&#39;s fatal mismatch.</strong> The three gates are, by requirement, <strong>CI-blocking machine predicates</strong>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> says the P1 quarantine gate is an &quot;import-graph / call-graph static check … these two CI predicates ARE the gate (green requires no human)&quot;; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a> (P2) is a regression test that &quot;fails red&quot;; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a> (P3) is <code>validate.py --lattice</code> exiting non-zero on shortfall. <strong>B</strong> models gates as first-class event-consumers that inspect a run-record and emit <code>proceed</code>/<code>halt(reason)</code> — a slightly cleaner separation of &quot;gate logic&quot; from &quot;stage logic,&quot; and it makes the non-fatal <code>UNDER_SAMPLED</code> path a natural event the report consumer must render. <strong>A</strong> is equal-to-datum, not worse: it places the identical predicates as fail-closed boundary checks between stages (P1 import-graph guard, P2 5-tuple, P3 power gate) — same predicates, same fail-closed semantics, just inlined at the boundary rather than dispatched on a bus. <strong>C</strong> is <strong>−1</strong>: it renders gates as <em>interactive operator cards</em> requiring acknowledgement (<code>{proceed-with-caveat | re-sample | abort | lock}</code>). That directly contradicts <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>&#39;s &quot;green requires no human&quot; and <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>&#39;s table-driven CI gate — the gates are designed to be human-free and CI-runnable (the default + smoke presets must run unattended in CI), so a human-in-the-loop gate model is a requirements mismatch, not a preference.</p>
+</li>
+<li><p><strong>Simplicity — A datum; B −1; C −1.</strong> A&#39;s parts: a stage sequencer + hashed-artifact checkpoints + a run-record sidecar writer + fail-closed boundary predicates. <strong>B</strong> adds an event/artifact contract per boundary, a subscription/dispatch mechanism, a <code>PENDING→…→CONSUMED|HALTED</code> state machine, and idempotency keys — real machinery for a flow with one true branch point. <strong>C</strong> adds a card-renderer-per-DC, interactive gate affordances, a transcript/audit model, and <code>--yes</code>/<code>--block-on-underpower</code> non-interactive escape hatches <em>just to recover CI-runnability</em> — i.e. C must re-introduce the batch path to satisfy CI, which is evidence the conversation is the wrong primary surface. The locked architecture says <strong>consume, do not rebuild</strong>; A adds the least new orchestration around the reused engine/stats.</p>
+</li>
+<li><p><strong>Resume / failure handling — A datum; B +1; C 0.</strong> <strong>Decisive finding: the FR/NFR set contains NO resume / checkpoint / <code>--from-stage</code> requirement</strong> (grep over both requirement docs returns zero hits). What the requirements <em>do</em> mandate is honest-halt (gates fail-closed / &quot;rejected, not merely warned&quot; — <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>) plus <strong>byte-identical re-run from the sealed manifest</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>). So the criterion reduces to: halt cleanly, then re-run reproducibly. <strong>B</strong> earns <strong>+1</strong> because &quot;re-fire the last EMITTED-but-unconsumed event&quot; is the lightest, most precise resume mapping, and it falls out of the event model for free. <strong>A</strong> is the datum: it halts fail-closed at the failing boundary and re-runs from the prior sealed artifact (byte-identical per <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>) — fully adequate, and A&#39;s frame <em>also</em> proposes a <code>--from-stage</code> resume, but that is <strong>over-build beyond requirements</strong> (noted as a switch-point, SP-W3, to be trimmed). <strong>C</strong> is equal: transcript-replay-to-last-good-card is a heavier resume surface than B&#39;s event re-fire but no worse than A&#39;s re-run.</p>
+</li>
+</ul>
+<p><strong>Pugh verdict: Frame A (Linear-batch-pipeline) is preferred (datum; the only non-negative total).</strong> It is the cycle-1-consistent choice and a 1:1 structural match to the spine. It is <strong>not</strong> unanimous — <strong>B wins observability-gate placement (+1) and resume (+1)</strong> — so the preferred workflow <strong>is Linear-batch enriched with B&#39;s two best ideas as named switch-points</strong>: (i) gates expressed as <em>named, inspectable boundary predicates over the run-record</em> (B&#39;s &quot;gate consumer&quot; discipline, realized inline — no bus), and (ii) the <em>honest-halt + re-run-from-sealed-artifact</em> resume model (B&#39;s event re-fire, realized as &quot;re-run from the last sealed checkpoint&quot; — no <code>--from-stage</code> engine). The result is A&#39;s spine, not a fourth archetype.</p>
+<hr>
+<h2>3. Switch-points (named, per the brief)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Switch-point</th>
+<th>Frames in tension</th>
+<th>Resolution (locked for D3–D5)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SP-W1</strong></td>
+<td><strong>Gate mechanism</strong>: inline fail-closed boundary checks (A) vs gate-as-event-consumer on a bus (B)</td>
+<td>A vs B</td>
+<td><strong>ADOPT B&#39;s DISCIPLINE, A&#39;s MECHANISM.</strong> Each gate (P1/P2/P3 + prereg + NOT-CONVERGED) is a <strong>named predicate over the stage&#39;s run-record</strong> that returns <code>proceed</code> / <code>halt(reason)</code> — B&#39;s clean gate/stage separation — but evaluated <strong>inline at the boundary</strong>, not dispatched on an event bus (no bus to build; the manifest-on-disk is the only seam). This keeps <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>&#39;s &quot;green requires no human&quot; CI-predicate semantics while gaining B&#39;s testability (gates unit-testable in isolation from stages).</td>
+</tr>
+<tr>
+<td><strong>SP-W2</strong></td>
+<td><strong>Under-powered path</strong>: hard halt vs non-fatal flag that the report must render</td>
+<td>(all 3 agree it is non-fatal)</td>
+<td><strong>NON-FATAL FLAG, carried on the manifest → report.</strong> Per DF-1 + <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/037, <code>UNDER_SAMPLED</code> / <code>CORPUS_LIMITED</code> on the <strong>default</strong> preset <strong>continues</strong> (the study&#39;s &quot;strongest delight&quot; — the honest under-powered run) and surfaces as a blocking <em>honesty flag</em> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>), never a crash and never a silent <code>LARGE</code>. On the <strong><code>full</code> / leaderboard</strong> preset, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>&#39;s power gate <strong>exits non-zero</strong> on shortfall (fail-closed). The gate&#39;s behavior is thus <strong>run-type-scoped</strong> (<a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>).</td>
+</tr>
+<tr>
+<td><strong>SP-W3</strong></td>
+<td><strong>Resume model</strong>: stateful <code>--from-stage</code> checkpoint executor (A&#39;s frame) vs re-run-from-sealed-artifact (B&#39;s re-fire)</td>
+<td>A vs B</td>
+<td><strong>TRIM TO RE-RUN-FROM-SEALED-ARTIFACT.</strong> There is <strong>no resume requirement</strong> in the FR/NFR set; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> guarantees re-run byte-identity. So failure → fail-closed halt → re-invoke the failed CLI stage, which re-consumes the prior <strong>sealed</strong> artifact (the manifest, or the prior run-record&#39;s referenced inputs) and reproduces byte-identically. A&#39;s <code>--from-stage</code> executor is <strong>descoped as over-build</strong> (revisitable in D4 only if a real operator in Pass-2 demands sub-run resume of the long <code>run</code> stage).</td>
+</tr>
+<tr>
+<td><strong>SP-W4</strong></td>
+<td><strong>Primary surface</strong>: batch CLI (A) vs interactive conversation with per-stage consent (C)</td>
+<td>A vs C</td>
+<td><strong>BATCH CLI; NO PER-STAGE CONSENT.</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/033/034 require the default + smoke presets to run <strong>unattended in CI</strong>; an operator-consent-per-stage model (C) is a requirements mismatch and forces C to re-add <code>--yes</code> escape hatches. The single human decision (preset + run-type) is <strong>upfront</strong> (<a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>, the L3 surface). C&#39;s one keepable insight — <em>the run-record trail is itself the audit deliverable</em> — is absorbed as SP-W5. <strong>This is the high-stakes commitment flagged for Pass-2.</strong></td>
+</tr>
+<tr>
+<td><strong>SP-W5</strong></td>
+<td><strong>Audit-trail framing</strong>: run-records as a passive sidecar (A) vs the transcript IS the deliverable (C)</td>
+<td>A vs C</td>
+<td><strong>SIDECAR THAT IS ALSO A FIRST-CLASS DELIVERABLE.</strong> A&#39;s sidecar framing (observability writes at every boundary, never gates flow) is kept, but C&#39;s insight is adopted: the <strong>chained run-record set (one per stage, shared run id — <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>) is an explicit audit artifact</strong>, not debug output — it is what makes the run reproducible-from-manifest end-to-end and feeds the self-verifying report (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>).</td>
+</tr>
+<tr>
+<td><strong>SP-W6</strong></td>
+<td><strong>Pre-registration position</strong>: structural Stage-2 (upstream of scoring) in all three</td>
+<td>(all 3 agree)</td>
+<td><strong>STRUCTURAL: PREREG IS UPSTREAM OF THE FIRST SCORE.</strong> The linear order <em>physically enforces</em> &quot;pre-register BEFORE scoring&quot; (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-044" data-trace-id="FR-044" aria-label="Trace FR-044 — — STRENGTHENED (&quot;pushed to remote&quot; needs an oracle)">FR-044</a>; AX-005 element 4) — <a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a> sits between SAMPLE and the <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> score stage. This is the one place all three frames agree; the linear archetype makes it a property of stage order, not a convention. Enforcement strength is run-type-scoped (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>4. The preferred workflow — Linear-batch-pipeline (LOCKED)</h2>
+<p>A <strong>resumable-by-re-run batch pipeline with fail-closed boundary gates</strong>, split across the two L3 CLI entrypoints at the L1 manifest seam. Six spine stages; two cross-cutting sidecars (observability, governance) that write at every boundary and <strong>never gate flow</strong>.</p>
+<pre><code>                ┌─ run-type (DC-20) selects rigor bar + sample mode + prereg gate ─┐
+                ▼  (the ONE upfront human decision; everything after is unattended)  │
+[ENTRY-A: eval-data CLI]  python -m pii_anon_datasets.assessment.sample --preset --seed --out
+                                                                                     │
+  STAGE 0  LOAD ──── DC-16 reconcile v2.0.0 + regression-contract 5-tuple            │
+       │             ╠═ GATE-P2 (NFR-041): {version,count,63-type,fingerprint,hash}  │
+       │             ║   mismatch ⇒ fail RED, non-zero exit, no downstream           │
+       ▼                                                                             │
+  STAGE 1  SAMPLE ── DC-17 seeded lattice sampler → DC-18 PowerMatrix → DC-19 manifest│
+       │             ╠═ GATE-P3 (NFR-053): power gate — run-type-scoped (SP-W2):      │
+       │             ║   default ⇒ UNDER_SAMPLED/CORPUS_LIMITED continue as FLAG;     │
+       │             ║   full/leaderboard ⇒ shortfall exits non-zero                  │
+       │             ╚═&gt; emits sample-manifest.json  [L1 SEAM, sha256-sealed,         │
+       │                 non-strippable caveat, seed + RNG fingerprint]              │
+       · · · · · · · · · · · · seam boundary (process split) · · · · · · · · · · · · ·
+[ENTRY-B: pii-rate-elo CLI]  pii-rate-elo assessment --sample manifest.json --config --out
+       │
+  STAGE 2  PREREG ── DC-24 pre-register BEFORE first score (git-anchored, hash-chained)
+       │             ╠═ GATE-AX5 (NFR-031, run-type-scoped): leaderboard/filing ⇒
+       │             ║   prereg MUST exist + commit-on-remote; else opt-in
+       ▼
+  STAGE 3  RUN ───── DC-21 thin orchestrator: PIIRateEloEngine + ConvergenceChecker (Glicko RD)
+       │             ╠═ GATE-P1 (NFR-019/020) [SHOWSTOPPER]: run_significance_tests:false
+       │             ║   + import-graph guard (significance.py UNREACHABLE) + fab-regex lint
+       ▼
+  STAGE 4  SCORE ─── DC-22 audited CIs (Wilson/Clopper-Pearson) · DC-23 family-separation
+       │                 (AX-004) + contamination + seed-variance scope
+       ▼
+  STAGE 5  RATE ──── DC-22 paired McNemar/bootstrap + Holm-Bonferroni; convergence verdict
+       │             ╠═ GATE-CONV (NFR-029): NOT-CONVERGED ⇒ blocking honesty flag (not crash)
+       ▼
+  STAGE 6  REPORT ── DC-26 tie-gated leaderboard → DC-27 operating-point → DC-28 honesty
+       │                 bundle + self-verifying header → DC-30 crosswalk → DC-31 DOI/citation
+       ▼
+  [DELIVERABLE: results/]  +  per-page governance block (DC-29)
+
+  SIDECARS (write at every boundary; NEVER gate flow):
+    • Observability (L5/DC-25): one run-record per stage {load,sample,run,score,rate,report},
+      shared run_id, each {dataset_version, record_count, schema_fingerprint, seed, stage,
+      code_commit} + toolchain; file-level provenance on every artifact (NFR-042/043).
+      ↳ SP-W5: this chained record set IS a first-class audit deliverable, not debug output.
+    • Governance (DC-29): submission-provenance + recusal/neutrality block, stamped per report page.
+
+  GATE SEMANTICS (SP-W1): every gate = a NAMED PREDICATE over the stage run-record returning
+    proceed / halt(reason), evaluated INLINE at the boundary (no event bus). All gates are
+    CI-blocking machine predicates (NFR-019 &quot;green requires no human&quot;). Fail-closed by default;
+    the power gate is the one run-type-scoped non-fatal-on-default exception (SP-W2).
+
+  FAILURE / RESUME (SP-W3): a gate halt is fail-closed (non-zero exit, downstream does not run).
+    Recovery = re-invoke the failed CLI stage; it re-consumes the prior SEALED artifact and
+    reproduces byte-identically (NFR-030). No stateful --from-stage executor (descoped over-build).
+
+  PREREG ORDERING (SP-W6): STAGE 2 is structurally upstream of STAGE 4/5 — the linear order
+    PHYSICALLY enforces &quot;pre-register before scoring&quot; (AX-005 element 4), not by convention.
+</code></pre>
+<h3>Stage → DC → trigger → gate → run-record mapping</h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>DC(s)</th>
+<th>Entry</th>
+<th>Trigger</th>
+<th>Boundary gate (predicate)</th>
+<th>Run-record (L5)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0 LOAD</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a></td>
+<td>A</td>
+<td>sample CLI invoked</td>
+<td><strong>GATE-P2</strong> 5-tuple (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a>), fail-red</td>
+<td><code>load</code></td>
+</tr>
+<tr>
+<td>1 SAMPLE</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>/18/19</td>
+<td>A</td>
+<td>LOAD gate green</td>
+<td><strong>GATE-P3</strong> power (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>), run-type-scoped (SP-W2)</td>
+<td><code>sample</code></td>
+</tr>
+<tr>
+<td>— (seam)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a></td>
+<td>A→B</td>
+<td>manifest sealed (sha256)</td>
+<td>manifest non-strippable-caveat invariant (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a>)</td>
+<td>(carried on <code>sample</code>)</td>
+</tr>
+<tr>
+<td>2 PREREG</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a></td>
+<td>B</td>
+<td>manifest loaded</td>
+<td><strong>GATE-AX5</strong> prereg (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>), run-type-scoped</td>
+<td>(chained into <code>run</code>)</td>
+</tr>
+<tr>
+<td>3 RUN</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a></td>
+<td>B</td>
+<td>prereg ok</td>
+<td><strong>GATE-P1</strong> quarantine (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/020) <strong>[SHOWSTOPPER]</strong></td>
+<td><code>run</code></td>
+</tr>
+<tr>
+<td>4 SCORE</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a>/23</td>
+<td>B</td>
+<td>outcomes handed off</td>
+<td>family-separation static check (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a>/055)</td>
+<td><code>score</code></td>
+</tr>
+<tr>
+<td>5 RATE</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a></td>
+<td>B</td>
+<td>scores computed</td>
+<td><strong>GATE-CONV</strong> NOT-CONVERGED honesty flag (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a>)</td>
+<td><code>rate</code></td>
+</tr>
+<tr>
+<td>6 REPORT</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>/27/28/29/30/31</td>
+<td>B</td>
+<td>rate complete</td>
+<td>report linter: CIs+ties+honesty-set+self-verify (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a>/047)</td>
+<td><code>report</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>5. Cross-workflow concerns</h2>
+<ul>
+<li><p><strong>Onboarding / default path.</strong> The default invocation (no preset ⇒ <code>powered-representative</code>, DF-1) runs the full spine <strong>unattended</strong> to a power-labelled deliverable — the linear default <em>is</em> the onboarding path. The <strong>one-command chain</strong> wires ENTRY-A → ENTRY-B by feeding <code>--out sample-manifest.json</code> into <code>--sample</code>. <code>smoke</code> is the fast-CI on-ramp: it exercises all six stages with CI + p-value fields <strong>suppressed</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-034" data-trace-id="NFR-034" aria-label="Trace NFR-034 — — PASS">NFR-034</a>), so it can never look inferential.</p>
+</li>
+<li><p><strong>Error / recovery flow.</strong> Three halt classes: <strong>(1) hard halt</strong> — P1 fabrication-path reachable (GATE-P1) or P2 contract mismatch (GATE-P2) ⇒ non-zero exit, nothing downstream runs; <strong>(2) run-type-scoped halt</strong> — P3 power shortfall on <code>full</code>/leaderboard (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>); <strong>(3) non-fatal flag</strong> — <code>UNDER_SAMPLED</code> / <code>CORPUS_LIMITED</code> on default, <code>NOT-CONVERGED</code>, <code>contamination-uncontrolled</code> ⇒ carried on the artifact, the report MUST render it (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>). <strong>Recovery is re-run, not resume</strong> (SP-W3): re-invoke the failed stage; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a> guarantees byte-identical reproduction from the sealed manifest.</p>
+</li>
+<li><p><strong>Multi-DC interactions.</strong> The <strong>manifest (<a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a>) is the only cross-process coupling</strong> (L1). The <strong>run-type selector (<a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>) fans out</strong> to GATE-P3 strength (<a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>), GATE-AX5 strength (<a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>), and the rigor bar (<a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a>) — one mechanism, three scoped behaviors (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>). The <strong>observability sidecar (<a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a>) threads the shared <code>run_id</code></strong> through all six stages and surfaces the <a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a> 5-tuple as run-record fields. <strong>Report DCs (26/27/28) fan in on the single audited-stats output</strong> so leaderboard, operating-point, and honesty bundle share one statistical source of truth (no recompute, no AX-004 merge).</p>
+</li>
+</ul>
+<hr>
+<h2>6. Axiom considerations</h2>
+<ul>
+<li><strong>AX-001 (synthetic-only):</strong> the non-strippable caveat is seeded at <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a> (manifest) and carried by <code>DesignProvenance</code> through every downstream stage to <a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a>/31. The linear data dependency guarantees it cannot be dropped between stages (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a>).</li>
+<li><strong>AX-002 (deterministic/seeded/byte-reproducible):</strong> each stage boundary is a sealed, hashed checkpoint; re-running from any boundary re-derives byte-identical artifacts (seed + RNG fingerprint pinned in the manifest and every run-record — <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>/021/042).</li>
+<li><strong>AX-003 (stated power):</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>&#39;s PowerMatrix verdict is a Stage-1 gate output, surfaced <strong>before any inference is computed</strong> (GATE-P3); re-asserted as a blocking honesty flag at <a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a>.</li>
+<li><strong>AX-004 (separate families):</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a> family-separation is enforced at SCORE (static check, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a>/055) <strong>before</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a> renders — the linear path contains no merge point.</li>
+<li><strong>AX-005 (pre-registered/reproducible, 6 elements + scope):</strong> the linear order <strong>physically enforces</strong> prereg (Stage 2) upstream of scoring (Stages 4–5) — <a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a> is structurally before <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (SP-W6). Run-type (<a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>) sets the gate strength at the PREREG and power boundaries (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>).</li>
+</ul>
+<hr>
+<h2>7. Constraints on downstream diamonds</h2>
+<ul>
+<li><p><strong>D3 (UI):</strong> Minimalist-CLI, no web UI (a11y N/A). Needs: (a) <strong>two entrypoints</strong> with upfront <code>--preset / --seed / --run-type / --sample / --config / --out</code>; (b) per-stage <strong>progress</strong> + the <strong>PowerMatrix verdict banner</strong> + <strong>fail-red gate messages</strong>; (c) info-dense terminal <strong>report pointers</strong>; (d) <strong>non-interactive by default</strong> (default + smoke run in CI with no prompts — SP-W4); (e) a <code>--block-on-underpower</code> flag to convert the default&#39;s non-fatal power flag into a hard halt for stricter callers (SP-W2). <strong>No <code>--from-stage</code> resume flag</strong> (SP-W3 descope) — recovery is re-invoke-the-stage.</p>
+</li>
+<li><p><strong>D4 (System):</strong> a <strong>linear stage sequencer</strong> (not an event bus, not a conversation state machine) with: <strong>hashed, sealed stage artifacts</strong>; the <strong>sample-manifest as the inter-process seam contract</strong> (the load-bearing schema — L1); <strong>gate predicates as named, unit-testable functions over the run-record</strong> (SP-W1) evaluated fail-closed at each boundary — P1 import-graph/call-graph guard (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>), P2 5-tuple regression test (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a>), P3 power gate (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>, run-type-scoped); a <strong>run-record sidecar writer</strong> keyed on shared <code>run_id</code>, one record per stage (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>), emitted as a first-class audit artifact (SP-W5); <strong>pure-stdlib cores + lazy heavy-dep guards</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a>). State persisted per boundary = <code>{stage, artifact_hash, run_id, seed, code_commit}</code> enabling crash-recovery via <strong>re-run</strong> (no stateful resume engine — SP-W3). <strong>L4 loader strategy remains deferred to D4/D5</strong> (prefer fixing the bundled parser + regression contract; reserve <code>load_dataset</code> import for the sampler side).</p>
+</li>
+</ul>
+<hr>
+<h2>8. What feeds the next diamond (D3 UI)</h2>
+<p>D3 inherits a <strong>non-interactive two-CLI batch surface</strong> with one upfront decision (preset + run-type), per-stage progress + verdict banners + fail-red gate messages, info-dense report pointers, and an explicit <strong>no-interactive-consent</strong> commitment (SP-W4, flagged for Pass-2). The gate-message vocabulary (P1/P2/P3 + prereg + NOT-CONVERGED) and the PowerMatrix verdict banner are the load-bearing UI affordances. The <code>--block-on-underpower</code> flag and the absence of a <code>--from-stage</code> flag are the two named UI-surface switch-points carried forward.</p>
+<hr>
+<p>✅ <strong>D2 CONVERGE complete (2026-06-01).</strong> Pugh-compared 3 workflow archetypes (A Linear-batch / B Event-Driven / C Agent-Conversation) against the brief&#39;s five criteria; <strong>Frame A (Linear-batch-pipeline) preferred (datum; the only non-negative total)</strong> — cycle-1-consistent and a 1:1 match to the <code>load→…→report</code> spine. Enriched with <strong>B&#39;s two winning ideas</strong> as switch-points: gate-as-named-predicate discipline (SP-W1) + honest-halt-and-re-run resume model (SP-W3, trimming A&#39;s own <code>--from-stage</code> over-build). Six switch-points named + resolved (SP-W1…W6). Decisive finding: <strong>no resume requirement exists</strong> — recovery is byte-identical re-run from the sealed manifest (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>). High-stakes commitment flagged for Pass-2: <strong>no interactive per-stage consent</strong> (SP-W4). <code>provisional_status: AGENT_SIMULATED</code>. Ready for D3 (UI).</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/03-design/02-workflow/preferred.md</code> ·
+  content-hash <code>f6c7e2816c57</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

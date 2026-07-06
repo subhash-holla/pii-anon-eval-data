@@ -1,0 +1,2002 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 — D6 SYNTHESIS: Implementation-Ready Design (Powered Assessment Workflow) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 — D6 SYNTHESIS: Implementation-Ready Design (Powered Assessment Workflow)</h1>
+<p><strong>Capability</strong>: CAP-02 — an academically-sound, repeatable, reportable assessment <strong>workflow</strong> that runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0 / 575,604 / CC0 / <code>annotations</code></strong> over a <strong>powered-representative lattice-stratified sample (CLI default)</strong> / <strong>full corpus (opt-in, citable)</strong> / <strong>smoke (fast CI)</strong>, with statistical/epistemic observability + reporting at every spine stage <code>load → sample → run → score → rate → report</code>.
+<strong>Stage</strong>: assessment-workflow / 03-Design · <strong>Diamond 6 (Synthesis) — the implementation-ready design</strong>
+<strong>Date</strong>: 2026-06-01
+<strong>provisional_status</strong>: AGENT_SIMULATED — the persona/PGO/UC/interview chain this design serves is agent-simulated single-session research; the <strong>code / version / line / API evidence is direct file-read at HEAD on 2026-06-01</strong> (eval-data side firsthand and re-verified this session — see §0.1; the <code>pii-rate-elo</code> side carried from Discovery file-reads because <strong>that repo is not populated on this machine</strong> — re-confirm every cited line before editing). One high-stakes commitment is flagged for Pass-2: <strong>non-interactive batch with no per-stage consent</strong> (the single human decision — preset + run-type — is upfront; SP-W4/SP-U6).</p>
+<blockquote>
+<p><strong>Vocabulary remap.</strong> DC = <strong>Benchmark Component</strong>; FR = Assessment Capability; UC = Evaluation Scenario; NFR = Quality Attribute; AX = binding axiom; PGO = Benchmark Goal; Persona = assessment consumer.</p>
+</blockquote>
+<blockquote>
+<p><strong>ID discipline (load-bearing).</strong> Cycle-1 ended at <strong><a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-15" data-trace-id="DC-15" aria-label="Trace DC-15">DC-15</a></strong> (verified: <code>03-design/06-synthesis/D-implementation-ready-design.md</code> ends at <a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-15" data-trace-id="DC-15" aria-label="Trace DC-15">DC-15</a>). CAP-02 DCs are <strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a> … <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a></strong>, global numbering continued, <strong>never renumbered or reused</strong>. <a class="trace-link" href="../../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>…23 / <a class="trace-link" href="../../02-requirements/audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>…054 / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>…055 / AX-pii-anon-001…005 are the cycle-2 ranges.</p>
+</blockquote>
+<blockquote>
+<p><strong>Locked architecture (every diamond honored; this synthesis ratifies).</strong> eval-data <strong>OWNS</strong> sampling + observability + reporting; <code>pii-rate-elo</code> <strong>CONSUMES</strong> (extend, do <strong>NOT</strong> rebuild the engine / metrics / convergence). The <strong>sample-manifest is the L1 SEAM</strong> (the sole cross-process data coupling). Two CLI entrypoints (L3). Cycle-1 hybrid held: <strong>Modular system (D4) + Hexagonal scoring core with Clean inside <code>stats</code> (D5) + Linear-batch data-prep (D2) + Minimalist-CLI / Info-Dense-reports (D3)</strong>; a11y <strong>N/A</strong> (library + two CLIs, no web UI).</p>
+</blockquote>
+<blockquote>
+<p><strong>D6 SME panel absorbed (2026-06-01).</strong> This design has been revised in place against the 5-SME heuristic panel (Nielsen usability / statistical-methodology rigor / reproducibility-provenance / architecture-testability / scientific-reporting-integrity; consolidated in <code>06-synthesis/sme-heuristic-findings.md</code>). <strong>All 11 MAJOR findings are resolved here</strong> (inline-tagged at each edit site): the sampler&#39;s shared-RNG determinism hole → <strong>per-cell child <code>random.Random((seed, cell_id))</code></strong> + full-closure fingerprint (repro-01/02, §7/§2.3); Holm multiplicity → <strong>within (metric, scoring-family) partition, family-size from the confirmatory set</strong> (stat-01/integrity-MINOR-4, §8/§6/§4); <strong>adjacent-pair paired-Δ as the rank oracle, marginal CIs descriptive-only</strong> (stat-02, §6/§8); <strong>power_class scoped to recall@p_ref, others NOT_ASSESSED</strong> (stat-03, §7/§2.3/§6); <strong>full-corpus census = no-CI by default via <code>inferential_target</code></strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a>/integrity-MAJOR-1, §3/§4/§6); <strong>verdict token bound to the synthetic-only/sample-scope caveat</strong> (integrity-MAJOR-2, §6/§2.3); <strong>named fatal-exit messages</strong> on every gate (nielsen-01, §7/§9/§10); <strong>ENTRY-B fail-closed manifest↔corpus precondition</strong> (nielsen-02, §2.3/§9); <strong>static-AST import-closure</strong> (arch-01, §9); and the <strong>runner→report <code>OutcomeDTO</code> seam + contract test</strong> (arch-02, §2.1/§2.4). Two of these (Holm family; descriptive-census CIs) re-anchor the design to requirements it had drifted from (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a>). MINOR/SUGGESTION items are folded into the adjacent payloads; PRAISE controls (significance-quarantine, audited LOCAL-RNG bootstrap, non-strippable caveat, single all-edges import gate) are protected from regression.</p>
+</blockquote>
+<hr>
+<h2>0. The five preferred diamonds, integrated</h2>
+<table>
+<thead>
+<tr>
+<th>Diamond</th>
+<th>Preferred</th>
+<th>One-line carry-forward into this design</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>D1 Design Cases</strong></td>
+<td><strong>Frame C (Workflow-arc-led), +0.85</strong> — enriched with A&#39;s axiom-narration + B&#39;s persona-ownership</td>
+<td><strong>16 DCs (<a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a>…31)</strong> = one per spine stage + observability + governance + release X-stage artifacts; the partition <em>is</em> the spine and <em>is</em> the L6 module map.</td>
+</tr>
+<tr>
+<td><strong>D2 Workflow</strong></td>
+<td><strong>Frame A (Linear-batch-pipeline), datum</strong> — enriched with B&#39;s gate-as-named-predicate + honest-halt/re-run</td>
+<td>A <strong>fail-closed linear batch</strong> across the two-CLI manifest seam; gates = named predicates over the run-record evaluated inline; <strong>no resume engine</strong> (recovery = byte-identical re-run, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>); <strong>no per-stage consent</strong>.</td>
+</tr>
+<tr>
+<td><strong>D3 UI</strong></td>
+<td><strong>Frame A (Minimalist-CLI + Info-Dense-Reports), datum (A 0.00 / B +0.08 / C −0.40)</strong> — enriched with B&#39;s dense-per-cell content + machine-stdout discipline</td>
+<td><strong>Two terse CLIs</strong> (one upfront decision: preset + run-type) + an <strong>Info-Dense LaTeX/CSV deliverable</strong>; PowerMatrix verdict banner (never silently LARGE); <code>FAIL</code>/<code>FLAG</code>/<code>OK</code> gate vocabulary; stdout = manifest path only on ENTRY-A.</td>
+</tr>
+<tr>
+<td><strong>D4 System</strong></td>
+<td><strong>Frame B (Modular), datum (B 0.00 / A −0.12 / C −0.34)</strong> — enriched with A&#39;s in-process grain + static-import-gate; C&#39;s immutability discipline</td>
+<td><strong>In-process modules in one shared venv</strong>, one-way import (<code>pii-rate-elo → pii_anon_datasets.{assessment,stats}</code>); <strong>L4 RESOLVED = FIX the bundled parser</strong> + 5-tuple regression contract; write-once content-hashed JSON (not event sourcing); Holm = net-new audited <code>stats/</code> primitive.</td>
+</tr>
+<tr>
+<td><strong>D5 Architecture</strong></td>
+<td><strong>Frame A (Hexagonal, Ports &amp; Adapters), datum (A 0.00 / B 0.00 / C −0.02)</strong> — B absorbed as the pure <code>stats/</code> Clean inner ring; C&#39;s authority-by-placement carried as SP-A2</td>
+<td><strong>Domain hexagon + 5 ports</strong> + manifest DTO + constructor-wired composition root; the <strong>import-boundary rule (§9)</strong> makes the fabricated <code>analysis.significance</code> <strong>module</strong> unreachable from both assessment entrypoints (canonical <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> gate, module-level).</td>
+</tr>
+</tbody></table>
+<h3>0.1 Firsthand verification ledger (eval-data side, re-confirmed THIS session 2026-06-01)</h3>
+<p>All reuse APIs the diamonds compose were re-read at HEAD this session and <strong>confirmed present</strong> (paths are real; the diamonds occasionally wrote <code>scripts/X</code> — the scripts live at the <strong>repo-root <code>scripts/</code></strong>, not under <code>src/</code> — corrected throughout this design):</p>
+<ul>
+<li><code>src/pii_anon_datasets/__init__.py:55</code> — <code>load_dataset(*, subset, domain, split, language, dimension)</code> (<strong>no <code>version</code> arg</strong> — the load-bearing fact behind the L4 decision). ✔</li>
+<li><code>src/pii_anon_datasets/stats/power.py</code> — <code>Tier</code>:54, <code>PowerClass</code>:60 (WELL/UNDER/EMPTY, 3-state today), <code>required_n</code>:67, <code>TIER_SPECS</code>:95 (→ 1522/753/200), <code>REID_TIER_SPECS</code>:152 (897/385 <em>pairs</em>, out-of-scope), <code>classify</code>:235, <code>CellAudit</code>:289, <code>PowerMatrix</code>:320, <code>PowerMatrix.verdict()</code>:351 (<strong>LARGE iff frac≥0.999, ADEQUATE iff ≥0.80, else SMALL</strong> — body read this session), <code>audit_crossing</code>:428. ✔</li>
+<li><code>src/pii_anon_datasets/stats/intervals.py</code> — <code>_require_int_counts</code>:39, <code>wilson_interval</code>:65, <code>clopper_pearson_interval</code>:170 (integer-guarded). ✔</li>
+<li><code>src/pii_anon_datasets/stats/paired.py</code> — <code>mcnemar_exact</code>:62, <code>mcnemar_chi2(...,continuity=True)</code>:82, <code>paired_bootstrap_recall_delta</code>:112 with <strong>LOCAL <code>random.Random(seed)</code>:140</strong>. ✔</li>
+<li><strong>Holm–Bonferroni / <code>multitest</code> is ABSENT</strong> from <code>src/pii_anon_datasets/stats/*</code> (grep returned zero hits this session) → it is the <strong>one net-new audited primitive</strong> (SP-S4). ✔</li>
+<li><code>scripts/lattice_audit.py</code> — <code>committed_index</code>:31, <code>record_increments</code>:68, <code>audit_positives</code>:83, <code>deficits</code>:103 (streaming single-pass realized positives). ✔</li>
+<li><code>scripts/benchmark_throughput.py</code> — <code>SEED_BENCHMARK=20260531</code>:63, <strong><code>RUNRECORD_SCHEMA=&quot;pii-anon-nfr010-runrecord/v1&quot;</code>:65</strong>, <code>HARNESS_VERSION=&quot;1.0.0&quot;</code>:66, <code>reservoir_sample</code>:92 (Algorithm-R — <strong>order-dependent: deterministic only for ONE iterable + ONE RNG in fixed order; this is the load-bearing fact behind the repro-01 per-cell-child-RNG requirement in §7</strong>), <code>host_spec()</code>:311 (<strong>always <code>is_reference_host=False</code></strong>), <code>build_run_record(..., timestamp=None)</code>:359 (<strong>injectable timestamp</strong>), and the <strong><code>provenance</code> block</strong> <code>{is_reference_host, environment, canonical_verdict, reason}</code>:418. This is the exact L5 RUNRECORD pattern to reuse. ✔</li>
+<li><code>scripts/write_manifest.py</code> — <code>_sha256</code>:26, <code>compute_manifest</code>:48, <code>--check</code> exit-1-on-drift (stdlib <code>hashlib</code>, no heavy deps). ✔</li>
+<li><code>scripts/_version.py</code> — <code>get_version()</code>:8, <code>DATASET_VERSION</code>:17. ✔</li>
+<li><code>scripts/validate.py</code> — <code>--lattice</code> (<code>DEFAULT_LATTICE</code>:41) + <code>check_committed_cell_power</code>:44 streams via <code>lattice_audit</code>, <code>--no-power-gate</code> exists (the gate it must keep ON), <code>sys.exit(1)</code>:204. ✔</li>
+<li><code>src/pii_anon_datasets/scoring/detection.py</code> — <code>DESIGN_CAVEAT</code>:17, <code>DesignProvenance</code>:30 with <code>__post_init__</code>:44 <strong>raising on empty caveat</strong>:46. ✔</li>
+<li><code>src/pii_anon_datasets/subsets/slices.py</code> — <code>SLICE_CAVEAT</code>:25, <code>Slice.__post_init__</code>:40 <strong>raising on empty caveat</strong>:42. ✔</li>
+<li><code>python -m pii_anon_datasets.stats.lattice --check</code> → <strong>&quot;OK … 730 cells&quot;</strong>, exit 0, run THIS session (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a> green). ✔</li>
+</ul>
+<p><strong><code>pii-rate-elo</code> side — NOT firsthand.</strong> The repo at <code>pii-anon-research-paper/pii-rate-elo-pipeline/</code> contains <strong>zero <code>.py</code> files on this machine</strong> (confirmed this session). Every cited consumer line (<code>significance.py:90</code>/<code>:409</code>, <code>cli.py:33</code>/<code>:240</code>/<code>:242</code>, <code>pii_anon_eval.py:93</code>/<code>:221</code>/<code>:222</code>/<code>:82</code>, <code>schema.py:137</code>/<code>:349</code>/<code>:583</code>/<code>:627</code>, <code>engine.py</code>/<code>convergence.py</code>/<code>metrics_bridge.py</code>) is carried from Discovery and <strong>MUST be re-confirmed against a checkout before S8 edits</strong> (S8 begins with that re-verification; this is the single biggest implementation risk and is tracked in §15 Unresolved Tensions UT-1).</p>
+<hr>
+<h2>1. The locked Design-Case set (<a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a> … <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a>)</h2>
+<p>16 Benchmark Components, one per spine stage plus the two cross-cutting spines (observability, governance) and the release/crosswalk X-stage artifacts. Each row = <strong>DC → bundled FR/NFR → spine stage → reused modules → owning persona-tier → axioms saturated → R7 priority → the module/port that builds it (D4/D5)</strong>.</p>
+<h3>LOAD</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a> — Dataset-seam reconciliation + regression contract (v2.0.0)</strong> [P2]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-031" data-trace-id="FR-031" aria-label="Trace FR-031 — — PASS">FR-031</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-054" data-trace-id="NFR-054" aria-label="Trace NFR-054 — — PASS">NFR-054</a> · <strong>Spine:</strong> LOAD · <strong>Precondition:</strong> P2 (CATASTROPHIC-as-wired).</li>
+<li><strong>Owner persona:</strong> P-tool-builder (T1). <strong>Axioms:</strong> correctness precondition (enables AX-002/003/004 downstream). <strong>Priority:</strong> MUST.</li>
+<li><strong>Builds:</strong> pii-rate-elo <code>datasets/converters/pii_anon_eval.py</code> + <code>schema.py</code> v2.0.0 metadata pins + the <strong>5-tuple regression contract</strong>; eval-data side reuses <code>scripts/_version.py</code>, <code>scripts/write_manifest.py</code> hashing, <code>tests/test_doc_drift.py</code> canonical pins, <code>taxonomy.ENTITY_TYPE_COUNT</code> (=63 derived). <strong>Port:</strong> <code>CorpusReader</code> ← <code>JsonlCorpusAdapter</code> (the fixed bundled parser). <strong>L4 RESOLVED (D4 §4): FIX the bundled parser; reserve <code>load_dataset</code> for the eval-data sampler side.</strong></li>
+</ul>
+<h3>SAMPLE</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a> — Powered, lattice-stratified, seeded sampler</strong> [P3]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-032" data-trace-id="FR-032" aria-label="Trace FR-032 — — STRENGTHENED (oracle for &quot;never head-truncation&quot;)">FR-032</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>, <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-039" data-trace-id="NFR-039" aria-label="Trace NFR-039 — — PASS">NFR-039</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a> · <strong>Spine:</strong> SAMPLE.</li>
+<li><strong>Owner:</strong> P-mlnlp-researcher (T1); P-acad-deid (T1); P-priveng (T2). <strong>Axioms:</strong> AX-002 (seeded/single-pass deterministic), AX-003 (tiered targets derived). <strong>Priority:</strong> MUST.</li>
+<li><strong>Builds:</strong> <code>assessment/sample.py</code>. <strong>Reuses:</strong> <code>stats/power.py</code> (<code>required_n</code>, <code>TIER_SPECS</code>, <code>classify</code>, <code>pick_tier</code>, <code>Tier</code>), <code>stats/lattice.py</code> (<code>build_committed_lattice</code>/<code>load_lattice</code>, <code>--check</code> 730@<code>47c3a8f</code>), <code>scripts/lattice_audit.py</code> (<code>committed_index</code>/<code>audit_positives</code>/<code>deficits</code>), <code>subsets/slices.py</code>, <code>scripts/benchmark_throughput.py::reservoir_sample</code> (Algorithm-R, <code>SEED_BENCHMARK</code>). <strong>Pure domain logic — no port</strong> (sampling is not swappable infrastructure, SP-A4). <strong>Determinism contract (repro-01/02):</strong> a <strong>per-cell child RNG <code>random.Random((seed, cell_id))</code></strong> (never one shared RNG fanned across cells — Algorithm-R is order-dependent); the byte-repro guarantee is <strong>conditional on pinned {corpus content_hash, lattice_version, seed}</strong>; <code>repro.sampler_version</code> fingerprints the FULL §7 closure (incl. <code>lattice_audit</code> + <code>reservoir_sample</code>) and <code>repro.ut5_integers</code> is frozen into the hashed payload.</li>
+</ul>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a> — PowerMatrix verdict + per-cell realized-positive shortfall</strong> [P3]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-033" data-trace-id="FR-033" aria-label="Trace FR-033 — — PASS">FR-033</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-036" data-trace-id="NFR-036" aria-label="Trace NFR-036 — — PASS">NFR-036</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-037" data-trace-id="NFR-037" aria-label="Trace NFR-037 — — PASS">NFR-037</a> · <strong>Spine:</strong> SAMPLE.</li>
+<li><strong>Owner:</strong> P-mlnlp-researcher (T1); P-acad-deid (T1). <strong>Axioms:</strong> AX-003. <strong>Priority:</strong> MUST.</li>
+<li><strong>Builds:</strong> <code>assessment/verdicts.py</code> (power-class derivation) feeding <code>assessment/sample.py</code>. <strong>Reuses:</strong> <code>stats/power.py::PowerMatrix.verdict()</code> (SMALL/ADEQUATE/LARGE @ 0.80/0.999), <code>CellAudit</code>, <code>classify</code>. <strong>The 4-state extension</strong> (<code>UNDER_SAMPLED</code> vs <code>CORPUS_LIMITED</code>) compares sample realized <code>n</code> to <strong>full-corpus</strong> realized positives via <code>lattice_audit.audit_positives</code> — <code>classify</code> is 3-state today; the 4th state is derived in <code>verdicts.py</code>, NOT by mutating <code>power.py</code> (keeps the audited core unchanged). <strong>Power-operating-point scope (stat-03):</strong> every <code>power_class</code> records <code>power_operating_point = recall@p_ref</code> and applies to <strong>recall only</strong>; precision/Fβ/AUPRC/pseudo-re-id are <code>NOT_ASSESSED</code> unless re-sized by a matching ladder — the recall verdict is never reused as their label. <strong>Verdict-token caveat (integrity-MAJOR-2):</strong> <code>verdicts.py</code> renders the corpus verdict as the non-strippable unit <code>&lt;verdict&gt; · conditional-on-this-sample · synthetic-only</code>; a sample run never emits a bare <code>LARGE</code> (G3).</li>
+</ul>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a> — Reproducible sample manifest (the L1 SEAM) + non-strippable caveat</strong> [P3]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-034" data-trace-id="FR-034" aria-label="Trace FR-034 — — PASS">FR-034</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-039" data-trace-id="NFR-039" aria-label="Trace NFR-039 — — PASS">NFR-039</a> · <strong>Spine:</strong> SAMPLE/X · <strong>The L1 SEAM.</strong></li>
+<li><strong>Owner:</strong> P-acad-deid (T1, byte-for-byte reproducibility). <strong>Axioms:</strong> AX-002 (canonical-form-equal re-run), AX-001 (non-strippable synthetic-only caveat). <strong>Priority:</strong> MUST.</li>
+<li><strong>Builds:</strong> <code>assessment/manifest.py</code>. <strong>Reuses:</strong> <code>scripts/write_manifest.py</code> (deterministic sha256, canonical form), <code>subsets/slices.py::SLICE_CAVEAT</code> + <code>Slice.__post_init__</code> (raise-on-empty → non-strippable), <code>scoring/detection.py::DesignProvenance</code>. <strong>The manifest is a serialized JSON DTO, not a Protocol</strong> (D5 SP-A4).</li>
+</ul>
+<h3>SAMPLE / RUN</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a> — Preset trio + run-type → rigor-bar profile</strong> [the L3 surface]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-035" data-trace-id="FR-035" aria-label="Trace FR-035 — — STRENGTHENED (undefined &quot;results-bearing&quot; predicate)">FR-035</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-037" data-trace-id="FR-037" aria-label="Trace FR-037 — — PASS">FR-037</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-025" data-trace-id="NFR-025" aria-label="Trace NFR-025 — — PASS">NFR-025</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-034" data-trace-id="NFR-034" aria-label="Trace NFR-034 — — PASS">NFR-034</a> · <strong>Spine:</strong> SAMPLE/RUN.</li>
+<li><strong>Owner:</strong> P-acad-deid (T1, full-corpus citable) + P-tool-builder (T1, smoke); P-mlnlp-researcher (T1, default). <strong>Axioms:</strong> AX-002, AX-005 (enforcement scope via run-type binding). <strong>Priority:</strong> MUST (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a>/037 SHOULD; the run-type mechanism <a class="trace-link" href="../../02-requirements/audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a> is MUST).</li>
+<li><strong>Builds:</strong> the two CLIs (ENTRY-A <code>assessment.sample</code>; ENTRY-B <code>pii-rate-elo assessment</code>) + <code>configs/assessment.yaml</code> + the <strong>committed run-type→profile enum</strong> (<code>smoke</code>/<code>dev</code>/<code>leaderboard-submission</code>/<code>filing-grade</code> → <code>{rigor_bar, prereg, sample_mode}</code> total triple) + <strong><code>preset</code>×<code>run-type</code> coherence validation at parse time (nielsen-04)</strong>. <strong>Inferential-target (integrity-MAJOR-1 / <a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a>):</strong> <code>preset=full</code> ⇒ <code>inferential_target = descriptive-census</code> (metrics labelled descriptive, <strong>no CI by default</strong>) unless <code>--super-population</code> is set; stamped into manifest + prereg + run-record; the report suppresses the CI column under descriptive-census. <strong>Reuses:</strong> pii-rate-elo <code>cli.py</code> (Typer, extend), <code>config.py::PipelineConfig.from_yaml</code>; eval-data <code>benchmark_throughput::build_run_record</code>; version-pinned <code>record_count</code> from <a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a> (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a> <code>records_scored == dataset.record_count(version)</code>, never literal <code>575604</code>).</li>
+</ul>
+<h3>RUN / RATE</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a> — Thin assessment orchestrator: engine + Glicko convergence (consume, no rebuild)</strong> [the L2 orchestrator]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-039" data-trace-id="FR-039" aria-label="Trace FR-039 — — STRENGTHENED (span-match mode value-space unpinned)">FR-039</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a> (convergence verdict source), <a class="trace-link" href="../../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a> · <strong>Spine:</strong> RUN/RATE.</li>
+<li><strong>Owner:</strong> P-mlnlp-researcher (T1); P-tool-builder (T1); P-acad-deid (T1). <strong>Axioms:</strong> AX-005 (element 3, convergence), AX-002. <strong>Priority:</strong> MUST.</li>
+<li><strong>Builds:</strong> pii-rate-elo <code>cli.py assessment</code> command + the <strong>thin assessment adapter</strong> (<code>EloEngineAdapter</code>). <strong>Reuses (consumed, none re-implemented):</strong> <code>tournament/engine.py::PIIRateEloEngine</code>, <code>tournament/convergence.py::ConvergenceChecker</code> (Glicko RD, default threshold 100), <code>tournament/organizer.py</code>, <code>evaluation/metrics_bridge.py::compute_span_metrics</code> (declared <code>span_match_mode ∈ {exact, relaxed-overlap}</code>), <code>config.py</code>, <code>cli.py</code>. <strong>Port:</strong> <code>TournamentRunner</code> ← <code>EloEngineAdapter</code> (the single cross-repo import surface).</li>
+</ul>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> — Audited statistics core: CIs + paired tests + Holm (P1 quarantine)</strong> [SHOWSTOPPER, P1]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-040" data-trace-id="FR-040" aria-label="Trace FR-040 — — STRENGTHENED (un-pinned small-n threshold)">FR-040</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-041" data-trace-id="FR-041" aria-label="Trace FR-041 — — STRENGTHENED (prose-only &quot;stated in report text&quot; has no o…">FR-041</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-042" data-trace-id="FR-042" aria-label="Trace FR-042 — — PASS">FR-042</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-020" data-trace-id="NFR-020" aria-label="Trace NFR-020 — — STRENGTHENED (sole-oracle drift on the human diff)">NFR-020</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-021" data-trace-id="NFR-021" aria-label="Trace NFR-021 — — PASS">NFR-021</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-022" data-trace-id="NFR-022" aria-label="Trace NFR-022 — — PASS">NFR-022</a>, <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-023" data-trace-id="NFR-023" aria-label="Trace NFR-023 — — CI on 100% of metrics + deterministic interval-selection…">NFR-023</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a> · <strong>Spine:</strong> SCORE/RATE · <strong>Precondition:</strong> P1 (one indivisible integrity surface — SP-2; NOT split).</li>
+<li><strong>Owner:</strong> P-mlnlp-researcher (T1); P-acad-deid (T1); P-tool-builder (T1). <strong>Axioms:</strong> AX-002, AX-003, AX-005 (elements 1, 2). <strong>Priority:</strong> MUST (SHOWSTOPPER).</li>
+<li><strong>Builds:</strong> <code>assessment/report.py</code> (calls the audited stats) + the <strong>net-new <code>stats/multitest.py</code> Holm–Bonferroni</strong> primitive (verified absent). <strong>Reuses:</strong> <code>stats/intervals.py</code> (<code>wilson_interval</code>, <code>clopper_pearson_interval</code>, <code>_require_int_counts</code>), <code>stats/paired.py</code> (<code>mcnemar_exact</code>, <code>mcnemar_chi2</code>, <code>paired_bootstrap_recall_delta</code>). <strong>Multiplicity partition (stat-01 / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>):</strong> Holm is applied <strong>WITHIN each (metric, scoring-family) partition — never pooled across metrics or across anon/pseudo (AX-004)</strong>; confirmatory <code>family_size = #pairs × #metrics in the confirmatory set</code> (computed from the structured <code>inference_families</code> block, asserted == prereg). <strong>Quarantine target:</strong> pii-rate-elo <code>analysis/significance.py::SignificanceTester</code> (fabricated; module-level eager instantiation <code>:409</code> per Discovery) → set <code>run_significance_tests:false</code> + <strong>static-AST import-graph guard</strong> (§9) + fabrication-regex lint.</li>
+</ul>
+<h3>SCORE</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a> — Scoring-family separation (anon/pseudo) + contamination + seed-variance scope</strong></p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a> · <strong>Spine:</strong> SCORE.</li>
+<li><strong>Owner:</strong> P-mlnlp-researcher (T1); P-tool-builder (T1); P-dpo (T2, separation). <strong>Axioms:</strong> AX-004 (separate families, never merged), AX-005. <strong>Priority:</strong> SHOULD (R7 demotion; <strong>NR-core &quot;four families never merged&quot; stays MUST via <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a> / G-norg</strong>; reversible at Pass-2).</li>
+<li><strong>Builds:</strong> <code>assessment/report.py</code> + run-record fields in <code>assessment/runrecord.py</code>: <code>scoring_family ∈ {anonymization, pseudonymization}</code>, <code>contamination_status</code> (+ <code>contamination-uncontrolled</code> propagation when <code>unknown</code>), <code>seed_variance_scope</code> (multi-seed <code>len(seeds) ≥ MIN_SEEDS=3</code> + Kendall-τ, or <code>single-seed</code> → <code>rank-volatility: UNMEASURED</code>). <strong>Reuses:</strong> the four-metric-families-never-merged guardrail (cycle-1 <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>, extended by <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a> static check).</li>
+</ul>
+<h3>X / REPORT (pre-registration)</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a> — Pre-registration: git-anchored + hash-chained</strong></p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-044" data-trace-id="FR-044" aria-label="Trace FR-044 — — STRENGTHENED (&quot;pushed to remote&quot; needs an oracle)">FR-044</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-032" data-trace-id="NFR-032" aria-label="Trace NFR-032 — — PASS">NFR-032</a> · <strong>Spine:</strong> X/REPORT (after <code>sample</code>, before first score).</li>
+<li><strong>Owner:</strong> P-acad-deid (T1); P-complreviewer (T3), P-tool-vendor (T3). <strong>Axioms:</strong> AX-002, AX-005 (element 4). <strong>Priority:</strong> MUST (mechanism MUST; enforcement run-type-scoped per <a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>).</li>
+<li><strong>Builds:</strong> <code>assessment/prereg.py</code>. <strong>Reuses:</strong> <code>scripts/write_manifest.py</code> hashing; commit-on-remote oracle <code>git branch -r --contains &lt;sha&gt;</code> (subprocess). <strong>Port:</strong> <code>PreregSink</code> ← <code>PreregAdapter</code>. <strong>Immutable payload</strong> pins {version, manifest hash, seed, systems, metrics, RD stopping rule, interval rule, multiplicity family+size, power design point, span-match mode, scoring family, tie/exclusion rules}; + run-lineage count.</li>
+</ul>
+<h3>X (observability — all stages)</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a> — Per-stage observability run-records + file-level provenance</strong> [the L5 spine]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-045" data-trace-id="FR-045" aria-label="Trace FR-045 — — PASS">FR-045</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-046" data-trace-id="FR-046" aria-label="Trace FR-046 — — PASS">FR-046</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-043" data-trace-id="NFR-043" aria-label="Trace NFR-043 — — PASS">NFR-043</a> · <strong>Spine:</strong> X (cross-cuts all 6 stages).</li>
+<li><strong>Owner:</strong> P-priveng (T2); P-complreviewer (T3, Art-11). <strong>FIRST-CONTACT assurance lens (Pass-2 caveat).</strong> <strong>Axioms:</strong> AX-002, AX-005 (element 4). <strong>Priority:</strong> SHOULD (R7; <strong>the 6-stage provenance floor is the assurance-MUST sub-part</strong>; reversible at Pass-2).</li>
+<li><strong>Builds:</strong> <code>assessment/runrecord.py</code>. <strong>Reuses:</strong> <code>scripts/benchmark_throughput.py</code> RUNRECORD pattern (<code>RUNRECORD_SCHEMA</code>, <code>HARNESS_VERSION</code>, injectable <code>timestamp</code>, <code>seed</code>, <code>host_spec()</code>, <code>provenance{is_reference_host, environment, canonical_verdict}</code>) extended per-stage; <code>scripts/write_manifest.py</code> per-file sha256. <strong>6 stage records</strong> {load, sample, run, score, rate, report}, shared <code>run_id</code>. <strong>Port:</strong> <code>RunRecordSink</code> ← <code>JsonRunRecordAdapter</code>.</li>
+</ul>
+<h3>REPORT</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a> — Honest leaderboard: paired-test-gated ranks + AX-004 separate families + artifact-first register</strong> [the deliverable]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a> · <strong>Spine:</strong> REPORT.</li>
+<li><strong>Owner:</strong> P-mlnlp-researcher (T1); P-acad-deid (T1); P-dpo/P-complreviewer (T2/T3). <strong>Axioms:</strong> AX-001, AX-004, AX-005 (element 2). <strong>Priority:</strong> MUST.</li>
+<li><strong>Builds:</strong> <code>assessment/report.py</code> (LaTeX tabular + CSV register; tie-gating from <code>stats/paired.py</code> + <code>stats/multitest.py</code> Holm; non-significant pairs greyed). <strong>Rank oracle (stat-02):</strong> for every <strong>adjacent rank pair</strong> the report prints the paired <strong>Δ + bootstrap CI + McNemar p</strong> as the rank-governing statistics (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>); per-system marginal Wilson CIs are <strong>descriptive-only</strong> and never decide a tie. <strong>Forbidden product-verdict tokens</strong> <code>{SHIP-WITH-CAVEATS, SHIP, DEFER, GO/NO-GO}</code> banned by scan.</li>
+</ul>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a> — Operating-point reporting (recall-priority Fβ / FN:FP cost + AUPRC)</strong> [false-positive tax]</p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-046" data-trace-id="NFR-046" aria-label="Trace NFR-046 — — STRENGTHENED (unbounded β; un-pinned operating point; mir…">NFR-046</a> · <strong>Spine:</strong> REPORT.</li>
+<li><strong>Owner:</strong> P-priveng (T2); P-dpo (T2). <strong>FIRST-CONTACT P-priv-eng lens; unseated at R6.</strong> <strong>Axioms:</strong> AX-005. <strong>Priority:</strong> COULD-overall / <strong>MUST-for-P-priv-eng</strong> (R7; the bundle most distorted by the sampling gap — <strong>highest-priority Pass-2 re-elicitation</strong>).</li>
+<li><strong>Builds:</strong> <code>assessment/report.py</code> figures via the <code>FigureRenderer</code> port. <strong>Reuses:</strong> pii-rate-elo <code>evaluation/metrics_bridge.py</code> extended for recall-priority Fβ (β≥2 recorded) / stated integer FN:FP cost + threshold-free AUPRC at the pre-registered operating point + precision-at-fixed-recall. <strong>Port:</strong> <code>FigureRenderer</code> ← <code>MatplotlibFigureAdapter</code> (the <strong>sole</strong> lazy numpy/matplotlib).</li>
+</ul>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a> — Non-strippable honesty-flag bundle + RD-convergence + self-verifying report</strong></p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-049" data-trace-id="FR-049" aria-label="Trace FR-049 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">FR-049</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a> · <strong>Spine:</strong> REPORT/X (terminal spine DC).</li>
+<li><strong>Owner:</strong> P-complreviewer (T3) + P-dpo (T2); P-mlnlp-researcher (T1); P-acad-deid (T1). <strong>Axioms:</strong> AX-001, AX-003, AX-005 (elements 3, 4, 5). <strong>Priority:</strong> MUST.</li>
+<li><strong>Builds:</strong> <code>assessment/verdicts.py</code> (honesty-flag derivation) + <code>assessment/report.py</code> (self-verifying header). <strong>Reuses:</strong> <code>scoring/detection.py::DesignProvenance</code> (carries caveat through serializers); pii-rate-elo <code>convergence.py</code> (<code>is_converged</code>, <code>max_rd</code>, <code>rd_threshold</code> → achieved max-RD ± 2RD + rounds; NOT-CONVERGED as blocking flag). <strong>Closed honesty set</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>): synthetic-only caveat / RD-NOT-CONVERGED / per-cell power_class / contamination-uncontrolled / rank-volatility scope / worst-language recall (argmin+label) / low-resource (&lt;200-positive set) recall / named-and-pending correlation flag; self-verifying header embeds {pre-reg hash, commit SHA, run id} + Art-11 alignment label.</li>
+</ul>
+<h3>X (governance / anti-gaming)</h3>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a> — Leaderboard hygiene + neutrality/recusal governance</strong></p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-052" data-trace-id="FR-052" aria-label="Trace FR-052 — — STRENGTHENED (sole oracle is structural-presence, but &quot;on…">FR-052</a> · <strong>NFR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-049" data-trace-id="NFR-049" aria-label="Trace NFR-049 — — STRENGTHENED (sole oracle is &quot;governance checklist audit&quot;)">NFR-049</a> · <strong>Spine:</strong> X.</li>
+<li><strong>Owner:</strong> P-tool-vendor (T3, forcing function); P-complreviewer (T3); P-priveng (T2). <strong>Axioms:</strong> AX-005 (element 6). <strong>Priority:</strong> MUST (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-052" data-trace-id="FR-052" aria-label="Trace FR-052 — — STRENGTHENED (sole oracle is structural-presence, but &quot;on…">FR-052</a> SHOULD).</li>
+<li><strong>Builds:</strong> <code>assessment/runrecord.py</code> (submission-provenance fields) + <code>assessment/report.py</code> (governance block per page). <strong>Reuses:</strong> scoring-API-surface oracle (held-out labels never returned); <code>contamination_status</code> source (<a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a>) with <code>unknown</code> rejected + signed held-out-non-exposure attestation <code>{submitter_id, statement, signature, signed_at}</code>; computable recusal record.</li>
+</ul>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a> — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA / CCPA / GLBA)</strong></p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-053" data-trace-id="FR-053" aria-label="Trace FR-053 — — PASS">FR-053</a> · <strong>NFR:</strong> — (AX-004 linkage) · <strong>Spine:</strong> X · Feeds <a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>/28 report.</li>
+<li><strong>Owner:</strong> P-dpo (T2); P-priveng (T2). <strong>FIRST-CONTACT DPO lens (Pass-2 caveat).</strong> <strong>Axioms:</strong> AX-004 (legally-distinct families). <strong>Priority:</strong> <strong>SHOULD, AUTHOR-not-defer</strong> (R7).</li>
+<li><strong>Builds:</strong> a versioned, provenance-stamped, updateable crosswalk artifact in <code>compliance/</code> (cycle-1 home of regulatory mapping) consumed by <code>assessment/report.py</code>; legally distinct per regime at the display layer (no cross-regime equivalence). <strong>Reuses:</strong> the 63-type vocabulary from <a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a> (<code>taxonomy.ENTITY_TYPE_COUNT</code>).</li>
+</ul>
+<p><strong><a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a> — Citable / DOI-able release + claims policy</strong></p>
+<ul>
+<li><strong>FR:</strong> <a class="trace-link" href="../../02-requirements/audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a> · <strong>NFR:</strong> — (AX-001/003 linkage) · <strong>Spine:</strong> X (terminal release).</li>
+<li><strong>Owner:</strong> P-acad-deid (T1 — MUST-for-this-persona); P-tool-vendor (T3). <strong>Axioms:</strong> AX-001 (claims-policy ceiling caveat). <strong>Priority:</strong> <strong>SHOULD, MUST-for-P-acad-deid</strong> (R7).</li>
+<li><strong>Builds:</strong> a release artifact (Zenodo DOI or equivalent + BibTeX + recommended citation template + synthetic-only claims policy) in <code>distribution/</code> (cycle-1 home of release packaging). <strong>Reuses:</strong> <code>DesignProvenance</code> ceiling caveat (AX-001/003).</li>
+</ul>
+<p><strong>Coverage self-check (carried verbatim from D1, re-validated): 25/25 FRs · 37/37 NFRs · 8/8 UCs — 0 orphans, both directions.</strong> (Full per-DC bind list in §13.1.)</p>
+<h3>1.1 Cross-cutting CI-gate constraints (the dissolved SP-3 &quot;gate&quot; — NOT a DC)</h3>
+<p>The no-regression / engineering NFRs are <strong>panel-wide blocking CI gates</strong> every DC&#39;s acceptance criteria inherit (resolving D1 SP-3 without minting a non-component DC), attached to their nearest spine DC for ownership:</p>
+<table>
+<thead>
+<tr>
+<th>Constraint (NFR)</th>
+<th>Pins</th>
+<th>Nearest-DC owner</th>
+<th>Enforced as</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a></strong></td>
+<td>Pure-stdlib stat cores + lazy heavy-dep guards</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a></td>
+<td>import-graph CI gate (cores import no 3rd-party numeric lib; <code>report.py</code> figure code is the sole lazy numpy/matplotlib)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a></strong></td>
+<td>pii-rate-elo gates green (pytest + ruff + mypy)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a></td>
+<td>the three gates in the <code>pii-rate-elo-pipeline</code> venv</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a></strong></td>
+<td>Lattice frozen 730 cells @ <code>47c3a8f</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a></td>
+<td><code>python -m pii_anon_datasets.stats.lattice --check</code> (green this session)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a></strong></td>
+<td><a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> committed-lattice power gate stays ON</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a></td>
+<td><code>validate.py --lattice</code> exits non-zero on shortfall + re-enable-if-disabled test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-054" data-trace-id="NFR-054" aria-label="Trace NFR-054 — — PASS">NFR-054</a></strong></td>
+<td>Doc-drift = 0 (575,604 / 2,486,438 / 63 / 2.0.0 identical)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a></td>
+<td><code>pytest -k nfr_013</code> (<code>test_doc_drift.py</code>)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a></strong></td>
+<td>Four metric families never merged</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a></td>
+<td>static check over the CAP-02-added module set</td>
+</tr>
+</tbody></table>
+<p><strong>Plus global rails:</strong> no corpus regeneration; four families never merged (AX-004); PURE-STDLIB cores + lazy heavy-dep guards; <code>pii-rate-elo</code> consumed not rebuilt; eval-data NEVER imports pii-rate-elo.</p>
+<hr>
+<h2>2. The concrete module / file plan (BOTH repos) + the seam contract</h2>
+<p><strong>Deployment grain (D4 SP-S1):</strong> two pip-installable packages in <strong>one shared venv</strong> (<code>pii-anon-core/.venv</code>, py 3.10.6); <strong>in-process modules, NOT services</strong> (no bus/broker/queue). One-way dependency (D4 §5.2 / D5 §4.5): <code>pii-rate-elo → pii_anon_datasets.{assessment, stats}</code>; <strong>eval-data NEVER imports pii-rate-elo</strong> (FORBIDDEN EDGE). The <strong>sample-manifest is the sole cross-process data coupling</strong>.</p>
+<h3>2.1 eval-data — <code>src/pii_anon_datasets/assessment/</code> (NEW package; confirmed absent at HEAD)</h3>
+<p>OWNS sample + observability + reporting. Pure-stdlib cores; <code>report.py</code> the <strong>sole</strong> lazy-heavy-dep module (D5 SP-S5).</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>DC(s)</th>
+<th>Responsibility</th>
+<th>Ring/Port role (D5)</th>
+<th>Heavy deps</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>__init__.py</code></td>
+<td>—</td>
+<td>re-export the <code>assessment</code> surface + <code>stats</code> passthrough; define <code>ports.py</code> exports</td>
+<td>—</td>
+<td>stdlib</td>
+</tr>
+<tr>
+<td><code>ports.py</code></td>
+<td>—</td>
+<td>the <strong>5 Protocols</strong> (<code>CorpusReader</code>, <code>TournamentRunner</code>, <code>RunRecordSink</code>, <code>PreregSink</code>, <code>FigureRenderer</code>) + the <strong>manifest DTO</strong> dataclasses + the <strong><code>OutcomeDTO</code></strong> runner→report contract (arch-02): per-pair discordant <code>(b, c)</code> counts, per-system per-record correct/incorrect, per-cell <code>(n, k)</code>, <code>scoring_family</code>, operating-point — the <strong>second cross-process seam</strong>, schema owned here, satisfied by <code>EloEngineAdapter</code>, enforced by a consumer-driven contract test parallel to the L1 manifest seam</td>
+<td>domain ports</td>
+<td>stdlib</td>
+</tr>
+<tr>
+<td><code>sample.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>/18</td>
+<td>single-streaming-pass seeded lattice sampler (Algorithm-R) → builds manifest DTO</td>
+<td>domain logic (no port)</td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>manifest.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a></td>
+<td>read/write the L1 SEAM manifest; canonical-form (sorted keys + fixed float repr); non-strippable caveat</td>
+<td>domain logic (DTO)</td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>verdicts.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>/28</td>
+<td>pure power-class (4-state) / convergence / honesty-flag derivation (closed-set enums)</td>
+<td>domain logic (no port)</td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>prereg.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a></td>
+<td>immutable, commit-anchored, hash-chained pre-registration</td>
+<td>domain logic; <code>PreregSink</code></td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>runrecord.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a>/23/29</td>
+<td>write-once 6-stage run-record assembly; shared run id; provenance + submission-provenance fields</td>
+<td>domain logic; <code>RunRecordSink</code></td>
+<td><strong>stdlib only</strong></td>
+</tr>
+<tr>
+<td><code>report.py</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a>/23/26/27/28/30</td>
+<td><strong>SPLIT (arch-03) into a pure <code>report/projection.py</code> (audited-stats → tables/CSV; stdlib; unit-testable without matplotlib; calls the Clean <code>stats/</code> ring directly, SP-A1) and <code>report/render.py</code> + <code>report/lint.py</code> adapters</strong> (LaTeX/CSV render + forbidden-token/honesty-set/family-separation/recomputed-prereg-equality linters; the sole lazy numpy/matplotlib lives in the figure renderer). Projection never imports matplotlib</td>
+<td>domain orchestration (projection) + render/lint adapters</td>
+<td>stdlib core; <strong>lazy numpy/matplotlib in figure code only</strong></td>
+</tr>
+</tbody></table>
+<p><strong><code>stats/</code> (EXISTING — extend in place, the Clean inner ring, D5 SP-A1):</strong> add <strong><code>stats/multitest.py</code></strong> = Holm–Bonferroni (net-new, verified absent), pure-stdlib, deterministic, integer/float-guarded, unit-tested like its siblings. The ring (<code>intervals</code>, <code>paired</code>, <code>power</code>, <code>lattice</code>, <code>multitest</code>) is <strong>pure functions with zero outward imports</strong>; <code>report.py</code> calls them directly (NO port wraps them).</p>
+<h3>2.2 pii-rate-elo (CONSUMES — thin; do NOT rebuild engine/metrics/convergence)</h3>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>DC(s)</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>configs/assessment.yaml</code></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a></td>
+<td>the assessment preset; <strong><code>analysis.run_significance_tests: false</code></strong> (P1) + the run-type→profile enum</td>
+</tr>
+<tr>
+<td><code>cli.py</code> <code>assessment</code> command</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>/21</td>
+<td>the second L3 entrypoint: <code>pii-rate-elo assessment --sample manifest.json --config configs/assessment.yaml --out results/</code></td>
+</tr>
+<tr>
+<td>thin assessment adapter (<code>EloEngineAdapter</code>, <code>JsonlCorpusAdapter</code>)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a>/16</td>
+<td><strong>verify manifest↔corpus (content_hash + lattice_version) fail-closed before scoring (nielsen-02)</strong> → load manifest → run <code>PIIRateEloEngine</code> + <code>ConvergenceChecker</code> + <code>compute_span_metrics</code> → hand per-system/per-record outcomes to <code>pii_anon_datasets.assessment.report</code> <strong>as the <code>OutcomeDTO</code> defined in eval-data <code>ports.py</code> (arch-02), validated by the consumer-driven contract test</strong></td>
+</tr>
+<tr>
+<td><code>datasets/converters/pii_anon_eval.py</code> + <code>schema.py</code> fix</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a></td>
+<td>v2.0.0 metadata pins + the 5-tuple regression contract</td>
+</tr>
+</tbody></table>
+<h3>2.3 The seam contract (the load-bearing L1 schema — <code>assessment/manifest.py</code> writes; the pii-rate-elo adapter reads)</h3>
+<p>The <strong>sample-manifest</strong> is the sole data coupling. Canonical-form equality (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>): <strong>sorted keys + fixed float repr</strong>; re-running the sampler from the <code>repro</code> block reproduces the manifest under canonical-form equality and every seeded artifact byte-identically.</p>
+<table>
+<thead>
+<tr>
+<th>Field group</th>
+<th>Contents</th>
+<th>Serves</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>schema</code></td>
+<td><code>&quot;pii-anon-assessment-manifest/v1&quot;</code> (mirrors the RUNRECORD schema-id discipline)</td>
+<td>versioning</td>
+</tr>
+<tr>
+<td><code>record_ids</code></td>
+<td>the exact corpus record ids the run scores (the adapter scores <strong>only</strong> these)</td>
+<td>L1 seam; <a class="trace-link" href="../../02-requirements/audit-report.html#fr-034" data-trace-id="FR-034" aria-label="Trace FR-034 — — PASS">FR-034</a></td>
+</tr>
+<tr>
+<td><code>per_cell_draw[]</code></td>
+<td>per (entity-type × language) cell: <code>cell_id</code>, <code>tier</code>, <code>target_n</code>, <code>realized_positive_count</code>, draw provenance, <code>power_class ∈ {WELL_POWERED, UNDER_SAMPLED, CORPUS_LIMITED, EMPTY, NOT_ASSESSED}</code>, <strong><code>power_operating_point</code> (= <code>recall@p_ref</code>; the verdict applies to recall only — stat-03)</strong>, integer <code>realized_positive_shortfall</code></td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/036/037</td>
+</tr>
+<tr>
+<td><code>design_point</code></td>
+<td>per-tier <code>(p_ref, half_width, α)</code> triple + the coverage envelope (which of 63 types × 60 langs × 5 domains committed)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-039" data-trace-id="NFR-039" aria-label="Trace NFR-039 — — PASS">NFR-039</a></td>
+</tr>
+<tr>
+<td><code>inferential_target</code></td>
+<td><code>descriptive-census</code> (full-corpus exact → no-CI default) | <code>super-population</code> (CIs retained) — <strong><a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a> / integrity-MAJOR-1</strong></td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a></td>
+</tr>
+<tr>
+<td><code>power_verdict</code></td>
+<td><code>PowerMatrix.verdict() ∈ {SMALL, ADEQUATE, LARGE}</code> <strong>rendered with the token-bound caveat <code>&lt;verdict&gt; · conditional-on-this-sample · synthetic-only</code>; a sample run never carries a bare <code>LARGE</code> (integrity-MAJOR-2)</strong></td>
+<td><a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a></td>
+</tr>
+<tr>
+<td><code>repro</code></td>
+<td><code>seed</code>, <strong><code>rng_fingerprint</code> = <code>&quot;random.Random((seed, cell_id))&quot;</code> per-cell derivation (repro-01)</strong>, <code>lattice_version</code> (730@<code>47c3a8f</code>), <strong><code>sampler_version</code> = sha256 of the FULL §7 sampler closure {<code>subsets/slices.py</code>, <code>stats/power.py</code>, <code>scripts/lattice_audit.py</code>, <code>scripts/benchmark_throughput.py::reservoir_sample</code>, <code>assessment/sample.py</code>, <code>assessment/verdicts.py</code>} (repro-02)</strong>, <strong><code>ut5_integers</code> {small_n_cutoff, beta, recall_target, min_seeds} frozen IN this hashed block (repro-02)</strong></td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>/021/038</td>
+</tr>
+<tr>
+<td><code>run_type</code> / <code>preset</code></td>
+<td>the upfront selector (<code>smoke</code>/<code>dev</code>/<code>leaderboard-submission</code>/<code>filing-grade</code>; preset <code>powered-representative</code>/<code>full</code>/<code>smoke</code>)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>/034</td>
+</tr>
+<tr>
+<td><code>caveat</code></td>
+<td>non-strippable synthetic-only / anti-anonymity caveat (<code>DesignProvenance.__post_init__</code> raises on empty)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a></td>
+</tr>
+<tr>
+<td><code>provenance</code></td>
+<td>producing <code>{run_id, stage, code_commit, content_hash}</code></td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>/043</td>
+</tr>
+</tbody></table>
+<p><strong>Standalone invariant (L1/L4):</strong> the manifest is the only thing pii-rate-elo needs from eval-data&#39;s <em>data</em> side; its bundled parser independently reads the on-disk v2.0.0 corpus via <code>resolve_eval_dataset_path</code> / <code>PII_ANON_DATASET_ROOT</code> (no shared import).</p>
+<p><strong>ENTRY-B fail-closed precondition (nielsen-02 — closes &quot;two parsers, one corpus&quot; silent divergence):</strong> before scoring <strong>any</strong> record, the pii-rate-elo <code>assessment</code> command verifies the manifest&#39;s <code>content_hash</code> + <code>lattice_version</code> against the corpus the bundled parser resolves (and checks <code>seed</code>/<code>sampler_version</code> on a warning channel). On mismatch it <strong>aborts before the first record</strong> with a named message stating the field + the manifest value + the resolved-corpus value. A stale or mismatched manifest can no longer silently score the wrong records.</p>
+<h3>2.4 The dependency-direction rule (the architectural invariant, D5 §4.5)</h3>
+<pre><code>   DOMAIN HEXAGON (eval-data: pii_anon_datasets.{stats, assessment})
+   imports ONLY stdlib + its own ports.py; NEVER an adapter; NEVER pii-rate-elo
+        │ defines ports                              ▲ report calls the Clean stats ring DIRECTLY (no port, SP-A1)
+        ▼                                            │
+   ADAPTERS (infrastructure — the only code that names pii-rate-elo or heavy deps):
+     • EloEngineAdapter      → pii-rate-elo engine   (SINGLE cross-repo import surface)
+     • JsonlCorpusAdapter    → bundled v2.0.0 parser (standalone-installable)
+     • MatplotlibFigureAdapter → numpy/matplotlib    (lazy, figure code only)
+     • analysis.significance → NOT an adapter; on a DISJOINT sub-graph (unreachable, §9)
+        ▲ wired by
+   COMPOSITION ROOT (the two CLIs): constructor injection, NO DI framework (SP-A5)
+
+   DATA SEAMS: (1) L1 cross-process = sample-manifest.json (DTO); (2) in-process runner→report = OutcomeDTO
+               in ports.py (arch-02), schema owned by eval-data, satisfied by EloEngineAdapter, contract-tested
+   FORBIDDEN EDGES: domain ↛ adapter/pii-rate-elo ; assessment ↛ analysis.significance ; EloEngineAdapter ↛ stats/*
+</code></pre>
+<hr>
+<h2>3. Finalized schema — the observability run-record (reuse the <code>benchmark_throughput</code> pattern, L5/<a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a>)</h2>
+<p>One <strong>write-once</strong> record per spine stage, <strong>6 records</strong> under a shared <code>run_id</code> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>). Reuses the verified <code>benchmark_throughput.build_run_record</code> pattern: a schema id, <code>harness_version</code>, <strong>injectable <code>timestamp</code></strong>, <code>seed</code>, <code>host</code> (via <code>host_spec()</code>, always <code>is_reference_host=False</code>), and the <strong><code>provenance</code> block</strong>.</p>
+<pre><code class="language-jsonc">{
+  &quot;schema&quot;: &quot;pii-anon-assessment-runrecord/v1&quot;,   // mirrors RUNRECORD_SCHEMA discipline (benchmark_throughput.py:65)
+  &quot;harness_version&quot;: &quot;&lt;assessment harness semver&gt;&quot;,// cf. HARNESS_VERSION (:66)
+  &quot;timestamp&quot;: &quot;&lt;injectable ISO-8601 UTC&gt;&quot;,        // injectable for byte-repro (build_run_record :361 pattern)
+  &quot;run_id&quot;: &quot;&lt;shared across all 6 stage records&gt;&quot;,
+  &quot;stage&quot;: &quot;load|sample|run|score|rate|report&quot;,   // one record per stage
+  &quot;seed&quot;: 7,
+  &quot;dataset_version&quot;: &quot;2.0.0&quot;,                       // the DC-16 5-tuple surfaced as fields (FR-031→FR-045)
+  &quot;record_count&quot;: 575604,                          // resolved from version-pinned loader, never a literal at runtime
+  &quot;entity_type_count&quot;: 63,                          // derived from taxonomy.ENTITY_TYPE_COUNT
+  &quot;schema_fingerprint&quot;: &quot;&lt;annotation-key-set + 63-type vocab hash&gt;&quot;,
+  &quot;inferential_target&quot;: &quot;descriptive-census|super-population&quot;,  // integrity-MAJOR-1: stamped per run; full-corpus census ⇒ no-CI default
+  &quot;content_hash&quot;: &quot;&lt;sha256 via write_manifest._sha256 over a FIXED sorted file enumeration&gt;&quot;,  // canonicalization pinned (repro-03); same-count-swap guard (GAME-07)
+  &quot;code_commit&quot;: &quot;&lt;git sha of the producing executable&gt;&quot;,
+  &quot;toolchain&quot;: { &quot;python&quot;: &quot;3.10.6&quot;, &quot;key_deps&quot;: {} },
+  &quot;host&quot;: { &quot;...&quot;: &quot;host_spec(); is_reference_host: false&quot; },
+  &quot;stage_timing&quot;: { &quot;wall_seconds&quot;: 0.0 },
+  &quot;provenance&quot;: {                                   // reused block shape (benchmark_throughput.py:418)
+    &quot;is_reference_host&quot;: false,
+    &quot;environment&quot;: &quot;agent-execution-sandbox&quot;,
+    &quot;canonical_verdict&quot;: &quot;INSUFFICIENT_EVIDENCE&quot;,   // for any inherited perf claim (NFR-010b stays as-is)
+    &quot;rng_fingerprint&quot;: &quot;random.Random((seed, cell_id)) per cell&quot;,  // repro-05: echoed from the manifest into the run-record for closure
+    &quot;stage_inputs&quot;: [&quot;&lt;content_hash of each consumed artifact&gt;&quot;]
+  },
+  &quot;prereg_ref&quot;: { &quot;commit_sha&quot;: &quot;...&quot;, &quot;prereg_hash&quot;: &quot;...&quot; }  // chained into the FIRST scoring record (DC-24→DC-25)
+}
+</code></pre>
+<p><strong>File-level provenance (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-046" data-trace-id="FR-046" aria-label="Trace FR-046 — — PASS">FR-046</a>/<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-043" data-trace-id="NFR-043" aria-label="Trace NFR-043 — — PASS">NFR-043</a>):</strong> <em>every</em> emitted artifact (manifest, run-records, leaderboard, figures, pre-reg) additionally carries <code>{content_hash, code_commit, run_id, stage}</code> (via <code>write_manifest._sha256</code> + a <code>MANIFEST.sha256</code>-style index). <strong>Write-once discipline (D4 SP-S3):</strong> run-records and the pre-reg are immutable once written — plain content-hashed JSON, <strong>not</strong> an event-sourcing store.</p>
+<hr>
+<h2>4. Finalized schema — the pre-registration artifact (<a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>; AX-005 element 4)</h2>
+<p>Immutable, git-commit-anchored, hash-chained (<code>assessment/prereg.py</code>).</p>
+<pre><code class="language-jsonc">{
+  &quot;schema&quot;: &quot;pii-anon-assessment-prereg/v1&quot;,
+  &quot;prereg_hash&quot;: &quot;&lt;sha256 of the canonical payload below&gt;&quot;,
+  &quot;commit_sha&quot;: &quot;&lt;SHA committed AND pushed to a NAMED remote/branch&gt;&quot;,   // oracle: git branch -r --contains &lt;sha&gt; non-empty AGAINST the configured origin; local-only SHA fails (repro-04)
+  &quot;remote_url&quot;: &quot;&lt;the configured origin URL — recorded IN the hashed payload&gt;&quot;,  // repro-04: the oracle can&#39;t pass on an unrelated remote
+  &quot;run_id&quot;: &quot;&lt;chained into the first run/score record&gt;&quot;,
+  &quot;created_utc&quot;: &quot;&lt;ISO-8601&gt;&quot;,
+  &quot;run_type&quot;: &quot;leaderboard-submission|filing-grade|dev&quot;,  // enforcement scope (NFR-031/033)
+  &quot;inferential_target&quot;: &quot;descriptive-census|super-population&quot;,  // integrity-MAJOR-1 / FR-036: full-corpus census ⇒ descriptive (no CI) unless super-population
+  &quot;run_lineage_count&quot;: 0,                                  // # prior pre-registered runs for this system set (GAME-05)
+  &quot;design_and_analysis_plan&quot;: {                            // the immutable equality set (NFR-031)
+    &quot;dataset_version&quot;: &quot;2.0.0&quot;,
+    &quot;sample_manifest_hash&quot;: &quot;&lt;sha256 of the consumed manifest&gt;&quot;,
+    &quot;seed&quot;: 7,
+    &quot;rng_fingerprint&quot;: &quot;random.Random((seed, cell_id)) per cell&quot;,  // repro-01: the per-cell derivation, pinned
+    &quot;sampler_version&quot;: &quot;&lt;sha256 of the full §7 sampler closure&gt;&quot;,   // repro-02: ALL modules the draw touches
+    &quot;system_list&quot;: [&quot;...&quot;],
+    &quot;metric_set&quot;: [&quot;recall&quot;,&quot;precision&quot;,&quot;f_beta&quot;,&quot;auprc&quot;],
+    &quot;rd_stopping_rule&quot;: { &quot;rd_threshold&quot;: 100, &quot;max_rounds&quot;: 0 },
+    &quot;interval_selection_rule&quot;: { &quot;default&quot;: &quot;wilson&quot;, &quot;boundary&quot;: &quot;clopper-pearson&quot;,
+                                 &quot;small_n&quot;: &quot;clopper-pearson&quot;, &quot;small_n_cutoff&quot;: 15, &quot;differences&quot;: &quot;paired-bootstrap&quot; },
+    // multiplicity (stat-01 / NFR-027): Holm WITHIN each (metric, scoring-family) partition — NEVER pooled across
+    // metrics or across anon/pseudo (AX-004). family_size is the COMPUTED #pairs × #metrics in the confirmatory set,
+    // per partition (no longer the &quot;0&quot; placeholder); the report asserts its printed family == this value.
+    &quot;multiplicity&quot;: { &quot;families&quot;: [&quot;exploratory&quot;,&quot;confirmatory&quot;], &quot;method&quot;: &quot;holm-bonferroni&quot;,
+                      &quot;partition&quot;: &quot;per (metric, scoring_family)&quot;, &quot;family_size&quot;: &quot;&lt;computed = #pairs × #metrics in confirmatory set&gt;&quot; },
+    &quot;n_boot&quot;: 10000,                                       // stat-06: replicate count affects CI width → pre-registered, not a hidden constant
+    &quot;min_seeds&quot;: 3,                                        // stat-06 / UT-5: seed count pre-registered
+    &quot;power_design_point&quot;: { &quot;CRITICAL&quot;: [0.99,0.005], &quot;STANDARD&quot;: [0.98,0.010], &quot;LONG_TAIL&quot;: [0.95,0.03025] },
+    &quot;power_operating_point&quot;: &quot;recall@p_ref&quot;,              // stat-03: the verdict covers RECALL only; other metrics NOT_ASSESSED unless re-sized
+    &quot;span_match_mode&quot;: &quot;exact|relaxed-overlap&quot;,
+    &quot;scoring_family&quot;: &quot;anonymization|pseudonymization&quot;,
+    &quot;operating_point&quot;: { &quot;beta&quot;: 2, &quot;recall_target&quot;: 0.90, &quot;fn_fp_cost&quot;: null },
+    &quot;ut5_integers&quot;: { &quot;small_n_cutoff&quot;: 15, &quot;beta&quot;: 2, &quot;recall_target&quot;: 0.90, &quot;min_seeds&quot;: 3 },  // repro-02: frozen INTO the hashed payload, not adjacent
+    &quot;tie_exclusion_rules&quot;: &quot;...&quot;
+  }
+}
+</code></pre>
+<p>The final report (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a>) embeds <code>{prereg_hash, commit_sha, run_id}</code> and a <code>pre_registration_matches</code> flag that is a <strong>recomputed hash-equality</strong> — the honesty linter independently re-derives the hash of the report&#39;s realized plan and compares it to <code>prereg_hash</code> over <code>design_and_analysis_plan</code> (NOT a self-asserted boolean the report writes about its own plan; integrity-MINOR-3). A drifted run cannot emit <code>true</code>.</p>
+<hr>
+<h2>5. Finalized — <code>configs/assessment.yaml</code> (<a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>; the pii-rate-elo consumer config)</h2>
+<pre><code class="language-yaml"># pii-rate-elo assessment preset — CONSUMER side. P1: run_significance_tests MUST be false.
+analysis:
+  run_significance_tests: false          # P1 / NFR-019 (belt-and-suspenders with the §9 import-graph gate)
+
+assessment:
+  manifest: null                          # set by --sample (the L1 seam)
+  out_dir: results/
+  span_match_mode: exact                  # FR-039; ∈ {exact, relaxed-overlap}; echoed + pre-registered
+  block_on_underpower: false              # SP-U4 default; --block-on-underpower flips GATE-P3 fatal on the default preset
+
+  # The committed run-type → profile enum (NFR-033; a table the test READS, names finalizable but the table is referenced):
+  run_types:
+    smoke:                 { rigor_bar: suppressed,  prereg: off,      sample_mode: sample }
+    dev:                   { rigor_bar: suppressed,  prereg: opt-in,   sample_mode: sample }
+    leaderboard-submission:{ rigor_bar: full-AX005,  prereg: enforced, sample_mode: sample }
+    filing-grade:          { rigor_bar: full-AX005,  prereg: enforced, sample_mode: full }   # DF-1 filing-grade may bind full-corpus
+
+stats:                                    # all audited eval-data stats/ (P1); NO pii-rate-elo significance
+  interval_default: wilson
+  interval_boundary: clopper-pearson
+  small_n_cutoff: 15                       # recorded in manifest + pre-reg; R10-DIRECTIONAL (real_user_needed)
+  multiplicity: holm-bonferroni           # → stats/multitest.py (net-new audited primitive)
+  min_seeds: 3                             # Kendall-τ rank stability OR single-seed → rank-volatility UNMEASURED
+  operating_point: { beta: 2, recall_target: 0.90 }
+</code></pre>
+<p>The eval-data <strong>ENTRY-A</strong> sampler takes its knobs as CLI flags (<code>--preset</code>/<code>--seed</code>/<code>--run-type</code>/<code>--out</code>/<code>--block-on-underpower</code>/<code>--show-cells</code>/<code>--quiet|--json-only</code>/<code>--no-color</code>/<code>--help|--help-advanced</code>; advanced = <code>--alpha</code>/<code>--lattice</code>/<code>--small-n-cutoff</code>/<code>--seeds</code>); the run-type→profile enum is shared with the YAML so both CLIs agree (<a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>). <strong>Coherence validation (nielsen-04):</strong> <code>--preset</code> × <code>--run-type</code> is validated at parse time against the <code>run_types</code> table&#39;s <code>sample_mode</code> — contradictory combos (e.g. <code>preset=smoke</code> + <code>run-type=filing-grade</code>, whose <code>sample_mode</code> is <code>full</code>) are <strong>rejected with a message</strong> rather than silently producing an incoherent run; the table is the single source of truth. The chosen <code>inferential_target</code> (descriptive-census for <code>preset=full</code> unless <code>--super-population</code> is set; integrity-MAJOR-1) is recorded into the manifest + prereg + run-record.</p>
+<hr>
+<h2>6. Finalized — the report / leaderboard schema (<a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>/27/28; the Info-Dense register)</h2>
+<p><code>results/</code> layout (artifact-first; LaTeX + CSV primary, JSON run-records the reproduction substrate):</p>
+<pre><code>results/
+├── leaderboard.tex            # PRIMARY citable register (FR-047)
+├── leaderboard.csv            # machine register (same content + same gating)
+├── report.{tex,pdf}           # full info-dense report (header + tables + figures + honesty bundle)
+├── figures/                   # AUPRC / Fβ-asymmetry / per-language-recall (matplotlib, lazy-imported — DC-27)
+├── run-records/run-&lt;run_id&gt;.jsonl   # 6 chained records (L5/NFR-042; audit deliverable, SP-W5)
+├── prereg.json                # FR-044; embedded into the report header
+└── manifest.copy.json         # the consumed L1 manifest (provenance closure)
+</code></pre>
+<p><strong>Leaderboard <code>tabular</code> columns</strong> (the Info-Dense core; each cell carries its CI + method inline; AX-004 anon/pseudo as <strong>separate metric families, never merged</strong>):</p>
+<table>
+<thead>
+<tr>
+<th>column</th>
+<th>content</th>
+<th>requirement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>system</td>
+<td>id + <code>contamination_status ∈ {disclosed-unseen, disclosed-trained-on-corpus, undisclosed}</code> (<code>unknown</code> ⇒ rejected/flagged)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a></td>
+</tr>
+<tr>
+<td>family</td>
+<td><strong>anon</strong> | <strong>pseudo</strong> as separate families (never one &quot;redaction quality&quot; number); Holm multiplicity is corrected <strong>within</strong> each (metric, family) partition, never across (stat-01)</td>
+<td>AX-004 / <a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a></td>
+</tr>
+<tr>
+<td>metric (per family)</td>
+<td>recall / precision / Fβ / AUPRC. <strong>CI behaviour is <code>inferential_target</code>-scoped (integrity-MAJOR-1):</strong> for the <strong>inferential</strong> targets (powered sample / <code>super-population</code>) each metric carries its CI + <code>method ∈ {wilson, clopper-pearson, paired-bootstrap}</code> inline + <code>scope: conditional-on-this-sample</code> (cells within ±1 of <code>small_n_cutoff</code> flagged, stat-04); for a <strong>full-corpus <code>descriptive-census</code></strong> the CI column is <strong>suppressed / labelled descriptive-only — no CI by default</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a>). The per-system marginal CI is <strong>descriptive-only</strong> and does <strong>not</strong> govern rank (stat-02)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-036" data-trace-id="FR-036" aria-label="Trace FR-036 — — PASS">FR-036</a>/040 / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a></td>
+</tr>
+<tr>
+<td>Δ vs next rank (<strong>rank oracle</strong>, stat-02)</td>
+<td>for every <strong>adjacent rank pair</strong>: the paired <strong>Δ with its bootstrap CI</strong> + the <strong>McNemar p</strong> (the rank-governing statistics, <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>/028</td>
+</tr>
+<tr>
+<td>rank</td>
+<td><strong>gated by the paired Δ / McNemar verdict</strong> — adjacent pairs not significant after Holm–Bonferroni (confirmatory <strong>family size = #pairs × #metrics in the confirmatory set, stated, == prereg</strong>; stat-01/integrity-MINOR-4) greyed/grouped as ties; overlapping marginal CIs alone never decide a tie (stat-02)</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-041" data-trace-id="FR-041" aria-label="Trace FR-041 — — STRENGTHENED (prose-only &quot;stated in report text&quot; has no o…">FR-041</a>/047 / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>/028</td>
+</tr>
+<tr>
+<td>power</td>
+<td>per-cell <code>power_class</code> roll-up + corpus verdict, <strong>each carrying <code>power_operating_point</code> (= recall@p_ref); precision/Fβ/AUPRC/pseudo-re-id show <code>NOT_ASSESSED</code> unless sized by a matching ladder (stat-03)</strong>; under-tier carries named shortfall in realized positives</td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-033" data-trace-id="FR-033" aria-label="Trace FR-033 — — PASS">FR-033</a> / <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/037</td>
+</tr>
+<tr>
+<td>caveat</td>
+<td>non-strippable synthetic-only / anti-anonymity caveat, inline per metric</td>
+<td>AX-001/003 / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a></td>
+</tr>
+</tbody></table>
+<p><strong>Honesty bundle (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a> closed set, inline + non-strippable — stripping any one invalidates the artifact):</strong> <code>RD-NOT-CONVERGED</code> (achieved max-RD ± 2RD + rounds + stopping rule; <strong>labelled strictly as tournament-rating convergence — it does NOT certify the recall estimate&#39;s interval validity; NOT-CONVERGED blocks ranking, not CI validity</strong>, stat-05) · per-cell <code>UNDER-POWERED / UNDER-SAMPLED / CORPUS-LIMITED</code> (each with <code>power_operating_point</code>, stat-03) · <code>contamination-uncontrolled</code> · <code>rank-volatility: UNMEASURED</code> (single-seed) or Kendall-τ <strong>reported with the seed count inline</strong> (≥3 seeds; not over-read as established stability, stat-06) · <strong>worst-language recall</strong> = <code>argmin</code> over coverage-envelope languages + label · <strong>low-resource recall</strong> = recall over committed languages with realized positives <code>&lt; 200</code> · <code>correlation-study: named-and-pending</code> · <code>NOT_ASSESSED</code> for critical types outside the envelope. <strong>Self-verifying header (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-050" data-trace-id="FR-050" aria-label="Trace FR-050 — — PASS">FR-050</a>):</strong> <code>{prereg_hash, commit_sha, run_id}</code> + <code>inferential_target</code> (descriptive-census | super-population, integrity-MAJOR-1) + run-lineage count + run-type contract triple + seed + RNG fingerprint + <strong>the corpus <code>PowerMatrix.verdict()</code> rendered as one non-strippable unit <code>&lt;verdict&gt; · conditional-on-this-sample · synthetic-only</code> — a sample run NEVER renders a bare <code>LARGE</code> (integrity-MAJOR-2, G3)</strong> + Art-11 alignment label. <strong><code>pre_registration_matches</code> is a recomputed hash-equality the honesty linter independently re-derives (prereg <code>prereg_hash</code> vs a recomputed hash of the report&#39;s realized plan), not a self-asserted boolean (integrity-MINOR-3).</strong></p>
+<p><strong>Forbidden-token lint (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a>/C7):</strong> the LaTeX + CSV registers contain <strong>none</strong> of <code>{SHIP-WITH-CAVEATS, SHIP, DEFER, GO/NO-GO}</code> (extensible). <strong>Smoke register (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-037" data-trace-id="FR-037" aria-label="Trace FR-037 — — PASS">FR-037</a>/<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-034" data-trace-id="NFR-034" aria-label="Trace NFR-034 — — PASS">NFR-034</a>):</strong> every CI + p-value field suppressed/null; <code>not_statistically_valid: true</code>; banner <code>NOT STATISTICALLY VALID</code>.</p>
+<hr>
+<h2>7. The stratified-covering sampler ALGORITHM (<a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>/18; seeded; reuses the verified APIs)</h2>
+<p><code>assessment/sample.py</code> — a <strong>single streaming pass</strong>, bounded by <code>O(#committed-cells)=O(730)</code> working-set keys (<a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-038" data-trace-id="NFR-038" aria-label="Trace NFR-038 — — sampler: single streaming pass, O(#committed-cells)≈O(730…">NFR-038</a>), seeded reservoir per cell, emitting the manifest + the PowerMatrix verdict + per-cell realized-positive shortfall.</p>
+<p><strong>Inputs:</strong> <code>preset ∈ {powered-representative, full-corpus, smoke}</code>, <code>seed</code>, <code>run_type</code>, the frozen lattice (<code>load_lattice</code>, 730@<code>47c3a8f</code>), the on-disk v2.0.0 corpus.</p>
+<pre><code>1.  lattice  = stats.lattice.load_lattice()                 # 730 committed cells @ 47c3a8f (NFR-052)
+    index    = scripts.lattice_audit.committed_index(lattice)
+    # PER-CELL CHILD RNG (repro-01): NEVER one shared rng fanned across cells — Algorithm-R is
+    # deterministic only for ONE iterable consuming ONE RNG in fixed order; a shared rng drawn
+    # interleaved in corpus order makes each cell&#39;s draw depend on iteration interleaving + multi-cell
+    # membership. Derive an INDEPENDENT child RNG per cell so a cell&#39;s reservoir is invariant to
+    # interleaving and to other cells&#39; membership.
+    cell_rng = lambda cell_id: random.Random((seed, cell_id))   # LOCAL, deterministic, per-cell (NFR-021)
+    targets  = { cell: required_n(*TIER_SPECS[tier(cell)].design_point) }   # DERIVED, never hand-typed (FR-032/NFR-035)
+
+2.  # ----- FULL-CORPUS realized positives, ONE streaming pass (the irreducible denominator for CORPUS_LIMITED) -----
+    full_counts = scripts.lattice_audit.audit_positives(corpus_path, lattice)   # streaming; O(730) keys (NFR-038)
+
+3.  # ----- preset dispatch -----
+    if preset == &quot;full-corpus&quot;:          # FR-036: descriptive census; records_scored == dataset.record_count(version)
+        record_ids = ALL record ids (no draw); sample_counts = full_counts
+    elif preset == &quot;smoke&quot;:              # FR-037: fixed seeded tiny slice; inferential output suppressed downstream
+        record_ids = a fixed seeded slice across cells; statistically inert
+    else:                                # powered-representative (DEFAULT, FR-035; never silently full, never silently LARGE)
+        # ----- ONE streaming pass: per-cell seeded reservoir to each cell&#39;s target_n positives -----
+        per_cell_reservoir = { cell: ReservoirR(k=targets[cell], rng=cell_rng(cell)) }  # INDEPENDENT child RNG per cell (repro-01); Algorithm-R = benchmark_throughput.reservoir_sample
+        for record in iter_corpus(corpus_path):              # generator; NEVER materialize the corpus (NFR-038)
+            for cell in record_increments(record, index):    # candidate cells this record&#39;s positives hit
+                per_cell_reservoir[cell].offer(record_id)     # back-loaded positives still reachable (no head-truncation, FR-032)
+        record_ids   = ∪ reservoir.selected for all cells
+        sample_counts = realized positive counts in the drawn set
+
+4.  # ----- per-cell power classification AGAINST REALIZED POSITIVES (verdicts.py; 4-state extends classify) -----
+    #     POWER SCOPING (stat-03): required_n / TIER_SPECS size the RECALL operating point only
+    #     (p_ref 0.95–0.99). The power_class therefore covers RECALL AT power_operating_point and NOTHING
+    #     else; precision / Fβ / AUPRC / pseudo re-id have different variance and were NOT sized here.
+    power_operating_point = &quot;recall@p_ref&quot;       # recorded per cell; the verdict applies ONLY to this metric
+    for cell in lattice:
+        n_sample = sample_counts[cell];  n_full = full_counts[cell];  t = targets[cell]
+        if   cell not in coverage_envelope: power_class = NOT_ASSESSED          # uncovered critical type (NFR-039)
+        elif n_sample == 0 and n_full == 0: power_class = EMPTY                  # structural
+        elif n_sample &gt;= t:                 power_class = WELL_POWERED           # RECALL operating point ONLY (stat-03)
+        elif n_full   &gt;= t:                 power_class = UNDER_SAMPLED          # fixable: draw more (NFR-037)
+        else:                               power_class = CORPUS_LIMITED         # irreducible: corpus itself short (NFR-037)
+        shortfall = max(0, t - n_sample)    # NAMED in REALIZED positives, integer (NFR-036), non-strippable
+        # precision / Fβ / AUPRC / pseudo-re-id are NOT sized by this ladder → power_class = NOT_ASSESSED for
+        # those metrics unless a matching ladder (e.g. REID_TIER_SPECS) sizes them; the recall verdict is
+        # NEVER reused as their power label (stat-03). Each cell records {power_class, power_operating_point}.
+
+5.  # ----- corpus verdict + manifest emission -----
+    verdict  = PowerMatrix(cells).verdict()        # SMALL/ADEQUATE/LARGE @ 0.80/0.999 (NFR-035; never silently LARGE, G3)
+    # repro.rng_fingerprint records the PER-CELL derivation algorithm &quot;random.Random((seed, cell_id))&quot; (repro-01),
+    # NOT just the seed. repro.sampler_version is the FULL sampler-closure hash over EVERY module the draw touches
+    # (repro-02): {subsets/slices.py, stats/power.py, scripts/lattice_audit.py,
+    # scripts/benchmark_throughput.py::reservoir_sample, assessment/sample.py, assessment/verdicts.py}.
+    # The UT-5 tuning integers {small_n_cutoff, beta, recall_target, MIN_SEEDS} are written INTO the hashed
+    # payload (not adjacent), so a patched lattice_audit or a changed cutoff CANNOT diverge under an unchanged
+    # fingerprint (repro-02).
+    manifest = manifest.write(record_ids, per_cell_draw=[...{cell_id, power_class, power_operating_point, shortfall}...],
+                              design_point, verdict,
+                              repro={seed,
+                                     rng_fingerprint=&quot;random.Random((seed, cell_id)) per cell&quot;,
+                                     lattice_version=&quot;730@47c3a8f&quot;,
+                                     sampler_version=&quot;&lt;sha256 of the full §7 sampler closure&gt;&quot;,
+                                     ut5_integers={small_n_cutoff:15, beta:2, recall_target:0.90, min_seeds:3}},
+                              run_type, preset, inferential_target,   # descriptive-census | super-population (integrity-MAJOR-1)
+                              caveat=DesignProvenance().caveat, provenance={...})
+    # canonical-form (sorted keys + fixed float repr) ⇒ byte-repro GIVEN pinned {corpus content_hash,
+    # lattice_version, seed} (repro-01 — NOT an unconditional &quot;byte-repro from repro block alone&quot;) (NFR-030)
+
+6.  # ----- GATE-P3 (run-type-scoped, SP-W2) -----
+    if preset == &quot;full-corpus&quot;/leaderboard AND any shortfall:
+        # FATAL MESSAGE (nielsen-01) — never a bare exit code. Enumerate, to stderr, each offending cell:
+        #   cell_id · power_class · integer realized-positive shortfall · the ACTIONABLE remedy:
+        #     UNDER_SAMPLED  → &quot;draw more: raise sample size / re-run with a larger draw&quot;
+        #     CORPUS_LIMITED → &quot;IRREDUCIBLE: the corpus itself has only &lt;n_full&gt; realized positives for this
+        #                       cell; drawing more cannot fix it&quot; (do NOT tell the user to draw more)
+        # then exit non-zero. (validate.py --lattice semantics, NFR-053)
+        exit non-zero
+    elif default AND under-tier:  CONTINUE, carry power_class as a non-fatal honesty FLAG  # the study&#39;s strongest delight
+    if --block-on-underpower:     promote the default flag to a hard halt with the SAME enumerated message (SP-U4)
+</code></pre>
+<p><strong>Determinism (AX-002/<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>; repro-01 corrected):</strong> a <strong>per-cell child <code>random.Random((seed, cell_id))</code></strong> (NOT one shared RNG fanned across cells — Algorithm-R is order-dependent), the single deterministic pass, and the canonical-form manifest make the draw <strong>byte-reproducible given pinned {corpus content_hash, lattice_version, seed}</strong> (recorded in <code>repro.rng_fingerprint</code>). <strong>Progress (nielsen-03):</strong> the <code>run</code>/<code>sample</code> stages emit per-stage progress (records scored / cells complete) to <strong>stderr</strong> only (stdout stays the machine channel, SP-U2); on interruption the <code>run_id</code> + &quot;re-run byte-identical to resume&quot; is printed. <strong>No head-truncation (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-032" data-trace-id="FR-032" aria-label="Trace FR-032 — — STRENGTHENED (oracle for &quot;never head-truncation&quot;)">FR-032</a> two-part oracle):</strong> (i) static — the sampler entrypoint never references the <code>max_samples</code> symbol; (ii) behavioral — a back-loaded fixture still reaches each cell&#39;s <code>target_n</code> (a head-truncation path fails this). <strong>Reuse, not reinvent:</strong> <code>required_n</code>/<code>TIER_SPECS</code>/<code>classify</code>/<code>PowerMatrix.verdict()</code> from <code>power.py</code>; <code>committed_index</code>/<code>record_increments</code>/<code>audit_positives</code>/<code>deficits</code> from <code>lattice_audit.py</code>; <code>reservoir_sample</code> from <code>benchmark_throughput.py</code>; <code>load_lattice</code> from <code>lattice.py</code>.</p>
+<hr>
+<h2>8. The audited-stats wiring (intervals/paired/multitest) + the significance.py quarantine (P1, <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a>)</h2>
+<p><strong>The run path computes ALL inference with the AUDITED eval-data stats</strong> (the SHOWSTOPPER P1). <code>report.py</code> (the only module that touches inference) calls the Clean <code>stats/</code> ring <strong>directly</strong> (D5 SP-A1 — no port over <code>wilson_interval</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Inference</th>
+<th>Audited call</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>proportion CI (interior)</td>
+<td><code>stats.intervals.wilson_interval(k:int, n:int)</code></td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-040" data-trace-id="FR-040" aria-label="Trace FR-040 — — STRENGTHENED (un-pinned small-n threshold)">FR-040</a> default; integer-guarded (<code>_require_int_counts</code>)</td>
+</tr>
+<tr>
+<td>proportion CI (boundary <code>k∈{0,n}</code> or <code>n &lt; small_n_cutoff</code>)</td>
+<td><code>stats.intervals.clopper_pearson_interval(k:int, n:int)</code></td>
+<td><a class="trace-link" href="../../02-requirements/audit-report.html#fr-040" data-trace-id="FR-040" aria-label="Trace FR-040 — — STRENGTHENED (un-pinned small-n threshold)">FR-040</a> load-bearing branch; <code>small_n_cutoff=15</code> recorded in manifest+prereg</td>
+</tr>
+<tr>
+<td>paired difference CI (<strong>rank oracle</strong>, stat-02)</td>
+<td><code>stats.paired.paired_bootstrap_recall_delta(..., seed=…)</code></td>
+<td>LOCAL <code>random.Random(seed)</code> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-021" data-trace-id="NFR-021" aria-label="Trace NFR-021 — — PASS">NFR-021</a>), byte-identical; computed for <strong>every adjacent rank pair</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>) — this Δ CI + the McNemar p <strong>govern the rank</strong>, the per-system marginal Wilson CIs are <strong>descriptive-only</strong></td>
+</tr>
+<tr>
+<td>pairwise significance</td>
+<td><code>stats.paired.mcnemar_exact(b,c)</code> / <code>mcnemar_chi2(b,c,continuity=True)</code></td>
+<td>exact for small discordant counts, Edwards χ² otherwise (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-026" data-trace-id="NFR-026" aria-label="Trace NFR-026 — — PASS">NFR-026</a>)</td>
+</tr>
+<tr>
+<td>multiplicity correction</td>
+<td><strong><code>stats.multitest.holm_bonferroni(pvalues)</code></strong> (NET-NEW)</td>
+<td>Holm <strong>WITHIN each (metric, scoring-family) partition — NEVER pooled across metrics or across anon/pseudo (AX-004)</strong> (stat-01); confirmatory family size = <strong>#pairs × #metrics in the confirmatory set</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-027" data-trace-id="NFR-027" aria-label="Trace NFR-027 — — STRENGTHENED (prose-location oracle; family-size computab…">NFR-027</a>, computed from the structured <code>inference_families</code> block, NOT &quot;printed&quot;); asserted <strong>== prereg family_size</strong> (integrity-MINOR-3/4)</td>
+</tr>
+</tbody></table>
+<p><strong>The quarantine (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/020, the canonical mechanism = D5 §9, summarized in §9 below):</strong> a <strong>two-predicate CI gate</strong> (&quot;green requires no human&quot;): (a) the fabricated <strong>module</strong> <code>pii_rate_elo_pipeline.analysis.significance</code> is absent from the <strong>static-AST import-closure</strong> (arch-01 — NOT a runtime <code>sys.modules</code> snapshot) of both assessment entrypoints (module-level per SP-A3, because the eager <code>:409</code> <code>_tester_instance = SignificanceTester()</code> means <em>any</em> import constructs the fabricated tester), AND (b) <code>analysis.run_significance_tests == False</code> in the loaded config. Plus a <strong>fabrication-regex lint</strong> (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-020" data-trace-id="NFR-020" aria-label="Trace NFR-020 — — STRENGTHENED (sole-oracle drift on the human diff)">NFR-020</a>) over the declared run-path module set for the three verified signatures <code>{*(1-*)/100, np.random.normal, (n_approx|pooled_sd=0.1|sqrt(n_approx)/0.05)}</code> — zero matches. <strong>Holm lands in audited <code>stats/</code>, NEVER in <code>significance.py</code></strong> (SP-S4). <strong>Authority-by-placement (SP-A2):</strong> the audited inference functions are imported <strong>only</strong> by <code>report.py</code>; the <code>EloEngineAdapter</code> has <strong>no import edge</strong> to <code>stats/*</code> — so the fabricated path is on a sub-graph disjoint from the assessment call path.</p>
+<hr>
+<h2>9. THE import-boundary rule that makes <code>significance.py</code> unreachable (P1 — the canonical <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> gate; D5&#39;s load-bearing deliverable)</h2>
+<p>P1 is enforced as a <strong>conjunction of two CI predicates</strong> living in <strong>eval-data</strong> (the OWNS side), with a mirror import-lint in pii-rate-elo CI (<a class="trace-link" href="../../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a>):</p>
+<p><strong>Predicate (a) — static import-graph unreachability of the FABRICATED MODULE (module-level, SP-A3):</strong>
+Build the transitive import closure from <strong>both</strong> assessment entrypoints — (1) the eval-data sampler CLI <code>pii_anon_datasets.assessment.sample</code>, and (2) the pii-rate-elo <code>assessment</code> command + its <code>EloEngineAdapter</code>. <strong>CLOSURE MECHANISM = a static AST import walk (arch-01):</strong> a <code>grimp</code>/<code>modulefinder</code>-class <strong>static</strong> import-graph walk over both entrypoints — <strong>NOT</strong> a runtime <code>sys.modules</code> snapshot. The distinction is load-bearing: a runtime snapshot only proves <em>the path you exercised didn&#39;t import the module</em>; the static AST walk proves <strong>unreachability</strong> (the actual P1 claim). <strong>S8 story-0 emits a pinned module-node list the test asserts against</strong>, so the gate is real <em>before</em> the unverified pii-rate-elo adapter exists (UT-1). <strong>Assert the module node <code>pii_rate_elo_pipeline.analysis.significance</code> is NOT in either closure.</strong> Module-level (not symbol-level) because the eager <code>_tester_instance = SignificanceTester()</code> at module scope (Discovery: <code>significance.py:409</code>) means importing the module at all constructs the fabricated tester; if the S8 re-confirm finds the eager instantiation gone, SP-A3 relaxes to symbol-level — and <strong>both</strong> the module-level and symbol-level guard tests are authored in S8 so the active regime is a recorded choice, not improvised (arch-04). The <code>assessment</code> adapter imports <code>tournament.engine</code> / <code>tournament.convergence</code> / <code>evaluation.metrics_bridge</code> <strong>directly</strong>, never the <code>cli</code> module&#39;s <code>from .analysis.significance import SignificanceTester</code> line (Discovery: <code>cli.py:33</code>).</p>
+<p><strong>Import-gate FATAL MESSAGE (nielsen-01):</strong> on failure the gate does not emit a bare pass/fail — it names the <strong>offending edge</strong> (importer module → <code>pii_rate_elo_pipeline.analysis.significance</code>) and the <strong>module node</strong> that pulled it into the closure, so the diagnosis is actionable.</p>
+<p><strong>ENTRY-B manifest↔corpus precondition (nielsen-02 — fail-closed, before any scoring):</strong> the pii-rate-elo <code>assessment</code> command, at start, verifies the manifest&#39;s <code>content_hash</code> + <code>lattice_version</code> (and <code>seed</code>/<code>sampler_version</code> for the warning channel) against the corpus the bundled parser resolves (<code>resolve_eval_dataset_path</code> / <code>PII_ANON_DATASET_ROOT</code>). On mismatch it <strong>aborts before scoring any record</strong> with a named message stating the field, the manifest value, and the resolved-corpus value (closes the &quot;two parsers, one corpus&quot; silent-divergence vector). This guard lives on the consumer side but mirrors the eval-data hashing (<code>write_manifest._sha256</code>).</p>
+<p><strong>Predicate (b) — runtime config assertion:</strong> <code>configs/assessment.yaml</code> sets <code>analysis.run_significance_tests: false</code>; a test asserts the loaded <code>PipelineConfig.analysis.run_significance_tests == False</code>. Belt-and-suspenders: even on the standalone <code>run</code> path the flag gates the (Discovery) <code>cli.py:242</code> instantiation; on the <code>assessment</code> path, (a) guarantees the module is never imported.</p>
+<p><strong>True-by-construction:</strong> the single import-graph test enforces all three forbidden edges at once — <code>domain ↛ adapter</code>, <code>assessment ↛ analysis.significance</code>, and <code>EloEngineAdapter ↛ stats/*</code>. Mutating either predicate (add the import edge; flip the flag <code>true</code>) turns the gate <strong>RED</strong>.</p>
+<hr>
+<h2>10. The v2.0.0 seam fix + regression-contract design (P2, <a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a>; L4 RESOLVED)</h2>
+<p><strong>L4 decision (D4 §4, ratified): FIX the pii-rate-elo bundled parser to v2.0.0 + pin the 5-tuple regression contract; reserve <code>load_dataset</code> for the eval-data sampler side.</strong> Grounded in the firsthand fact that <code>load_dataset</code> (<code>__init__.py:55</code>) takes <strong>no <code>version</code> arg</strong> — importing it into the consumer would couple the consumer&#39;s loader to eval-data&#39;s package layout for zero version-selection benefit and break the standalone invariant.</p>
+<p><strong>What gets fixed</strong> (Discovery line numbers — <strong>re-confirm before editing</strong>, UT-1):</p>
+<ul>
+<li><code>datasets/converters/pii_anon_eval.py</code>: <code>num_records=159891</code> (L93) → <strong>575604</strong>; <code>license=&quot;CC-BY-4.0&quot;</code> (L221) → <strong>CC0 / CC0-1.0</strong>; <code>citation=&quot;…v1.3.0&quot;</code> (L222) → <strong>v2.0.0</strong>; docstring (L1). The naive <code>max_samples</code> head-truncation (L82) is <strong>left as-is for standalone use</strong> (CAP-02&#39;s powered sampler lives in eval-data; the converter&#39;s head-truncation must NOT be on the assessment path — <a class="trace-link" href="../../02-requirements/audit-report.html#fr-032" data-trace-id="FR-032" aria-label="Trace FR-032 — — STRENGTHENED (oracle for &quot;never head-truncation&quot;)">FR-032</a> static oracle).</li>
+<li><code>schema.py</code>: <code>version=&quot;1.3.0&quot;</code> (L137) → <strong>2.0.0</strong> (+ any second occurrence); the normalizer <code>_normalize_eval_row</code> (L349, reads <code>annotations</code> with a <code>labels</code> fallback) <strong>already speaks v2.0.0&#39;s shape</strong> — so the drift is <strong>metadata-provenance, NOT field-reading</strong>.</li>
+</ul>
+<p><strong>The 5-tuple regression contract (<a class="trace-link" href="../../02-requirements/audit-report.html#fr-031" data-trace-id="FR-031" aria-label="Trace FR-031 — — PASS">FR-031</a>/<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-041" data-trace-id="NFR-041" aria-label="Trace NFR-041 — — PASS">NFR-041</a>)</strong> — a committed test (<code>tests/test_pii_anon_eval_v2_contract.py</code>, RED-first in S8) that mutates each pin in turn and asserts RED, green on the true values. <strong>On failure the contract names the drifted tuple element + expected-vs-found (nielsen-01)</strong> — e.g. <code>version: expected 2.0.0, found 1.3.0</code> — never a bare assertion error, so a maintainer diagnoses the regression at a glance:</p>
+<table>
+<thead>
+<tr>
+<th>Pinned value</th>
+<th>Canonical (eval-data <code>tests/test_doc_drift.py</code>)</th>
+<th>Guards against</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>version</td>
+<td><code>2.0.0</code></td>
+<td>regression to v1.3.0</td>
+</tr>
+<tr>
+<td>record_count</td>
+<td><code>575,604</code></td>
+<td>regression to 159,891</td>
+</tr>
+<tr>
+<td>entity-type count</td>
+<td><code>63</code> (<strong>derived</strong> from <code>taxonomy.ENTITY_TYPE_COUNT</code>)</td>
+<td>vocabulary drift</td>
+</tr>
+<tr>
+<td>schema fingerprint</td>
+<td>annotation-key set + 63-type vocab hash</td>
+<td>same-count mutated annotation schema</td>
+</tr>
+<tr>
+<td>dataset content hash</td>
+<td>sha256 via <code>write_manifest._sha256</code></td>
+<td>silent same-count content swap (GAME-07)</td>
+</tr>
+</tbody></table>
+<p><strong>Path coherence (verified-via-Discovery):</strong> <code>resolve_eval_dataset_path</code> (<code>schema.py:583</code>) walks ancestors + honors <code>PII_ANON_DATASET_ROOT</code> (<code>schema.py:627</code>) → the bundled parser locates the <strong>same</strong> on-disk v2.0.0 corpus the eval-data sampler reads, <strong>no shared import</strong> — &quot;two parsers, one corpus, one manifest seam.&quot;</p>
+<hr>
+<h2>11. Build sequence mapped to sprints S8–S12</h2>
+<p>Ordered by the precondition gates (P1 must land <strong>first</strong> per R7 T3) and the linear data dependency. Each story is RED→GREEN→REFACTOR (cycle-1 TDD discipline); both repos&#39; gates (pytest/ruff/mypy) stay green at every sprint boundary (<a class="trace-link" href="../../../05-testing/release-readiness-addendum.html#nfr-051" data-trace-id="NFR-051" aria-label="Trace NFR-051 — mypy (pii-rate-elo, consumer)">NFR-051</a>).</p>
+<table>
+<thead>
+<tr>
+<th>Sprint</th>
+<th>Theme</th>
+<th>DCs</th>
+<th>Key deliverables</th>
+<th>Exit gate</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>S8</strong></td>
+<td><strong>Preconditions: seam + quarantine scaffolding</strong></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (P1 gate only)</td>
+<td><strong>(0) RE-CONFIRM all pii-rate-elo line numbers against a checkout (UT-1); emit the pinned static-AST module-node list the §9 gate asserts against (arch-01); author BOTH the module-level and symbol-level import-guard tests, recording the active regime (arch-04).</strong> v2.0.0 metadata pins + the 5-tuple regression contract (RED-first, <strong>named-element failure message</strong>, nielsen-01); <code>configs/assessment.yaml</code> with <code>run_significance_tests:false</code>; the <strong>§9 two-predicate STATIC-AST import-graph gate</strong> (P1) as a standalone contract test (named-edge failure message, nielsen-01); <code>stats/multitest.py</code> Holm (net-new, unit-tested, <strong>per-(metric,family) partition</strong>, stat-01).</td>
+<td>P2 contract RED-on-drift green; <strong>P1 gate green (module unreachable via static AST + flag false)</strong>; pinned node list committed; doc-drift <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-054" data-trace-id="NFR-054" aria-label="Trace NFR-054 — — PASS">NFR-054</a> green; both venvs&#39; gates green</td>
+</tr>
+<tr>
+<td><strong>S9</strong></td>
+<td><strong>Sampler + manifest (the L1 seam)</strong></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a></td>
+<td><code>assessment/{sample,verdicts,manifest}.py</code> + the §7 algorithm; the manifest DTO + canonical-form equality test (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>); 4-state power classification vs realized positives; ENTRY-A CLI (<code>assessment.sample</code>) with the banner + machine-stdout (SP-U2) + <code>--show-cells</code>/<code>--block-on-underpower</code>.</td>
+<td>P3: lattice <code>--check</code> 730 green (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a>); <code>validate.py --lattice</code> ON (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-053" data-trace-id="NFR-053" aria-label="Trace NFR-053 — — PASS">NFR-053</a>); back-loaded-fixture no-head-truncation oracle green; manifest byte-repro green</td>
+</tr>
+<tr>
+<td><strong>S10</strong></td>
+<td><strong>Run path: orchestrator + audited stats wiring</strong></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (full), <a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a></td>
+<td><code>EloEngineAdapter</code> (+ <strong>ENTRY-B manifest↔corpus fail-closed precondition</strong>, nielsen-02) + <code>JsonlCorpusAdapter</code> + pii-rate-elo <code>cli.py assessment</code>; the <strong><code>OutcomeDTO</code> in <code>ports.py</code> + the consumer-driven contract test</strong> (arch-02); <code>report.py</code> split into projection vs render/lint (arch-03) — audited CIs (<strong><code>inferential_target</code>-scoped</strong>, integrity-MAJOR-1) + <strong>adjacent-pair paired-Δ rank oracle</strong> (stat-02) + Holm <strong>per-(metric,family) partition</strong> (stat-01); <code>runrecord.py</code> 6-stage write-once records (reuse <code>build_run_record</code> pattern, <strong>rng_fingerprint echoed</strong>, repro-05); family-separation + contamination + seed-variance fields.</td>
+<td>P1 full (audited path taken, fabricated unreachable via static AST); ENTRY-B precondition fail-closed green; OutcomeDTO contract test green; CI-on-every-(inferential-)metric + paired-Δ-on-every-adjacent-pair linters green; 6 run-records shared run_id (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>); <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a> cores-stdlib green</td>
+</tr>
+<tr>
+<td><strong>S11</strong></td>
+<td><strong>Pre-reg + report + honesty bundle</strong></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a></td>
+<td><code>prereg.py</code> (commit-anchored + hash-chained + remote oracle); <code>report.py</code> tie-gated leaderboard + LaTeX/CSV + forbidden-token lint + honesty-set linter + self-verifying header; <code>MatplotlibFigureAdapter</code> operating-point figures (lazy); governance block + hygiene attestation + recusal.</td>
+<td>pre-reg↔report parity (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>); tie-gating (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a>); honesty-set non-strippable (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-047" data-trace-id="NFR-047" aria-label="Trace NFR-047 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">NFR-047</a>); forbidden-token scan green; figures lazy-import-only (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-050" data-trace-id="NFR-050" aria-label="Trace NFR-050 — — PASS">NFR-050</a>)</td>
+</tr>
+<tr>
+<td><strong>S12</strong></td>
+<td><strong>Run-type scope, crosswalk, release, E2E</strong></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a> (full), <a class="trace-link" href="../01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a></td>
+<td>run-type→profile enum total-triple test (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-033" data-trace-id="NFR-033" aria-label="Trace NFR-033 — — STRENGTHENED (sole-oracle drift &quot;+ reviewer audit&quot;; table…">NFR-033</a>) + smoke statistically-inert (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-034" data-trace-id="NFR-034" aria-label="Trace NFR-034 — — PASS">NFR-034</a>); regulatory crosswalk artifact (<a class="trace-link" href="../01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a>, AUTHOR-not-defer); DOI/citation release + claims policy (<a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a>); the <strong>one-command chain E2E</strong> on smoke; full no-regression sweep.</td>
+<td>run-type table green; smoke inert green; E2E chain green; all no-regression rails (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-052" data-trace-id="NFR-052" aria-label="Trace NFR-052 — — PASS">NFR-052</a>/053/054/055) green; both repos&#39; gates green</td>
+</tr>
+</tbody></table>
+<p><strong>Dependency note:</strong> S8 (P1+P2) gates everything (R7: P1 must land first). S9&#39;s manifest is the seam S10 consumes. S11 depends on S10&#39;s audited-stats output (report DCs fan in on one statistical source of truth). The long <code>run</code> stage has <strong>no sub-run resume</strong> (D2 SP-W3) — recovery is byte-identical re-run.</p>
+<hr>
+<h2>12. AUDIT 1 — Requirements-to-design traceability (every <a class="trace-link" href="../../02-requirements/audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>…054 / <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>…055 → ≥1 DC)</h2>
+<h3>12.1 FR coverage — all 25 FRs bound, 0 orphans</h3>
+<p><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>/031 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-032" data-trace-id="FR-032" aria-label="Trace FR-032 — — STRENGTHENED (oracle for &quot;never head-truncation&quot;)">FR-032</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-033" data-trace-id="FR-033" aria-label="Trace FR-033 — — PASS">FR-033</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-034" data-trace-id="FR-034" aria-label="Trace FR-034 — — PASS">FR-034</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-035" data-trace-id="FR-035" aria-label="Trace FR-035 — — STRENGTHENED (undefined &quot;results-bearing&quot; predicate)">FR-035</a>/036/037/038 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-039" data-trace-id="FR-039" aria-label="Trace FR-039 — — STRENGTHENED (span-match mode value-space unpinned)">FR-039</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-040" data-trace-id="FR-040" aria-label="Trace FR-040 — — STRENGTHENED (un-pinned small-n threshold)">FR-040</a>/041/042 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-044" data-trace-id="FR-044" aria-label="Trace FR-044 — — STRENGTHENED (&quot;pushed to remote&quot; needs an oracle)">FR-044</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-045" data-trace-id="FR-045" aria-label="Trace FR-045 — — PASS">FR-045</a>/046 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-047" data-trace-id="FR-047" aria-label="Trace FR-047 — — STRENGTHENED (subjective &quot;honest&quot;; product-string ban nee…">FR-047</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-049" data-trace-id="FR-049" aria-label="Trace FR-049 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">FR-049</a>/050 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a>/052 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-053" data-trace-id="FR-053" aria-label="Trace FR-053 — — PASS">FR-053</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a>.
+<strong>Σ = 25 distinct FRs, each in exactly one DC. 0 orphan FRs.</strong> ✔</p>
+<h3>12.2 NFR coverage — all 37 NFRs bound, 0 orphans</h3>
+<p><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-040" data-trace-id="NFR-040" aria-label="Trace NFR-040 — — STRENGTHENED (subjective &quot;correctly&quot;)">NFR-040</a>/041/054 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>: <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/038/039/052/053 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>: <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a>/036/037 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>/039 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-025" data-trace-id="NFR-025" aria-label="Trace NFR-025 — — PASS">NFR-025</a>/033/034 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a>/051 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/020/021/022/023/024/026/027/050 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a>/048/055 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-031" data-trace-id="NFR-031" aria-label="Trace NFR-031 — — STRENGTHENED (&quot;pushed to remote&quot; oracle; mirrors FR-044)">NFR-031</a>/032 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-042" data-trace-id="NFR-042" aria-label="Trace NFR-042 — — PASS">NFR-042</a>/043 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-028" data-trace-id="NFR-028" aria-label="Trace NFR-028 — — PASS">NFR-028</a>/044 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-046" data-trace-id="NFR-046" aria-label="Trace NFR-046 — — STRENGTHENED (unbounded β; un-pinned operating point; mir…">NFR-046</a> · <a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a>/047 · <a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a>: <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>/049.
+<strong>All 37 land on ≥1 DC. 0 orphan NFRs.</strong> ✔
+(Shared-across-two-DCs quality attributes, each a single attribute exercised by the two DCs that jointly satisfy it, not a double-count: <a class="trace-link" href="../../02-requirements/_threshold-validation/findings-summary.html#nfr-035" data-trace-id="NFR-035" aria-label="Trace NFR-035 — — powered-tier compliance OR explicit UNDER-POWERED + named…">NFR-035</a> <a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>+<a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a>; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-039" data-trace-id="NFR-039" aria-label="Trace NFR-039 — — PASS">NFR-039</a> <a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>+<a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a>; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-029" data-trace-id="NFR-029" aria-label="Trace NFR-029 — — PASS">NFR-029</a> <a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a>+<a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a>; <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a> <a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a>+<a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a>.)</p>
+<h3>12.3 Precondition coverage</h3>
+<ul>
+<li><strong>P1 (SHOWSTOPPER)</strong> → <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (+ §8/§9). <strong>P2</strong> → <a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a> (+ §10). <strong>P3</strong> → <a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a> + <a class="trace-link" href="../01-design-cases/preferred.html#dc-18" data-trace-id="DC-18" aria-label="Trace DC-18 — — PowerMatrix verdict + per-cell realized-positive shortfall">DC-18</a> + <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a> (+ §7). ✔</li>
+</ul>
+<h3>12.4 The 6 R7-stratified requirements land with their stratified priority honored</h3>
+<p><a class="trace-link" href="../../02-requirements/audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a> (SHOULD; NR-core MUST via <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a>) → <a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a> ✔ · <a class="trace-link" href="../../02-requirements/audit-report.html#fr-045" data-trace-id="FR-045" aria-label="Trace FR-045 — — PASS">FR-045</a> (SHOULD; 6-stage floor assurance-MUST) → <a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a> ✔ · <a class="trace-link" href="../../02-requirements/audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> (COULD/MUST-for-P-priv-eng) → <a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a> ✔ · <a class="trace-link" href="../../02-requirements/audit-report.html#fr-052" data-trace-id="FR-052" aria-label="Trace FR-052 — — STRENGTHENED (sole oracle is structural-presence, but &quot;on…">FR-052</a> (SHOULD) → <a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a> ✔ · <a class="trace-link" href="../../02-requirements/audit-report.html#fr-053" data-trace-id="FR-053" aria-label="Trace FR-053 — — PASS">FR-053</a> (SHOULD, AUTHOR-not-defer) → <a class="trace-link" href="../01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a> ✔ · <a class="trace-link" href="../../02-requirements/audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a> (SHOULD, MUST-for-P-acad-deid) → <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a> ✔.</p>
+<p><strong>Audit 1 verdict: PASS — 25/25 FRs and 37/37 NFRs each map to ≥1 DC; 0 orphans both directions; all 3 preconditions and all 6 stratified-priority requirements placed.</strong></p>
+<hr>
+<h2>13. AUDIT 2 — Axiom-saturation (AX-001…005 each covered at the touched layer)</h2>
+<p>Per D1 SP-5, AX-005 is a cross-cutting invariant tracked as a matrix (not a DC). Each axiom is shown saturating <strong>its touched layers</strong> (load/sample/run/score/rate/report/X), each by a concrete DC + the mechanism.</p>
+<table>
+<thead>
+<tr>
+<th>Axiom</th>
+<th>LOAD</th>
+<th>SAMPLE</th>
+<th>RUN/RATE</th>
+<th>SCORE</th>
+<th>REPORT</th>
+<th>X (obs/gov/release)</th>
+<th>Saturated?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>AX-001</strong> (synthetic-only)</td>
+<td>—</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a> (manifest caveat by construction)</td>
+<td>—</td>
+<td>—</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>/28 (inline non-strippable)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a> (claims policy)</td>
+<td>✔ <code>DesignProvenance.__post_init__</code> raise-on-empty seeds it at the manifest; the linear data dependency carries it (<a class="trace-link" href="../../02-requirements/audit-report.html#nfr-044" data-trace-id="NFR-044" aria-label="Trace NFR-044 — — PASS">NFR-044</a>)</td>
+</tr>
+<tr>
+<td><strong>AX-002</strong> (deterministic/seeded/byte-repro)</td>
+<td>—</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a> (LOCAL RNG, single pass), <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a> (canonical-form)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a> (consumed deterministically)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (seeded paired-bootstrap)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a> (self-verifying header)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>/25 (hash-chain, repro block)</td>
+<td>✔ <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-030" data-trace-id="NFR-030" aria-label="Trace NFR-030 — — PASS">NFR-030</a>/021/038/042</td>
+</tr>
+<tr>
+<td><strong>AX-003</strong> (stated power: n + CI)</td>
+<td>—</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>/18 (power class vs realized positives; design point)</td>
+<td>—</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (integer-guarded CIs on every metric)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a> (power flags as honesty bundle)</td>
+<td>—</td>
+<td>✔ <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-022" data-trace-id="NFR-022" aria-label="Trace NFR-022 — — PASS">NFR-022</a>/023/035/036/037/039</td>
+</tr>
+<tr>
+<td><strong>AX-004</strong> (anon vs pseudo SEPARATE)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a> (scoring_family; never merged)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a> (separate families), <a class="trace-link" href="../01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a> (legally-distinct regimes)</td>
+<td>—</td>
+<td>✔ <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-045" data-trace-id="NFR-045" aria-label="Trace NFR-045 — — PASS">NFR-045</a>/055 static no-merge check</td>
+</tr>
+<tr>
+<td><strong>AX-005</strong> (pre-registered/reproducible, 6 elements + scope)</td>
+<td>—</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a>/20 (run-type scope; manifest repro)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a> (convergence), <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (CI+paired+Holm)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a>/28 (tie-gating, convergence, honesty, self-verify)</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a> (pre-reg el.4), <a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a> (provenance el.4), <a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a> (contamination el.6)</td>
+<td>✔ the most cross-cutting; element→DC map below</td>
+</tr>
+</tbody></table>
+<p><strong>AX-005 element → DC (the testable saturation):</strong> (1) CI+method → <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> · (2) paired+Holm+2-families → <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a>/26 · (3) convergence max-RD±2RD → <a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a>/28 · (4) provenance reproducible-from-manifest → <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a>/24/25/28 · (5) non-strippable caveat → <a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a>/26/28 · (6) contamination + attestation → <a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a>/29 · enforcement scope (run-type) → <a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a>.</p>
+<p><strong>Touched-layer rule honored:</strong> AX-001/003/004/005 each saturate every spine layer they <em>touch</em> (e.g. AX-003 touches SAMPLE+SCORE+REPORT and is covered at each; it does not &quot;touch&quot; LOAD because power is a sampling/scoring property — its absence at LOAD is correct, not a gap). AX-002 reaches the most layers and is covered at each.</p>
+<p><strong>Audit 2 verdict: PASS — all 5 axioms saturate every layer they touch, each via a named DC + mechanism; AX-005&#39;s 6 elements + enforcement scope each map to a DC.</strong></p>
+<hr>
+<h2>14. AUDIT 3 — Persona-service (each HIGH persona served)</h2>
+<p>The 3 HIGH (T1) personas are the acceptance + credibility cohort (Discovery §3). Each must be served at the layers it cares about, by a DC, with a built deliverable.</p>
+<table>
+<thead>
+<tr>
+<th>HIGH persona</th>
+<th>Core JTBD (Discovery §5)</th>
+<th>Served by DCs</th>
+<th>Built deliverable that serves them</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P-acad-deid</strong> (Academic De-id Researcher)</td>
+<td>publish/cite a defensible result that survives peer + regulator review</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-19" data-trace-id="DC-19" aria-label="Trace DC-19 — — Reproducible sample manifest (the L1 SEAM artifact) + non…">DC-19</a> (byte-repro manifest), <a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a> (full-corpus citable), <a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a> (pre-reg), <a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a> (honest self-verifying report), <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a> (<strong>MUST-for-this-persona</strong> DOI)</td>
+<td>the citable LaTeX/CSV register + pre-reg + Zenodo DOI + claims policy; byte-identical re-run from the manifest</td>
+<td><strong>SERVED</strong> — incl. the persona-MUST <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a></td>
+</tr>
+<tr>
+<td><strong>P-mlnlp-researcher</strong> (ML/NLP Privacy Researcher)</td>
+<td>rank PII systems on v2.0.0 over a right-sized seeded sample with a CI on every number</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-17" data-trace-id="DC-17" aria-label="Trace DC-17 — — Powered, lattice-stratified, seeded sampler">DC-17</a>/18 (powered sampler + PowerMatrix), <a class="trace-link" href="../01-design-cases/preferred.html#dc-21" data-trace-id="DC-21" aria-label="Trace DC-21 — — Thin assessment orchestrator: engine + Glicko convergence…">DC-21</a> (engine+convergence), <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (audited CIs+paired+Holm), <a class="trace-link" href="../01-design-cases/preferred.html#dc-26" data-trace-id="DC-26" aria-label="Trace DC-26 — — Honest leaderboard: paired-test-gated ranks + AX-004 sepa…">DC-26</a> (tie-gated leaderboard)</td>
+<td>the powered sample + the honest tie-gated leaderboard with a CI + paired verdict on every claim</td>
+<td><strong>SERVED</strong> — the primary workflow consumer; every spine stage</td>
+</tr>
+<tr>
+<td><strong>P-tool-builder</strong> (Privacy-Tool Builder / OSS Maintainer)</td>
+<td>an external reproducible CI/publication harness</td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a> (seam fix — the tool literally cannot read v2.0.0 today), <a class="trace-link" href="../01-design-cases/preferred.html#dc-20" data-trace-id="DC-20" aria-label="Trace DC-20 — — Preset trio + run-type → rigor-bar profile">DC-20</a> (smoke fast-CI), <a class="trace-link" href="../01-design-cases/preferred.html#dc-22" data-trace-id="DC-22" aria-label="Trace DC-22 — — Audited statistics core: CIs + paired tests + Holm (P1 qu…">DC-22</a> (audited stats)</td>
+<td>the reconciled v2.0.0 seam + 5-tuple contract + the smoke preset (CI on-ramp, statistically inert)</td>
+<td><strong>SERVED</strong> — the correctness unlock + the DX on-ramp</td>
+</tr>
+</tbody></table>
+<p><strong>MEDIUM (T2/T3) personas — served (SHOULD/persona-stratified), with the honest first-contact / unseated caveats carried (NOT silently resolved):</strong></p>
+<ul>
+<li><strong>P-priveng (T2):</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a> (observability), <a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a> (operating-point / false-positive tax — <strong>MUST-for-this-persona</strong>). <em>Caveat: P-priv-eng was UNSEATED at R6; <a class="trace-link" href="../../02-requirements/audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a>/<a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a> is the highest-priority Pass-2 re-elicitation.</em></li>
+<li><strong>P-dpo (T2):</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-23" data-trace-id="DC-23" aria-label="Trace DC-23 — — Scoring-family separation (anon/pseudo) + contamination +…">DC-23</a> (anon/pseudo separation), <a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a> (regulatory crosswalk). <em>Caveat: the DPO/assurance lens is FIRST-CONTACT (INT-05); <a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a>/30 trace to a single un-re-confirmed lens → Pass-2.</em></li>
+<li><strong>P-tool-vendor (T3, forcing function):</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a> (hygiene), <a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a>. <strong>P-complreviewer (T3):</strong> <a class="trace-link" href="../01-design-cases/preferred.html#dc-24" data-trace-id="DC-24" aria-label="Trace DC-24 — — Pre-registration: git-anchored + hash-chained">DC-24</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a> (Art-11 floor), <a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a>, <a class="trace-link" href="../01-design-cases/preferred.html#dc-29" data-trace-id="DC-29" aria-label="Trace DC-29 — — Leaderboard hygiene + neutrality/recusal governance">DC-29</a>.</li>
+</ul>
+<p><strong>Audit 3 verdict: PASS — all 3 HIGH personas served at every layer they care about (incl. both persona-MUST carve-outs: <a class="trace-link" href="../01-design-cases/preferred.html#dc-31" data-trace-id="DC-31" aria-label="Trace DC-31 — 4. The preferred Design-Case set (DC-16 … DC-31) — LOCKED">DC-31</a> for P-acad-deid, <a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a> for P-priv-eng); all MEDIUM personas served with their first-contact/unseated caveats explicitly carried to Pass-2, not silently resolved.</strong></p>
+<hr>
+<h2>15. Unresolved tensions (carried honestly, not hidden)</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Tension</th>
+<th>Status / disposition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>UT-1</strong></td>
+<td><strong>pii-rate-elo is NOT populated on this machine</strong> — every consumer line number (significance.py:90/:409, cli.py:33/240/242, converter L93/221/222/82, schema.py L137/349/583/627, engine/convergence/metrics_bridge symbols) is carried from Discovery.</td>
+<td><strong>The single biggest implementation risk.</strong> S8 story 0 is &quot;re-confirm against a checkout before any edit.&quot; The design is <strong>structured to be robust to drift</strong> (the §9 gate asserts the <em>module is unreachable</em> regardless of its internal line numbers; the §10 fix is metadata-provenance pins the contract test pins by value not by line). If the checkout differs materially (e.g. the eager <code>:409</code> instantiation is gone), SP-A3 relaxes from module-level to symbol-level — note it in the S8 decision record.</td>
+</tr>
+<tr>
+<td><strong>UT-2</strong></td>
+<td><strong>High-stakes UX commitment: non-interactive batch, no per-stage consent</strong> (D2 SP-W4 / D3 SP-U6).</td>
+<td>Flagged for <strong>Pass-2 cognitive walkthrough with a real single-operator research user.</strong> Defensible from <a class="trace-link" href="../../02-requirements/audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>/033/034 (default + smoke MUST run unattended in CI), but never validated with a real operator. The design adds <strong>no <code>--yes</code> escape hatch</strong> (it isn&#39;t needed); reversal would mean adding per-stage cards (D2 Frame C, rejected).</td>
+</tr>
+<tr>
+<td><strong>UT-3</strong></td>
+<td><strong><a class="trace-link" href="../../02-requirements/audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> / <a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a> (operating-point) priority is COULD-overall but MUST-for-P-priv-eng, and P-priv-eng was unseated at R6.</strong></td>
+<td><a class="trace-link" href="../01-design-cases/preferred.html#dc-27" data-trace-id="DC-27" aria-label="Trace DC-27 — — Operating-point reporting (recall-priority Fβ / FN:FP cos…">DC-27</a> is <strong>built</strong> (not deferred) but is the <strong>highest-priority Pass-2 re-elicitation</strong> with a real privacy-engineer seat. If Pass-2 re-seats the persona, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-048" data-trace-id="FR-048" aria-label="Trace FR-048 — — STRENGTHENED (unbounded β; &quot;available&quot; precision-at-recal…">FR-048</a> likely re-promotes to MUST — a priority change, not a design change (the DC already exists).</td>
+</tr>
+<tr>
+<td><strong>UT-4</strong></td>
+<td><strong>The DPO / assurance lens (<a class="trace-link" href="../01-design-cases/preferred.html#dc-25" data-trace-id="DC-25" aria-label="Trace DC-25 — — Per-stage observability run-records + file-level provenan…">DC-25</a>/30, <a class="trace-link" href="../../02-requirements/audit-report.html#fr-045" data-trace-id="FR-045" aria-label="Trace FR-045 — — PASS">FR-045</a>/046/050/052/053) is FIRST-CONTACT</strong> (a single un-re-confirmed INT-05 lens).</td>
+<td>The 6-stage provenance floor and the crosswalk are <strong>authored</strong> (R7 AUTHOR-not-defer for <a class="trace-link" href="../01-design-cases/preferred.html#dc-30" data-trace-id="DC-30" aria-label="Trace DC-30 — — Regulatory taxonomy crosswalk (63 types → GDPR / HIPAA /…">DC-30</a>), but real-user DPO validation is a <strong>named Pass-2 must.</strong> Carried, not resolved.</td>
+</tr>
+<tr>
+<td><strong>UT-5</strong></td>
+<td><strong><code>small_n_cutoff=15</code>, <code>β=2</code>, <code>recall_target=0.90</code>, <code>MIN_SEEDS=3</code> are R10-DIRECTIONAL</strong> (no canonical integer; <code>real_user_needed: true</code>).</td>
+<td>These are now <strong>frozen INTO the manifest + pre-reg hashed payload</strong> (<code>repro.ut5_integers</code> + <code>design_and_analysis_plan.ut5_integers</code>; per repro-02 — not merely adjacent), so a re-run on changed integers cannot diverge under an unchanged fingerprint, AND a Pass-2 reviewer can change them deliberately without touching the audited stats. <code>n_boot=10000</code> is likewise pre-registered (stat-06). The <em>contract</em> (deterministic, recorded-in-hash, boundary-clause firm) is locked; only the integers await a real ACL/PETS/de-id reviewer.</td>
+</tr>
+<tr>
+<td><strong>UT-6</strong></td>
+<td><strong>Real-data correlation slice (cycle-1 <a class="trace-link" href="../../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a>, vs i2b2-2014/TAB)</strong> — the strongest credibility unlock — is out-of-band / DUA-gated / explicitly NOT v0.1-blocking.</td>
+<td>Surfaced only as the <a class="trace-link" href="../01-design-cases/preferred.html#dc-28" data-trace-id="DC-28" aria-label="Trace DC-28 — — Non-strippable honesty-flag bundle + RD-convergence + sel…">DC-28</a> <code>correlation-study: named-and-pending</code> honesty flag. The synthetic-only ceiling (7–8) is acknowledged, not papered over. Roadmap.</td>
+</tr>
+<tr>
+<td><strong>UT-7</strong></td>
+<td><strong>NFR-010b throughput floor (≥5000 rec/sec, 8-core ref host)</strong> inherited from cycle-1 stays <strong>INSUFFICIENT_EVIDENCE</strong> (the agent sandbox is not the reference host).</td>
+<td>CAP-02 does <strong>not</strong> re-pin it; the run-record <code>provenance.canonical_verdict</code> carries <code>INSUFFICIENT_EVIDENCE</code> honestly. Needs an out-of-band reference-host run.</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>16. What this hands to Stage 4 (Development)</h2>
+<p>A complete, implementation-ready design: <strong>16 DCs (<a class="trace-link" href="../01-design-cases/preferred.html#dc-16" data-trace-id="DC-16" aria-label="Trace DC-16 — CAP-02 — D1 CONVERGE: Preferred Design-Case set (DC-16+)">DC-16</a>…31)</strong> mapped 1:1 to the spine and the L6 module map; <strong>the concrete module/file plan for both repos</strong> + the L1 seam contract + the one-way dependency rule; <strong>five finalized schemas</strong> (sample-manifest, 6-stage run-record reusing <code>benchmark_throughput</code>, pre-registration, <code>configs/assessment.yaml</code> incl. <code>run_significance_tests:false</code>, the report/leaderboard register); <strong>the seeded stratified-covering sampler algorithm</strong> (§7) reusing <code>load_dataset</code>-adjacent <code>lattice_audit</code> + <code>power</code> + <code>reservoir_sample</code>; <strong>the audited-stats wiring</strong> (§8) + <strong>the canonical P1 import-boundary gate</strong> (§9); <strong>the v2.0.0 seam fix + 5-tuple regression contract</strong> (§10); <strong>a build sequence S8–S12</strong> gated by P1-first; and <strong>three passing audits</strong> (requirements-traceability 0-orphan, axiom-saturation, persona-service) with <strong>seven honestly-carried unresolved tensions</strong> (UT-1 the load-bearing one).</p>
+<p>✅ <strong>D6 SYNTHESIS complete (2026-06-01).</strong> Integrated the 5 preferred diamonds (D1 Frame C / D2 Frame A / D3 Frame A / D4 Frame B / D5 Frame A). All eval-data reuse APIs re-verified firsthand this session (lattice <code>--check</code> 730 green; Holm verified absent → net-new; the <code>benchmark_throughput</code> RUNRECORD pattern read in full). pii-rate-elo side carried from Discovery (repo not populated locally — UT-1). <code>provisional_status: AGENT_SIMULATED</code>; Pass-2 commitments named (UT-2/3/4/6). No-regression rails honored (730@<code>47c3a8f</code>, <a class="trace-link" href="../../../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> gate ON, doc-drift 0, four families separate, no corpus regen, pii-rate-elo consumed not rebuilt). Ready for Stage 4 (Development).</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/03-design/06-synthesis/D-implementation-ready-design.md</code> ·
+  content-hash <code>d637df3db42f</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

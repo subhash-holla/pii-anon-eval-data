@@ -1,0 +1,157 @@
+reviewer: dev-assist-development-requirements-coverage
+scope_id: S3-02
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: coverage-S3-02-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-3/S3-02.md:29
+    description: |
+      FR-007 attribution is sound BECAUSE OF a design revision — recording the
+      provenance so the sprint/MUST-coverage gate carries it correctly. The source
+      catalog text for FR-007 (functional-requirements.md:17 — "MUST — headline")
+      specifies a "version-pinned LLM adversary" and the full measured deliverable
+      ("empirical re-id recall AND precision (with Wilson CIs) … RRS = 1 − recall×
+      precision reported, with |C| as a stated parameter"). S3-02 builds a
+      DETERMINISTIC OFFLINE adversary, not the literal "LLM adversary." That is NOT
+      an over-claim: SME finding reidx-01 (sme-heuristic-findings.md:10, a
+      CATASTROPHIC verdict, resolved) reclassified the RRS headline to
+      "Headline RRS = deterministic offline adversary + exposure-index; LLM-adversary
+      = version-stamped SECONDARY," folded into the implementation-ready design
+      (D-implementation-ready-design.md:99, reidx-01). S3-02 §2/§4 cite reidx-01
+      explicitly and §4 keeps provisional_status AGENT_SIMULATED (not DIVERGED). So
+      the headline-adversary slice of FR-007 IS legitimately this story; only the
+      *measured scoring* slice (recall/precision/RRS + Wilson CIs over the paired set)
+      remains open. Recording so the S3 sprint snapshot tracks FR-007 as still-OPEN
+      with S3-04 as the successor carrying the measured-RRS acceptance evidence.
+    suggested_resolution: |
+      No change for this story. At the S3 sprint gate, list FR-007 as covered-by
+      {S3-02 (deterministic offline adversary, this story), S3-04 (measured
+      recall×precision + Wilson CIs + |C|-parameterized RRS)} and confirm the
+      reidx-01 LLM→offline headline reclassification is reflected in the
+      traceability matrix so the "LLM adversary" literal in FR-007 is not read as
+      an unmet acceptance clause.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-007
+      - dev-assist-artifacts/03-design/06-synthesis/sme-heuristic-findings.md
+      - dev-assist-artifacts/03-design/06-synthesis/D-implementation-ready-design.md
+
+  - id: coverage-S3-02-02
+    severity: OBSERVATION
+    location: tests/test_offline_adversary.py:187
+    description: |
+      Acceptance-coverage completeness note on the FR-010 "lower precision" clause
+      (non-blocking; correctly scoped). §7 "And a distractor-augmented variant is
+      available, version-distinguished in adversary_id" is fully backed:
+      test_fr_010_distractor_variant_distinct_id_and_lower_precision pins
+      adversary_id == "offline-deterministic-v1+distractor:web-like-distractors-v1"
+      vs the base "offline-deterministic-v1", and asserts |C| grows (len(aug) >=
+      len(cands)). The "lower precision" half is asserted as
+      int(distractor_correct) <= int(base_correct) — a NON-STRICT bound that the
+      story honestly scopes: §6 item 6 says "≤ precision" and §8b states the
+      deterministic lexicographic tie-break "can resolve to a decoy → a correct
+      guess is no longer guaranteed; the distractor variant's correctness is ≤ the
+      base variant's." It does NOT claim a measured precision DROP — measured
+      precision is FR-007's recall×precision deliverable, explicitly deferred to
+      S3-04. So this is correct scope, not an under-claim of the variant's existence.
+      Recording so the S3-04 coverage check verifies a measured precision decrement
+      under decoys is exercised where the RRS numbers are actually computed.
+    suggested_resolution: |
+      No change for this story. Track at the S3-04 (FR-007 measured RRS) gate: a
+      test demonstrating the distractor-augmented variant yields measurably lower
+      precision (recall×precision) than the base variant on the paired set, closing
+      the strict-decrement half of the FR-010 "≥ candidates, ≤ precision" property.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-010
+      - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-02.md#7
+
+notes: |
+  STORY-LEVEL coverage snapshot only (a single slice). Full Tier-1/2/3 MUST-coverage
+  runs at the S3 sprint gate, not here — per contract this gate verifies S3-02's slice.
+
+  Scope discipline (the user's explicit over/under-claim check): CONFIRMED — no
+  over-claim and no under-claim.
+    * Over-claim check (does S3-02 claim the measured RRS that is S3-04's?): NO.
+      §2 "The measured RRS scoring (recall/precision/RRS + CIs) is S3-04; this story
+      is the adversary it runs." §3 SUPPORTING note defers FR-009 caveat enforcement
+      to S3-04. §6 item 5 frames the integer guess count as feeding "the
+      integer-guarded Wilson in S3-04." §5 Blocks: S3-04 (measured RRS scoring). The
+      owned-files set (§8) is confined to offline_adversary.py + its exports + the
+      test file — no scorer/recall/precision/Wilson/CI code is added here. S3-04 is a
+      valid named successor (a real downstream story this branch will deliver), not a
+      vague "later."
+    * Under-claim check (does S3-02 deliver LESS of the adversary than FR-007/010's
+      headline-adversary slice requires?): NO. The deterministic offline attacker
+      (the reidx-01 headline) plus the FR-010 version-distinguished distractor variant
+      are both delivered and tested. See coverage-S3-02-01 for the reidx-01 provenance
+      that makes "deterministic offline" the correct headline, not a downgrade.
+
+  Acceptance-criteria <-> test mapping (§7 G/W/T -> §6 plan -> tests/, all GREEN —
+  every §7 clause backed by >=1 passing test; the seven items the dispatch named are
+  each present):
+    AC "deterministically emits one ranked Guess per target … reproducible byte-for-
+        byte across runs"
+        -> test_fr_007_attack_is_deterministic (#1, PROPERTY: g1 == g2, all Guess).
+    AC "… and candidate orderings" (order-independence via total lexicographic order)
+        -> test_fr_007_ranking_is_order_independent (#2, PROPERTY: forward ==
+           reversed_pool == shuffled).
+    AC "abstaining below threshold" (abstain distinguishable from a wrong guess)
+        -> test_fr_007_abstains_below_threshold (#3, UNIT: threshold=1.0+1e-9 forces
+           guessed_persona_id is None; committed[0] is not None; the two differ).
+    AC "using only post-anonymization signal" — the link actually works
+        -> test_fr_007_links_surviving_signal (#4, UNIT: Boston+medical survivor ->
+           p-boston top guess, score > 0.0; fitness target -> p-fitness). Reinforced
+           by reidx-01 in offline_adversary.py: target side reads observed_signals +
+           surviving QI tokens only, never the target's own gold behavioral_signals.
+    AC integer guess count (feeds S3-04 Wilson)
+        -> test_fr_007_guess_counts_are_integers (#5, UNIT: len(guesses)==len(targets)
+           ==3; isinstance(n_committed, int); target_ids preserved 1:1 in order).
+    AC "a distractor-augmented variant is available, version-distinguished in
+        adversary_id"
+        -> test_fr_010_distractor_variant_distinct_id_and_lower_precision (#6, UNIT;
+           see coverage-S3-02-02 for the honestly-bounded precision half).
+    AC port conformance + version pin
+        -> test_fr_010_adversary_satisfies_port (#7, CONTRACT: isinstance(adv,
+           Adversary); deterministic is True (instance + class); adversary_id ==
+           OFFLINE_ADVERSARY_VERSION == "offline-deterministic-v1").
+    AC negative "no random/time/network import" (the "offline deterministic" meaning)
+        -> test_fr_007_nfr004_offline_adversary_imports_no_nondeterminism (#9,
+           AST AUDIT: banned {random,time,uuid,datetime,secrets} disjoint from the
+           module's imports). Statically warrants the §7 Negative + AX-002/NFR-004.
+    Supra-AC: test_fr_007_config_is_frozen_and_hashable (#8) pins the frozen,
+    hashable, deterministically-stampable DEFAULT config ordering (six behavioral
+    categories sorted + quasi_identifier_token appended, weight 2.0 > any behavioral)
+    — backs §8b reproducibility-key stampability.
+  All seven dispatch-named clauses (determinism, order-independence, abstain-below-
+  threshold, links-surviving-signal, integer guess count, distractor variant, port
+  conformance) map to a passing test. No acceptance clause lacks a test.
+
+  Re-ran (pytest 9.0.2 / Python 3.10.6, AGENT_SIMULATED per §12):
+    * python3 -m pytest tests/test_offline_adversary.py -q -> 9 passed (~0.13s).
+    * -k fr_007 -> 7 passed, 2 deselected; -k fr_010 -> 2 passed, 7 deselected
+      (the S3-01-learned fr_NNN token-selection convention holds).
+    * Full suite python3 -m pytest -q -> 124 passed, 0 regressions (matches §12).
+  Verified exports resolve: OfflineDeterministicAdversary / OfflineAdversaryConfig /
+  DEFAULT_OFFLINE_CONFIG / OFFLINE_ADVERSARY_VERSION exported from adversary/__init__
+  and re-exported from scoring/__init__ (§8 owned-files claim holds); the impl's
+  UNIQUENESS_WEIGHT / SignalsBlock / extract dependencies exist in signals.py (S3-01).
+
+  Deferral validity: S3-04 (measured RRS) is a named in-sprint successor; the deferral
+  target is not later than the sprint's scoring stories. Not a DIVERGED MUST — §4 sets
+  provisional_status AGENT_SIMULATED, so the DIVERGED Pass-2 cross-check does not apply
+  here (Pass 2 for the AGENT_SIMULATED gap is the orchestrator's real-CI re-run, §12).
+
+  Out of my lane (deferred to peers per §11): test-assertion strength / the non-strict
+  <= precision bound's robustness as a *test* (code-quality); presence/correctness of
+  fr_NNN traceability tokens & docstring markers (traceability); AX-002 determinism +
+  NFR-004 purity verification beyond coverage (axiom-compliance); no-real-PII over any
+  corpus/fixture reads (security-sast); O(|targets|·|C|·features) complexity
+  (performance advisory). The repo-wide ruff/mypy findings in non-owned sibling modules
+  (§12 note) are pre-existing and out of S3-02's owned-files set — not a coverage
+  concern.
+
+  0 MAJOR+ coverage findings (2 OBSERVATIONs, both forward-tracking to S3-04) -> APPROVE.
+
+review_time_seconds: 300
+context_bounds_respected: true

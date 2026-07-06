@@ -1,0 +1,43 @@
+signoff_id: SO-10-cap02-development
+date: 2026-06-01
+type: stage-close
+stage: 04-development
+capability: CAP-02
+scope: >
+  CAP-02 Development (sprints S8-S12), executed MAIN-THREAD-LED with strict TDD (RED->GREEN per unit, local
+  commits) across BOTH repos for reliable cross-repo access + real gate verification. Delivered the full
+  academically-sound assessment spine: the powered lattice-stratified seeded sampler (4-state power vs realized
+  positives) + manifest seam, the audited statistics report projection (Wilson/Clopper-Pearson recall CIs +
+  adjacent-pair McNemar + Holm + paired-bootstrap Δ + tie-gating + honest-verdict bundle), observability
+  run-records + pre-registration, the net-new Holm primitive, the v2.0.0 dataset-seam reconciliation + 5-tuple
+  contract, the P1 quarantine (fabrication lint + lazy significance + import-closure), and both CLIs
+  (ENTRY-A sampler, ENTRY-B `pii-rate-elo assessment`). Proven end-to-end on REAL v2.0.0 data.
+signer: AGENT_SIMULATED (developer-assistant); real-detector + real-data Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - eval-data src/pii_anon_datasets/stats/multitest.py + assessment/{__init__,_guards,sample,verdicts,manifest,report,runrecord,prereg}.py
+  - eval-data tests/{test_multitest,test_p1_runpath_guard,test_assessment_sampler,test_assessment_cli,test_assessment_report,test_assessment_observability}.py
+  - eval-data scripts/run_powered_assessment.sh + dev-assist-artifacts/assessment-workflow/{ONE-COMMAND-EXAMPLE.md, 05-testing/example-leaderboard.md}
+  - pii-rate-elo src/pii_rate_elo_pipeline/{assessment_runner.py, cli.py (assessment cmd + lazy significance), datasets/converters/pii_anon_eval.py, schema.py} + configs/assessment.yaml
+  - pii-rate-elo tests/{test_pii_anon_eval_v2_contract,test_assessment_config_p1,test_assessment_e2e,test_p1_closure}.py
+
+decisions_acknowledged:
+  - "P1 (SHOWSTOPPER) closed: configs/assessment.yaml run_significance_tests:false + cli.py significance import made LAZY + import-closure tests prove pii_rate_elo_pipeline.analysis.significance is unreachable from BOTH assessment entrypoints + fabrication-regex lint (positive control on significance.py, negative on the audited ring). All assessment inference is the audited eval-data stats."
+  - "P2 closed: v2.0.0 metadata pins fixed (num_records 575604, license CC0-1.0, citation v2.0.0, schema version 2.0.0, summary pin) + 5-tuple regression contract (RED-first, named-element messages); cross-repo vocab-coherence (converter 63 types == taxonomy) verified."
+  - "P3 closed: §7 powered sampler reuses lattice_audit + power + load_lattice; 4-state power (WELL/UNDER_SAMPLED/CORPUS_LIMITED/EMPTY/NOT_ASSESSED) vs REALIZED positives; emits PowerMatrix verdict + per-cell named shortfall."
+  - "Byte-reproducibility hardened beyond the design: the design pseudocode's tuple seed random.Random((seed,cell_id)) is hash-salted (non-reproducible across processes); replaced with a STRING seed (sha512-stable) + a cross-process determinism test (PYTHONHASHSEED 0 vs 1 → identical manifest)."
+  - "Architecture honored: eval-data NEVER imports pii-rate-elo (FORBIDDEN EDGE); report.py uses only the audited stats ring; the orchestrator (consumer) auto-discovers the sibling eval-data checkout (no install/PYTHONPATH needed), so pii-rate-elo stays importable standalone."
+
+evidence:
+  - "eval-data: 394 passed / 6 skipped (6 skips ALL optional-dep-gated: pyarrow/matplotlib/anthropic/spacy); +33 new CAP-02 tests; ruff clean; lattice --check 730@47c3a8f green; doc-drift NFR-013 green; 0 regressions."
+  - "pii-rate-elo: 268 passed / 1 skipped (was 253/1 at baseline; +15 incl the now-running cross-repo coherence test); ruff clean; 0 regressions; significance.py untouched (quarantined, not deleted)."
+  - "REAL-DATA E2E (splits/test_technology.jsonl.gz, 10,352 records): powered sample 1822 records in 0.4s, verdict SMALL + 122 named CORPUS_LIMITED shortfalls; assessment over 15,569 gold positives in ~20s -> leaderboard with Wilson CIs + Holm-significant paired McNemar + RD-NOT-CONVERGED + verified pre-registration + non-strippable synthetic-only caveat. One-command wrapper validated (smoke + powered)."
+
+findings_waived_to_pass2:
+  - "Real-detector systems (Presidio/GLiNER/Piiranha): the bundled systems are lightweight synthetic -> the run is INDICATIVE (academic machinery fully exercised). Systems are pluggable; real-detector runs are Pass-2."
+  - "Real-data external-validity correlation slice (cycle-1 UC-13) — the credibility unlock; surfaced as a honest pending flag; Pass-2."
+  - "Roadmap (honest, NOT shipped): figures (lazy matplotlib, absent in agent-env), run-type rigor-bar ENFORCEMENT (smoke CI-suppression is plumbed but not enforced), DC-29 governance/anti-gaming block, DC-30 regulatory crosswalk, DC-31 DOI release, the formal OutcomeDTO contract test (the seam is exercised by the E2E)."
+  - "NFR-010b throughput floor inherited INSUFFICIENT_EVIDENCE (agent sandbox != reference host)."
+
+next: "Stage 5 Testing — NFR-019+ verification matrix (map to the shipped tests), release-readiness verdict (expected SHIP-WITH-CAVEATS), /dev-assist-html render. Run: /dev-assist-testing"

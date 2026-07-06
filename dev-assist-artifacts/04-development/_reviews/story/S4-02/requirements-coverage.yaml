@@ -1,0 +1,196 @@
+# requirements-coverage reviewer — STORY gate S4-02 (iteration 1)
+reviewer: requirements-coverage
+gate: story
+story_id: S4-02
+iteration: 1
+verdict: APPROVE
+mode: read_only
+context_bounds_respected: true
+
+scope:
+  summary: >-
+    S4-02 adds the MEASUREMENT side of FR-002 (detector A/B regression) and NFR-002
+    (named CI/test method): McNemar exact two-sided binomial tail + Edwards
+    continuity-corrected chi2 over discordant pairs (b, c), plus a seeded paired
+    bootstrap for the recall-difference Interval. Supporting: AX-003 (statistical
+    rigor), NFR-004 (pure-stdlib + deterministic).
+  files_owned:
+    - src/pii_anon_datasets/stats/paired.py        # NEW
+    - tests/test_paired.py                          # NEW
+    - src/pii_anon_datasets/stats/__init__.py       # MODIFIED (4 exports)
+  note: >-
+    Story gate scope is one story-slice; full Tier-1/2/3 coverage snapshot is an
+    epic/sprint-gate concern, not run here.
+
+# ── Acceptance-clause (§7) coverage: every G/W/T clause maps to a passing test ──
+acceptance_clause_coverage:
+  - clause: "McNemar exact binomial over discordant (b,c) -> statistic + named-method p"
+    test: tests/test_paired.py::test_fr_002_mcnemar_exact_binomial
+    status: verified
+  - clause: "McNemar continuity-chi2 over discordant (b,c) -> statistic + named-method p"
+    test: tests/test_paired.py::test_fr_002_mcnemar_chi2_continuity
+    status: verified
+  - clause: "seeded paired bootstrap yields recall-diff Interval, method 'paired-bootstrap'"
+    test: tests/test_paired.py::test_fr_002_paired_bootstrap_brackets_delta, test_nfr_002_paired_bootstrap_method_named
+    status: verified
+  - clause: "Negative: b+c==0 -> no-difference (statistic 0.0, p 1.0)"
+    test: tests/test_paired.py::test_fr_002_mcnemar_zero_discordant
+    status: verified
+  - clause: "Negative: bootstrap reproducible for fixed seed, NOT driven by global RNG"
+    test: tests/test_paired.py::test_fr_002_paired_bootstrap_deterministic, test_fr_002_nfr004_paired_imports_no_uncontrolled_nondeterminism
+    status: verified
+
+# ── §6 test-first plan: 8 planned tests, each present + passing + fr_002/nfr_002 token ──
+test_plan_coverage:
+  planned: 8
+  present: 8
+  passing: 8
+  all_tokened: true     # 8/8 carry fr_002 or nfr_002 token
+  map:
+    - { plan: 1, test: test_fr_002_mcnemar_exact_binomial,          status: pass }
+    - { plan: 2, test: test_fr_002_mcnemar_chi2_continuity,          status: pass }
+    - { plan: 3, test: test_fr_002_mcnemar_zero_discordant,          status: pass }
+    - { plan: 4, test: test_fr_002_mcnemar_odds_ratio,               status: pass }
+    - { plan: 5, test: test_fr_002_paired_bootstrap_deterministic,   status: pass }
+    - { plan: 6, test: test_fr_002_paired_bootstrap_brackets_delta,  status: pass }
+    - { plan: 7, test: test_nfr_002_paired_bootstrap_method_named,   status: pass }
+    - { plan: 8, test: test_fr_002_nfr004_paired_imports_no_uncontrolled_nondeterminism, status: pass }
+
+# ── CRITICAL math-correctness: INDEPENDENTLY RECOMPUTED, story claims NOT trusted ──
+math_correctness_independent_recompute:
+  - check: "mcnemar_exact(10,0).p_value"
+    recomputed: 0.001953125          # = 2 * (C(10,0)*0.5^10) = 2*0.0009765625
+    expected_approx: 0.00195
+    code_returns: 0.001953125
+    statistic: 0.0                   # min(b,c)=0
+    method: mcnemar-exact
+    status: confirmed
+  - check: "mcnemar_exact(5,5).p_value"
+    recomputed: 1.0                  # 2*tail = 1.246 -> clipped to 1.0; statistic min(b,c)=5
+    code_returns: 1.0
+    status: confirmed
+  - check: "mcnemar_chi2(20,10) continuity"
+    recomputed_chi2: 2.7             # (|20-10|-1)^2/30 = 81/30
+    recomputed_p: 0.10034824646229071   # erfc(sqrt(2.7/2))
+    expected_approx_p: 0.1003
+    code_returns: { chi2: 2.7, p: 0.10034824646229071, method: mcnemar-chi2-continuity }
+    status: confirmed
+  - check: "mcnemar_chi2(20,10, continuity=False)"
+    recomputed_chi2: 3.3333333333333335   # 100/30
+    method: mcnemar-chi2
+    status: confirmed
+  - check: "b+c==0 -> no-difference (both exact & chi2)"
+    expected: { statistic: 0.0, p_value: 1.0 }
+    code_returns: { exact: [0.0, 1.0], chi2: [0.0, 1.0] }
+    status: confirmed
+  - check: "odds_ratio == b/c; None when c==0"
+    code_returns: { "(20,10)": 2.0, "(10,0)": null }
+    status: confirmed
+  - check: "bootstrap seeded-deterministic + percentile brackets delta + global-RNG independent"
+    findings:
+      same_seed_byte_identical: true
+      diff_seed_endpoints_differ: true     # 50-pair *2 mix; seed42=(-0.10,0.28) vs seed7=(-0.12,0.26)
+      global_rng_independent: true         # invariant under random.seed(0)/seed(999999)
+      brackets_delta: true                 # low <= point <= high; point == observed delta
+      n_equals_len_pairs: true
+      strong_A_gt_B_low_positive: true
+      method: paired-bootstrap
+    status: confirmed
+
+# ── coverage on the owned production module ──
+coverage:
+  target: pii_anon_datasets.stats.paired
+  line_coverage_pct: 92          # 76 stmts, 4 missed
+  branch_coverage_pct_partial: "14 branch / 3 partial"
+  threshold_pct: 85
+  threshold_met: true
+  uncovered_lines: [47, 134, 167, 173]
+  uncovered_note: >-
+    47 = McNemarResult.as_dict serializer (defensive; round-tripped indirectly via
+    Interval path); 134 = empty-pairs degenerate Interval return (behaviorally
+    verified by reviewer ad hoc, no dedicated owned test); 167/173 = _percentile
+    singleton + lo==hi interpolation edges. None are FR-002/NFR-002 acceptance-
+    bearing paths; line coverage 92% clears the 85% bar with margin.
+
+test_execution:
+  command: "python3 -m pytest tests/test_paired.py -q (PYTHONPATH=src)"
+  result: "8 passed"
+  full_suite: "184 passed, 1 skipped"   # matches story claim; 0 regressions
+  python: "3.10.6"
+
+requirement_disposition:
+  FR-002:
+    status: verified            # measurement side; design-time sizer is S-PWR power.py (separate story)
+    evidence: "McNemar exact + chi2 over (b,c); paired_bootstrap_recall_delta recall-delta Interval"
+  NFR-002:
+    status: verified
+    evidence: "McNemarResult.method in {mcnemar-exact, mcnemar-chi2-continuity, mcnemar-chi2}; Interval.method == paired-bootstrap"
+  NFR-004:
+    status: verified
+    evidence: "pure-stdlib (math + random.Random); AST guard + runtime global-RNG-independence guard"
+  AX-003:
+    status: verified
+    evidence: "exact binomial tail + Edwards continuity chi2 + percentile bootstrap; paired not CI-overlap"
+
+orphaned_requirement_scan:
+  result: none
+  note: >-
+    No MUST claimed for this story slice lacks test evidence. FR-002 measurement
+    obligations all map to passing, math-verified tests. Design-time sizing
+    obligation is explicitly out of scope (owned by S-PWR power.py, a closed
+    predecessor seam), not silently dropped.
+
+# ── DIVERGED / Pass-2 cross-check ──
+diverged_pass2:
+  diverged: false                # story §4: DC-09, AGENT_SIMULATED, NOT DIVERGED
+  provisional_status: AGENT_SIMULATED
+  pass2_required: true
+  pass2_note: >-
+    provisional_status AGENT_SIMULATED (agent-simulated executor, Python 3.10
+    miniforge). Pass 2 (real CI on real hardware) must complete before DONE is
+    ratified per story §12 — orchestrator-scheduled. Not a coverage blocker at the
+    STORY gate; flagged so it is not lost at the release gate (no DIVERGED NFR here,
+    so no provisional-threshold doc obligation).
+
+findings:
+  - id: S4-02-RC-01
+    severity: OBSERVATION
+    requirement: NFR-004 / FR-002 (bootstrap empty-pairs path)
+    summary: >-
+      The empty-pairs degenerate branch (paired.py:134, returns Interval(0,0,0,0,
+      'paired-bootstrap', confidence)) is documented in the spec but has no dedicated
+      owned test; it is one of the 4 uncovered lines. Reviewer verified it behaves
+      as specified ad hoc. A one-line assertion would close the gap. Non-blocking:
+      empty pairs is not an FR-002/NFR-002 acceptance clause and overall line
+      coverage (92%) clears the 85% bar.
+    blocking: false
+  - id: S4-02-RC-02
+    severity: OBSERVATION
+    requirement: scope-adjacent (out of this story)
+    summary: >-
+      mypy --strict surfaces a pre-existing intervals.py:28 [type-arg] from S1
+      (acac5a8), correctly disclosed in story §Lint/type as out-of-scope and
+      untouched. Noted only for downstream traceability; paired.py itself is
+      ruff + mypy --strict clean. Not attributable to S4-02.
+    blocking: false
+
+severity_tally:
+  SHOWSTOPPER: 0
+  CATASTROPHIC: 0
+  MAJOR: 0
+  MINOR: 0
+  OBSERVATION: 2
+
+self_attestation:
+  independent: true
+  recomputed_not_trusted: true        # all worked values recomputed from scratch; story table cross-checked, not relied on
+  tests_actually_executed: true
+  coverage_actually_measured: true
+  context_bounds_respected: true
+  out_of_scope_deferred:
+    - "test well-formedness -> code-quality / traceability"
+    - "FR semantic validity -> axiom-compliance"
+    - "whether requirement should exist -> SME, not per-story"
+    - "full T1/T2/T3 snapshot -> epic/sprint gate, not story gate"
+
+decision_rule: "APPROVE iff zero MAJOR+; tally shows 0 MAJOR+ -> APPROVE"

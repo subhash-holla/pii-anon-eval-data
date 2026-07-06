@@ -1,0 +1,154 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S5-04
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S5-04-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/integrations/conll_format.py:64-65
+    description: |
+      Two `# type: ignore[call-overload]` suppressions are present in `_assign_bio_tags`
+      at lines 64-65 on `int(ann["start"])` and `int(ann["end"])`. These are justified:
+      `ann` is typed as `Mapping[str, object]`, so subscript lookup yields `object`, and
+      `int(object)` has no matching overload under mypy --strict. Confirmed by stripping
+      the suppression and re-running mypy, which fires two `call-overload` errors. The
+      suppressions are minimal, locally scoped, and necessary for the broad `Mapping[str,
+      object]` contract (matching the brownfield port discipline and the spaCy exporter's
+      analogous `Any` pattern). No action required.
+    suggested_resolution: |
+      No action required. If a future story narrows the annotation schema to a typed
+      dataclass or TypedDict, these suppressions will become unused-ignore errors under
+      --strict and can be removed at that time.
+
+notes: |
+  ## Live check results (all commands run from repo root at HEAD 574a30f)
+
+  ### Lint (ruff)
+  Command: `ruff check src/pii_anon_datasets/integrations/ src/pii_anon_datasets/distribution/conll_export.py src/pii_anon_datasets/distribution/spacy_export.py tests/test_conll_export.py tests/test_spacy_export.py`
+  Result: **All checks passed!** — zero warnings, zero errors across all files.
+
+  ### Type check (mypy --strict --follow-imports=silent)
+  Command: `mypy --strict --follow-imports=silent src/pii_anon_datasets/integrations/conll_format.py src/pii_anon_datasets/distribution/conll_export.py src/pii_anon_datasets/distribution/spacy_export.py`
+  Result: **Success: no issues found in 3 source files.**
+  Notes: The two `# type: ignore[call-overload]` suppressions in `_assign_bio_tags`
+  (lines 64-65) are genuinely needed — confirmed by stripping them and observing
+  mypy reports the same two errors. The absence of `# type: ignore[import-untyped]`
+  on the lazy `import spacy` is correct: spaCy 3.8.x ships a `py.typed` marker so
+  mypy --strict resolves it cleanly. The §12 deviation is valid and the REFACTOR
+  commit correctly removed the dead suppression.
+
+  ### Test run
+  Command: `python3 -m pytest tests/test_conll_export.py tests/test_spacy_export.py -v`
+  Result: **9 passed in 1.39s** — all 9 tests GREEN, 0 skipped, 0 errors.
+  Individual results:
+  - test_fr_024_conll_bio_tags_align_to_offsets            PASSED [UNIT-TEST]
+  - test_fr_024_conll_bilou_conversion                     PASSED [UNIT-TEST]
+  - test_fr_024_conll_export_streams_not_materializes      PASSED [PROPERTY-TEST]
+  - test_fr_024_conll_deterministic                        PASSED [PROPERTY-TEST]
+  - test_nfr004_conll_pure_stdlib                          PASSED [PROPERTY-TEST]
+  - test_fr_024_spacy_offsets_format                       PASSED [UNIT-TEST]
+  - test_fr_024_spacy_docbin_roundtrip                     PASSED [INTEGRATION-TEST] (spaCy 3.8.3)
+  - test_fr_024_spacy_docbin_filters_overlaps              PASSED [UNIT-TEST] (spaCy 3.8.3)
+  - test_nfr004_spacy_export_imports_without_spacy         PASSED [CONTRACT-TEST]
+
+  Full suite regression check: `python3 -m pytest tests/`
+  Result: **242 passed, 1 skipped** — 233 pre-S5-04 + 9 new, 0 regressions,
+  the 1 pre-existing skip preserved exactly.
+
+  Token selection: `-k fr_024` selects 15 tests (7 new in this story + 8 from
+  prior stories); `-k nfr004` selects 17 tests (2 new in this story + 15 from
+  prior stories). The 2 new nfr004 tests (`test_nfr004_conll_pure_stdlib` and
+  `test_nfr004_spacy_export_imports_without_spacy`) both PASS.
+
+  ### TDD evidence (RED → GREEN → REFACTOR)
+  Git log 39f90d0..HEAD (TDD chain):
+  - 589567f [RED]      — `tests/test_conll_export.py` (5 tests) + `tests/test_spacy_export.py`
+                         (4 tests) + story file added; NO production modules in this commit.
+                         `git show 589567f --stat` confirms only 3 files:
+                         S5-04.md + both test files. The source modules
+                         `integrations/conll_format.py`, `distribution/conll_export.py`,
+                         `distribution/spacy_export.py` were absent — so pytest would
+                         fail at collection with ImportError. RED commit is strictly
+                         test-only; protocol satisfied.
+  - dd71da6 [GREEN]    — 4 production modules implemented; 9/9 tests GREEN;
+                         full suite 242 passed / 1 skipped.
+  - 99f58f1 [REFACTOR] — lint/format/type cleanups (zip strict=True, dead ignore
+                         removed, ruff-format, import-sort); no behaviour change;
+                         suite unchanged at 242/1.
+  - 574a30f docs        — §12 evidence filled in story file. No production code change.
+  RED commit precedes GREEN; GREEN precedes REFACTOR. Protocol fully satisfied.
+
+  ### Scope discipline
+  Files changed (git diff 39f90d0..HEAD --name-only):
+  - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-04.md  (story file)
+  - src/pii_anon_datasets/distribution/__init__.py                     (§8 MODIFIED)
+  - src/pii_anon_datasets/distribution/conll_export.py                 (§8 NEW)
+  - src/pii_anon_datasets/distribution/spacy_export.py                 (§8 NEW)
+  - src/pii_anon_datasets/integrations/__init__.py                     (§8 NEW)
+  - src/pii_anon_datasets/integrations/conll_format.py                 (§8 NEW)
+  - tests/test_conll_export.py                                         (§8 NEW)
+  - tests/test_spacy_export.py                                         (§8 NEW)
+  All 8 are listed in story §8 "Files owned" or are the story file itself.
+  The brownfield top-level `integrations/conll_format.py` CLI script is untouched
+  (`git diff 39f90d0..HEAD -- integrations/conll_format.py` → empty).
+  Zero scope creep into scoring/stats/corpus/lattice/compliance/pyproject.
+
+  ### Idiomatic style vs S5-02/S5-03 (parquet_export/croissant baseline)
+  - Module docstrings: full docstring on every module with NFR cross-refs, load-bearing
+    contract bullet points, lazy-import notes, AX-001/AX-002 references — matches S5-02/03 pattern.
+  - Lazy import pattern: `_require_spacy()` mirrors `_require_pyarrow()` / `_require_mlcroissant()`
+    exactly (try/except ImportError → RuntimeError re-raise naming install command).
+  - Thin-wrap discipline: `conll_export.py` contains ONLY `export_conll`; zero BIO/BILOU symbols
+    present. All tagging logic resides in `integrations/conll_format.py`.
+  - Streaming: both exporters consume a one-pass iterator; AST confirms zero `list()` / `len()`
+    calls on the input; test #3 drives a one-shot generator to exhaustion.
+  - `from __future__ import annotations` on every module.
+  - Docstrings: every public function (`export_conll`, `to_spacy_offsets`, `export_spacy_docbin`,
+    `record_to_conll`, `build_label2id`, `CONLL_FORMATS`) and every private helper
+    (`_tokenize_simple`, `_assign_bio_tags`, `_bio_to_bilou`, `_require_spacy`) carries a
+    complete docstring. Full coverage.
+  - `zip(..., strict=True)` added in REFACTOR commit (B905 / house convention); lengths equal
+    by construction — the comment says so and it is structurally enforced.
+  - Test names all carry `fr_024` or `nfr004` tokens (9/9 per §6 / §10).
+  - Tests use `tmp_path` fixture for filesystem; synthetic in-memory fixtures; no real
+    time/network/RNG. All deterministic.
+
+  ### §12 deviations — verified non-weakening
+  Deviation 1 (CoNLL doc separator = one blank line): The verbatim-ported `record_to_conll`
+  ends each record on exactly one trailing `\n`; `export_conll` writes one extra `"\n"` between
+  records — the boundary is `\n\n` (one blank line), the same shape as between-sentence. Test #3
+  asserts the exact byte form (`"line\tO\n\nGamma\tO"`) and proves the separator exists and has
+  the right count. No contract weakened; the test is tighter, not looser.
+  Deviation 2 (no `# type: ignore[import-untyped]` on `import spacy`): spaCy 3.8.x ships
+  `py.typed`, so the suppression would be an unused-ignore under `--strict`. Removing it is
+  required for a clean `mypy --strict`. The comment in `_require_spacy` documents the reasoning
+  (lines 50-52). No contract weakened; the type contract is cleaner.
+
+  ### 15-pattern scan — no MAJOR or higher findings
+  1.  No `unwrap()`/`expect()` (Python): no bare `assert` on external inputs. The `type: ignore`
+      suppressions are minimal, justified, and scoped (OBSERVATION filed above).
+  2.  No unsafe casts; typed conversions used (`int(...)`, `str(...)`).
+  3.  No `Any` without justification: `Any` in `to_spacy_offsets` / `_require_spacy` return type
+      is necessary (spaCy module object has no stub-level type; `from __future__ import annotations`
+      defers; the docstring notes it). Acceptable under the lazy-import pattern.
+  4.  All public surfaces documented — see idiomatic style note above.
+  5.  RED commit precedes GREEN — confirmed.
+  6.  All 9 test names carry `fr_024` or `nfr004` tokens.
+  7.  Tests are deterministic — `tmp_path`, synthetic in-memory fixtures, no clock/RNG/network.
+  8.  No out-of-scope edits — see scope discipline above.
+  9.  No dead code — no unreferenced helpers remain.
+  10. No production module gains a dev-dependency at runtime.
+  11. Error wrapping is consistent: all lazy-import guards raise `RuntimeError` with install
+      message chained from `ImportError` — matches S5-02/S5-03 pattern.
+  12. Public API docstrings include parameter semantics and contract notes inline.
+  13. No lint-warning-escalated-to-error bypass: ruff clean with zero `# noqa` suppressions.
+  14. mypy --strict clean: no type errors in 3 source files.
+  15. No language-profile violations: `from __future__ import annotations`, typed signatures,
+      lazy imports, `Mapping`/`Sequence` from `collections.abc`, `strict=True` zip.
+
+review_time_seconds: 480
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

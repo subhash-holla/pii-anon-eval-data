@@ -11,7 +11,7 @@ Reproducibility fixes from the D6 SME panel:
 """
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Protocol, Sequence, runtime_checkable
 
@@ -62,16 +62,47 @@ class Counts:
 
 
 def _count_partial(gold_left: Sequence[Span], pred_left: Sequence[Span]) -> int:
-    """Deterministic greedy partial-overlap count (same type, each gold used once)."""
-    gold_sorted = sorted(gold_left, key=lambda s: (s.start, s.end, s.entity_type))
-    used = [False] * len(gold_sorted)
+    """Deterministic greedy partial-overlap count (same type, each gold used once).
+
+    Byte-identical to the brute-force greedy definition — each predicted span, in ``(start, end,
+    entity_type)`` order, claims the FIRST still-unused same-type gold span it overlaps — but linear-ish
+    rather than O(FP×FN) on the record-namespaced pools the orchestrator builds for a full multilingual run
+    (115k records → ~1M+ pooled spans). Gold is bucketed by type and sorted by start; a per-bucket
+    low-water pointer skips gold that is permanently dead (already used, OR ending at/before the prediction's
+    start — and so, since predictions are processed in non-decreasing start order, unmatchable by this and
+    every later prediction). The inner scan stops at the first gold whose start reaches the prediction's end
+    (sorted ⇒ no later gold can overlap). The match chosen is identical to scanning the full sorted gold
+    list, because every gold skipped by the pointer could not have matched anyway.
+    """
+    gold_by_type: dict[str, list[Span]] = defaultdict(list)
+    for g in gold_left:
+        gold_by_type[g.entity_type].append(g)
+    for spans in gold_by_type.values():
+        spans.sort(key=lambda s: (s.start, s.end))
+    used_by_type = {t: [False] * len(spans) for t, spans in gold_by_type.items()}
+    lo_by_type = dict.fromkeys(gold_by_type, 0)
+
     partial = 0
     for ps in sorted(pred_left, key=lambda s: (s.start, s.end, s.entity_type)):
-        for i, gs in enumerate(gold_sorted):
-            if not used[i] and gs.entity_type == ps.entity_type and gs.overlaps(ps):
-                used[i] = True
+        spans = gold_by_type.get(ps.entity_type)
+        if not spans:
+            continue
+        used = used_by_type[ps.entity_type]
+        lo = lo_by_type[ps.entity_type]
+        # Retire gold that can never match this prediction or any later (higher-start) one.
+        while lo < len(spans) and (used[lo] or spans[lo].end <= ps.start):
+            lo += 1
+        lo_by_type[ps.entity_type] = lo
+        j = lo
+        while j < len(spans):
+            gs = spans[j]
+            if gs.start >= ps.end:  # sorted by start ⇒ no remaining gold overlaps this prediction
+                break
+            if not used[j] and gs.end > ps.start:  # same type already; a genuine partial overlap
+                used[j] = True
                 partial += 1
                 break
+            j += 1
     return partial
 
 

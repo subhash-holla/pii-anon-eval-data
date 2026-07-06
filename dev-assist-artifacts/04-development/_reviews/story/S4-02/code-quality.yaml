@@ -1,0 +1,115 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S4-02
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  REVIEW SUMMARY — S4-02 Paired Statistics (McNemar + Seeded Paired Bootstrap)
+
+  All 15 common finding patterns checked. Zero MAJOR or above findings. Full detail:
+
+  TDD DISCIPLINE (RED → GREEN → REFACTOR)
+  - RED commit 5568608: only tests/test_paired.py present; paired.py absent. Collection would
+    fail with ImportError. Confirmed via `git show --name-only 5568608` — sole touched file is
+    tests/test_paired.py. RED is genuine.
+  - GREEN commit 1e34f7b: adds src/pii_anon_datasets/stats/paired.py and stats/__init__.py
+    export; test count 8/8. The test fixture for test_fr_002_paired_bootstrap_deterministic was
+    widened from 8 to 50 pairs in this commit. This is a test-robustness fix (see below) — not
+    a production change to force a test to pass.
+  - REFACTOR commit d5cafe7: ruff I001 import-block ordering on test_paired.py only. No
+    production-code change. Scope correct.
+
+  BOOTSTRAP FIXTURE WIDENING (executor-disclosed; 8 → 50 pairs)
+  The executor disclosed that the property test fixture was widened from 8 to 50 pairs during
+  the GREEN phase to avoid percentile aliasing across seeds. This was independently verified:
+  running paired_bootstrap_recall_delta against the original 8-pair fixture with seeds 42 and 7
+  produces identical (low, high) endpoints — the discrete-bootstrap distribution over 8 pairs
+  with n_boot=2000 can only yield ~ (2000+1) distinct Δ values but the set of achievable
+  percentiles is coarse enough that two different seeds alias to the same quantile boundary.
+  The 50-pair fixture resolves this: seed=42 gives (-0.100, 0.280); seed=7 gives (-0.120,
+  0.260). The production algorithm (random.Random, percentile interpolation) is unchanged;
+  only the test data grew. This is confirmed to be a robustness fix, not a production-code
+  change motivated by a failing test.
+
+  SCOPE DISCIPLINE
+  All files touched across RED/GREEN/REFACTOR are within story §8:
+    - NEW: src/pii_anon_datasets/stats/paired.py (owned)
+    - NEW: tests/test_paired.py (owned)
+    - MODIFIED: src/pii_anon_datasets/stats/__init__.py (owned)
+  No out-of-scope files touched. intervals.py, power.py, lattice/corpus/tags files untouched.
+
+  TYPE CORRECTNESS
+  - `mypy --strict --ignore-missing-imports src/.../stats/paired.py` → Success: 0 errors.
+  - The only `--strict --follow-imports=silent` error is intervals.py:28 [type-arg] ("Missing
+    type parameters for generic type 'dict'"), which pre-dates this story (committed acac5a8,
+    S1). Confirmed it fires identically against the S1 baseline. Out of scope; not fixed here
+    per reviewer mandate. Zero errors attributable to paired.py.
+  - All public functions (mcnemar_exact, mcnemar_chi2, paired_bootstrap_recall_delta, as_dict)
+    carry full parameter and return-type annotations. The `self` parameter of as_dict is
+    unannotated per Python convention — correct.
+  - `pairs` parameter: typed as Sequence[tuple[bool, bool]] — concrete, correct.
+  - McNemarResult dataclass fields: all annotated (b: int, c: int, statistic: float,
+    p_value: float, method: str, odds_ratio: float | None). No bare `Any`.
+
+  FROZEN DATACLASS
+  McNemarResult uses @dataclass(frozen=True). Confirmed: attempting to set .b raises
+  FrozenInstanceError. Matches §8b spec.
+
+  PURITY / NFR-004
+  - Imports: `math`, `random`, `collections.abc.Sequence`, `dataclasses.dataclass`,
+    `.intervals.Interval`. No `time`, `uuid`, `datetime`, `secrets`. Pure-stdlib. ✓
+  - The AST guard test statically walks the parse tree confirming no banned imports and no
+    module-global `random.<fn>` call. Only `random.Random` (class access) is used. ✓
+  - The bootstrap body creates `rng = random.Random(seed)` locally; every draw uses
+    `rng.randrange(n)`. The module-global RNG is provably never consulted, confirmed by
+    the runtime invariance test (seed(0) vs seed(999999) produce identical results). ✓
+
+  UNWRAP / PANIC PATTERNS
+  No `unwrap()`, `expect()`, `assert` on production paths, or non-null dereferences without
+  guard. The c==0 → odds_ratio=None guard is explicit in _odds_ratio(). No unsafe casts. ✓
+
+  DETERMINISTIC + ISOLATED TESTS
+  - All 8 tests use fixed inputs; no real time, network, or filesystem (only pathlib.Path
+    of the module's own __file__ for the AST guard — deterministic). ✓
+  - Tests are named with fr_002/nfr_002 tokens as required (§6). ✓
+  - [UNIT-TEST] / [PROPERTY-TEST] tags present in docstrings. ✓
+
+  DEAD CODE
+  Private helpers _odds_ratio, _recall_delta, _percentile are all referenced from public
+  functions. No unreferenced helpers from prior drafts. ✓
+
+  LINT
+  `ruff check src/pii_anon_datasets/stats/paired.py tests/test_paired.py` → All checks
+  passed. Zero warnings. ✓
+
+  DOCUMENTATION
+  All public symbols (McNemarResult class + as_dict method, mcnemar_exact, mcnemar_chi2,
+  paired_bootstrap_recall_delta) carry module-level and function-level docstrings with
+  usage examples inline (formula, edge-case behaviour, NFR references). ✓
+  Module-level docstring explains the paired-vs-CI-overlap distinction and references
+  sampling-design.md §3.2 and the S-PWR counterpart. ✓
+
+  EXPORT
+  stats/__init__.py exports all 4 required symbols (McNemarResult, mcnemar_exact,
+  mcnemar_chi2, paired_bootstrap_recall_delta) and includes them in __all__. ✓
+
+  FULL SUITE
+  `python3 -m pytest` (full suite): 184 passed, 1 skipped (0 regressions; the 1 pre-existing
+  skip preserved). `python3 -m pytest tests/test_paired.py -q`: 8 passed, exit 0. ✓
+
+  PRE-EXISTING OUT-OF-SCOPE FINDING (documented, not blocked)
+  intervals.py:28 [type-arg] under `mypy --strict` — originates from S1 commit acac5a8.
+  Out of scope for this story; the reviewer mandate explicitly excludes it.
+
+  DOMAIN PACKS
+  No active domain packs found (domain-packs/ contains only README, _schema, examples).
+  No pack-extension patterns loaded. source_pack field omitted.
+
+review_time_seconds: 312
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

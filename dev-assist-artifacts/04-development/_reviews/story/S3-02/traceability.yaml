@@ -1,0 +1,134 @@
+reviewer: dev-assist-development-traceability
+
+scope_id: S3-02
+
+gate: story
+
+iteration: 1
+
+verdict: APPROVE
+
+context_bounds_respected: true
+
+self_attestation: >
+  Reviewed ONLY forward FR/NFR -> Story -> Test -> DC traceability for S3-02 within the
+  declared owned set (scoring/adversary/offline_adversary.py, tests/test_offline_adversary.py,
+  the two scoring __init__.py export edits). Did NOT assess test quality, idiomatic style,
+  semantic FR validation beyond G/W/T, or NFR threshold attainment (other reviewers' lanes).
+  Token-selection claims were dynamically verified by running pytest, not read from the story.
+
+summary: >
+  S3-02 traces cleanly. The S3-01 MAJOR (no test FUNCTION NAME carried a canonical fr_NNN
+  token; tokens lived only in docstrings) does NOT recur: all 9 test function names in
+  tests/test_offline_adversary.py embed a canonical fr_NNN token, and pytest selection
+  confirms it dynamically -- `-k fr_007` => 7 passed, 2 deselected; `-k fr_010` => 2 passed,
+  7 deselected (both > 0). FR-007 and FR-010 both exist in requirements-document.md and
+  functional-requirements.md. DC-07 (D-implementation-ready-design.md) covers FR-007/008/009/010
+  and reidx-01 makes the DETERMINISTIC offline adversary the RRS headline (LLM secondary = S3-03),
+  so the story's FR-007 claim is correctly realized by the offline adversary -- no misclaim.
+  The FR-010 version-pinning contract is realized: OFFLINE_ADVERSARY_VERSION = "offline-deterministic-v1",
+  base adversary_id == OFFLINE_ADVERSARY_VERSION, distractor variant stamps
+  adversary_id == "offline-deterministic-v1+distractor:web-like-distractors-v1" -- each pinned by a
+  named fr_010 test. Module docstring cites FR-007, FR-010, DC-07 (reidx-01) + AX-002/NFR-004.
+  §5 dependency S3-01 is DONE (valid). traceability-matrix.md UC-05 row carries FR-007/010 +
+  AGENT_SIMULATED, matching the story's provisional_status. Source DC-07 is AGENT_SIMULATED (not
+  DIVERGED), provisional_status cascades correctly, no DIVERGED-cascade obligation. No
+  name-says-X-asserts-Y mismatch across the 9 tests. Zero MAJOR+ -> APPROVE.
+
+verified:
+  - check: every test fn name carries a canonical fr_NNN token
+    result: PASS
+    evidence: >
+      9/9 defs in tests/test_offline_adversary.py embed fr_007 or fr_010 in the function name:
+      test_fr_007_attack_is_deterministic, test_fr_007_ranking_is_order_independent,
+      test_fr_007_abstains_below_threshold, test_fr_007_links_surviving_signal,
+      test_fr_007_guess_counts_are_integers, test_fr_010_distractor_variant_distinct_id_and_lower_precision,
+      test_fr_010_adversary_satisfies_port, test_fr_007_config_is_frozen_and_hashable,
+      test_fr_007_nfr004_offline_adversary_imports_no_nondeterminism. ZERO untokened test fns.
+  - check: pytest -k fr_007 selects > 0
+    result: PASS
+    evidence: "python3 -m pytest tests/test_offline_adversary.py -k fr_007 => 7 passed, 2 deselected in 0.13s"
+  - check: pytest -k fr_010 selects > 0
+    result: PASS
+    evidence: "python3 -m pytest tests/test_offline_adversary.py -k fr_010 => 2 passed, 7 deselected in 0.12s"
+  - check: claimed FR/NFR IDs exist in requirements-document.md
+    result: PASS
+    evidence: >
+      FR-007 (requirements-document.md L19; functional-requirements.md L17 "Measured-attack RRS"),
+      FR-010 (requirements-document.md L23; functional-requirements.md L20 "Adversary pluggability ...
+      >=1 distractor-augmented variant"). Neither is a phantom ID.
+  - check: source DC exists and FR-007 framing reconciles
+    result: PASS
+    evidence: >
+      DC-07 (D-implementation-ready-design.md L24) = Re-identification scorer covering FR-007/008/009/010;
+      reidx-01 (L99) designates the DETERMINISTIC offline adversary as the RRS headline, LLM secondary
+      (S3-03). FR-007 canonical prose says "LLM adversary" but DC-07 + reidx-01 decompose the headline
+      realization to the offline adversary -- the story's FR-007 claim is correct, not a misclaim.
+  - check: FR-010 version-pinning contract realized
+    result: PASS
+    evidence: >
+      offline_adversary.py: OFFLINE_ADVERSARY_VERSION="offline-deterministic-v1" (L37); base
+      adversary_id == OFFLINE_ADVERSARY_VERSION (L193, asserted L196 test #7); distractor variant
+      stamps adversary_id="offline-deterministic-v1+distractor:web-like-distractors-v1" (L195,
+      asserted L160-163 test #6). AST guard bans {random,time,uuid,datetime,secrets} (L231).
+  - check: module docstring cites FR-007/FR-010/DC-07
+    result: PASS
+    evidence: >
+      offline_adversary.py docstring L1 "(FR-007 headline; FR-010 variant)", L9 "reidx-01"
+      (the DC-07 design revision), L23 "FR-010: a distractor-augmented ... variant", L17
+      "AX-002 / NFR-004". DC-07 carried via the reidx-01 reference; test module docstring L8-13
+      cites fr_007 + fr_010 + nfr004.
+  - check: §5 dependency S3-01 is DONE
+    result: PASS
+    evidence: "S3-01.md L12 Status = DONE; story §5 marks S3-01 DONE -- dependency valid."
+  - check: traceability-matrix.md carries the FR row + provisional_status
+    result: PASS
+    evidence: >
+      traceability-matrix.md L12 UC-05 row: "FR-007, FR-008, FR-009, FR-010 | NFR-007 | MUST |
+      AGENT_SIMULATED" -- FR-007/010 present, AGENT_SIMULATED matches story metadata (L16) and
+      source DC-07 cascade (story §4).
+  - check: provisional_status cascade / DIVERGED gate
+    result: PASS
+    evidence: >
+      Source DC-07 provisional_status = AGENT_SIMULATED (not DIVERGED); story provisional_status =
+      AGENT_SIMULATED (L16, §4). No DIVERGED cascade obligation -> no §10 Pass-2 DIVERGED commitment required.
+  - check: no name-says-X-asserts-Y mismatch
+    result: PASS
+    evidence: >
+      All 9 tests assert what their name claims (determinism->g1==g2; order-independence->
+      forward==reversed==shuffled; abstain->guessed_persona_id is None; links-surviving-signal->
+      =="p-boston"; guess-counts-integers->isinstance(n_committed,int)+len==3; distractor-variant->
+      id-string+precision<=base; port->isinstance(adv,Adversary)+deterministic is True; config-frozen->
+      FrozenInstanceError; AST-purity->banned.isdisjoint(imported)).
+
+findings:
+  - id: traceability-S3-02-01
+    severity: OBSERVATION
+    title: "test_fr_010 precision assertion OR-compares guessed_persona_id against a target_id literal"
+    location: tests/test_offline_adversary.py:184-186
+    detail: >
+      In test_fr_010_distractor_variant_distinct_id_and_lower_precision the base/distractor
+      correctness proxies OR-compare guessed_persona_id against "t-boston" (a TARGET id) as well as
+      "p-boston" (the candidate id). A guessed_persona_id can only ever be a candidate persona_id,
+      so the "t-boston" disjunct is structurally dead -- the assertion still holds via the "p-boston"
+      disjunct and the FR-010 token + version-stamp contract it pins are sound, so this is NOT a
+      traceability defect. Flagged for code-quality's correctness lane (name-vs-assert alignment is
+      intact; the dead disjunct is a clarity/precision-proxy smell, not a tracing error).
+    source_reviewer_handoff: code-quality
+
+  - id: traceability-S3-02-02
+    severity: OBSERVATION
+    title: "DC-07 cited in docstring indirectly via reidx-01 rather than the literal token DC-07"
+    location: src/pii_anon_datasets/scoring/adversary/offline_adversary.py:9,23
+    detail: >
+      The module docstring cites FR-007 and FR-010 by literal token but references DC-07 only
+      through its design-revision handle "reidx-01" (the DC-07 headline revision), not the literal
+      "DC-07" string. Traceability is intact (reidx-01 is unambiguously the DC-07 revision per
+      D-implementation-ready-design.md L99, and the adversary/__init__.py package docstring L1 does
+      carry the literal "DC-07"), so this is informational only. Adding the literal "DC-07" token to
+      the module docstring would make a future grep-for-DC-07 audit fully self-contained.
+
+orphaned_requirements_scan: >
+  Not a full-sprint scan at story gate. FR-009 is named "Supporting" by the story (§3) and is
+  correctly deferred to S3-04 (the RRS scorer that embeds the non-strippable caveat) -- not an
+  orphan and not in S3-02's owned set. No adjacent claimable FR left untraced by this story.

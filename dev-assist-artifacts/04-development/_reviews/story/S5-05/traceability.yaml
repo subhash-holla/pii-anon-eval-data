@@ -1,0 +1,78 @@
+reviewer: dev-assist-development-traceability
+scope_id: S5-05
+gate: story
+verdict: APPROVE
+findings: []
+notes: |
+  FR/NFR/DX/AX -> Story -> Test -> DC chain fully verified for S5-05 (pii-anon CLI, iteration 1).
+
+  TOKEN-NAMED TEST GATE (pytest -k selection, names carry the token WITH underscore):
+    - fr_024  -> 4 (>=4 OK): test_fr_024_cli_exposes_five_verbs, _cli_export_dispatches_to_distribution,
+                 _cli_validate_forwards_user_args, _cli_leaderboard_graceful_until_s6
+    - nfr_018 -> 1 (>=1 OK): test_nfr_018_cli_validate_keeps_power_gate_on
+    - dx_03   -> 1 (>=1 OK): test_dx_03_console_entry_point_declared
+    - nfr004  -> 2 (>=2 OK): test_nfr004_cli_generate_never_targets_frozen_corpus, _cli_thin_pure_stdlib
+    Total = 8, summing exactly across the four tokens with NO double-claim. Verified two ways:
+    `python3 -m pytest tests/test_cli.py -k <tok> --collect-only -q` AND `grep "def test_<tok>"`
+    (counts agree: 4/1/1/2). (An earlier collect-only grep returned 0 due to a one-token-per-line
+    output-format artifact in my pipe, not a selection failure — the clean re-run is authoritative.)
+
+  ID EXISTENCE (every declared ID resolves to a source-of-truth):
+    - FR-024  -> requirements-document.md:19 ("FR-024 CC0 + exports") + traceability-matrix.md UC-12 row. EXISTS.
+    - NFR-018 -> requirements-document.md:20 + non-functional-requirements.md (committed-lattice per-cell power). EXISTS.
+    - NFR-004 -> non-functional-requirements.md:13 ("Deterministic, provenanced generation", *(AX-002)*). EXISTS.
+                 (Not enumerated on the requirements-document.md MUST one-liner, which lists only the
+                 headline MUST NFRs; NFR-004 is canonically defined in non-functional-requirements.md.)
+    - DX-03   -> design/DX axis: sme-heuristic-findings.md:21 (MAJOR DX finding: add [project.scripts]
+                 pii-anon, 5 thin-dispatcher verbs, one copy-paste CI invocation) +
+                 D-implementation-ready-design.md:108 item #10. RESOLVES correctly; this is a design/DX id,
+                 not an FR/NFR, and is cited as such in S5-05 §2/§3/§4. EXISTS.
+    - AX-002  -> determinism axiom, locked in D-implementation-ready-design.md:11/85; maps AX-002 -> NFR-004
+                 in traceability-matrix.md:30. Supporting axiom for deterministic dispatch. EXISTS.
+    No orphan IDs.
+
+  DC + LOCKED REVISION #10 LINKAGE (§4):
+    - DC-12 (Distribution & exports: Parquet/Croissant/spaCy/CoNLL/HF card; FR-024/028, NFR-012; MUST) =
+      D-implementation-ready-design.md:29. S5-05 §1 parent epic "S5-A — Distribution (DC-12)" + §4 cite it. OK.
+    - Locked revision #10 = D-implementation-ready-design.md:108 ("CLI entry point [project.scripts]
+      pii-anon=...cli:main with 5 verbs as thin dispatchers; one copy-paste CI invocation. (DX-03.)").
+      S5-05 §4 quotes this verbatim ("CLI entry point: 5 verbs as thin dispatchers; one copy-paste CI
+      invocation"). DC-12 + rev #10 linkage CORRECT.
+
+  FR-024 PARTITION (no double-claim across the DC-12 sub-clauses):
+    - S5-02 (Parquet)            §3 Primary FR-024 "exports — Parquet"; §4 "Blocks ... S5-05 (the CLI export verb)".
+    - S5-03 (Croissant + card)   FR-024/NFR-012 — Croissant/HF card sub-clause.
+    - S5-04 (spaCy + CoNLL)      §1 "spaCy + CoNLL exporters (FR-024)".
+    - S5-05 (CLI)                §3 Primary FR-024 "+ a CLI surface" — closes the CLI sub-clause ONLY.
+      The export VERB lazily dispatches to S5-02/03/04 exporters (it re-uses, does not re-implement or
+      re-claim them). Clean 4-way partition of FR-024; S5-05 owns exactly the CLI surface. No double-claim.
+
+  DEPENDENCY GATE (§5 "Must be DONE"):
+    - S5-02 Status=DONE, S5-03 Status=DONE, S5-04 Status=DONE (all three verified in their story files).
+      The export verb's three hard dependencies are satisfied. (S6 leaderboard is a soft/graceful-until
+      dependency and is genuinely absent — correctly handled by the graceful-degradation contract.)
+
+  STATUS + TDD SHAs (§12):
+    - Status == REVIEW (§1). OK.
+    - RED c003174  / GREEN ded2281 / REFACTOR 7efedbd all EXIST and resolve on feat/v2-scoring-harness
+      (git branch --contains => *feat/v2-scoring-harness for each; current HEAD branch matches). Commit
+      subjects match the TDD phases ([RED]/[GREEN]/[REFACTOR] S5-05 pii-anon CLI). OK.
+
+  TRACEABILITY-MATRIX ROW (finding-pattern #4 — does NOT fire):
+    - traceability-matrix.md is a Stage-2 R8 artifact tracking UC -> FR/NFR -> priority; it explicitly
+      defers the "DC -> Story -> Test" layer to later stages and carries NO per-story rows (no S-prefixed
+      story IDs appear anywhere in it). FR-024 already present via UC-12. A "missing S5-05 row" is therefore
+      not a defect against this matrix's structure; the story-level chain evidence lives in S5-05 §12 (RED/
+      GREEN/REFACTOR SHAs + 8 token-named tests + 250/1 suite), which is complete. No finding.
+
+  provisional_status CASCADE:
+    - Source DC-12 / locked revision #10 is AGENT_SIMULATED and NOT DIVERGED (§4). Story §1
+      provisional_status: AGENT_SIMULATED matches the source. No DIVERGED cascade obligation; §10/§12
+      record the scheduled Pass-2 real-CI re-run (pure-stdlib + I/O dispatch, no benchmark hardware). OK.
+
+  Out-of-scope (deferred to sibling reviewers, not assessed here): subprocess shell-safety (security-sast),
+  thin-dispatch/power-gate-on/no-corpus-regeneration axiom enforcement (axiom-compliance), G/W/T semantic
+  adequacy (requirements-coverage), idiomatic code + the §8b argparse deviations (code-quality).
+
+review_time_seconds: 300
+context_bounds_respected: true

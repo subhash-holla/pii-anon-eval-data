@@ -1,0 +1,99 @@
+reviewer: dev-assist-development-requirements-coverage
+scope_id: S7
+gate: sprint
+verdict: APPROVE
+
+findings:
+  - id: coverage-S7-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/scoring/adversary/payloads.py:CARRIER_TEMPLATES
+    description: |
+      FR-017 names the injection payloads "multilingual/obfuscated." The library SHIPS six
+      multilingual carrier templates (en/es/fr/de/ja/ar) — so the "multilingual" qualifier is
+      implemented — but `build_payloads(span)` defaults to the English carrier (CARRIER_TEMPLATES[0])
+      and no test exercises a non-English carrier. This is a coverage-of-the-qualifier gap, not a
+      missing capability: the multilingual surface exists and is reachable via the `carrier=` kwarg.
+      Already logged identically at the S7-02 story gate (requirements-coverage 1 OBS). Non-blocking
+      at the sprint bar — FR-017 is FULLY covered (oracle S7-01 + payloads S7-02), the multilingual
+      carrier is a cheap v1.1 test nicety.
+    suggested_resolution: |
+      In a future maintenance pass (or v1.1), add one parametrized test that calls
+      `build_payloads(span, carrier=CARRIER_TEMPLATES[i])` for a non-Latin carrier (e.g. the
+      Japanese or Arabic template) and asserts `render()` substitutes the obfuscated span into that
+      carrier, exercising the FR-017 "multilingual" qualifier end-to-end. No production change needed.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-017
+      - dev-assist-artifacts/04-development/_reviews/story/S7-02/synthesis.md
+
+notes: |
+  SPRINT S7 (Extension seams; DC-10 / DC-14 / DC-01 v1.1) — sprint-level requirements-coverage snapshot
+  at the sprint's planned bar. All five stories DONE, every story gate APPROVE (S7-01, S7-02,
+  S7-03-04 combined; S7-05 reviewed here at the sprint gate). Zero SHOWSTOPPER/CATASTROPHIC/MAJOR.
+
+  ── In-scope FR/NFR coverage (bounded context: FR-015/016/017/018/019/020/027 + NFR-004) ──
+  • FR-017 — FULLY COVERED. Bipartite FR (callable oracle API AND injection payload library) — BOTH
+    halves ship: oracle.py (S7-01, `recognize`/`recognize_span` → labeled-entity OracleVerdict) +
+    payloads.py (S7-02, InjectionPayload = obfuscated-span/carrier-template/intent-tag tuple, 3
+    committed faithful transforms base64/ocr/zero_width). The non-strippable "NEVER marketed as
+    agent-leakage scoring" scope guard (FR-017 crux) is type-enforced and was stress-verified
+    non-droppable by axiom-compliance + security-sast at both story gates. INERT (AX-001) confirmed
+    (zero weaponized markers). FR-017 markable VERIFIED at S7 close.
+  • FR-015 / FR-016 — v1 SEAM VERIFIED (SHOULD / v1.1). slices.py (S7-04) ships the coreference-chain
+    + quasi-identifier-combination slice LOADERS over the frozen corpus fields, each carrying the
+    non-strippable ~72%-formulaic v1.1 LOW-POWER caveat. The actual chain-as-a-unit / qid-combination
+    SCORING is correctly deferred to v1.1/Pass-2. Seam-level verified, not full-feature closed.
+  • FR-027 — v1 SEAM VERIFIED (SHOULD / v1.1 / PERSONA-CONDITIONAL). correlation.py (S7-03) ships the
+    Kendall-τ/Spearman + seeded-bootstrap-CI + Bland-Altman harness with the load-bearing,
+    non-bypassable `RealDataAbsent` NEVER-FABRICATE sentinel (real i2b2-2014/TAB absent by licensing →
+    sentinel, never a fabricated CorrelationResult; short-circuit precedes any result construction).
+    The real-data synthetic→real transfer delta is the Pass-2 deliverable. Seam-level verified.
+  • FR-018 / FR-019 / FR-020 — DOCUMENTED AS v1.x ROADMAP, NOT SHIPPED (COULD). ROADMAP.md (S7-05)
+    names + describes each (cross-turn fragmented leakage / transcript-residual estimate / live-harness
+    adapter), flagged "roadmap (v1.x), not implemented," anchored to the v1 oracle/payload seams,
+    honesty note intact ("nothing here is implemented in v1"; "never agent-leakage scoring";
+    synthetic ≠ external validity). Pinned by tests/test_roadmap.py (2 tests). Correct deferral.
+  • NFR-004 (deterministic, pure-stdlib) — carried by all four code modules; AST-guarded purity tests
+    per module (test_nfr004_*), correlation uses a LOCAL random.Random(seed) only (no module-global
+    RNG; mirrors stats/paired.py).
+
+  ── Orphan scan ── No orphans in S7 scope. Traceability matrix §Reverse confirms no orphan MUSTs;
+  UC-08/UC-09 (the agentic FRs) are COULD-priority, so no MUST-priority UC rides solely on a deferred
+  item. Every S7 FR maps to a delivered story.
+
+  ── Pass-2 / release-gate carry-forward (the load-bearing dispatch check) ── CONFIRMED BINDING, not
+  merely asserted in synthesis. traceability-matrix.md rows 20 & 23 carry FR-027 and FR-015/016 as
+  PERSONA-CONDITIONAL / SHOULD (v1.1) (Pass-2); Status Change Log row 44 (2026-05-28) records the
+  carry-forward verbatim ("academics MUST-for-citation but v1.1/Pass-2; carried as constrained
+  extension seams"). Critically there is NO later Status Change Log row marking FR-015/016/027
+  "verified" — they correctly remain Pass-2-OPEN while the S5/S6 MUSTs (FR-021/022/023/024/025/026,
+  NFR-012/013/014) were marked verified. No premature closure, no over-claim. The binding Pass-2 items
+  for the Stage-5 release gate are: (a) FR-027 real-data correlation (synthetic→real transfer delta on
+  the licensed i2b2-2014/TAB corpus; FR-027 pre-registers Kendall-τ/Spearman + bootstrap-CI sampling),
+  (b) FR-015/016 the actual coreference / quasi-id SCORING. The v1 SEAMS are verified now.
+
+  ── Coverage gate (NFR-016 ≥85% line) ── PASS for all four S7 modules (and the adjacent pre-existing
+  adversary modules):
+      oracle.py 94%  ·  payloads.py 98%  ·  slices.py 97%  ·  correlation.py 94%
+      (base.py 100% · llm_adversary.py 94% · offline_adversary.py 94% · adversary/__init__ 100%)
+    No module below the 85% line bar. The OPTIONAL [tool.coverage.run] source += validation + subsets
+    edit (deferred from S7-03/04 to avoid a concurrent-edit conflict, flagged as the sprint-close
+    action) HAS LANDED (pyproject.toml lines 77-78) — config-driven `pytest --cov` (no explicit flags)
+    now measures both new packages by default. Sprint-close coverage action CLOSED.
+
+  ── Full suite ── 346 passed / 1 skipped (exit 0) — matches the planned bar exactly. All 21
+  requirement-tokened tests present across the 5 test files (fr_017 ×7, fr_015 ×2, fr_016 ×1,
+  fr_018/019/020 ×2, fr_027 ×4, nfr004 ×4).
+
+  ── DIVERGED + Pass-2 cross-check ── No S7 FR carries provisional_status: DIVERGED (all AGENT_SIMULATED
+  / PERSONA-CONDITIONAL) — no provisional-threshold-documentation obligation triggers. The
+  PERSONA-CONDITIONAL Pass-2 items (FR-015/016/027) are scheduled on the release-gate roster; FR-027's
+  pre-registered Kendall-τ/Spearman + bootstrap-CI design supplies the sample-size protocol. Per the
+  release-gate rule these MUST-for-citation items are NOT considered verified until their real-data
+  Pass-2 completes — which is exactly how the matrix currently leaves them (Pass-2-open). Honored.
+
+  ── Domain packs ── developer-assistant.yaml: domain_packs: [] and extends.domain_packs: null — no
+  active pack, so no reviewer-extension finding catalog to merge; no source_pack findings emitted.
+
+review_time_seconds: 2940
+
+context_bounds_respected: true

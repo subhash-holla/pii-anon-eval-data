@@ -1,0 +1,67 @@
+# Reviewer output — code-quality gate, S3-01, iteration 2
+# Generated: 2026-05-29
+# Amendment commit reviewed: e5a35d49c6f911b6b84581e676070c13f9b1f231
+
+reviewer: dev-assist-development-code-quality
+scope_id: S3-01
+gate: story
+iteration: 2
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  All three checks from the iteration-1 review-brief pass cleanly.
+
+  CHECK 1 — MINOR resolved (Adversary.attack() per-method docstring):
+    base.py:84-97: `Adversary.attack()` now carries a full per-method docstring
+    inside the Protocol stub, added in commit e5a35d4. The docstring explains
+    purpose, return contract, and the purity obligation for deterministic
+    implementations. The iteration-1 MINOR is fully cleared.
+
+  CHECK 2 — Test renames + suite health:
+    All 12 tests now carry canonical `fr_NNN` tokens in their function names:
+      - 3 tests prefixed test_fr_010_* (adversary pluggability / value objects)
+      - 4 tests prefixed test_fr_007_* (paired-set assembly / reidx-01)
+      - 5 tests prefixed test_fr_008_* (signals substrate / NFR-004 purity)
+    `python3 -m pytest tests/test_adversary_port.py tests/test_signals.py -q`
+    reported 12 passed (0 failures, 0 errors, 0 warnings). Build is clean.
+    `ruff check` on all three changed files: "All checks passed!"
+
+  CHECK 3 — AST import-purity guard soundness:
+    `test_fr_008_nfr004_signals_imports_no_nondeterminism` (test_signals.py:94-109)
+    is sound and not flaky:
+      - Uses `pathlib.Path(signals.__file__).read_text()` — resolves the installed
+        module's actual source path; does not rely on CWD or relative path guessing.
+      - Walks the full AST with `ast.walk`, catching both `ast.Import` and
+        `ast.ImportFrom` forms; splits on "." to handle submodule imports.
+      - The banned set {random, time, uuid, datetime, secrets} is comprehensive for
+        the standard-library nondeterminism sources plausible in a text-analysis
+        module; `os` (os.urandom) is not in scope here — acceptable for this target.
+      - Guard has no flakiness vectors: no I/O other than reading a static .py
+        file, no RNG, no network, no process state. Idempotent under repeated runs.
+      - One minor limitation (OBSERVATION-level): the guard checks direct imports
+        only, not dynamic `importlib.import_module("random")` calls. This is an
+        appropriate trade-off for a static signal-extractor module — no such pattern
+        is present in signals.py.
+
+  SCOPE CREEP CHECK:
+    Commit e5a35d4 modifies exactly three files:
+      src/pii_anon_datasets/scoring/adversary/base.py
+      tests/test_adversary_port.py
+      tests/test_signals.py
+    These are the three files listed in the review-brief. No other files touched.
+    Context bounds confirmed clean.
+
+  PRE-EXISTING MYPY ERRORS:
+    Consistent with review-brief instructions, mypy errors in core.py /
+    detection.py / reidentification.py are out of S3-01 scope and were not
+    inspected or held against this story.
+
+review_time_seconds: 210
+
+context_bounds_respected: true
+
+discipline_mode: soft
+tdd_evidence: tests-exist-and-pass

@@ -1,0 +1,109 @@
+reviewer: traceability
+gate: story
+story_id: S3-04
+iteration: 1
+mode: read-only
+verdict: APPROVE
+independence_attestation: >
+  I independently reviewed forward FR/NFR -> Story -> Test -> DC traceability for S3-04
+  from the story, the owned source/test files, the requirements document, the UC-level
+  traceability matrix, and the dependency stories. I did not author the artifacts under
+  review and did not coordinate my verdict with other reviewers.
+context_bounds_respected: true
+
+summary:
+  scope: "Forward traceability of FR-007 (primary) + FR-009 (supporting) + reidx-02 + DC-07 for S3-04."
+  findings_total: 0
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+  result: "Zero MAJOR+. Every fr_NNN token resolves; both pytest -k selectors select >0; FR-007 and FR-009 contracts realized in score_reidentification/MeasuredRRS; deps DONE; provisional_status cascade correct; no name-says-X-asserts-Y mismatch."
+
+checks:
+  - id: declared-ids-exist
+    status: PASS
+    detail: >
+      FR-007 ("measured RRS") and FR-009 ("non-strippable caveat") both present in
+      requirements-document.md (FR index, line 19). reidx-02 / reidx-01 are design-level
+      constraints defined in 03-design/06-synthesis/D-implementation-ready-design.md and
+      cited by the story as SUPPORTING constraints (not primary FRs) — correctly sourced.
+      DC-07 is the story's source DC (AGENT_SIMULATED, not DIVERGED).
+  - id: tests-embed-fr-tokens
+    status: PASS
+    detail: >
+      `pytest tests/test_reidentification_measured.py -k fr_007 -q` selects 8 tests;
+      `-k fr_009 -q` selects 1 test. Both >0 (S3-01 gate lesson satisfied). All 9 collect
+      and pass (9 passed). Module docstring + MeasuredRRS/score_reidentification docstrings
+      cite FR-007/008/009 + reidx-02 explicitly (reidentification.py L1-18, L84-92, L134-151).
+  - id: fr-007-contract-realized
+    status: PASS
+    detail: >
+      score_reidentification realizes the FR-007 contract: empirical recall = correct/n_targets
+      and precision = correct/n_guesses with Wilson CIs on INTEGER (correct, n_targets) and
+      (correct, n_guesses) via wilson_interval (reidx-02 integer guard); RRS = 1 - recall*precision
+      via RRSResult.from_attack; |C| (candidate_set_size), adversary_id, deterministic all recorded
+      on MeasuredRRS. n=0 edges defer to the stats.intervals n=0 sentinel (no fabricated CI).
+  - id: fr-009-contract-realized
+    status: PASS
+    detail: >
+      FR-009 realized by NESTING the frozen S1 RRSResult: MeasuredRRS.rrs is an RRSResult
+      whose mandatory non-defaulted `caveat` carries ANTI_ANONYMITY_CAVEAT; MeasuredRRS.as_dict()
+      nests rrs.as_dict() so the caveat is always serialized. RRSResult contract byte-preserved
+      (no edits to L34-79). Caveat substring "MUST NOT be cited" asserted by the [AUDIT] test
+      is present in the live constant (verified at runtime).
+  - id: name-vs-assertion-coherence
+    status: PASS
+    detail: >
+      All 8 fr_007-named tests assert FR-007 / reidx-02 content (CI denominators, 1-r*p identity,
+      ground-truth link, abstention semantics, |C|+version-pin, perfect/no-commit edges, fractional
+      -> TypeError guard). The 1 fr_009-named test asserts the non-strippable-caveat semantics.
+      No name-says-X-asserts-Y mismatch.
+  - id: dependencies-done
+    status: PASS
+    detail: "§5 deps S3-01 (Status: DONE) and S3-02 (Status: DONE) — both valid DONE prerequisites."
+  - id: traceability-matrix-row
+    status: PASS
+    detail: >
+      traceability-matrix.md is UC-level (columns: UC | FRs | NFRs | Priority | provisional_status),
+      not a per-story ledger (0 story-id refs across the whole file; sibling DONE stories S3-01/S3-02
+      likewise have no rows). UC-05 row (line 12) "measured RRS | FR-007, FR-008, FR-009, FR-010 |
+      NFR-007 | MUST | AGENT_SIMULATED" covers the story's claimed FRs. Finding pattern #4
+      (missing story row) does not apply to this matrix design.
+  - id: provisional-status-cascade
+    status: PASS
+    detail: >
+      Story provisional_status = AGENT_SIMULATED; source DC-07 = AGENT_SIMULATED, not DIVERGED;
+      UC-05 matrix row = AGENT_SIMULATED. Consistent. No DIVERGED cascade obligation triggered,
+      so no §10 Pass 2 commitment required beyond the sprint-CI Pass 2 already noted in §12.
+
+findings: []
+
+observations:
+  - id: OBS-1
+    severity: OBSERVATION
+    detail: >
+      UC-05 (matrix line 12) also lists FR-008 and FR-010 alongside FR-007/FR-009. S3-04 legitimately
+      touches FR-010 (asserts isinstance(adv, Adversary) and isinstance(_StubAdversary, Adversary) —
+      structural-typing conformance) without claiming it, and explicitly defers FR-008 (exposure-index)
+      to S3-05. No fr_008/fr_010 token is required of this story; noted only as adjacent coverage that
+      the scope deliberately and correctly excludes.
+
+evidence:
+  story: dev-assist-artifacts/04-development/02-stories/sprint-3/S3-04.md
+  owned_source:
+    - src/pii_anon_datasets/scoring/reidentification.py
+    - src/pii_anon_datasets/scoring/__init__.py
+  owned_test:
+    - tests/test_reidentification_measured.py
+  requirements_document: dev-assist-artifacts/02-requirements/requirements-document.md
+  traceability_matrix: dev-assist-artifacts/02-requirements/traceability-matrix.md
+  design_constraint_source: dev-assist-artifacts/03-design/06-synthesis/D-implementation-ready-design.md
+  deps:
+    - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-01.md  # Status DONE
+    - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-02.md  # Status DONE
+  commands_run:
+    - "python3 -m pytest tests/test_reidentification_measured.py -k fr_007 -q  -> 8 selected, passed"
+    - "python3 -m pytest tests/test_reidentification_measured.py -k fr_009 -q  -> 1 selected, passed"
+    - "python3 -m pytest tests/test_reidentification_measured.py -q            -> 9 passed"

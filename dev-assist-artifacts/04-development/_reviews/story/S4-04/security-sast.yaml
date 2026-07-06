@@ -1,0 +1,87 @@
+# Story-gate security-sast review — canonical YAML
+reviewer: security-sast
+gate: story
+story_id: S4-04
+iteration: 1
+mode: read-only
+verdict: APPROVE
+timestamp: "2026-05-30"
+model: claude-opus-4-8[1m]
+
+scope:
+  owned_files:
+    - src/pii_anon_datasets/reporting/language_power.py
+    - src/pii_anon_datasets/reporting/__init__.py
+    - tests/test_language_power.py
+  story_signals_tripped: []          # none of {capability-registry, trust-boundary, HSM-port,
+                                     # event-signing, network-egress, unsafe-block} touched
+  conditional_fire_rationale: >-
+    Pure-stdlib reporting-layer story over a frozen artifact. No capability registry, trust
+    boundary, HSM port, signing path, network egress, or unsafe block in this diff. Story-gate
+    security-sast ran the requested purity / no-corpus-read / no-PII / frozen-lattice-integrity
+    checks per the dispatch contract.
+
+domain_packs:
+  active: []                         # developer-assistant.yaml -> domain_packs: []
+  financial_pack_loaded: false       # PII-pattern catalog NOT auto-loaded; applied story AX-001
+                                     # no-PII check directly instead
+  pack_extensions_merged: 0
+
+verification:
+  pure_stdlib:
+    status: pass
+    imports_observed: ["__future__", "csv", "io", "typing", "reporting.power_table (reuse)"]
+    banned_import_hits: []           # numpy/scipy/network/eval/exec/subprocess/pickle/yaml/secrets
+    method: ast.walk over Import/ImportFrom
+  no_corpus_read:
+    status: pass
+    method: ast.walk over Call/Import (authoritative, matches test_nfr_003_no_corpus_read)
+    confirmed_absent: ["load_dataset", "gzip", "open", "load_lattice"]
+    operates_on: passed-in (lattice, observed_counts) args  # mirrors power_table.py:6-7
+  no_real_pii_path:
+    status: pass
+    detail: >-
+      AX-001 regex scan (SSN / IBAN / email / api-key|secret|password|token|bearer|sk- / PEM)
+      across all three owned files -> zero matches. Test fixtures are tiny synthetic
+      en/fr x IBAN/EMAIL lattice + count dicts; no corpus, no real PII.
+  frozen_lattice_untouched:
+    status: pass
+    artifact: src/pii_anon_datasets/data/eval_lattice.json
+    authored_in: 47c3a8f (S-PWR)
+    s4_04_commits_touching_lattice: []      # b4e0335, ae8ff0b, 3893fdf — none touch it
+    mutation_surface: none                  # read-only over cell["dimensions"] keys; no
+                                            # assignment / pop / update / clear / del
+  determinism_nfr004:
+    status: pass
+    banned_absent: ["random", "time", "uuid", "datetime", "secrets"]
+  injection_surface:
+    status: pass
+    detail: single f-string feeds a markdown low-power flag cell; no SQL/NoSQL/shell/eval sink.
+  supply_chain:
+    status: pass
+    detail: no new third-party dependency; no git=, no new transitive dep; nothing for CVE scan.
+  new_capability_or_egress_or_unsafe:
+    status: pass
+    detail: none introduced (Python; N/A for unsafe; no pub capability, no network route).
+  tests_green:
+    status: pass
+    detail: 6/6 nfr_003 tests pass (AST purity guards are themselves the load-bearing assertions).
+
+findings: []                         # zero MAJOR+; zero findings of any severity
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+
+approve_condition:
+  rule: APPROVE iff zero MAJOR+
+  major_plus_count: 0
+  met: true
+
+independence:
+  context_bounds_respected: true
+  shared_state_used: false
+  bounded_context: story S4-04 owned files + read-only reuse target power_table.py + frozen lattice provenance

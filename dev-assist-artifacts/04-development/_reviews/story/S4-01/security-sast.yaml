@@ -1,0 +1,121 @@
+# security-sast reviewer — STORY gate (conditional fire: new iterative numeric kernels + shared input-guard refactor)
+reviewer: security-sast
+gate: story
+story_id: S4-01
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+independence:
+  bounded_context: true
+  shared_state: none
+  self_attested: true
+
+scope_reviewed:
+  owned_files:
+    - src/pii_anon_datasets/stats/intervals.py    # ADD clopper_pearson_interval + _betacf/_betainc/_inv_betainc + shared _require_int_counts; wilson_interval re-routed through it
+    - src/pii_anon_datasets/stats/__init__.py      # export clopper_pearson_interval
+    - tests/test_clopper_pearson.py                # 7 fr_004/nfr_002-tokened tests (RED 8939c46 -> GREEN acac5a8 -> REFACTOR c4dc62c)
+  diff_range: acac5a8~1..HEAD   # GREEN diff is the load-bearing change; REFACTOR c4dc62c is ruff import-order only (no logic)
+  story_diff_is_code_only: true  # only the 3 owned files + story doc changed; no data/corpus/snapshot/lattice/tag
+  note: >
+    Story §8 names the path as stats/intervals.py; the real source tree roots it at
+    src/pii_anon_datasets/stats/intervals.py (pythonpath=src). Reviewed the real files.
+
+threat_surface:
+  classification: pure-numerical-compute  # binomial CI math; no trust boundary, no capability, no egress, no I/O
+  inputs: "integer (k, n) success/trial counts + a confidence float; no strings, no paths, no network"
+  trust_boundary_touched: false
+  capability_registry_touched: false
+  hsm_signing_path_touched: false
+  network_egress_added: false
+  unsafe_block_added: false   # (Python; n/a — no FFI/ctypes either)
+
+dos_hang_analysis:   # PRIMARY dispatch concern — iterative kernels cannot loop forever
+  while_loops_anywhere: 0          # static: inspect-confirmed zero `while` in _betacf/_betainc/_inv_betainc/clopper_pearson_interval
+  loops_are_fixed_range: true      # every loop is `for _ in range(FIXED)`
+  betacf_max_iterations: 200       # _BETACF_MAXIT; the only `break` is a convergence early-exit -> can ONLY shorten the loop, never extend
+  inv_betainc_iterations: 60       # _INV_BETAINC_ITERS; unconditional fixed bisection count, no early exit at all
+  worst_case_bounded: true         # adversarial input -> at most 200 (betacf) / 60 (bisection) iters; no unbounded growth path
+  empirical_no_hang: "357 CP evals incl. n up to 1_000_000 and confidence in {0.001..0.9999} finished in 0.192s under a 20s SIGALRM watchdog — no hang"
+  verdict: "NO DoS / hang risk — fixed-iteration bounds are unconditional; no adversarial integer count can cause an infinite or input-scaled loop"
+
+float_domain_analysis:   # PRIMARY dispatch concern — log(0)/lgamma(0)/lgamma(neg) unreachable at k=0/k=n edges
+  log_of_zero_unreachable: true    # _betainc short-circuits x<=0 ->0.0 and x>=1 ->1.0 BEFORE any math.log(x)/math.log(1-x)
+  lgamma_nonpositive_unreachable: true  # on reachable paths a>=1 and b>=1 always; brute-forced all (k,n) for n in [1,399]: zero non-positive lgamma args
+  edge_k0_kn_no_beta_call: true    # k==0 pins low=0.0 and k==n pins high=1.0 by short-circuit; the inverse-beta is never invoked on the pinned bound
+  inv_betainc_p_edges_guarded: true  # p<=0 ->0.0, p>=1 ->1.0 before any beta eval (covers confidence==1.0 -> alpha/2==0)
+  nan_inf_sweep: "fine sweep n in [1,249], all k, conf in {0.90,0.95,0.99} -> zero NaN/Inf bounds; bounds always finite and 0.0<=low<=high<=1.0"
+  verdict: "NO float-domain crash on any in-contract integer input; edges are arithmetically pinned, not computed"
+
+reidx02_guard_review:   # dispatch ask — confirm shared _require_int_counts does NOT weaken reidx-02
+  factored_out_correctly: true
+  value_range_check_byte_identical: true   # `if n < 0 or k < 0 or k > n: raise ValueError(...)` unchanged from pre-S4-01 Wilson
+  bool_rejection_strengthened: true        # PRE-S4-01 Wilson rejected only `isinstance(k, bool)`; the shared guard adds `or isinstance(n, bool)` -> bool n now ALSO raises TypeError (gap CLOSED, not opened)
+  wilson_behavior_preserved: true          # test_intervals.py 6/6 byte-identical; only newly-rejected case is bool-n, which was an undocumented prior gap and is the intended reidx-02 semantics
+  cp_guard_identical_to_wilson: true        # clopper_pearson_interval routes through the same _require_int_counts(k, n, "clopper_pearson_interval")
+  verdict: "reidx-02 NOT weakened — strictly strengthened (bool n now rejected); fractional/bool k|n -> TypeError, out-of-range -> ValueError"
+
+ax_001_no_real_pii:
+  confirmed: true   # no email/SSN/PAN/phone/private-key/API-key literal in any owned file; only integer (k,n) counts + confidence floats. (Sole grep 'hit' = the token `fr_004` matching a phone-regex digit fragment inside a docstring — false positive.)
+
+pure_stdlib_no_new_dependency:   # NFR-004
+  confirmed: true   # intervals.py imports only `math` + `dataclasses`; test imports `math`/`pytest`; __init__ imports intra-package only. No numpy/scipy/network/eval/exec/subprocess/pickle/yaml/secrets/socket/urllib/os.system/open/random.
+  deterministic_no_rng: true   # no random/uuid/time/os.urandom/identity-hash source
+  cross_process_byte_identical: true   # independent interpreters with differing PYTHONHASHSEED (0 vs 1) produce byte-identical as_dict() for cp(7,23,0.99)
+
+catalog_pattern_scan:
+  danger_apis_eval_exec_dynimport_subprocess_network_filewrite: none
+  pickle_marshal_yaml_load: none
+  weak_hash_md5_sha1: none
+  sql_nosql_string_interpolation: none
+  wildcard_scope: none
+  thread_spawn_or_fork_crossing_boundary: none
+  hardcoded_credential_shape: none
+  new_egress_route: none
+  git_pinned_dependency: none
+  denied_license_dependency: none
+  cve_surface: "no new dependency introduced -> no new CVE / SBOM-diff surface"
+
+test_execution:
+  owned_suite: "7 passed (tests/test_clopper_pearson.py)"
+  wilson_regression_check: "tests/test_intervals.py 6 passed — Wilson byte-identical post-refactor"
+  combined_run: "13 passed (CP 7 + Wilson 6), 0 regressions"
+  note: "AGENT_SIMULATED env per story §12; this reviewer independently re-ran the owned + Wilson suites locally (Python 3.13, PYTHONPATH=src) plus adversarial DoS/float-domain harnesses"
+
+findings:
+  - id: S4-01-SAST-OBS-1
+    severity: OBSERVATION
+    title: "Out-of-contract confidence (>=1.0, <=0.0, negative) yields a degenerate/inverted interval rather than raising"
+    file: src/pii_anon_datasets/stats/intervals.py
+    detail: >
+      clopper_pearson_interval has no confidence-range guard: confidence=-1.0 returns an
+      inverted Interval (low=1.0 > high=0.0) and confidence=2.0 collapses to [0,1]. This is
+      NOT a security/DoS/crash issue — no hang, no float-domain error, bounds stay finite —
+      and it is pre-existing symmetric behavior with wilson_interval (which likewise has no
+      confidence guard; _z would misbehave the same way). The function contract is
+      0 < confidence < 1. Flagged for code-quality/robustness, not security. No action
+      required at the security gate.
+    breach: false
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1
+
+summary: >
+  S4-01 adds the exact Clopper-Pearson binomial CI via a hand-rolled inverse regularized
+  incomplete beta (Lentz continued fraction + bisection), pure-stdlib (math only). The two
+  dispatch-named hazards are both clean: (1) DoS/hang is impossible — there are ZERO `while`
+  loops; every loop is `for _ in range(FIXED)` with _betacf bounded at 200 (its only break can
+  only shorten) and _inv_betainc at an unconditional 60 bisection steps, so no adversarial
+  integer (k,n) can drive an infinite or input-scaled loop (357 evals incl. n=1e6 ran in 0.19s
+  under a SIGALRM watchdog); (2) no float-domain crash — _betainc short-circuits x<=0/x>=1 before
+  any math.log, lgamma only ever sees a>=1,b>=1 on reachable paths, and the k=0/k=n edges pin the
+  bound arithmetically (0.0/1.0) without calling the inverse-beta at all (zero NaN/Inf over a fine
+  sweep). The shared _require_int_counts does NOT weaken reidx-02 — it STRENGTHENS it (now also
+  rejects bool n, a prior Wilson gap) while keeping the value-range check byte-identical and Wilson
+  6/6 unchanged. No real PII (AX-001), no new dependency / CVE / egress surface, fully deterministic
+  (cross-process byte-identical under differing hash seeds). One OBSERVATION (unguarded
+  out-of-contract confidence) is non-security and pre-existing with Wilson. Zero MAJOR+ findings -> APPROVE.

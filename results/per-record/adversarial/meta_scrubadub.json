@@ -1,0 +1,16 @@
+{
+  "status": "scored",
+  "model_id": "",
+  "deterministic": true,
+  "build_seconds": 0.7,
+  "wall_seconds": 2.1,
+  "record_errors": 0,
+  "n_records": 11254,
+  "n_gold": 34646,
+  "n_pred": 11749,
+  "n_tp": 11203,
+  "precision": 0.9535279598263682,
+  "recall": 0.32335623159960747,
+  "f1": 0.48293997197973926,
+  "f2": 0.3726061476854716
+}

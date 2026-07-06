@@ -1,0 +1,116 @@
+reviewer: dev-assist-development-performance-benchmark
+
+scope_id: S3
+
+gate: sprint
+
+verdict: APPROVE
+
+findings:
+  - id: performance-S3-01
+    severity: MINOR
+    location: scoring/pseudonymization.py:283
+    description: |
+      `_referential_integrity` is accidentally O(n²) on a >1000-element path. The dict
+      comprehension at line 283 iterates `real_to_tokens.items()` (D distinct real values)
+      and calls `_occurs_more_than_once(pairs, v)` for EACH one; that helper (lines 291-298)
+      linearly scans the entire `pairs` list. Net cost is O(D · n), which degenerates to
+      O(n²) in the common case where reals are mostly unique (D ≈ n). `score_pseudonymization`
+      (line 448) feeds it the full normalized `pairs`/`tokens` for the whole `records` input,
+      and the corpus is 159,891 records with documented warehouse-batch full-scan guidance
+      (NFR-010c), so the >1000-element regime is reachable.
+      An O(n) fix is trivial and already in-module: `_collision_counts` (line 260) builds an
+      `occurrences: dict[str, int]` Counter that answers "occurs > 1" in O(1); the same
+      single-pass occurrence map could replace the per-value re-scan here. This is offline,
+      run once per eval (not a hot path), and realistic per-threat-model Wilson denominators
+      are record SLICES rather than the whole corpus — hence MINOR, not a threshold breach —
+      but it is a genuine quadratic where O(n) is feasible in-file, which is exactly the
+      design-level scaling risk this gate flags pre-Stage-5.
+    suggested_resolution: |
+      Replace the `_occurs_more_than_once(pairs, v)` per-value re-scan with a single-pass
+      occurrence count. Build `occurrences: dict[str, int]` once (or reuse the same map
+      `_collision_counts` computes), then `repeated = {v: toks for v, toks in
+      real_to_tokens.items() if occurrences[v] > 1}`. Drop the `_occurs_more_than_once`
+      helper. Restores O(n) and keeps byte-identical output (NFR-004 determinism unaffected —
+      same set membership, same iteration order over the dict).
+    references:
+      - non-functional-requirements.md#NFR-004
+      - non-functional-requirements.md#NFR-010c
+
+  - id: performance-S3-02
+    severity: MINOR
+    location: scoring/adversary/offline_adversary.py:237
+    description: |
+      `OfflineDeterministicAdversary.attack` carries a large redundant constant factor inside
+      its O(|targets|·|C|) double loop. For every (target, candidate) pair the inner body
+      calls `_target_feature_weights(target, candidate, config)` (line 237), which at lines
+      144-151 (a) recomputes `_signal_feature_weights(target.observed_signals, config)` — a
+      function of the TARGET ALONE, identical across all candidates — and (b) re-lowercases
+      `haystack = target.anonymized_text.lower()`. Only the QI substring probe genuinely
+      depends on the candidate. At the default re-id-track scale the target-only signal map
+      and the `.lower()` are thus recomputed |C| times more than necessary: with
+      `assemble_paired_set` defaults targets and candidates are the SAME truncated slice, so
+      |targets| ≈ |C| ≈ 2500 (DEFAULT_CANDIDATE_SET_SIZE) → ~6.25M iterations, ~2500× redundant
+      recompute of the per-target work.
+      The O(|targets|·|C|) CLASS itself is inherent to a brute-force closed-world all-pairs
+      weighted-Jaccard linkage and is NOT reducible to O(n log n) without a blocking/index
+      scheme (a legitimate Stage-5+ optimization, out of scope here). The adversary is offline,
+      deterministic, and run once per eval (explicitly not a hot path; NFR-010 binds the
+      DETECTION scorer, not this re-id adversary), so ~6.25M small-dict iterations in pure
+      Python (single-digit seconds) is acceptable for offline batch scoring. Flagged MINOR as
+      a constant-factor hoist opportunity, not a scaling defect or threshold breach.
+    suggested_resolution: |
+      Hoist the target-only work out of the candidate loop. Compute the target's signal-feature
+      map and `haystack = target.anonymized_text.lower()` ONCE per target (before the
+      `for candidate ...` loop), then inside the loop only assemble the candidate-dependent QI
+      features and merge. Equivalently, split `_target_feature_weights` into a target-only
+      `_target_signal_features(target, config)` (called once per target) plus a
+      `_surviving_qi_features(haystack, candidate, config)` (called per candidate). Output stays
+      byte-identical (same feature maps, same `(similarity desc, persona_id asc)` total order),
+      preserving AX-002/NFR-004 determinism while removing the ~|C|× redundant recompute.
+    references:
+      - non-functional-requirements.md#NFR-004
+      - sampling-design.md#section-5
+
+notes: |
+  Scope: design-level algorithmic-complexity + scaling review of the four S3 scorer surfaces
+  named in the dispatch. Read-only; no benchmark harness executed (Stage-5 territory).
+  Judged against "acceptable for offline batch scoring," not a latency SLA. Both findings are
+  advisory MINOR — neither breaches a binding NFR threshold.
+
+  Per-surface assessment:
+  - scoring/adversary/offline_adversary.py::attack — O(|targets|·|C|·features) weighted-Jaccard.
+    Class is INHERENT to brute-force closed-world all-pairs linkage; not reducible to O(n log n)
+    without a blocking/index scheme (Stage-5+). At |C|=2500 / |targets|≈2500 → ~6.25M iterations
+    of small-dict work ≈ single-digit seconds in pure Python — fine for a once-per-eval offline
+    pass. Candidate feature maps are correctly precomputed once (line 226-228); only the
+    target-side work is redundantly recomputed per candidate (finding S3-02, constant-factor).
+    Memory: O(|C|·features) for the precomputed candidate maps + O(|targets|) guesses — linear,
+    no heavy materialization. Sort-then-truncate is O(|C| log |C|), negligible. Determinism is
+    sound (total order, no RNG/clock/network).
+  - scoring/signals.py::extract — regex over text, once per target. ReDoS-FREE: all 15 regex
+    literals are alternations of fixed strings plus a single bounded `\d{1,2}` and `+`/`*` only
+    ever on single character classes (`[.!?]+`, `\b[a-zA-Z]+\b`); NO nested unbounded quantifier
+    ((X+)+ / (X*)* / (X+)*) anywhere → no catastrophic backtracking. Each detector is a constant
+    number of single linear passes over the text; `extract` is O(|text|). Substring jargon/topic/
+    location scans are O(catalogue · |text|) with FIXED small catalogues → effectively linear in
+    text length. No quadratic, no memory blow-up. Clean.
+  - scoring/pseudonymization.py — `_collision_counts`, `_keyless_rejoinable`,
+    `_unauthorized_reversal`, `score_pseudonymization` orchestration are all single linear passes
+    / O(distinct) keyless-digest derivations with O(1) dict/set lookups — LINEAR and fine. The
+    lone exception is `_referential_integrity` (finding S3-01, accidental O(n²) with a trivial
+    in-file O(n) fix). No heavy materialization elsewhere; hashlib is deterministic (NFR-004).
+  - stats/power.py re-id additions (`reid_required_n`, `ReidTier`/`ReidTierSpec`/`REID_TIER_SPECS`,
+    `ReidProvenance`) — O(1) closed-form arithmetic reusing the shared `_z`/`required_n` z-table;
+    the lazy `_anti_anonymity_caveat` import is a one-time module resolution. No scaling concern.
+    (`PowerMatrix.heatmap` builds an O(|xs|·|ys|) grid behind the optional `viz` extra — bounded
+    by axis cardinality, not record count; not a batch-scoring path.)
+
+  No SHOWSTOPPER/CATASTROPHIC/MAJOR: no missing-or-broken harness (harness is Stage 5 by design),
+  no NFR-threshold breach (no throughput NFR binds these offline scorers — NFR-010 scopes the
+  detection scorer), and the single accidental quadratic is on a once-per-eval offline path with
+  a trivial fix, kept advisory. Throughput NFRs are formally verified at Stage 5.
+
+review_time_seconds: 660
+
+context_bounds_respected: true

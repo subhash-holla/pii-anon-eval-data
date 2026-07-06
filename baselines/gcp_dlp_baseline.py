@@ -12,6 +12,7 @@ import importlib.util
 import os
 import time
 
+from pii_anon_datasets.baselines import cloud_languages
 from pii_anon_datasets.baselines.contract import AdapterSpan, coverage_of
 
 _PROJECT = os.environ.get("GCP_PROJECT") or os.environ.get("GOOGLE_CLOUD_PROJECT", "")
@@ -58,6 +59,12 @@ class _GcpDlpAdapter:
     deterministic = False
     max_retries = 6          # transient-429 retries before surfacing a real record-error
     backoff_base_s = 0.5     # exponential backoff seconds: 0.5, 1, 2, 4, … (tests set 0 to skip the sleep)
+    # DLP ``inspect_content`` takes NO language argument (infoType matching is language-agnostic), so the
+    # ``language`` slot is informational only; ``supports_language`` still bounds which shards GCP runs.
+    language = "en"
+
+    def supports_language(self, language: str) -> bool:
+        return cloud_languages.is_supported(self.name, language)
 
     def available(self) -> bool:
         try:  # find_spec on a dotted name imports the parent; absent google.cloud raises

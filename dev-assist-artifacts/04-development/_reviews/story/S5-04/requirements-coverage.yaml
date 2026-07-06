@@ -1,0 +1,97 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S5-04
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S5-04-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-5/S5-04.md:51
+    description: |
+      FR-024 is a single MUST spanning JSONL + Parquet + Croissant + spaCy + CoNLL +
+      dataset card + the CLI `export` verb. S5-04 correctly closes ONLY the spaCy +
+      CoNLL sub-clauses. The CLI sub-clause (`export` verb, `--format conll|spacy`) is
+      deferred to the named successor S5-05 (story §5 "Blocks: S5-05"). S5-05 is
+      referenced consistently as the CLI-export successor across S5-02, S5-03, S5-04
+      and the prior S5-02 coverage review, but the S5-05 story file does NOT yet exist
+      under sprint-5/ (only S5-01..S5-04 present). This is a valid deferral (S5 is not
+      the release sprint — MANIFEST shows S5-S7 still TODO, so the deferral target is
+      in-bounds), not a missing-coverage gap for THIS story. Logged so the sprint gate
+      confirms S5-05 gets authored before the FR-024 MUST is rolled up as fully closed.
+    suggested_resolution: |
+      No change required at the S5-04 story gate. At the sprint/epic gate, ensure the
+      S5-05 story is authored and explicitly claims the FR-024 CLI `export`-verb
+      sub-clause, so FR-024 has no silently-orphaned sub-clause at roll-up.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-024
+      - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-04.md#5
+
+notes: |
+  REQUIREMENTS-COVERAGE @ STORY GATE — S5-04 (spaCy + CoNLL exporters, iteration 1).
+  Question asked: "are there gaps in what we've claimed?" Answer: no in-scope gap.
+  Every FR-024 sub-clause S5-04 claims is verified by a named passing test; the
+  out-of-scope sub-clauses are deferred-with-named-successor, not silently missing.
+
+  SCOPE BOUNDARY (load-bearing — do NOT read this as full FR-024 closure):
+  S5-04 closes ONLY the spaCy + CoNLL sub-clauses of the FR-024 MUST. The other
+  sub-clauses are NOT closed by this story and are tracked elsewhere:
+    * JSONL  — already shipped (pre-S5).
+    * Parquet — VERIFIED by S5-02 (tests/test_parquet_export.py; see S5-02 coverage review).
+    * Croissant + dataset card — S5-03 (sibling, in REVIEW/closing).
+    * CLI `export` verb (--format conll|spacy) — successor S5-05 (named; file not yet
+      authored — see OBSERVATION coverage-S5-04-01).
+  FR-024 is therefore NOT marked fully closed on S5-04 alone. After S5-04 the
+  spaCy + CoNLL slices of FR-024 are VERIFIED.
+
+  TEST EVIDENCE — independently re-run by this reviewer (not trusting §12 prose):
+    * spaCy 3.8.3 confirmed present (`python3 -c "import spacy; spacy.__version__"` -> 3.8.3),
+      so the DocBin round-trip genuinely RUNS and is NOT importorskip-skipped.
+    * `python3 -m pytest tests/test_spacy_export.py -k fr_024 -v` -> "3 passed, 1 deselected",
+      ZERO skipped. test_fr_024_spacy_docbin_roundtrip is among the 3 that RAN and PASSED
+      (real DocBin().from_disk round-trip preserving ents labels + char offsets
+      [(0,10,PERSON),(15,24,ORG)] and [(0,5,CITY)]). The required claim "the round-trip
+      actually RAN, not skipped" is CONFIRMED.
+    * `python3 -m pytest tests/test_conll_export.py -k fr_024 -q` -> "...." (4 passed):
+      BIO alignment, BILOU conversion, streaming one-shot generator, determinism.
+    * Token-selection contract verified EXACTLY via --collect-only:
+        -k fr_024  -> 7/9 (4 conll fr_024 + 3 spacy fr_024)
+          conll:  bio_tags_align_to_offsets, bilou_conversion,
+                  export_streams_not_materializes, deterministic
+          spacy:  offsets_format, docbin_roundtrip, docbin_filters_overlaps
+        -k nfr004  -> 2/9 (conll_pure_stdlib + spacy_export_imports_without_spacy)
+    * Combined both-file run -> ".........", 9 passed, 0 skipped, 0 failed.
+
+  FORMAT-BY-FORMAT COVERAGE (every FR-024 export format in S5-04's scope has a test —
+  flag any with none; none unflagged):
+    * CoNLL BIO     -> test_fr_024_conll_bio_tags_align_to_offsets        [PASS]
+    * CoNLL BILOU   -> test_fr_024_conll_bilou_conversion                 [PASS]
+    * CoNLL stream  -> test_fr_024_conll_export_streams_not_materializes  [PASS]
+    * CoNLL determ. -> test_fr_024_conll_deterministic                    [PASS]
+    * spaCy offsets -> test_fr_024_spacy_offsets_format                   [PASS]
+    * spaCy DocBin  -> test_fr_024_spacy_docbin_roundtrip                 [PASS, RAN real spaCy 3.8.3]
+    * spaCy filters -> test_fr_024_spacy_docbin_filters_overlaps          [PASS]
+    NO in-scope FR-024 export format is left without a passing named test.
+
+  SUPPORTING REQUIREMENTS:
+    * NFR-004 (deterministic/pure-stdlib): CoNLL core pure-stdlib (AST guard,
+      test_nfr004_conll_pure_stdlib) + spaCy lazy-import contract
+      (test_nfr004_spacy_export_imports_without_spacy, RuntimeError names
+      `pip install pii-anon-datasets[baselines]`). Both PASS.
+    * AX-002 (determinism) + AX-001 (synthetic-only) — supporting, exercised by the
+      determinism + filter tests; semantic adjudication belongs to axiom-compliance.
+
+  DIVERGED / PASS-2: provisional_status is AGENT_SIMULATED (not DIVERGED) per story §4,
+  so NO DIVERGED Pass-2 sample-size cross-check applies. A Pass-2 real-CI re-run is
+  scheduled at the gate (I/O-bound, no special hardware) — appropriate and not a
+  coverage blocker.
+
+  OUT OF SCOPE for this reviewer (deferred to the right reviewer, not adjudicated here):
+  whether tests are well-written (code-quality / traceability); whether AX-002/NFR-004
+  semantically hold (axiom-compliance); whether requirements should exist (SME).
+
+review_time_seconds: 540
+
+context_bounds_respected: true

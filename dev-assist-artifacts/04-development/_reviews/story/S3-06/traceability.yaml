@@ -1,0 +1,177 @@
+# Traceability review — STORY gate
+reviewer: traceability
+gate: story
+story_id: S3-06
+iteration: 1
+reviewed_at: 2026-05-29
+reviewed_by: dev-assist-traceability-reviewer
+mode: read-only
+context_bounds_respected: true
+
+independence_attestation: >
+  Reviewed only the forward FR/NFR -> Story -> Test -> DC chain for S3-06 within the
+  owned surface (scoring/anonymization.py, scoring/__init__.py, tests/test_anonymization.py)
+  plus the requirements/design source-of-truth artifacts needed to verify declared IDs.
+  No code-quality, semantic-coverage-beyond-G/W/T, or NFR-threshold judgements were made
+  (out of scope). Verdict derived solely from the evidence below.
+
+verdict: APPROVE
+
+summary:
+  major_plus_count: 0
+  findings_total: 2          # 2 OBSERVATION, 0 MINOR+, 0 MAJOR+
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 2
+
+# ── Forward-chain verification ────────────────────────────────────────────────
+declared_ids_exist:
+  FR-006:
+    exists: true
+    source: 02-requirements/functional-requirements.md:16
+    text_match: >
+      "Anonymization output scorer (Pareto) ... residual-re-id-risk AND downstream utility
+      ... emitted as a privacy-utility Pareto point, never merged into one number" —
+      verbatim alignment with the story's headline guarantee.
+  NFR-005:
+    exists: true
+    source: 02-requirements/non-functional-requirements.md:14
+    text_match: "Anon/pseudo metric separation — zero code paths merge ... into one headline score (AX-004; boolean)."
+  AX-004:
+    exists: true
+    source: 00-axioms/project-axioms.yaml:94 (id AX-pii-anon-004, anonymization-pseudonymization-separation)
+  NFR-004:
+    exists: true
+    source: 02-requirements/non-functional-requirements.md:13 (deterministic generation; import-purity guard token nfr004)
+  FR-009:
+    exists: true
+    source: 02-requirements/functional-requirements.md:19 (non-strippable anti-anonymity caveat)
+  DC-06:
+    exists: true
+    source: 03-design/06-synthesis/D-implementation-ready-design.md:23 (DC-06 -> FR-006, MUST; AX-004 -> DC-06/DC-08 separate modules + NFR-005 static check)
+
+test_token_selectors:
+  command_fr_006: "python3 -m pytest tests/test_anonymization.py -k fr_006 -q"
+  fr_006_selected: 6
+  fr_006_result: "6 passed"
+  command_nfr005: "python3 -m pytest tests/test_anonymization.py -k nfr005 -q"
+  nfr005_selected: 1
+  nfr005_result: "1 passed"
+  command_nfr004: "python3 -m pytest tests/test_anonymization.py -k nfr004 -q"
+  nfr004_selected: 1
+  nfr004_result: "1 passed"
+  all_selectors_gt_zero: true
+  note: >
+    7 test fns total; tokens fr_006 (x6), nfr005 (x1, the [AUDIT] no-merge guard), nfr004 (x1,
+    shared with the fr_006 import-purity test). Every test fn carries at least one required token.
+    Story §6/§12 selector predictions (6/1/1) reproduced exactly.
+
+docstring_citations:
+  module_docstring_cites: "anonymization.py:1 — 'Anonymization scorer — privacy-utility Pareto point (DC-06; FR-006).' (both IDs)"
+  symbol_docstrings_cite_fr_006:
+    - "UtilityScore (L106)"
+    - "ParetoPoint (L173)"
+    - "score_utility (L134)"
+    - "score_anonymization (L217)"
+  result: PASS
+
+fr_006_genuinely_realized:
+  claim: "residual re-id risk + utility, never merged into one number — via ParetoPoint (two typed axes)"
+  evidence:
+    - "ParetoPoint.residual_risk: MeasuredRRS  (privacy axis) — anonymization.py:182"
+    - "ParetoPoint.utility: UtilityScore       (utility axis) — anonymization.py:183"
+    - "two axes are nested objects of DIFFERENT types; no arithmetic field combining them"
+    - "no __float__; no combined/overall/overall_score/deid/de_identification_score/score member"
+    - "as_dict() emits two SEPARATE sub-objects {privacy, utility} + variant + note — anonymization.py:191-202"
+    - "AST source grep in test_nfr005 confirms none of the forbidden merged-metric names are defined as fn/field/assign"
+  result: PASS — the 'never merged' guarantee is structurally realized, not by convention.
+
+name_says_x_asserts_y_check:
+  result: PASS
+  per_test:
+    - fn: test_fr_006_utility_probe_deterministic_and_versioned
+      asserts: "UtilityScore deterministic, probe==token-preservation-v1, utility in [0,1] — matches FR-006 utility axis."
+    - fn: test_fr_006_utility_perfect_preservation_and_full_mask
+      asserts: "perfect~1.0, full-mask<0.5 — utility-axis behaviour (FR-006)."
+    - fn: test_fr_006_pareto_point_has_two_separate_axes
+      asserts: "as_dict keys exactly {privacy,utility,variant,note}; distinct typed sub-objects — FR-006 two-axis core."
+    - fn: test_nfr005_pareto_point_cannot_merge
+      asserts: "no forbidden merged attr/property, no __float__, float() raises, AST grep clean, empty-note rejected — squarely NFR-005/AX-004 no-merge."
+    - fn: test_fr_006_residual_risk_axis_is_measured_rrs
+      asserts: "privacy axis is MeasuredRRS from real adversary; FR-009 caveat ('MUST NOT be cited') survives as_dict — FR-006 reuse + FR-009."
+    - fn: test_fr_006_variant_recorded
+      asserts: "variant label recorded on ParetoPoint + in as_dict — FR-006 variant provenance."
+    - fn: test_fr_006_nfr004_anonymization_imports_no_nondeterminism
+      asserts: "AST: imports none of {random,time,uuid,datetime,secrets} — NFR-004 import purity."
+
+dependencies:
+  declared: "§5 — S3-01 (assembler), S3-02 (adversary), S3-04 (MeasuredRRS/score_reidentification) must be DONE"
+  verified:
+    S3-01: DONE
+    S3-02: DONE
+    S3-04: DONE
+  all_done: true
+  reuse_verified: >
+    score_anonymization calls score_reidentification (S3-04) and imports MeasuredRRS;
+    reidentification.py unmodified (RRS not reimplemented). __init__.py exports wire all 6 symbols.
+
+provisional_status_cascade:
+  source_dc: DC-06
+  source_dc_status: "AGENT_SIMULATED (not DIVERGED)"
+  story_provisional_status: AGENT_SIMULATED
+  cascade_match: true
+  diverged_cascade_required: false
+  note: >
+    DC-06 carries no DIVERGED flag in the design synthesis; story §4 declares
+    'AGENT_SIMULATED · not DIVERGED'. No §10 Pass-2 DIVERGED commitment required.
+    Pass-2 real-CI run scheduled at orchestrator integration (§12) — standard for the
+    project-wide AGENT_SIMULATED posture.
+
+traceability_matrix:
+  fr_006_row_present: true
+  location: "02-requirements/traceability-matrix.md:11 (UC-04 anon residual+utility | FR-006 | NFR-005 | MUST | AGENT_SIMULATED)"
+  m6_linkage: "M6 (no running scorer) -> FR-006 — traceability-matrix.md:35"
+  note: >
+    Matrix is FR->NFR/UC-keyed (not per-Build-Task-keyed); the FR-006/NFR-005/DC-06 chain is
+    present and status-consistent (AGENT_SIMULATED). No story-row insertion is mandated by this
+    matrix's schema — see OBSERVATION-1.
+
+domain_packs:
+  active: []
+  source_pack_extensions_applied: none
+  note: "developer-assistant.yaml domain_packs: [] — no reviewer pack extensions to merge."
+
+findings:
+  - id: TRACE-OBS-1
+    severity: OBSERVATION
+    title: "Status Change Log entry for S3-06 REVIEW transition not yet present"
+    detail: >
+      traceability-matrix.md carries the FR-006/NFR-005/DC-06 row but no per-Build-Task
+      Status Change Log line for S3-06's IN_PROGRESS->REVIEW transition. The matrix schema is
+      FR/UC-keyed, so this is not required at story gate; flagged for the sprint-gate 61-MUST /
+      Status-Change-Log refresh when S3-06 reaches DONE.
+    requirement_refs: [FR-006]
+    blocking: false
+  - id: TRACE-OBS-2
+    severity: OBSERVATION
+    title: "FR-007 (measured-attack RRS) is exercised transitively but not separately tokened here"
+    detail: >
+      score_anonymization reuses S3-04 score_reidentification (FR-007 machinery) for the privacy
+      axis; FR-007 is correctly owned/tokened by S3-04, not S3-06. No claim collision — S3-06
+      declares FR-006 primary with FR-009 supporting, which is the right boundary. Noted only as
+      an adjacent FR the privacy axis depends on.
+    requirement_refs: [FR-007, FR-009]
+    blocking: false
+
+self_attestation:
+  ran_selectors: true
+  selectors_all_gt_zero: true
+  every_test_fn_tokened: true
+  declared_ids_all_exist: true
+  deps_all_done: true
+  provisional_status_cascade_ok: true
+  no_name_asserts_mismatch: true
+  zero_major_plus: true
+  context_bounds_respected: true

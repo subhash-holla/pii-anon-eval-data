@@ -1,0 +1,237 @@
+# Traceability reviewer — STORY gate
+schema_version: "1.0"
+reviewer: traceability
+gate: story
+story_id: S5-02
+iteration: 1
+mode: read-only
+timestamp: "2026-05-30"
+independence_attestation: >-
+  I reviewed S5-02 forward-traceability independently against the requirements
+  document, traceability matrix, design synthesis, and the owned source/test
+  files. I did not author any artifact under review and ran only read-only
+  verification commands (pytest -k selection/collection, grep, git cat-file,
+  python import checks).
+context_bounds_respected: true
+
+scope:
+  primary_requirement: FR-024
+  supporting_requirements: [NFR-012, gov-02, NFR-004]
+  source_dc: DC-12
+  design_revision: gov-02
+  owned_files:
+    - src/pii_anon_datasets/distribution/__init__.py
+    - src/pii_anon_datasets/distribution/parquet_export.py
+    - pyproject.toml
+    - tests/test_parquet_export.py
+  domain_packs_active: []   # developer-assistant.yaml domain_packs: [] — no pack extensions merged
+
+verdict: APPROVE
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 2
+
+checks:
+  - id: fr_nfr_exist_in_requirements
+    description: >-
+      FR-024 and NFR-012 declared by the story exist verbatim in the
+      requirements documents.
+    status: PASS
+    evidence: >-
+      functional-requirements.md:44 — "FR-024 — CC0 corpus + standard exports.
+      ... JSONL + Parquet + Croissant (validates + loads via HF datasets) ...
+      deterministic load. (UC-12; MUST)". non-functional-requirements.md:28 —
+      "NFR-012 — Croissant/HF loadability. ... validates against the spec AND
+      loads via the HF datasets loader ... (UC-12; boolean)". Both present;
+      MUST/boolean priorities consistent with the story's claims.
+  - id: gov02_and_dc12_exist_in_design
+    description: gov-02 design revision and DC-12 distribution component exist in design synthesis.
+    status: PASS
+    evidence: >-
+      D-implementation-ready-design.md:104 (LOCKED revision #6): "Regulatory
+      crosswalk = N separate typed columns in compliance/ + distribution/; the
+      existing export_parquet.py regime-flattening is fixed, not inherited;
+      export test asserts each regime independently addressable, no equivalence
+      field. (gov-02 — FR-022 made structural.)"; sme-heuristic-findings.md:29
+      logs gov-02 (export_parquet.py:54 flatten bug). DC-12 named in the same
+      design doc; story §1 Parent epic S5-A (DC-12). Story §4 quotes the gov-02
+      revision faithfully.
+  - id: tests_embed_required_tokens
+    description: >-
+      Every test fn carries an fr_024 / nfr_012 / nfr004 token (the story's
+      declared tokens).
+    status: PASS
+    evidence: >-
+      tests/test_parquet_export.py — 6 test fns: test_fr_024_parquet_has_n_separate_regime_columns,
+      test_fr_024_parquet_roundtrips_records, test_nfr_012_parquet_loads_via_datasets,
+      test_fr_024_export_streams_not_materializes, test_fr_024_deterministic_export,
+      test_nfr004_distribution_imports_without_pyarrow. Tokens: 4×fr_024, 1×nfr_012,
+      1×nfr004 — every fn tokened; no untokened test.
+  - id: pytest_k_fr_024_selects_gt0
+    description: "`python3 -m pytest tests/test_parquet_export.py -k fr_024 -q` selects >0."
+    status: PASS
+    evidence: >-
+      Ran the exact command: output "...." (4 dots), all passed, exit 0;
+      `--co -q` reports "tests/test_parquet_export.py: 4". 4 > 0 — requirement met.
+  - id: pytest_k_nfr_012_selects_gt0
+    description: "`python3 -m pytest tests/test_parquet_export.py -k nfr_012 -q` selects >0."
+    status: PASS
+    evidence: >-
+      Ran the exact command: output "." (1 dot), passed, exit 0; `--co -q`
+      reports "tests/test_parquet_export.py: 1". 1 > 0 — requirement met
+      (test_nfr_012_parquet_loads_via_datasets).
+  - id: pytest_k_nfr004_selects_gt0
+    description: nfr004 token (third declared token) selects >0.
+    status: PASS
+    evidence: >-
+      `python3 -m pytest tests/test_parquet_export.py -k nfr004 -q` → "." (1
+      dot), passed, exit 0 (test_nfr004_distribution_imports_without_pyarrow).
+  - id: symbol_docstrings_cite_fr024_gov02
+    description: Production symbol docstrings cite FR-024 / gov-02.
+    status: PASS
+    evidence: >-
+      parquet_export.py module docstring L1 "(FR-024) — gov-02 N typed regime
+      columns", L5 gov-02 contract, L25 imports as_columns; _require_pyarrow L39
+      "(NFR-004 / [distribution] extra)"; _row L70/L76/L84/L90 "(gov-02)";
+      export_parquet L102 "(FR-024)", L111 "gov-02", L114 "AX-001"; _empty_schema
+      L163 "(gov-02)". __init__.py L1 "Distribution surface (DC-12) ... (FR-024)",
+      L4-5 gov-02 + FR-022. Package, module, and all public/private symbols cite
+      the FR/gov ids.
+  - id: fr024_parquet_contract_realized
+    description: >-
+      FR-024 Parquet-export contract realized — streaming Parquet writer, regime
+      columns, deterministic load.
+    status: PASS
+    evidence: >-
+      export_parquet streams `records` as a one-pass iterator into a single
+      pyarrow.parquet.ParquetWriter in batches (schema fixed from first batch,
+      batches dropped after flush; no list()/len()/index of input — confirmed by
+      read). Test #4 (test_fr_024_export_streams_not_materializes) drives a
+      one-shot generator to exhaustion (consumed order asserted, list(gen)==[]).
+      Test #2 round-trips records; test #5 asserts deterministic table contents
+      (Table.equals). GREEN: -k fr_024 → 4 passed.
+  - id: gov02_realized_via_as_columns
+    description: >-
+      gov-02 (N regime columns, no flattened blob) realized via
+      compliance.crosswalk.as_columns (S5-01).
+    status: PASS
+    evidence: >-
+      parquet_export.py:25 imports `as_columns` from compliance.crosswalk;
+      _row L92 `row.update(as_columns(record))` appends the 5 typed reg_* columns
+      LAST; `regulatory_domains` is in _DROP_FIELDS (L35) so the flattened blob is
+      never written back. crosswalk.REGIMES has exactly 5 entries (gdpr,
+      hipaa_safe_harbor, hipaa_expert_determination, ccpa_deidentified, pci_dss).
+      Test #1 asserts all 5 reg_* columns present + independently addressable AND
+      `"regulatory_domains" not in names` (the line-54 fix); hipaa fans out to
+      BOTH HIPAA columns. No equivalence/merged column.
+  - id: nfr012_loadability_realized
+    description: NFR-012 (validates + loads via HF datasets) realized.
+    status: PASS
+    evidence: >-
+      test_nfr_012_parquet_loads_via_datasets exports then
+      `datasets.load_dataset("parquet", data_files=..., split="train")`,
+      asserts num_rows==4, every reg_* column survives the HF load, and the
+      gdpr-only record's reg_gdpr=="in_scope" round-trips. pyproject.toml:36
+      `distribution = ["pyarrow", "datasets", "huggingface_hub"]` makes the
+      loader available behind the extra. datasets 4.8.3 installed → test RAN
+      (-k nfr_012 → 1 passed).
+  - id: nfr004_lazy_import_realized
+    description: NFR-004 lazy import (package imports pure-stdlib; clear install error) realized.
+    status: PASS
+    evidence: >-
+      pyarrow imported ONLY inside _require_pyarrow (never module top); top-level
+      imports are stdlib (json, collections.abc, typing) + compliance.crosswalk.
+      test_nfr004_distribution_imports_without_pyarrow imports the package with
+      pyarrow blocked via monkeypatched __import__, then asserts export_parquet
+      raises RuntimeError naming "pip install pii-anon-datasets[distribution]".
+      -k nfr004 → 1 passed.
+  - id: dependency_S5-01_done
+    description: Declared upstream dependency S5-01 is DONE.
+    status: PASS
+    evidence: >-
+      S5-01.md §1 Status "DONE", Story gate "APPROVE (iter 1, 5/5 reviewers)".
+      The crosswalk it ships is genuinely landed: git cat-file -t on the S5-01
+      GREEN SHA b86720e → "commit"; src/pii_anon_datasets/compliance/crosswalk.py
+      tracked in HEAD; importable (REGIMES count == 5). S5-02's import of
+      as_columns resolves at runtime (integration tests pass). Dependency
+      satisfied, not IN_PROGRESS.
+  - id: no_name_says_x_asserts_y
+    description: No test whose name claims X but body asserts an unrelated Y.
+    status: PASS
+    evidence: >-
+      Each body asserts what its name states. fr_024_has_n_separate_regime_columns
+      → 5 reg_* cols present + no regulatory_domains blob + per-record values.
+      fr_024_roundtrips → row count + record_id/text/language + nested JSON decodes.
+      nfr_012_loads_via_datasets → HF datasets load + reg_* survive. fr_024_streams
+      → one-shot generator consumed once + exhausted. fr_024_deterministic →
+      Table.equals on two exports. nfr004_imports_without_pyarrow → package imports
+      under blocked pyarrow AND export raises the install RuntimeError (both halves
+      are the lazy-import contract the name implies — no mismatch).
+  - id: provisional_status_cascade
+    description: Story provisional_status matches source DC-12 (AGENT_SIMULATED, not DIVERGED).
+    status: PASS
+    evidence: >-
+      Story §1 metadata and §4 both declare provisional_status: AGENT_SIMULATED;
+      §4 states DC-12 is AGENT_SIMULATED, not DIVERGED. No DIVERGED-cascade
+      obligation (no §10 Pass-2-divergence commitment required). §12 records a
+      Pass-2 real-CI re-run consistent with AGENT_SIMULATED, noting pyarrow
+      23.0.1 + datasets 4.8.3 are installed so the integration tests genuinely
+      ran (not stubbed).
+  - id: matrix_row_present
+    description: Forward FR-024/NFR-012 → UC trace exists in the traceability matrix.
+    status: PASS
+    evidence: >-
+      traceability-matrix.md:19 — "UC-12 CC0 + contribution | FR-024, FR-025,
+      FR-028 | NFR-011, NFR-012, NFR-013 | MUST (exports) ...". FR-024 reverse
+      orphan-check row :26 maps FR-024↔acaddeid-03. The FR-024/NFR-012 forward
+      rows are present; per-story FR→test evidence is recorded in this
+      _reviews/story/S5-02/traceability.yaml (the repo's per-story trace artifact).
+
+findings:
+  - id: TRACE-S5-02-OBS-01
+    severity: OBSERVATION
+    title: NFR-012 cited in test docstrings but not in the production module/package docstrings
+    detail: >-
+      The production symbols (parquet_export.py, distribution/__init__.py) cite
+      FR-024, gov-02, FR-022, NFR-004, AX-001 — but NOT NFR-012 by id. The
+      NFR-012 loadability id appears only in the test layer
+      (test_nfr_012_parquet_loads_via_datasets + the test module docstring
+      "loads via HF datasets (nfr_012)"). The realization itself is correct
+      (datasets in the [distribution] extra; loadability test passes), so trace
+      integrity is intact via the tokened test. Optional: add an "NFR-012
+      loadability via HF datasets" mention to export_parquet's docstring to make
+      the production-side cite explicit. Non-blocking.
+    files:
+      - src/pii_anon_datasets/distribution/parquet_export.py
+    requirement: NFR-012
+  - id: TRACE-S5-02-OBS-02
+    severity: OBSERVATION
+    title: Story §3 names NFR-005-adjacent as supporting but ships no nfr005-tokened test
+    detail: >-
+      Story §3 lists "NFR-005-adjacent (regime columns legally distinct)" as a
+      supporting requirement. The dispatch's declared tokens are fr_024/nfr_012/
+      nfr004 only, and the no-merged/legally-distinct guarantee is inherited from
+      and asserted in S5-01 (test_fr_022_no_merged_or_equivalence_column); S5-02's
+      test #1 re-asserts the no-blob structural property. So the NFR-005-adjacent
+      intent is covered transitively, not by a dedicated nfr005 token in this
+      story. No action required at story gate; noted for sprint-gate coverage
+      bookkeeping.
+    files: []
+    requirement: NFR-005
+
+evidence_commands:
+  - "python3 -m pytest tests/test_parquet_export.py -k fr_024 -q  =>  .... / passed / exit 0 ; --co => 4 selected (>0)"
+  - "python3 -m pytest tests/test_parquet_export.py -k nfr_012 -q  =>  . / passed / exit 0 ; --co => 1 selected (>0)"
+  - "python3 -m pytest tests/test_parquet_export.py -k nfr004 -q  =>  . / passed / exit 0 ; 1 selected (>0)"
+  - "grep -nE '^def test_' tests/test_parquet_export.py  =>  6 fns: 4x fr_024, 1x nfr_012, 1x nfr004 (all tokened)"
+  - "python3 -m pytest  =>  223 passed, 1 skipped in 3.98s (matches story §10/§12: 217 prior + 6 new, 0 regressions, 1 pre-existing skip)"
+  - "functional-requirements.md:44  =>  FR-024 present at cited locator"
+  - "non-functional-requirements.md:28  =>  NFR-012 present at cited locator"
+  - "traceability-matrix.md:19  =>  UC-12 -> FR-024 + NFR-012 forward row present"
+  - "D-implementation-ready-design.md:104  =>  gov-02 + DC-12 (distribution) cited; FR-022 made structural"
+  - "python3 -c 'from pii_anon_datasets.compliance.crosswalk import REGIMES; print(len(REGIMES))'  =>  5 (gov-02 N=5 typed columns)"
+  - "git cat-file -t b86720e (S5-01 GREEN)  =>  commit ; git ls-files crosswalk.py => tracked in HEAD (dep DONE genuinely landed)"
+  - "grep import in parquet_export.py  =>  pyarrow only inside _require_pyarrow; as_columns imported from compliance.crosswalk (gov-02 realization)"

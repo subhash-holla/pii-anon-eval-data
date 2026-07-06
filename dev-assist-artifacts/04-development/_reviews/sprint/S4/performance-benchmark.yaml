@@ -1,0 +1,126 @@
+reviewer: dev-assist-development-performance-benchmark
+
+scope_id: S4
+
+gate: sprint
+
+verdict: APPROVE
+
+findings:
+  - id: performance-S4-01
+    severity: OBSERVATION
+    location: stats/paired.py:142
+    description: |
+      `paired_bootstrap_recall_delta` is the documented O(n_boot × len(pairs)) double loop
+      (outer `for _ in range(n_boot)` line 142, inner `for _ in range(n)` line 145, one
+      `rng.randrange(n)` + two list-index reads + two int adds per inner step). With the
+      DEFAULTS (n_boot=10000) and a per-slice pair count this is fully bounded, deterministic,
+      and entirely acceptable for offline batch stats — at e.g. n=2000 pairs that is 20M tiny
+      pure-Python ops (single-digit seconds), run once per A/B comparison, never on a latency
+      path. Determinism is sound: a LOCAL `random.Random(seed)` (line 140) drives every draw,
+      the module-global RNG is never consulted, so two same-seed runs are byte-identical
+      (NFR-004; the S4-02 AST + runtime determinism guards prove this). The `deltas` list
+      materializes exactly n_boot floats (10000 at default) + an O(n_boot log n_boot) sort —
+      bounded, not record-scaled, no heavy materialization.
+      Carried forward (per the dispatch) as the SAME unbounded-`n_boot` note raised at the
+      S4-02 story gate: `n_boot` is a caller-supplied keyword with no upper clamp, so a caller
+      passing an extreme value (e.g. n_boot=10**8) could make the cost arbitrarily large. The
+      default is bounded and the call is offline/once-per-comparison, so this is an OBSERVATION,
+      not a finding that blocks — it is purely a robustness note for a future caller-facing
+      guard, NOT an NFR-threshold breach (no throughput NFR binds this offline measurement path;
+      NFR-010 scopes the DETECTION scorer, formally verified at Stage 5).
+    suggested_resolution: |
+      No change required for this gate. If/when a public/CLI caller surface exposes `n_boot`
+      directly, consider documenting a recommended ceiling (or a soft cap with a warning) so an
+      accidental extreme value cannot dominate an offline run. Output and determinism are
+      unaffected either way.
+    references:
+      - non-functional-requirements.md#NFR-004
+      - non-functional-requirements.md#NFR-010
+
+  - id: performance-S4-02
+    severity: OBSERVATION
+    location: reporting/viz.py:188
+    description: |
+      `coverage_risk_curve` is the one RECORD-scaled path among the S4 reporters: it sorts the
+      prediction indices by confidence (O(n log n), line 188) then sweeps them in a single
+      cumulative pass (O(n), lines 192-195) building two O(n) lists for the plot. This is a clean
+      O(n log n) selective-prediction curve with NO nested loop and NO quadratic — appropriate
+      for an offline, render-only viz function behind the optional `[viz]` extra. matplotlib is
+      imported LAZILY inside `_require_matplotlib` (line 45) so the pure-stdlib core invariant
+      (NFR-004) is preserved; the render is offline (Agg backend, writes a PNG) and PNG
+      byte-equality is explicitly NOT a determinism contract (matplotlib embeds a timestamp).
+      Noted only because it is the sole >O(cells) reporter surface; it is well-behaved and not a
+      concern.
+    suggested_resolution: |
+      No change required. The O(n log n) sort + single cumulative pass is the correct shape for
+      a coverage-risk curve; the lazy-matplotlib guard correctly keeps the core stdlib-only.
+
+notes: |
+  Scope: design-level algorithmic-complexity + scaling review of the six S4 stats/reporting
+  surfaces named in the dispatch (stats/{intervals,paired,calibration}.py,
+  reporting/{language_power,power_table,viz}.py). Read-only; NO benchmark harness executed —
+  the full throughput/latency harness is Stage 5 by design. Judged against "acceptable for
+  offline batch stats/reporting," NOT a sub-ms latency SLA. This stats/reporting core is
+  pure-stdlib (NFR-004), batch/offline, not a latency-SLA service. Both findings are
+  non-blocking OBSERVATIONs; neither breaches a binding NFR threshold (no throughput NFR binds
+  these offline surfaces — NFR-010 scopes the DETECTION scorer, formally verified at Stage 5).
+
+  Domain packs: developer-assistant.yaml `extends.domain_packs: []` (and legacy top-level
+  `domain_packs: []`) — NO active pack, so NO reviewer-extension finding patterns merged; the
+  base catalog applies unchanged.
+
+  Per-surface assessment (each named complexity claim CONFIRMED):
+  - stats/intervals.py::clopper_pearson_interval — O(1) per call, CONFIRMED. The only loops are
+    `_betacf` (`range(1, _BETACF_MAXIT+1)`, MAXIT=200, with an early `_BETACF_TOL=1e-12` break —
+    a FIXED ceiling, never input-scaled) and `_inv_betainc` (`range(_INV_BETAINC_ITERS)`,
+    60 bisection steps, FIXED — no convergence-dependent early exit that could vary by platform).
+    `clopper_pearson_interval` calls `_inv_betainc` at most twice (low + high), each driving 60
+    `_betainc` evals × one `_betacf` each → bounded at ~2·60·200 inner iterations REGARDLESS of
+    (k, n). No input-scaled loop, cannot hang. `math.comb` is NOT used here. Integer-count guard
+    (reidx-02) is O(1). Determinism: fixed iteration counts, lgamma/exp/log only, no RNG/clock —
+    NFR-004 sound (the docstring's own determinism rationale is correct).
+  - stats/paired.py — `mcnemar_exact` computes `sum(math.comb(n, i) for i in range(0, k+1))`
+    with `k = min(b, c)`, `n = b + c`: O(min(b,c)) BIGINT terms, bounded by the DISCORDANT count
+    (b+c), not the corpus — fine and run once. `mcnemar_chi2` is O(1) (erfc closed form).
+    `_recall_delta` / `_percentile` are single O(n) / O(1) passes. The lone nested loop is the
+    bootstrap (finding S4-01, the documented + bounded O(n_boot × n)). Determinism: local
+    `random.Random(seed)`, byte-identical same-seed (NFR-004). No heavy materialization beyond
+    the bounded n_boot-length deltas list.
+  - stats/calibration.py — `expected_calibration_error`, `brier_score`, `_reliability_bins` are
+    each a SINGLE O(n) pass over the predictions into fixed `n_bins`-length accumulator arrays
+    (no nesting; the `range(n_bins)` summarize loops are O(n_bins), a small constant). `calibrate`
+    calls each once → O(n). `calibration_by_entity_class` is genuinely O(n) group-then-calibrate:
+    one O(n) grouping pass building per-class lists, then `calibrate` per class — every record is
+    visited once in grouping + once in exactly one class's calibrate ⇒ Σ O(n_class) = O(n), NOT
+    quadratic. Memory: the grouped per-class lists are the natural O(n) total, no blow-up.
+    Deterministic (insertion-ordered dict iteration, no RNG/clock — AX-002).
+  - reporting/language_power.py — `per_language_table` / `language_x_type_matrix` each do ONE
+    O(cells) filter pass over `lattice["cells"]` + an O(cells log cells) sort; renderers are
+    O(rows). Bounded by the FROZEN committed lattice = 730 cells (verified: 60 language marginals,
+    492 language×entity_type, etc.) — NOT the ~160k-record corpus. The module never reads the
+    corpus (`observed_counts` arrives as an argument). Trivial scale; clean.
+  - reporting/power_table.py — `power_table` is O(cells) single pass + O(cells log cells) sort;
+    the optional `scores` lookup is an O(1) dict membership per cell. `power_report` calls
+    `power_table` once, builds `interaction_of` O(cells), then one pass over rows where the
+    inner `for bucket in (by_int[...], by_tier[...], tot)` (line 93) iterates a FIXED 3-element
+    tuple → O(3·rows) = O(rows); summary sorts are bounded by interaction/tier cardinality. No
+    record-scaled quadratic. Clean at 730 cells.
+  - reporting/viz.py — all five renderers are offline matplotlib (lazy import preserves NFR-004
+    pure-stdlib core). `reliability_diagram` O(bins), `pareto_plot` O(points),
+    `agent_leakage_sankey` O(edges log edges), `slice_heatmap` delegates to
+    `PowerMatrix.heatmap` (axis-bounded O(|xs|·|ys|), already noted in the S3 review).
+    `coverage_risk_curve` is the sole record-scaled path: O(n log n) sort + single cumulative
+    pass (finding S4-02, well-behaved). No quadratic, no heavy materialization.
+
+  No SHOWSTOPPER/CATASTROPHIC/MAJOR: the benchmark harness is Stage 5 by design (its absence
+  here is not a defect), no NFR-threshold is breached (no throughput NFR binds these offline
+  stats/reporting surfaces), and every dispatch-named complexity claim is CONFIRMED — O(1)
+  Clopper-Pearson, bounded/deterministic paired bootstrap, O(n) single-pass calibration, and
+  O(cells) reporters over a frozen 730-cell lattice. No accidentally-quadratic-or-worse hot path
+  and no memory-heavy materialization on any >1000-element path were found. Throughput NFRs are
+  formally verified at Stage 5.
+
+review_time_seconds: 1380
+
+context_bounds_respected: true

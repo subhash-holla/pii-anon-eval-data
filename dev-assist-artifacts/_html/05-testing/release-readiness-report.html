@@ -1,0 +1,1380 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Release-Readiness Report — pii-anon-datasets v2.0.0 — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="05-testing">
+<h1>Release-Readiness Report — pii-anon-datasets v2.0.0</h1>
+<p><strong>Stage 5 · Wave T6 (FINAL synthesis)</strong> · 2026-05-31 · Produced by <code>dev-assist-testing-release-readiness</code>
+<strong>Scope:</strong> the PII-Anon CC0 synthetic-PII benchmark + pure-stdlib evaluation harness (<code>src/pii_anon_datasets/</code>).
+<strong>Policy:</strong> <code>developer-assistant.yaml testing.pass2_required: false</code> (4B default) — a PERSONA-CONDITIONAL / DIVERGED row lacking real-data/real-user Pass-2 evidence downgrades <strong>SHIP → SHIP-WITH-CAVEATS</strong>; it does <strong>not</strong> DEFER. <strong>DEFER is reserved for a MUST-track FAILURE</strong> (a failing MUST NFR, a carrying-forward SHOWSTOPPER, or a Pass-2 invalidation requiring pivot). None of those obtain.
+<strong>Provisional status:</strong> <code>AGENT_SIMULATED</code> — every Stage-4 verdict is agent-self-assessed; a real-CI Pass-2 is owed (carried as Caveat 4).</p>
+<blockquote>
+<p><strong>Discipline note.</strong> This report <em>synthesizes and rules</em>; it audits nothing new. Every load-bearing claim cites a <code>file:section</code> or a git fact. No finding is generated here; where a prior wave flagged a limitation it is carried verbatim, never invented and never stripped.</p>
+</blockquote>
+<blockquote>
+<p><strong>Brownfield — Source Signal vs Gaps.</strong> PII-Anon entered the PDLC with a brownfield assessment that rated Testing WEAK→PARTIAL and filed <strong>C1 (CATASTROPHIC): zero automated tests; the scoring harness itself is unverified</strong> (<code>05-testing/02-architecture/test-architecture.md §0</code>). Stage 4 closed C1 by growing the suite 0 → 346 tests under strict TDD; Stage 5 measured the result. This first-release verdict therefore carries the methodology-evidence debt typical of a brownfield project: the evidence base is real and green, but it is <code>AGENT_SIMULATED</code> until a real CI + real-data Pass-2 runs.</p>
+</blockquote>
+<hr>
+<h2>1. Verdict</h2>
+<h1><strong>SHIP-WITH-CAVEATS</strong></h1>
+<p><strong>Rationale (one sentence):</strong> All four privacy directions (detection / anonymization / pseudonymization / measured-RRS) are runnable and statistically grounded with M6 closed (<code>_signoffs/SO-02-s3.yaml:scope</code>); every quantified NFR PASSES except <strong><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a></strong> throughput, which is honestly <strong>PROVISIONAL</strong> pending a real-host Pass-2 (<code>05-testing/03-nfr-verification/nfr-verification-matrix.md#aggregate</code> — 12 PASS / 1 PROVISIONAL / 0 FAIL); there is <strong>no MUST-track failure, no showstopper, and no Pass-2 invalidation</strong>, so the binding limitations are documented caveats — not blockers — for a CC0 synthetic eval.</p>
+<p><strong>Decision-tree trace</strong> (per the T6 verdict tree):</p>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Result</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Any MUST NFR FAIL?</td>
+<td><strong>No</strong> (0 FAIL)</td>
+<td><code>nfr-verification-matrix.md#aggregate</code>, <code>#fail-details</code> (&quot;None.&quot;)</td>
+</tr>
+<tr>
+<td>Any SHOWSTOPPER carrying forward?</td>
+<td><strong>No</strong> (every story + sprint gate APPROVE, 0 MAJOR+ open)</td>
+<td><code>_reviews/sprint/{S3,S4,S5,S6,S7}/synthesis.md</code> (all &quot;Aggregate: APPROVE&quot;); <code>SO-0{1..6}-*.yaml</code></td>
+</tr>
+<tr>
+<td>Any Pass-2 invalidation requiring pivot?</td>
+<td><strong>No</strong> (Pass-2 is protocols-only; nothing run, nothing invalidated)</td>
+<td><code>05-testing/05-pass2/*/protocol.md</code> (all 5 are protocols; <code>INSUFFICIENT_EVIDENCE → SHIP-WITH-CAVEATS</code>, never PIVOT, because un-run)</td>
+</tr>
+<tr>
+<td>Any UI-surface a11y HOLD?</td>
+<td><strong>No</strong> (N/A — no UI)</td>
+<td><code>05-testing/04-accessibility/accessibility-audit-results.md</code> (&quot;NOT APPLICABLE&quot;)</td>
+</tr>
+<tr>
+<td>All MUST NFRs PASS <strong>and</strong> all DIVERGED REAL_USER_VALIDATED <strong>and</strong> all surfaces a11y PASS <strong>and</strong> ≤3 MAJOR open?</td>
+<td><strong>NFRs: <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a> PROVISIONAL (not all PASS); DIVERGED rows: not yet real-user-validated</strong> → the SHIP precondition is not met</td>
+<td><code>nfr-verification-matrix.md#provisional-details</code>; <code>SO-06-s7.yaml:findings_waived_to_pass2</code></td>
+</tr>
+<tr>
+<td><strong>⇒ Outcome</strong></td>
+<td><strong>SHIP-WITH-CAVEATS</strong> (with the explicit caveat list in §5)</td>
+<td>this report</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>2. Evidence summary</h2>
+<table>
+<thead>
+<tr>
+<th>Evidence area</th>
+<th>Result</th>
+<th>Citation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>NFR coverage</strong></td>
+<td><strong>12 PASS / 1 PROVISIONAL / 0 FAIL</strong> over the 13 quantified/auditable NFRs routed to T3. PASS: <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a>/002/003/004/005/006/008/012/013/014/016/018. PROVISIONAL: <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a> (throughput b/c, <code>real_user_needed</code>).</td>
+<td><code>nfr-verification-matrix.md#aggregate</code></td>
+</tr>
+<tr>
+<td><code>validate.py</code> power gate</td>
+<td><strong>0 errors</strong>, exit 0, over <strong>575,604 records / 575,604 unique IDs</strong>; <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> committed-cell power gate PASS (all committed cells meet tiered target).</td>
+<td><code>nfr-verification-matrix.md#nfr-001</code> &amp; <code>#nfr-018</code>; re-measured this dispatch</td>
+</tr>
+<tr>
+<td>Committed lattice</td>
+<td><strong>730 cells</strong>; <code>eval_lattice.json</code> round-trips <code>build_committed_lattice()</code> (anti-drift, 0 drift).</td>
+<td><code>nfr-verification-matrix.md#nfr-018</code>; <strong>git-verified</strong>: <code>eval_lattice.json</code> last touched <code>47c3a8f</code> (2026-05-29), <strong>zero</strong> commits touch it through HEAD <code>1423167</code></td>
+</tr>
+<tr>
+<td><strong>A11y</strong></td>
+<td><strong>N/A — no UI surface</strong> (CC0 dataset + pure-stdlib library + thin console CLI). Recorded as an explicit &quot;not applicable&quot; finding, not a skipped obligation. De-scoped throughout the PDLC.</td>
+<td><code>accessibility-audit-results.md</code> (Determination + Outcome)</td>
+</tr>
+<tr>
+<td><strong>Pass-2</strong></td>
+<td><strong>5 protocols authored; 0 run</strong> (Wave T5). Each refuses agent-simulated substitution and maps <code>INSUFFICIENT_EVIDENCE → SHIP-WITH-CAVEATS</code> (never DEFER, never PIVOT while un-run).</td>
+<td><code>05-pass2/{FR-027,NFR-010,design-real-user-trial,formulaic-distribution-shift,FR-015-016}/protocol.md §8</code></td>
+</tr>
+<tr>
+<td><strong>Findings carried forward</strong></td>
+<td>All work-streams <strong>APPROVE with 0 MAJOR+ open</strong>; remaining items are OBSERVATION-level (lint baseline, hosted-leaderboard hardening, recursive gold-key screen, O(n²) seams at seam-scale). No showstopper, no unresolved MAJOR.</td>
+<td><code>_reviews/sprint/{S3..S7}/synthesis.md</code> (reviewer tables); <code>SO-0{1..6}-*.yaml:findings_waived_to_pass2</code></td>
+</tr>
+<tr>
+<td><strong>Test suite</strong></td>
+<td><strong>346 passed / 1 skipped / 0 failed</strong> (the 1 skip = <code>anthropic</code>-absent live-LLM contract test, by design — the deterministic offline adversary is the RRS headline).</td>
+<td><code>nfr-verification-matrix.md#nfr-016</code>; <code>SO-06-s7.yaml:evidence</code>; <code>examples-and-tests-catalog.md §6.3</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>3. Test-architecture summary</h2>
+<p><strong>Pyramid shape: CLASSIC PYRAMID with a PROPERTY-TEST mantle</strong> — broad unit base, thin integration band, small named system cap; measured from inline test-type markers, not asserted (<code>test-architecture.md §1</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Marker</th>
+<th>Count</th>
+<th>Band</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>[UNIT-TEST]</code></td>
+<td>108</td>
+<td>base</td>
+</tr>
+<tr>
+<td><code>[PROPERTY-TEST]</code></td>
+<td>45</td>
+<td>base mantle (determinism / invariants)</td>
+</tr>
+<tr>
+<td><code>[CONTRACT-TEST]</code></td>
+<td>15</td>
+<td>port boundaries (Hexagonal)</td>
+</tr>
+<tr>
+<td><code>[AUDIT]</code></td>
+<td>15</td>
+<td>cross-cutting structural guards</td>
+</tr>
+<tr>
+<td><code>[INTEGRATION-TEST]</code></td>
+<td>14</td>
+<td>export↔load round-trips, store↔policy, CLI dispatch</td>
+</tr>
+</tbody></table>
+<p>Unit + property dominate (~153 of ~197 marked assertions; ~7.7:1 unit+property : integration). <strong>Anti-pattern check:</strong> ice-cream-cone NOT present; no hidden integration weight in &quot;unit&quot; files (heavy deps gated behind <code>pytest.importorskip</code>). Justified by project profile, not &quot;best practice&quot;: correctness lives in pure stdlib functions; the architecture is Hexagonal (scoring core) + Clean (<a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a> stats), making the integration band small by construction; there is no UI/service runtime to drive an e2e tier (<code>test-architecture.md §1</code> justification + anti-pattern check).</p>
+<p><strong>Coverage (<a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a>, hard gate — CLEARED with margin on both axes):</strong></p>
+<ul>
+<li><strong>Aggregate: 96.4% line (2364/2452), 88.7% branch (605/682)</strong> over 11 covered packages (<code>test-architecture.md §5</code>).</li>
+<li><strong>scoring + stats (the credibility-bearing surface): 95.18% line (1,421/1,493), 84.52% branch (355/420)</strong> — line <strong>+10.18pp</strong> over the ≥85% bar, branch <strong>+14.52pp</strong> over the ≥70% bar (<code>nfr-verification-matrix.md#nfr-016</code>).</li>
+<li>Lowest scorer/stats module <code>signals.py</code> at 86% line — still above the 85% floor (<code>test-architecture.md §5</code>).</li>
+</ul>
+<hr>
+<h2>4. Cross-cutting discipline summary</h2>
+<table>
+<thead>
+<tr>
+<th>Discipline</th>
+<th>Status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>TDD discipline</strong></td>
+<td>Strict RED→GREEN→REFACTOR per Build Task across S-PWR+S3+S4+S5+S6+S7; a Build Task is not GREEN until its FR/NFR has ≥1 named test.</td>
+<td><code>SO-0{1..6}-*.yaml:scope</code> (&quot;strict TDD&quot;); recent git log shows <code>[RED]</code>/<code>[GREEN]</code>/<code>[REFACTOR]</code> triplets</td>
+</tr>
+<tr>
+<td><strong>Traceability</strong></td>
+<td><strong>0 orphans</strong>: all 29 FR + 18 NFR accounted; <strong>221</strong> test fns carry an <code>fr_/nfr_</code> token (of 335); explicit-to-inferred ≈ 85/15. The token convention is the traceability join (closes brownfield M3).</td>
+<td><code>examples-and-tests-catalog.md §6.1/§6.2</code> (29/29, 18/18, zero orphans); <code>test-architecture.md §3.1</code></td>
+</tr>
+<tr>
+<td><strong>CI health</strong></td>
+<td>Full suite <strong>346 passed / 1 skipped / 0 failed</strong>; lint (ruff) + type (mypy --strict) clean; <strong>flakiness budget ZERO</strong> (count-based power gate, equality-not-tolerance determinism, local explicit seeds). One copy-paste CI invocation defined (DX-03).</td>
+<td><code>nfr-verification-matrix.md#nfr-016</code>; <code>test-architecture.md §3.6, §4</code></td>
+</tr>
+<tr>
+<td><strong>Determinism (AX-002)</strong></td>
+<td>Seeded/offline paths byte-reproducible (frozen-dataclass equality, not a seed-fakeable hash); LLM paths flagged <code>deterministic=False</code>, version-stamped; offline adversary proven nondeterminism-free by AST import audit (no <code>random</code>/<code>time</code>/<code>datetime</code>).</td>
+<td><code>test-architecture.md §3.4, §3.5, §2.4</code></td>
+</tr>
+<tr>
+<td><strong>Non-strippable caveats</strong></td>
+<td>Privacy figures cannot be emitted without their caveat — caveat is a mandatory non-defaulted value-object field (TypeError on omit, rejected on empty, survives <code>as_dict()</code>). Replicated for RRS anti-anonymity, exposure &quot;NOT RRS&quot;, EDPB Art 4(5), DPIA disclaimer, CoI no-pre-pub attestation, slice low-power, correlation <code>RealDataAbsent</code>.</td>
+<td><code>test-architecture.md §3.3</code>; <code>SO-06-s7.yaml:evidence</code> (&quot;5/5 scope-honesty disclaimers non-strippable&quot;)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> / AX-004 separation</strong></td>
+<td>Zero code paths merge anon + pseudo into one headline; mutation-tested against 4 fusion vectors; no <code>__float__</code>/combined/deid field in the scoring public API.</td>
+<td><code>nfr-verification-matrix.md#nfr-005</code>; <code>_reviews/sprint/S3/synthesis.md</code> (4 fusion vectors rejected)</td>
+</tr>
+<tr>
+<td><strong>Mutation / perf gates</strong></td>
+<td>No full mutation score and no perf gate in v1 (targeted no-merge/no-fusion audits exist); flagged, not silently omitted. Consistent with NFR-010a no-throughput-floor.</td>
+<td><code>test-architecture.md §5</code> (mutation), <code>§2.6</code> (perf)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>5. Caveats (non-strippable — carried, NEVER fabricated)</h2>
+<p>These five bind the SHIP-WITH-CAVEATS verdict. Each is a pre-existing, documented limitation; none is a MUST failure. Mitigations are the authored Pass-2 protocols (<code>05-pass2/</code>). Owner / deadline reflect that Pass-2 is <strong>OPTIONAL</strong> under <code>pass2_required: false</code> — these are release-honesty obligations and v1.1 unlocks, not v1 ship-blockers.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Caveat</th>
+<th>Why it is a caveat, not a blocker</th>
+<th>Mitigation (protocol)</th>
+<th>Owner</th>
+<th>Deadline</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>1</strong></td>
+<td><strong>Synthetic-only external-validity gap.</strong> <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> synthetic→real transfer is unmeasured; <code>correlate(real=None)</code> returns the <code>RealDataAbsent</code> sentinel and never fabricates a correlation. Every committed-cell metric carries the non-strippable &quot;not citable as a standalone recall claim absent the real-data correlation slice&quot; caveat.</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> is SHOULD / v1.1; the v1 seam ships and is honest. <code>pass2_required: false</code> ⇒ un-Pass-2&#39;d PERSONA-CONDITIONAL row downgrades, does not DEFER.</td>
+<td>Real i2b2-2014 + TAB correlation (Kendall τ-b + Bland-Altman) on the domain-matched English slice; pre-registered; real PHI never enters repo (derived score matrix only). <code>05-pass2/FR-027/protocol.md</code></td>
+<td>De-id collaborator + maintainer (needs i2b2/n2c2 DUA)</td>
+<td>v1.1 / when a DUA-holding collaborator is secured</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Design was never real-user-trialed.</strong> R10 was a SIMULATED panel (6-persona 2026-05-28 + 10-persona 2026-05-29 <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> amendment); the concept-value study was 15 simulated agents, explicitly &quot;NOT a substitute for real users.&quot;</td>
+<td>The locked thresholds (1,522/753/200) were ACCEPTED-WITH-CAVEATS by the simulated panel with 0 REVISE; design credibility rests on simulation until real consumers confirm. Downgrades, does not DEFER.</td>
+<td>n=12–18 real consumers, 2–3 per persona; semi-structured interview + artifact walkthrough; mirrors the R10 10-sub-archetype split for comparability. <code>05-pass2/design-real-user-trial/protocol.md</code></td>
+<td>Maintainer + recruited panel (de-id/privacy-ML community; paid role-screened backfill)</td>
+<td>v1.1 / first real-consumer study window</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><strong>~72% formulaic-template synthetic monoculture.</strong> ~72% of the 575,604-record corpus carries <code>provenance.source_type=&quot;synthetic_lattice_enrichment&quot;</code> (filterable). Power is <strong>precision on the synthetic distribution, not external validity</strong> — a tight committed-cell CI is not generalization.</td>
+<td>DATASHEET/README state this plainly; the caveat is non-strippable on every per-cell metric. The enrichment raised statistical power legitimately (<a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> PASS); the open question is distribution-shift magnitude, which is a measurement, not a defect. Downgrades, does not DEFER.</td>
+<td>Real-data distribution-shift study vs i2b2/TAB feature histograms (derived only); quantify the power discount + name the most-monocultured types/languages. <code>05-pass2/formulaic-distribution-shift/protocol.md</code></td>
+<td>Maintainer + de-id collaborator (co-located i2b2/TAB acquisition with #1)</td>
+<td>v1.1 / same DUA window as #1</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td><strong>All evidence is AGENT_SIMULATED; real-CI Pass-2 owed.</strong> Every story + sprint gate is an agent self-assessment; the suite has not run in a clean, provisioned external CI image. The two environment-conditional guarantees — Parquet→HF-<code>datasets</code> load and full <code>mlcroissant</code> spec-conformance (<a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a>) — degrade to <code>importorskip</code> skips when the <code>distribution</code>/<code>croissant</code> extras are absent.</td>
+<td>No FAIL was observed; the local run is <strong>346 passed / 1 skipped</strong>; <a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a>&#39;s HF <code>datasets</code> round-trip <em>did</em> run in-env. The gap is provenance (self-assessed vs CI-attested), not a known break. Downgrades, does not DEFER.</td>
+<td>Real CI run on a clean checkout with <code>.[dev,baselines,llm,distribution,croissant,viz]</code>; the one copy-paste DX-03 invocation. <code>test-architecture.md §4, §7.1</code></td>
+<td>Maintainer / CI of record</td>
+<td>Before any MUST counts RELEASE-verified (v1.0 release-CI)</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td><strong><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a> runtime throughput unmeasured on real hardware.</strong> NFR-010b (lightweight path ≥5,000 rec/sec on 8-core + p50/p95/p99) and NFR-010c (batch wall-clock) are <code>real_user_needed: true</code>. No throughput harness or rec/sec emitter exists in the codebase (a forward seam by Stage-2/3 design); <strong>no number was fabricated</strong>.</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a> is the sole PROVISIONAL row; NFR-010a has no floor; transformer/LLM detectors are exempt. This is a real-hardware measurement gap, not a missing Stage-4 deliverable. Per policy and the protocol, this is <strong>explicitly SHIP-WITH-CAVEATS, not DEFER</strong>.</td>
+<td>Real 8-core reference-host benchmark (declared spec); ship <code>scripts/benchmark_throughput.py</code>; record rec/sec per detector-class + p50/p95/p99 + streaming/chunked. <code>05-pass2/NFR-010/protocol.md</code></td>
+<td>Runtime privacy engineer + maintainer (8-core CI/cloud host)</td>
+<td>v1.1 / first reference-host provisioning</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>6. Known scope gaps (acceptable for v1)</h2>
+<p>Distinct from the caveats above — these are <strong>bounded feature gaps</strong>, all SHOULD/COULD priority, each documented and honestly framed (not silent omissions). None affects a MUST verdict.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Priority</th>
+<th>v1 status</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong><a class="trace-link" href="examples-and-tests-catalog.html#fr-014" data-trace-id="FR-014" aria-label="Trace FR-014 — — Query-aware masking scorer (SHOULD)">FR-014</a></strong> — query-aware masking scorer</td>
+<td>SHOULD</td>
+<td><strong>Genuine gap</strong> — no <code>fr_014</code> token, no test. Acceptable for v1; recommend a seam test for the query-aware records slice.</td>
+<td><code>examples-and-tests-catalog.md</code> <a class="trace-link" href="examples-and-tests-catalog.html#fr-014" data-trace-id="FR-014" aria-label="Trace FR-014 — — Query-aware masking scorer (SHOULD)">FR-014</a> (&quot;GAP (SHOULD)&quot;); §6.1</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="examples-and-tests-catalog.html#fr-028" data-trace-id="FR-028" aria-label="Trace FR-028 — — Frictionless citation (SHOULD)">FR-028</a></strong> — frictionless citation (BibTeX/CITATION.cff)</td>
+<td>SHOULD</td>
+<td><strong>Genuine gap</strong> — no <code>fr_028</code> token; citation presence implied by dataset-card tests but not explicitly traced. Recommend a <code>CITATION.cff</code> presence check.</td>
+<td><code>examples-and-tests-catalog.md</code> <a class="trace-link" href="examples-and-tests-catalog.html#fr-028" data-trace-id="FR-028" aria-label="Trace FR-028 — — Frictionless citation (SHOULD)">FR-028</a> (&quot;GAP (SHOULD)&quot;); §6.1</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a> / <a class="trace-link" href="../04-development/02-stories/sprint-7/S7-04.html#fr-016" data-trace-id="FR-016" aria-label="Trace FR-016 — / DC-01)">FR-016</a></strong> — coreference-chain &amp; quasi-id-combination scoring</td>
+<td>SHOULD</td>
+<td><strong>v1 seam ships, full feature deferred to v1.1.</strong> Slice loaders (<code>coreference_slice</code>, <code>quasi_identifier_slice</code>) with non-strippable ~72%-formulaic low-power caveat; chain-as-a-unit / qid-combination <em>scoring</em> is v1.1/Pass-2.</td>
+<td><code>examples-and-tests-catalog.md</code> <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/<a class="trace-link" href="../04-development/02-stories/sprint-7/S7-04.html#fr-016" data-trace-id="FR-016" aria-label="Trace FR-016 — / DC-01)">FR-016</a> (&quot;Pass-2 deferred&quot;); <code>SO-06-s7.yaml:decisions_acknowledged</code></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a></strong> — real-data correlation harness</td>
+<td>SHOULD</td>
+<td><strong>v1 seam ships, full real-data run deferred.</strong> (Also Caveat 1.) Harness seam-tested (<code>RealDataAbsent</code> sentinel, non-strippable caveat, deterministic bootstrap CI); real i2b2-2014/TAB correlation is v1.1 Pass-2.</td>
+<td><code>examples-and-tests-catalog.md</code> <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> (&quot;Pass-2 deferred&quot;)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a> / <a class="trace-link" href="examples-and-tests-catalog.html#fr-019" data-trace-id="FR-019" aria-label="Trace FR-019 — — Transcript residual-leakage estimate (COULD)">FR-019</a> / <a class="trace-link" href="examples-and-tests-catalog.html#fr-020" data-trace-id="FR-020" aria-label="Trace FR-020 — — Live-harness adapter — roadmap (COULD)">FR-020</a></strong> — cross-turn fragmented leakage / transcript residual-leakage / live-harness adapter</td>
+<td>COULD</td>
+<td><strong>Roadmap-only.</strong> Documented in ROADMAP.md, pinned by <code>test_roadmap.py</code> property tests as future-not-shipped; no feature implementation in v1.</td>
+<td><code>examples-and-tests-catalog.md</code> <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020 (&quot;doc-pinned&quot;); <code>SO-06-s7.yaml</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>7. Guardrails held (frozen-asset integrity)</h2>
+<p>The release does not silently mutate any frozen evaluation asset. Verified independently against git, not merely asserted by the signoffs:</p>
+<table>
+<thead>
+<tr>
+<th>Guardrail</th>
+<th>State</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>eval_lattice.json</code> frozen (<strong>730 cells @ <code>47c3a8f</code></strong>)</td>
+<td><strong>HELD</strong> — last touched <code>47c3a8f</code> (2026-05-29); <strong>zero</strong> commits touch it through HEAD <code>1423167</code>; round-trips its deterministic generator (0 drift).</td>
+<td><strong>git-verified</strong> (<code>git log 47c3a8f..HEAD -- eval_lattice.json</code> empty); <code>nfr-verification-matrix.md#nfr-018</code>; <code>SO-04..06:evidence</code></td>
+</tr>
+<tr>
+<td>Tags <code>v1.3.0</code> + <code>pre-lattice-enrichment</code> intact</td>
+<td><strong>HELD</strong> — both tags present locally.</td>
+<td><strong>git-verified</strong> (<code>git tag</code> lists both); <code>SO-0{1..6}:evidence</code></td>
+</tr>
+<tr>
+<td>Corpus <strong>575,604 records</strong> unchanged</td>
+<td><strong>HELD</strong> — <code>pii_anon.jsonl.gz</code> untouched since baseline (<code>git log 47c3a8f..HEAD</code> empty for that path); <code>validate.py</code> confirms 575,604 records / 575,604 unique IDs / 0 errors; <code>metadata.json</code> version <code>2.0.0</code>, entity_types <code>63</code>.</td>
+<td><strong>git-verified</strong>; <code>nfr-verification-matrix.md#nfr-001</code>; <code>metadata.json</code></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> power gate PASS</strong></td>
+<td><strong>HELD</strong> — all committed cells meet tiered target (≥1,522/≥753/≥200, NIST-derived), exit 0, 0 shortfalls.</td>
+<td><code>nfr-verification-matrix.md#nfr-018</code></td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> doc-drift = 0</strong></td>
+<td><strong>HELD</strong> — canonical 575,604 / 2,486,438 / 63 / v2.0.0 pinned across 7 docs; <code>test_doc_drift.py</code> 6/6 green; doc-drift still 0 through S6/S7.</td>
+<td><code>nfr-verification-matrix.md#nfr-013</code>; <code>SO-05-s6.yaml</code> / <code>SO-06-s7.yaml:evidence</code> (&quot;<a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> doc-drift still 0&quot;)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>8. What would change the verdict to SHIP</h2>
+<p>SHIP requires retiring the open caveats via the Pass-2 roster — i.e. moving every PROVISIONAL/PERSONA-CONDITIONAL row to a real-data/real-user/real-host VALIDATED outcome, with no PIVOT:</p>
+<ol>
+<li><strong><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a> → MEASURED (real host).</strong> <code>05-pass2/NFR-010/protocol.md §8</code>: lightweight path <strong>≥5,000 rec/sec on a declared 8-core host</strong> with p50/p95/p99 recorded and streaming/chunked demonstrated → <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a> PROVISIONAL becomes the 13th PASS. (A LOOSENED outcome — e.g. 3,000–4,999 rec/sec — substitutes the measured floor and still clears the row; only a wide miss / pathological tail is a PIVOT that would hold SHIP.)</li>
+<li><strong><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> → REAL_USER_VALIDATED.</strong> <code>05-pass2/FR-027/protocol.md §8</code>: τ-b ≥ τ* on <strong>both</strong> i2b2 and TAB with the bootstrap-CI lower bound above the pre-registered floor and Bland-Altman within band → lifts the synthetic-only citation ceiling (retires Caveat 1).</li>
+<li><strong>Design real-user trial → REAL_USER_VALIDATED.</strong> <code>05-pass2/design-real-user-trial/protocol.md §8</code>: real consumers confirm the design elements + locked thresholds (≈R10&#39;s ACCEPTED-WITH-CAVEATS, no DIVERGED) → retires Caveat 2.</li>
+<li><strong>Distribution-shift study → REAL-DATA-VALIDATED (or TIGHTENED with a stated power discount).</strong> <code>05-pass2/formulaic-distribution-shift/protocol.md §8</code>: bounds Caveat 3 to a measured, named discount.</li>
+<li><strong>Real-CI Pass-2 green on a clean checkout</strong> with the full optional surface → drops <code>AGENT_SIMULATED</code> (retires Caveat 4) and converts the <a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a> <code>importorskip</code> skips to executed passes.</li>
+</ol>
+<p>Until those outcomes exist <strong>as real artifacts</strong> (<code>05-pass2/*/outcome.md</code>), the honest verdict is SHIP-WITH-CAVEATS. <strong>No agent-simulated cohort, synthetic reference, or sandbox throughput number may substitute</strong> — each protocol marks substitution a CATASTROPHIC methodology violation and REFUSES it (<code>05-pass2/*/protocol.md</code> preamble).</p>
+<hr>
+<h2>9. Recommended next action</h2>
+<p><strong>Ship v1.0 of pii-anon-datasets as SHIP-WITH-CAVEATS</strong>, publishing the five §5 caveats verbatim in the release notes / dataset card (they are already non-strippable in-artifact). Concurrently, <strong>execute the §8 Pass-2 roster</strong> — prioritizing (a) the <strong>real-CI clean-checkout run</strong> (cheapest, retires Caveat 4 and the <a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a> skips with no external dependency) and (b) securing the <strong>i2b2/n2c2 DUA + de-id collaborator</strong> that co-unlocks Caveats 1 and 3 and <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016. Record each outcome to <code>05-pass2/&lt;item&gt;/outcome.md</code> and write the corresponding Status Change Log row into <code>02-requirements/traceability-matrix.md</code>; re-run T6 to re-rule toward SHIP once the roster lands.</p>
+<hr>
+<h2>10. Handoff signal — PDLC closure for this release</h2>
+<p><strong>Stage 5 Testing is COMPLETE for pii-anon-datasets v2.0.0.</strong> This report is the canonical release-readiness verdict and closes the developer-assistant PDLC for this release cycle:</p>
+<ul>
+<li><strong>Development COMPLETE</strong> (S1 + S2 + S-PWR + S3 + S4 + S5 + S6 + S7 all DONE; <code>SO-06-s7.yaml:scope</code>).</li>
+<li><strong>Testing COMPLETE</strong> (T2 architecture, T3 NFR-verification, T4 a11y N/A, T5 Pass-2 protocols, T6 catalog + this synthesis).</li>
+<li><strong>Release verdict: SHIP-WITH-CAVEATS</strong> — actionable, evidence-backed, caveats non-strippable, Pass-2 roster authored and routed.</li>
+</ul>
+<p>The PDLC reopens for v1.1 upon the first Pass-2 <code>outcome.md</code> landing (re-run T6), or for any new scope (<a class="trace-link" href="examples-and-tests-catalog.html#fr-014" data-trace-id="FR-014" aria-label="Trace FR-014 — — Query-aware masking scorer (SHOULD)">FR-014</a>/028 feature work; <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016/018/019/020 promotion from seam/roadmap).</p>
+<hr>
+<p><em>Conforms to the developer-assistant release-readiness-report section contract (verdict · evidence summary · test-architecture summary · cross-cutting discipline · caveats · recommended next action · handoff signal). Brownfield &quot;Source Signal vs Gaps&quot; header carried. Every load-bearing claim cites an artifact section or a git-verified fact; no new finding generated; no caveat fabricated or stripped.</em></p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>05-testing/release-readiness-report.md</code> ·
+  content-hash <code>eb5f2d24832d</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

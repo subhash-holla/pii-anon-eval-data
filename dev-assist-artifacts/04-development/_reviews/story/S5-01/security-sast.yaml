@@ -1,0 +1,195 @@
+# Security-SAST reviewer verdict — STORY gate
+schema: dev-assist/reviewer-verdict/v1
+reviewer: dev-assist-development-security-sast
+gate: story
+story_id: S5-01
+story_title: "Legally-distinct regulatory crosswalk (gov-02 N-typed-column / FR-022)"
+iteration: 1
+audit_tagged: true            # [AUDIT] — gov-02 compliance-integrity controls in scope
+review_mode: story-conditional
+date: 2026-05-30
+reviewer_email: subhashholla23@gmail.com
+
+verdict: APPROVE
+approve_condition: "zero MAJOR-or-above findings"
+blocking_findings: 0
+finding_count: 1              # 1 OBSERVATION (non-blocking)
+
+# --- Independence + self-attestation -----------------------------------------
+context_bounds_respected: true
+independence:
+  bounded_context: true
+  shared_state_used: false
+  attestation: >
+    Review confined to the three owned files; no cross-reviewer state consulted.
+    All control verifications were re-derived independently (own greps, an AST
+    purity pass, and a live mutation-probe of test #3), not taken on trust from
+    the story's §12 self-reported evidence.
+
+# --- Scope reviewed ----------------------------------------------------------
+files_reviewed:
+  - src/pii_anon_datasets/compliance/crosswalk.py      # impl (story path; story §8 omitted the src/pii_anon_datasets/ prefix)
+  - src/pii_anon_datasets/compliance/__init__.py       # package surface / re-exports
+  - tests/test_crosswalk.py                            # 6 fr_022-tokened tests (incl. AUDIT #2, #3)
+diff_scope_confirmed: true
+diff_scope_note: >
+  git diff fdc3b450~1..HEAD touches only the three owned files plus the story
+  doc; no lattice / corpus / tags / scoring / exporter code modified.
+
+# --- Domain packs ------------------------------------------------------------
+domain_packs_active: []        # developer-assistant.yaml: domain_packs: [] — no pack extensions merged
+pack_extensions_loaded: []     # financial + agentic-runtime extension files absent AND no pack active
+source_pack_findings: 0
+sensitive_data_scan_note: >
+  Project sets security.sensitive_data_scan.enforcement: advisory, but no pack
+  pattern set is active. AX-pii-anon-001 real-PII heuristics were run manually
+  over the owned files as additional evidence (SSN / Luhn-card / email / API-key
+  shapes) — zero matches; test data is regime tags only.
+
+# --- PRIMARY controls (the [AUDIT] gov-02 compliance-integrity gate) ----------
+primary_controls:
+  - id: PRIMARY-1
+    control: "Crosswalk emits NO merged/equivalence compliance verdict"
+    requirement: >
+      No `compliant` / `deidentified` / `overall` / `equivalent` field or column;
+      tag presence is an IN-SCOPE SIGNAL, never a determination. A wrong
+      'GDPR-compliant: true' emitted from a tag would be a dangerous
+      compliance-integrity failure.
+    status: PASS
+    evidence: >
+      grep over crosswalk.py: zero bare `compliant` / `overall` / `equivalent`
+      identifiers (those substrings occur ONLY in docstring/disclaimer prose);
+      the sole `deidentified` occurrences are the legitimate regime-scoped
+      `ccpa_deidentified` / `reg_ccpa_deidentified` (CCPA's own statutory term).
+      No `True` / `False` literal is used as a regime value (the one `True` hit
+      is `@dataclass(frozen=True)` decorator kwarg). RegimeStatus is a str-Enum
+      with values {in_scope, out_of_scope_of_dataset} — a scope SIGNAL, not a
+      pass/fail verdict. as_dict() keys = {5 regimes, other_regimes, disclaimer};
+      forbidden∩cols = forbidden∩dict = empty set (verified live). A non-empty,
+      __post_init__-enforced CROSSWALK_DISCLAIMER states it "INFORMS but does NOT
+      MAKE a compliance determination."
+  - id: PRIMARY-2
+    control: "HIPAA stays TWO legally-distinct columns"
+    requirement: >
+      Safe-Harbor §164.514(b)(2) and Expert-Determination §164.514(b)(1) are
+      different legal standards, never collapsed into one HIPAA verdict.
+    status: PASS
+    evidence: >
+      REGIMES carries `hipaa_safe_harbor` and `hipaa_expert_determination` as
+      two separate entries; two separate dataclass fields; two separate
+      `reg_hipaa_*` columns; the `hipaa` tag fans out to BOTH via
+      _TAG_TO_REGIMES. No collapsed `reg_hipaa` literal exists anywhere in the
+      module (grep-confirmed). Test #2 asserts exactly these two columns and the
+      absence of `reg_hipaa`.
+  - id: PRIMARY-3
+    control: "Test #3 source-grep guard has TEETH"
+    requirement: >
+      The guard must fail RED if a merged-verdict symbol were defined.
+    status: PASS
+    evidence: >
+      crosswalk_mod.__file__ resolves to the LIVE impl at
+      src/pii_anon_datasets/compliance/crosswalk.py (verified) — the grep reads
+      the real source, not a stale copy. Mutation probe reproducing test #3's
+      exact regex logic: planting each of `compliant: bool`, `overall:`,
+      `equivalent:`, and `reg_regulatory_domains` into the source is CAUGHT by
+      the guard (each yields a RED failure). The guard is a genuine structural
+      backstop, not a tautology. Coverage note: the guard intentionally omits a
+      bare `deidentified` word-match (since `ccpa_deidentified` legitimately
+      contains it); that gap is fully closed by test #3's separate column-set and
+      field-set disjointness assertions (forbidden∩cols, forbidden∩dict) plus the
+      explicit `reg_deidentified` / `reg_compliant` absence checks.
+
+# --- SECONDARY controls ------------------------------------------------------
+secondary_controls:
+  - id: SEC-INERT
+    control: "Pure-stdlib, inert"
+    status: PASS
+    evidence: >
+      Imports of crosswalk.py = {__future__, collections.abc, dataclasses,
+      enum}; __init__.py adds only the intra-package re-export. Independent AST
+      sweep: no eval / exec / compile / __import__ / subprocess / os.system /
+      pickle / marshal / yaml / socket / urllib / http / requests / secrets /
+      getpass / ctypes / importlib — by import OR by Name node. No network, no
+      filesystem write, no dynamic code, no deserialization. Module is inert.
+  - id: SEC-DETERMINISM
+    control: "NFR-004 / AX-pii-anon-002 determinism (no nondeterminism imports)"
+    status: PASS
+    evidence: >
+      AST guard (test #6 and independent re-run) confirms none of
+      {random, time, uuid, datetime, secrets} imported. Pure function of input
+      tags; order-preserving de-dup; no RNG/clock. Reproducible.
+  - id: SEC-AX-001
+    control: "AX-pii-anon-001 synthetic-only / no real PII (operates on caller dicts)"
+    status: PASS
+    evidence: >
+      Module operates on caller-supplied record dicts and reads only the
+      `regulatory_domains` key (coerced via str().strip().lower()); it neither
+      stores nor logs record contents. Manual real-PII heuristic scan
+      (SSN / Luhn-card / email / sk_|pk_|AKIA|ghp_ key shapes) over all three
+      owned files: zero matches. Test fixtures use regime tags only
+      ({gdpr, hipaa, ccpa, pci_dss, sox, lgpd, pipa}) — no PII.
+  - id: SEC-INJECTION
+    control: "No injection surface on a capability-gated path"
+    status: PASS
+    evidence: >
+      No SQL/NoSQL, no string-built queries, no f-string into any sink. The one
+      f-string (`f"reg_{regime}"`) interpolates only the frozen REGIMES constant,
+      never user input. Non-FR-022 tags (sox/lgpd/pipa) are surfaced in
+      other_regimes, never used to synthesize a column name (test #5 asserts no
+      smuggled `reg_<tag>`).
+
+# --- Findings ----------------------------------------------------------------
+findings:
+  - id: SAST-S5-01-001
+    severity: OBSERVATION
+    blocking: false
+    title: "Story §8 owned-file paths omit the src/pii_anon_datasets/ package prefix"
+    file: dev-assist-artifacts/04-development/02-stories/sprint-5/S5-01.md
+    location: "§8 'Files this story owns' vs §12 'Scope'"
+    detail: >
+      The dispatch and §8 list the owned files as compliance/crosswalk.py etc.,
+      but the real (and git-tracked, import-resolved) location is
+      src/pii_anon_datasets/compliance/. §12 already uses the full path, so the
+      implementation is correct and unambiguous; this is a doc-path cosmetic
+      inconsistency only. No security impact — flagged for traceability hygiene.
+    recommendation: >
+      Normalize §8 paths to the src/pii_anon_datasets/ prefix to match §12 and
+      the actual tree. Non-blocking.
+    source_pack: null
+
+# --- Severity ledger ---------------------------------------------------------
+severity_summary:
+  SHOWSTOPPER: 0
+  CATASTROPHIC: 0
+  MAJOR: 0
+  MINOR: 0
+  OBSERVATION: 1
+
+# --- Common-pattern catalog sweep (15 base patterns) -------------------------
+catalog_sweep:
+  composition_root_ban: N/A          # no crate deps; single pure-stdlib module
+  capability_outside_registry: N/A   # no capability registry in this dataset domain
+  trust_boundary_bypass: N/A
+  unsafe_without_safety: N/A         # Python; no unsafe blocks
+  cve_high_new_dep: PASS             # zero new dependencies (stdlib only)
+  hsm_signing_contract: N/A
+  egress_not_declared: PASS          # no egress / network
+  hardcoded_credential: PASS         # none
+  sql_nosql_injection: PASS          # no query surface
+  git_pinned_dep: PASS               # no deps
+  denied_license_dep: PASS           # no deps
+  wildcard_capability_scope: N/A
+  cross_boundary_spawn: N/A          # no tokio/threads/async
+  architectural_egress_import: PASS  # imports only intra-package + stdlib
+  weak_hash_primitive: PASS          # no md5/sha1 (no hashing at all)
+
+verdict_rationale: >
+  All three [AUDIT] gov-02 compliance-integrity controls PASS under independent
+  verification: (1) no merged/equivalence verdict — statuses are an in_scope /
+  out_of_scope_of_dataset SIGNAL gated by a non-empty disclaimer, never a
+  'compliant: true'; (2) HIPAA is two legally-distinct columns mapping both
+  §164.514(b) methods; (3) test #3's source-grep guard reads the live impl and
+  was mutation-proven to fail RED on any planted merged-verdict symbol. Secondary
+  controls (pure-stdlib, inert, deterministic, AX-pii-anon-001 no-PII, no
+  injection) all PASS. Sole finding is a non-blocking OBSERVATION on a doc path
+  prefix. Zero MAJOR-or-above => APPROVE.

@@ -1,0 +1,116 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S4-05
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S4-05-01
+    severity: MINOR
+    location: tests/test_viz.py:217
+    description: |
+      `test_fr005_pyproject_declares_viz_extra` uses the token style `fr005` (no underscore
+      separator) while the other 8 tests consistently use `fr_005` / `nfr_003` / `nfr004`
+      (mixed, but the Pareto and agent-leakage tests use the canonical `fr_NNN` form with
+      underscore). Story §6 specifies tokens `fr_005` / `nfr_003` / `fr_006`. A strict grep
+      for `fr_\d{3}` would not match this name. The FR-005 intent is clear from context; this
+      is a stylistic inconsistency across the 9 tests, not a functional gap.
+    suggested_resolution: |
+      Rename `test_fr005_pyproject_declares_viz_extra` to
+      `test_fr_005_pyproject_declares_viz_extra` to match the canonical `fr_NNN` underscore
+      token style used by the other 8 tests and specified in story §6. No logic change required.
+
+notes: |
+  TDD DISCIPLINE — STRICT MODE:
+  - RED commit (cf8bc50): introduces `tests/test_viz.py` (226 lines, 9 tokened test functions
+    covering all 8 §6 items; §6 test 7 split into a package-import test +
+    AST-guard companion per §12 evidence). At RED time `reporting.viz` does not exist —
+    collection fails with ImportError. TRUE RED state confirmed.
+  - GREEN commit (8c5c820): introduces `src/pii_anon_datasets/reporting/viz.py` (207 LOC) +
+    updates `reporting/__init__.py` + adds `viz` extra to `pyproject.toml`. RED-before-GREEN
+    sequence confirmed; production code first appears in GREEN, never before.
+  - REFACTOR commit (344d7f1): single-line change — `from typing import Sequence` replaced with
+    `from collections.abc import Sequence` (ruff UP035 clean). No logic change. Behaviour-
+    equivalent; confirmed via `git show 344d7f1`.
+
+  SCOPE DISCIPLINE (story §8):
+  - RED: `tests/test_viz.py` + story MD only. No out-of-scope files.
+  - GREEN: `src/pii_anon_datasets/reporting/viz.py` (NEW) + `reporting/__init__.py` (MODIFIED)
+    + `pyproject.toml` (MODIFIED). All three listed in §8. No out-of-scope files.
+  - REFACTOR: `reporting/viz.py` only. In-scope.
+  Full RED→GREEN→REFACTOR range (`git diff cf8bc50^..344d7f1 --name-only`) touches exactly the
+  5 §8-listed paths (story MD, pyproject, __init__, viz.py, test_viz.py). Zero scope creep.
+
+  LAZY MATPLOTLIB / NFR-004 (AST-confirmed):
+  - Python AST walk of `viz.py` body-level nodes confirms zero `ast.Import`/`ast.ImportFrom`
+    nodes with `matplotlib` as module or name at module scope. The only matplotlib import lives
+    inside `_require_matplotlib()` — a function body node, not a module-level node.
+  - `test_nfr004_viz_no_toplevel_matplotlib_import` (test 8b companion) is itself an AST guard
+    that will catch any future regression. Reviewed and found correct.
+  - `test_nfr004_reporting_core_imports_without_matplotlib` properly evicts matplotlib from
+    `sys.modules`, patches `builtins.__import__`, re-imports the package, and restores state in
+    a `try/finally`. Robust — no leakage risk to other tests.
+
+  FROZEN LeakageEdge:
+  - `@dataclass(frozen=True)` confirmed via `e.__dataclass_params__.frozen == True`. Mutation
+    attempt raises `FrozenInstanceError`. Satisfies the thin-immutable-transport contract.
+
+  MODULE BOUNDARY (NFR-005 / AX-004):
+  - `import ast` grep and AST walk confirm zero `scoring` imports in `viz.py` at any scope.
+    `pareto_plot` signature is `Sequence[tuple[float, float, str]]` — structurally cannot accept
+    a merged scalar. Two-axis contract is structural, not just a docstring claim.
+
+  `Any` USAGE:
+  - Three uses of `typing.Any`: (a) `_require_matplotlib() -> Any` — correct, returns a
+    `matplotlib.pyplot` module object unavailable at type-check time without the extra installed;
+    (b) `reliability_diagram(result: Any, ...)` — deliberate duck-typing documented inline and in
+    module docstring (avoids hard-importing CalibrationResult from stats/); (c)
+    `slice_heatmap(power_matrix: Any, ...)` — deliberate duck-typing for PowerMatrix. All three
+    are structurally justified by the module-boundary constraint; module and function docstrings
+    explain each explicitly. Satisfies pattern #3 (no unjustified `Any`).
+
+  PUBLIC API DOCS:
+  - Module docstring (28 lines): explains all five functions, NFR-004 lazy-import strategy,
+    Agg backend selection, and PNG determinism contract.
+  - Per-function docstrings: all 5 public functions + `_require_matplotlib` + `LeakageEdge`
+    carry docstrings. Satisfies patterns #4 and #12.
+
+  SENSIBLE DEVIATIONS CONFIRMED:
+  (a) 9 tests vs 8 §6 items — §6 test 7 is split into a package-import runtime test
+      (`test_nfr004_reporting_core_imports_without_matplotlib`) + an AST structural guard
+      (`test_nfr004_viz_no_toplevel_matplotlib_import`). Both are referenced in §12. This is
+      a strictly better implementation: the AST guard catches future regressions independently
+      of the runtime path. Deviation is reasonable.
+  (b) Sankey rendered as horizontal-bar flow chart — `agent_leakage_sankey` uses `barh` rather
+      than `matplotlib.sankey.Sankey`. `Sankey` requires flow-conservation (balanced in/out per
+      node), which arbitrary `LeakageEdge` inputs need not satisfy. The docstring explicitly
+      states this rationale. The result still surfaces dominant leakage paths by magnitude,
+      ordered descending, labelled `source → target`. Deviation is reasonable and more robust.
+
+  LINT / TYPE:
+  - `ruff check src/pii_anon_datasets/reporting/viz.py`: All checks passed.
+  - `ruff check tests/test_viz.py src/pii_anon_datasets/reporting/__init__.py`: All checks passed.
+  - `mypy --strict --follow-imports=silent src/pii_anon_datasets/reporting/viz.py`:
+    Success: no issues found in 1 source file.
+
+  TEST RUN (re-executed):
+  - `python3 -m pytest tests/test_viz.py -v`: 9 passed in 0.69s. matplotlib 3.10.8 installed —
+    PNG tests RUN (not skip). All 5 render functions wrote non-empty PNGs with valid PNG magic
+    header (0x89504E470D0A1A0A).
+  - Full suite: 207 passed, 1 skipped — zero regressions against the 198-test prior baseline.
+
+  PRODUCTION PATH SAFETY:
+  - Zero `unwrap()` / `expect()` / non-null assertions in viz.py.
+  - One `ValueError` raised on mismatched lengths in `coverage_risk_curve` — appropriate defensive
+    validation with a clear message, not an unexpected panic.
+  - No dev-dependency imported at runtime (all stdlib: `__future__`, `collections.abc`, `dataclasses`,
+    `typing`; matplotlib is optional and guarded).
+
+  No domain pack extensions active; no `financial` or other active packs found under
+  `/Users/subhashholla/Development/Agent Plugins/developer-assistant/domain-packs/`.
+
+review_time_seconds: 312
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

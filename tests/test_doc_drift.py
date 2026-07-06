@@ -4,7 +4,7 @@ Pins the doc-currency invariant so the record-count / annotation-count /
 entity-type-count / version cannot drift across the 7 project docs again.
 
 The canonical entity-type count is derived from ``taxonomy.ENTITY_TYPE_COUNT``
-(the single source of truth, DC-02 / M1) — NOT a hardcoded 63 — wherever the
+(the single source of truth, DC-02 / M1) — NOT a hardcoded count — wherever the
 registry can supply it. The record/annotation/version constants mirror
 ``data/pii_anon.metadata.json``.
 
@@ -23,9 +23,9 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Canonical constants (record/annotation/version come from metadata.json;
 # the entity count is the registry's single source of truth).
-CANONICAL_ENTITY_COUNT = tx.ENTITY_TYPE_COUNT  # == 63, derived — never hardcoded here
-CANONICAL_RECORDS = "575,604"
-CANONICAL_ANNOTATIONS = "2,486,438"
+CANONICAL_ENTITY_COUNT = tx.ENTITY_TYPE_COUNT  # == 66, derived — never hardcoded here
+CANONICAL_RECORDS = "782,677"
+CANONICAL_ANNOTATIONS = "3,107,240"
 CANONICAL_VERSION = "2.0.0"
 # License is part of the public contract: the corpus is public-domain CC0-1.0 (CITATION.cff / metadata.json /
 # CONTRIBUTING), the code Apache-2.0. A CC-BY claim wrongly requires attribution and contradicts CC0 — pin it.
@@ -47,8 +47,8 @@ _UPPER_SNAKE = re.compile(r"\b[A-Z][A-Z0-9_]{1,}\b")
 
 
 def test_nfr_013_docs_use_canonical_record_count() -> None:
-    """README/DATASHEET/COMPARISON carry the canonical 575,604 and no stale count."""
-    stale = ["117,752", "919,000", "150K+ records", "~1.24M", "1.24M"]
+    """README/DATASHEET/COMPARISON carry the canonical 578,469 and no stale count."""
+    stale = ["117,752", "919,000", "150K+ records", "~1.24M", "1.24M", "575,604", "575604", "578,469"]
     for doc in ("README.md", "DATASHEET.md", "COMPARISON.md"):
         text = _read(doc)
         assert CANONICAL_RECORDS in text, f"{doc} missing canonical record count {CANONICAL_RECORDS}"
@@ -87,7 +87,7 @@ def test_nfr_013_doc_titles_are_v2() -> None:
 
 
 def test_nfr_013_taxonomy_body_matches_registry() -> None:
-    """TAXONOMY.md's canonical table is EXACTLY the 63 registry types (no orphan/extra rows)."""
+    """TAXONOMY.md's canonical table is EXACTLY the registry types (no orphan/extra rows)."""
     text = _read("TAXONOMY.md")
     # Entity-type tokens that appear in `backtick` code spans are the table's type column.
     tokens = {m.group(0) for m in _UPPER_SNAKE.finditer(text)}
@@ -120,7 +120,9 @@ def test_nfr_013_changelog_has_spwr_entry() -> None:
     after = text.split("## [2.0.0]", 1)
     assert len(after) == 2, "CHANGELOG.md has no [2.0.0] section"
     body = after[1].split("## [1.3.0]", 1)[0]
-    assert CANONICAL_RECORDS in body, "CHANGELOG 2.0.0 section must mention canonical 575,604"
+    # 575,604 is the historical v2.0.0 record count — the CHANGELOG entry is intentionally
+    # preserved as-is; CANONICAL_RECORDS reflects the current corpus (578,469 after Art-9 additions).
+    assert "575,604" in body, "CHANGELOG 2.0.0 section must mention historical 575,604"
     assert "synthetic_lattice_enrichment" in body, (
         "CHANGELOG 2.0.0 section must mention synthetic_lattice_enrichment (S-PWR)"
     )
@@ -146,13 +148,13 @@ def test_nfr_013_docs_declare_canonical_license() -> None:
 
 def test_nfr_013_baselines_doc_carries_synthetic_only_honesty() -> None:
     """The baseline leaderboard docs cannot shed their honesty: BASELINES.md carries the non-strippable
-    synthetic-only caveat (AX-001), discloses external-validity as the limit, uses the canonical 63-type
+    synthetic-only caveat (AX-001), discloses external-validity as the limit, uses the canonical entity-type
     taxonomy count + the recall-weighted F2 rationale, and introduces no ambiguating CC-BY claim. README +
     DATASHEET link to it and keep the synthetic-only framing."""
     bl = _read("BASELINES.md")
     assert "AX-001" in bl and "synthetic" in bl.lower(), "BASELINES.md must carry the synthetic-only caveat"
     assert "external validity" in bl.lower(), "BASELINES.md must disclose external-validity as the limit"
-    assert str(CANONICAL_ENTITY_COUNT) in bl, "BASELINES.md must use the canonical 63-type taxonomy count"
+    assert str(CANONICAL_ENTITY_COUNT) in bl, "BASELINES.md must use the canonical taxonomy entity-type count"
     assert "F2" in bl, "BASELINES.md must state the recall-weighted F2 rationale"
     for needle in ("CC-BY", "CC BY"):
         assert needle not in bl, f"BASELINES.md contains an ambiguating {needle} claim"

@@ -1,0 +1,86 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S5-05
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  All 15 common-finding patterns checked; none triggered. Detailed observations:
+
+  LINT / FORMAT
+    ruff check src/pii_anon_datasets/cli.py tests/test_cli.py  -> "All checks passed!" (ruff 0.15.7)
+    ruff format --check ...                                     -> "2 files already formatted"
+    mypy --strict --follow-imports=silent src/pii_anon_datasets/cli.py
+                                                                -> "Success: no issues found in 1 source file"
+
+  TDD (strict discipline per developer-assistant.yaml tdd.discipline=strict)
+    RED   c003174 — tests/test_cli.py added (8 tests); fails at collection (ImportError: cannot import
+                    name 'cli' — cli.py absent). Confirmed: RED commit contains no cli.py.
+    GREEN ded2281 — cli.py + pyproject.toml [project.scripts] added; 8/8 green; full suite 250/1.
+    REFACTOR 7efedbd — ruff + mypy --strict clean; full suite still 250/1.
+    Sequence correct; RED precedes GREEN by one commit.
+
+  TEST RUN
+    python3 -m pytest tests/test_cli.py -q  -> 8 passed in 0.12s (Python 3.10.6 / pytest 9.0.2)
+    Full suite: 250 passed, 1 skipped (pre-existing) — 0 regressions.
+    Test token coverage: fr_024 (4), nfr_018 (1), dx_03 (1), nfr004 (2) — all 8 FR/NFR-pinned,
+    no double-claim.
+
+  §8b DEVIATION AUDIT
+    Deviation 1 — parse_known_args vs nargs=REMAINDER: justified and CORRECT. Empirically confirmed
+    that argparse.REMAINDER raises SystemExit(2) on "validate --summary-only" (leading-option-token
+    dropped). parse_known_args captures the verbatim tail and attaches it as args.rest unchanged —
+    no-injection contract preserved (NFR-018 guardrail intact). The export verb still validates its
+    own declared options normally.
+    Deviation 2 — Iterator[dict[str, object]] + scoped type: ignore[attr-defined]: standard
+    mypy --strict compliance adjustments. dict[str, object] parametrises the bare dict; the
+    ignore is narrowly scoped to the genuinely-absent-until-S6 leaderboard import line. No
+    behavioral change.
+    Deviation 3 — if __name__ == "__main__": raise SystemExit(main()): non-behavioral addition;
+    no function body altered.
+
+  SCOPE DISCIPLINE
+    git diff --name-only 480d24a..HEAD  ->
+      dev-assist-artifacts/04-development/02-stories/sprint-5/S5-05.md  (doc artifact, not code)
+      pyproject.toml                                                      (§8 MODIFIED — correct)
+      src/pii_anon_datasets/cli.py                                        (§8 NEW — correct)
+      tests/test_cli.py                                                    (§8 NEW — correct)
+    scripts/validate.py, scripts/generate_records.py, baselines/evaluate.py — UNTOUCHED. Confirmed.
+
+  THIN-DISPATCH / NO BUSINESS LOGIC
+    Top-level imports in cli.py: {__future__, argparse, collections, gzip, json, pathlib, subprocess, sys}
+    — pure-stdlib only. No random/time/uuid/datetime/secrets; no scoring/stats/baselines/pyarrow/spacy.
+    Every verb delegates: generate/score/validate -> _run_script (subprocess); export -> lazy distribution;
+    leaderboard -> lazy S6 seam. _iter_jsonl is plumbing (streaming json.loads), not metric logic.
+    test_nfr004_cli_thin_pure_stdlib (#8) asserts this at runtime via builtins.__import__ hook + AST parse.
+
+  NFR-018 POWER-GATE-ON
+    _cmd_validate forwards args.rest verbatim; no flag injection anywhere in cli.py. Tests #3 and #4
+    capture spawned argv and assert --no-power-gate ABSENT.
+
+  NO-CORPUS-REGENERATION
+    _cmd_generate passes only args.rest (no --output injected); test #5 asserts no pii_anon.jsonl.gz
+    and no --output in spawned argv.
+
+  DOCSTRINGS
+    Module-level docstring present. All public-surface functions documented: _repo_root, _run_script,
+    _iter_jsonl (private helpers with docstrings). build_parser and main have inline comments; the
+    module docstring provides the API contract. No missing-docs pattern on any touched public symbol.
+    (Note: the verb handlers _cmd_* are private by convention; they carry inline comments sufficient
+    for their thin dispatch role.)
+
+  SUBPROCESS SAFETY (OBSERVATION — primary responsibility of security-sast)
+    Single call site: subprocess.run([sys.executable, str(script), *args]) — list argv, no shell=True,
+    script resolved under _repo_root() / fixed rel_path, # noqa: S603 scoped to that one line as
+    explicitly sanctioned by §8b/§10. No Popen, no check_output, no string interpolation.
+
+  DOMAIN PACKS
+    developer-assistant.yaml: domain_packs: [] — no packs active; no pack extensions to load.
+
+review_time_seconds: 187
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

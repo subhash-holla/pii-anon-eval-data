@@ -1,0 +1,103 @@
+reviewer: dev-assist-development-security-sast
+scope_id: S3-02
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY-gate security-sast review of S3-02 (iteration 1), read-only. Bounded context:
+  story file (S3-02.md), the owned/in-scope diff set — scoring/adversary/offline_adversary.py
+  (NEW, 246 LoC), tests/test_offline_adversary.py (NEW/MODIFIED), the two export edits
+  (scoring/adversary/__init__.py, scoring/__init__.py) — plus the transitively-imported
+  scoring/adversary/base.py and scoring/signals.py (read for inertness), and
+  developer-assistant.yaml (domain_packs only). No findings at any severity. APPROVE
+  (zero MAJOR+).
+
+  INERTNESS — offline_adversary.py is a pure, offline, pure-stdlib analytic (VERIFIED on AST):
+    - Imports (AST-walked, ALL nodes): `from __future__ import annotations`,
+      `from collections.abc import Sequence`, `from dataclasses import dataclass`, and two
+      in-package RELATIVE imports (`..signals` -> UNIQUENESS_WEIGHT/SignalsBlock; `.base` ->
+      Guess/Persona/Target). Nothing else. No third-party, no top-level stdlib beyond those.
+    - Banned-construct sweep (AST Name/Attribute/Call binding analysis, not naive substring):
+      NO eval / exec / compile / __import__ / globals / locals; NO subprocess / os.system /
+      popen; NO pickle / marshal / shelve; NO yaml (no yaml.load); NO getattr/setattr abuse.
+      Call-target set is purely arithmetic/collection helpers (min, max, sorted, isinstance,
+      str, tuple, dict.get/.keys/.lower, .append) + the module's own private feature fns.
+    - NO network / socket: no socket / urllib / requests / httpx / http.client / ftplib /
+      smtplib. NO os.environ / getenv / secrets (no secret pull). NO filesystem: no open /
+      Path / read_text / read_bytes / json.load. Egress surface for this module = none.
+    - The two token-presence hits ("os", "input") from a coarse substring pre-scan are
+      confirmed FALSE POSITIVES via word-boundary + AST analysis: they occur only inside
+      prose/identifiers (`post`, `closed`, `across`, `input`-ordering text). Zero `os`/`sys`/
+      `io`/`open`/`input` identifiers, attributes, or call targets are bound.
+
+  AX-001 (no-real-PII) — PRIMARY axiom, VERIFIED CLEAN on independent grounds:
+    1. offline_adversary.attack() is a pure in-memory transform over caller-supplied
+       `targets: Sequence[Target]` + `candidates: Sequence[Persona]` (frozen value objects from
+       base.py) + an int `candidate_set_size`. It performs ZERO ingestion: no load_dataset,
+       no open(), no json, no file/network read. There is no read path in scope to point at a
+       real-PII source — whatever the caller passes is the only data surface, and that surface
+       is synthetic Persona/Target objects per the port contract.
+    2. The Persona/Target value objects (base.py) are frozen dataclasses; Target carries only a
+       ground-truth `target_id`, an `anonymized_text` string, and RE-EXTRACTED `observed_signals`
+       (reidx-01). The adversary reads the post-anonymization view for the target side and gold
+       behavioral_signals only for the candidate substrate — no synthesis of new PII.
+    3. Tests use tiny inline synthetic fixtures (3 personas: p-boston/p-fitness/p-plain on short
+       crafted texts via signals.extract); they do NOT touch load_dataset or any real corpus
+       path. No real-PII can enter the test path. The QI-survival match
+       (`value.lower() in target.anonymized_text.lower()`) operates only over these synthetic
+       strings.
+
+  AST import-purity guard (NFR-004 / AX-002) — EXISTS and is CORRECTLY SCOPED:
+    - test_fr_007_nfr004_offline_adversary_imports_no_nondeterminism parses
+      offline_adversary.py via ast.parse, walks ast.Import / ast.ImportFrom, and asserts
+      `banned.isdisjoint(imported)` where banned == {"random","time","uuid","datetime",
+      "secrets"} — exactly the required set. RAN LIVE: passes. The 8 §6 tests + this guard
+      (9 total) all pass; `pytest -k fr_007` and `-k fr_010` both select live. Full suite
+      124 passed, 0 regressions — no flaky/RNG/clock leakage (determinism dynamically
+      corroborated alongside the static warrant).
+
+  ReDoS triage (regex over anonymized_text) — CLEAN:
+    - offline_adversary.py runs NO regex over `anonymized_text`. QI-token survival uses a plain
+      case-insensitive SUBSTRING test (`value.lower() in haystack`) — linear-time, no
+      backtracking surface, safe on adversary-controlled Target.anonymized_text.
+    - The only regex surface is the transitively-called signals.extract (already shipped in
+      S3-01, re-triaged here because S3-02 fixtures + assemble_paired_set feed text into it):
+      8 re.* sites — 6 string-LITERAL patterns, 2 iterating module-level CONSTANT pattern lists
+      (TIMEZONE_PATTERNS, PERSONAL_ANECDOTE_PATTERNS). No pattern is built from runtime/caller
+      input. Catastrophic-backtracking heuristic over all literal + module-const patterns:
+      0 flagged for nested/overlapping/adjacent quantifiers — flat `\b...\b` alternations and
+      char-classes, linear-time. UNIQUENESS_WEIGHT is a static literal float table.
+
+  Supply-chain / CVE (NFR-004 pure-stdlib): the story RED..HEAD range (2e4344d..HEAD) touches
+  ZERO dependency manifests (no pyproject/requirements/setup/poetry.lock/Pipfile changes —
+  only the 4 owned files: offline_adversary.py + test + 2 __init__ exports). No new CVE,
+  git-pinned dep, or denied-license surface. pip-audit is NOT installed in this environment
+  (per dispatch: run only if quick) — moot, the stdlib-only diff adds zero auditable deps.
+
+  Export edits: scoring/adversary/__init__.py and scoring/__init__.py only add re-exports of
+  OfflineDeterministicAdversary / OfflineAdversaryConfig / DEFAULT_OFFLINE_CONFIG /
+  OFFLINE_ADVERSARY_VERSION to __all__ + import lines. No new egress, no side-effecting
+  module-load behavior, no capability surface introduced.
+
+  Hardcoded secrets: none. Secret/PII-shape scan (AWS AKIA / GitHub ghp_ / PEM private-key
+  headers / SSN dddd-dd-dddd / password=/api_key=/secret= assignments) over all owned files:
+  no matches. The literal corpus texts in fixtures (Beacon Hill / medical+fitness jargon) are
+  synthetic crafted strings, not real identifiers.
+
+  Domain packs: developer-assistant.yaml `domain_packs: []` (financial / agentic-runtime NOT
+  active; no-real-PII / determinism / power are project-authored axioms). No pack-extension
+  patterns merged; no sensitive-data scan output to consult; no `source_pack` findings.
+
+  Common-pattern catalog (15) sweep: 1-15 N/A to this diff — no capability registry, no
+  trust-boundary/mediator code, no HSM port, no event-signing path, no unsafe blocks (Python),
+  no new egress route, no SQL/NoSQL string interpolation, no git-pinned dep, no wildcard
+  capability, no tokio::spawn, no cross-crate architectural egress, no md5/sha1. Story-gate
+  conditional signals did NOT trip (pure-stdlib analytic over synthetic value objects); the
+  no-real-PII corpus-read + offline-inertness checks (the project-specific reasons this
+  reviewer is in the default_set) are the binding concerns and they pass.
+
+review_time_seconds: 600
+
+context_bounds_respected: true

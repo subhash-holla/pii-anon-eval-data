@@ -1,0 +1,381 @@
+{
+  "summary": {
+    "gliner": {
+      "recall": 0.7162869031107588,
+      "precision": 0.8129254951343876,
+      "f2": 0.7337317498155572,
+      "tp": 144604,
+      "n_pred": 177881
+    },
+    "presidio": {
+      "recall": 0.5621012482662968,
+      "precision": 0.4191596638655462,
+      "f2": 0.5262115752913299,
+      "tp": 113477,
+      "n_pred": 270725
+    },
+    "regex": {
+      "recall": 0.3486378046364177,
+      "precision": 0.8569080549332814,
+      "f2": 0.39556300412743806,
+      "tp": 70383,
+      "n_pred": 82136
+    },
+    "piiranha": {
+      "recall": 0.32737765008916186,
+      "precision": 0.44147195169198294,
+      "f2": 0.34522150463944773,
+      "tp": 66091,
+      "n_pred": 149706
+    },
+    "stanza": {
+      "recall": 0.30811868436695067,
+      "precision": 0.5831841066556661,
+      "f2": 0.3402116211122305,
+      "tp": 62203,
+      "n_pred": 106661
+    },
+    "spacy": {
+      "recall": 0.29377848226669306,
+      "precision": 0.46407612012707555,
+      "f2": 0.31704725024002534,
+      "tp": 59308,
+      "n_pred": 127798
+    },
+    "scrubadub": {
+      "recall": 0.1687438082028928,
+      "precision": 0.8182647963105304,
+      "f2": 0.20058835167319866,
+      "tp": 34066,
+      "n_pred": 41632
+    }
+  },
+  "order": [
+    "gliner",
+    "presidio",
+    "regex",
+    "piiranha",
+    "stanza",
+    "spacy",
+    "scrubadub"
+  ],
+  "pairs": [
+    {
+      "pair": "gliner>presidio",
+      "recall_a": 0.7162869031107588,
+      "recall_b": 0.5621012482662968,
+      "delta_recall": 0.154185654844462,
+      "b": 47103,
+      "c": 15976,
+      "p_raw": 0.0,
+      "method": "mcnemar-chi2-continuity",
+      "odds_ratio": 2.94836004006009,
+      "p_holm": 0.0,
+      "significant": true
+    },
+    {
+      "pair": "presidio>regex",
+      "recall_a": 0.5621012482662968,
+      "recall_b": 0.3486378046364177,
+      "delta_recall": 0.21346344362987912,
+      "b": 58840,
+      "c": 15746,
+      "p_raw": 0.0,
+      "method": "mcnemar-chi2-continuity",
+      "odds_ratio": 3.736822050044456,
+      "p_holm": 0.0,
+      "significant": true
+    },
+    {
+      "pair": "regex>piiranha",
+      "recall_a": 0.3486378046364177,
+      "recall_b": 0.32737765008916186,
+      "delta_recall": 0.021260154547255827,
+      "b": 16752,
+      "c": 12460,
+      "p_raw": 4.2747742734189514e-139,
+      "method": "mcnemar-chi2-continuity",
+      "odds_ratio": 1.34446227929374,
+      "p_holm": 8.549548546837903e-139,
+      "significant": true
+    },
+    {
+      "pair": "piiranha>stanza",
+      "recall_a": 0.32737765008916186,
+      "recall_b": 0.30811868436695067,
+      "delta_recall": 0.019258965722211197,
+      "b": 62524,
+      "c": 58636,
+      "p_raw": 5.917237949107193e-29,
+      "method": "mcnemar-chi2-continuity",
+      "odds_ratio": 1.0663073879527936,
+      "p_holm": 5.917237949107193e-29,
+      "significant": true
+    },
+    {
+      "pair": "stanza>spacy",
+      "recall_a": 0.30811868436695067,
+      "recall_b": 0.29377848226669306,
+      "delta_recall": 0.014340202100257604,
+      "b": 5823,
+      "c": 2928,
+      "p_raw": 3.872412238767351e-210,
+      "method": "mcnemar-chi2-continuity",
+      "odds_ratio": 1.9887295081967213,
+      "p_holm": 1.1617236716302054e-209,
+      "significant": true
+    },
+    {
+      "pair": "spacy>scrubadub",
+      "recall_a": 0.29377848226669306,
+      "recall_b": 0.1687438082028928,
+      "delta_recall": 0.12503467406380026,
+      "b": 59308,
+      "c": 34066,
+      "p_raw": 0.0,
+      "method": "mcnemar-chi2-continuity",
+      "odds_ratio": 1.740973404567604,
+      "p_holm": 0.0,
+      "significant": true
+    }
+  ],
+  "complementarity": [
+    {
+      "with": "presidio",
+      "union_recall": 0.7954230235783634,
+      "gain_over_top": 0.07913612046760454
+    },
+    {
+      "with": "regex",
+      "union_recall": 0.7647562908658609,
+      "gain_over_top": 0.04846938775510212
+    },
+    {
+      "with": "piiranha",
+      "union_recall": 0.742292450960967,
+      "gain_over_top": 0.026005547850208144
+    },
+    {
+      "with": "stanza",
+      "union_recall": 0.7689072716465227,
+      "gain_over_top": 0.052620368535763906
+    },
+    {
+      "with": "spacy",
+      "union_recall": 0.766163067168615,
+      "gain_over_top": 0.04987616405785622
+    },
+    {
+      "with": "scrubadub",
+      "union_recall": 0.7213592233009709,
+      "gain_over_top": 0.005072320190212087
+    }
+  ],
+  "union_ceiling": 0.8344957400435903,
+  "ablation": {
+    "curated_public": {
+      "gliner": {
+        "recall": 0.7325025036163347,
+        "precision": 0.8338188727042432,
+        "f2": 0.7507469835549575,
+        "n_gold": 8987,
+        "tp": 6583,
+        "n_pred": 7895
+      },
+      "presidio": {
+        "recall": 0.5851785912985423,
+        "precision": 0.41964570699010534,
+        "f2": 0.5423886138613861,
+        "n_gold": 8987,
+        "tp": 5259,
+        "n_pred": 12532
+      },
+      "regex": {
+        "recall": 0.38422165349949927,
+        "precision": 0.8815419964258361,
+        "f2": 0.433086667502822,
+        "n_gold": 8987,
+        "tp": 3453,
+        "n_pred": 3917
+      },
+      "piiranha": {
+        "recall": 0.38600200289306774,
+        "precision": 0.4088873173031589,
+        "f2": 0.3903718041051495,
+        "n_gold": 8987,
+        "tp": 3469,
+        "n_pred": 8484
+      },
+      "stanza": {
+        "recall": 0.2687214865917436,
+        "precision": 0.4781231439318947,
+        "f2": 0.2945193785214274,
+        "n_gold": 8987,
+        "tp": 2415,
+        "n_pred": 5051
+      },
+      "spacy": {
+        "recall": 0.2508067208189607,
+        "precision": 0.3630798969072165,
+        "f2": 0.2673403548723788,
+        "n_gold": 8987,
+        "tp": 2254,
+        "n_pred": 6208
+      },
+      "scrubadub": {
+        "recall": 0.17903638589073106,
+        "precision": 0.8919068736141907,
+        "f2": 0.2131012926467472,
+        "n_gold": 8987,
+        "tp": 1609,
+        "n_pred": 1804
+      }
+    },
+    "synthetic": {
+      "gliner": {
+        "recall": 0.7072364770723648,
+        "precision": 0.8138625802561101,
+        "f2": 0.726266461883641,
+        "n_gold": 162206,
+        "tp": 114718,
+        "n_pred": 140955
+      },
+      "presidio": {
+        "recall": 0.5410897254108973,
+        "precision": 0.40679851496850566,
+        "f2": 0.5075776940631084,
+        "n_gold": 162206,
+        "tp": 87768,
+        "n_pred": 215753
+      },
+      "regex": {
+        "recall": 0.3495678334956783,
+        "precision": 0.8388366175513344,
+        "f2": 0.3957315541163005,
+        "n_gold": 162206,
+        "tp": 56702,
+        "n_pred": 67596
+      },
+      "piiranha": {
+        "recall": 0.31570965315709654,
+        "precision": 0.438749807227677,
+        "f2": 0.3344689122216678,
+        "n_gold": 162206,
+        "tp": 51210,
+        "n_pred": 116718
+      },
+      "stanza": {
+        "recall": 0.30546342305463425,
+        "precision": 0.5728357380688124,
+        "f2": 0.3369145406081706,
+        "n_gold": 162206,
+        "tp": 49548,
+        "n_pred": 86496
+      },
+      "spacy": {
+        "recall": 0.2887562728875627,
+        "precision": 0.44415153382959555,
+        "f2": 0.3104819304262746,
+        "n_gold": 162206,
+        "tp": 46838,
+        "n_pred": 105455
+      },
+      "scrubadub": {
+        "recall": 0.1355930113559301,
+        "precision": 0.7594613259668508,
+        "f2": 0.16224933017008367,
+        "n_gold": 162206,
+        "tp": 21994,
+        "n_pred": 28960
+      }
+    },
+    "synthetic_lattice_enrichment": {
+      "gliner": {
+        "recall": 0.7593769348584091,
+        "precision": 0.8876995162089063,
+        "f2": 0.7819851139940536,
+        "n_gold": 30687,
+        "tp": 23303,
+        "n_pred": 26251
+      },
+      "presidio": {
+        "recall": 0.6664059699547039,
+        "precision": 0.5071924603174603,
+        "f2": 0.6270390266637231,
+        "n_gold": 30687,
+        "tp": 20450,
+        "n_pred": 40320
+      },
+      "regex": {
+        "recall": 0.333300746244338,
+        "precision": 0.962816530170385,
+        "f2": 0.3834416777260424,
+        "n_gold": 30687,
+        "tp": 10228,
+        "n_pred": 10623
+      },
+      "piiranha": {
+        "recall": 0.3718838596148206,
+        "precision": 0.4872758326216909,
+        "f2": 0.3903727217995731,
+        "n_gold": 30687,
+        "tp": 11412,
+        "n_pred": 23420
+      },
+      "stanza": {
+        "recall": 0.33369179131228205,
+        "precision": 0.7394569612940497,
+        "f2": 0.37482795982312805,
+        "n_gold": 30687,
+        "tp": 10240,
+        "n_pred": 13848
+      },
+      "spacy": {
+        "recall": 0.3329097011763939,
+        "precision": 0.6826595389241563,
+        "f2": 0.3709163259822965,
+        "n_gold": 30687,
+        "tp": 10216,
+        "n_pred": 14965
+      },
+      "scrubadub": {
+        "recall": 0.3409587121582429,
+        "precision": 0.9946763000285198,
+        "f2": 0.3925577975042584,
+        "n_gold": 30687,
+        "tp": 10463,
+        "n_pred": 10519
+      }
+    }
+  },
+  "ablation_rank": {
+    "curated_public": [
+      "gliner",
+      "presidio",
+      "regex",
+      "piiranha",
+      "stanza",
+      "spacy",
+      "scrubadub"
+    ],
+    "synthetic": [
+      "gliner",
+      "presidio",
+      "regex",
+      "stanza",
+      "piiranha",
+      "spacy",
+      "scrubadub"
+    ],
+    "synthetic_lattice_enrichment": [
+      "gliner",
+      "presidio",
+      "scrubadub",
+      "piiranha",
+      "regex",
+      "stanza",
+      "spacy"
+    ]
+  },
+  "n_gold": 201880
+}

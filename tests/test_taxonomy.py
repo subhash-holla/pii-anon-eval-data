@@ -3,9 +3,9 @@ from pii_anon_datasets import taxonomy as tx
 
 
 def test_canonical_counts():
-    assert tx.ENTITY_TYPE_COUNT == 63
+    assert tx.ENTITY_TYPE_COUNT == 66
     assert tx.CATEGORY_COUNT == 9
-    assert len(tx.CANONICAL_ENTITY_TYPES) == 63
+    assert len(tx.CANONICAL_ENTITY_TYPES) == 66
     assert len(tx.SENSITIVITY_CLASSES) == 3
 
 

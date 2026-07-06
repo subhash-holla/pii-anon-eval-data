@@ -1,0 +1,75 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S5-03
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY-gate axiom slice for S5-03 (Croissant 1.0 JSON-LD + HF dataset card). All five
+  project axioms triggered by this diff hold at the touched (distribution/export) layer.
+  Verified statically (source + AST) AND dynamically (built artifacts + targeted pytest).
+
+  NFR-004 (pure-stdlib core) — UPHELD.
+    - `pytest tests/test_croissant.py tests/test_dataset_card.py -k nfr004 -q` -> 2 passed
+      (AST guard bans {random,time,uuid,datetime,secrets} on BOTH new modules).
+    - Top-level imports (module body, via ast): croissant.py = {__future__, collections,
+      json, pathlib, pii_anon_datasets, typing}; dataset_card.py = {__future__, collections,
+      pii_anon_datasets, typing}. mlcroissant NOT at top level in either.
+    - `mlcroissant` imported ONLY inside validate_with_mlcroissant (croissant.py:276; enclosing
+      FunctionDef confirmed == validate_with_mlcroissant). `import ...distribution.croissant`
+      succeeds with mlcroissant absent (find_spec -> None in this env; test #6 reload-with-blocked
+      -__import__ dynamic). The lazy ImportError guard re-raises a clear RuntimeError naming
+      `pip install pii-anon-datasets[croissant]`.
+
+  AX-002 (deterministic emit) — UPHELD.
+    - build_croissant() x2 -> byte-identical (json.dumps compare). build_dataset_card() x2 ->
+      byte-identical. No clock/RNG (AST guard). _CROISSANT_CONTEXT is a fixed literal; recordSet
+      fields = _CORE_FIELDS (declaration order) then ordered REGIMES appended; card language list
+      from by_language key order. Same metadata -> same output.
+
+  gov-02 separation (NFR-005-adjacent; metric/regime-family separation) — UPHELD.
+    - recordSet declares exactly N=5 SEPARATE reg_* fields, one per crosswalk.REGIMES (the SSOT;
+      the five names are never re-listed in croissant.py): reg_gdpr, reg_hipaa_safe_harbor,
+      reg_hipaa_expert_determination, reg_ccpa_deidentified, reg_pci_dss.
+    - NO merged/flattened `regulatory_domains` field; NO cross-regime equivalence / merged-verdict
+      field anywhere in the JSON-LD (string-scan negative). card body likewise states "separate
+      reg_* columns -- no merged compliance verdict".
+    - validate_croissant raises ValueError naming the dropped field when any reg_* is removed
+      (gov-02 enforced, not incidental; dynamic drop-test + test #2).
+
+  counts-cannot-drift (NFR-013-adjacent) — UPHELD.
+    - Every count read from data/pii_anon.metadata.json via load_metadata (same _DATA_DIR source
+      stats/lattice.py reads). build_dataset_card asserts md["entity_types"] ==
+      taxonomy.ENTITY_TYPE_COUNT at runtime (63 == 63 confirmed). Croissant counts DERIVED
+      (perturbed metadata changes emitted JSON-LD; canonical value absent under perturbation;
+      test #3). Card forbids stale "150K"/"65 "/"57 " (all absent; test #8) and carries canonical
+      575,604 / 2,486,438 / 63.
+
+  AX-001 (synthetic-only / no real PII) — UPHELD.
+    - Modules embed metadata counts + static caveats only; return an in-memory dict / Markdown
+      string. Egress scan (requests|urllib|socket|push_to_hub|HfApi|hf_hub|huggingface_hub|boto3|
+      upload|file-write) matches ONLY docstring/comment lines asserting absence -- no actual
+      network/upload/write call. Test fixtures are tiny synthetic records (no checksum-valid
+      identifiers, no real names/secrets).
+
+  Out-of-scope / deferred to peers: NFR-012 validate-AND-load round-trip correctness
+  (requirements-coverage/traceability); network-egress hardening depth (security-sast);
+  ruff/mypy cleanliness (code-quality). All 10 story tests pass (`pytest ...test_croissant.py
+  ...test_dataset_card.py -q` -> 10 passed); mlcroissant absent -> test #5 takes the
+  absent-RuntimeError path (a PASS).
+
+  Documentation-prose OBSERVATION (non-blocking, not a finding): §6/§7 of the story enumerate the
+  regime fields as "reg_gdpr ... reg_pci_dss" / "the five regime names", but the REGIMES SSOT is
+  ('gdpr','hipaa_safe_harbor','hipaa_expert_determination','ccpa_deidentified','pci_dss') -- two
+  HIPAA variants + a CCPA variant, still exactly 5. The CODE derives from the SSOT and is correct
+  (count-of-5 + gov-02 separation both hold); the story prose enumeration is illustrative shorthand,
+  not an axiom violation. Worth tightening the §6 prose for accuracy but it does not affect the
+  emitted artifact or any axiom.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

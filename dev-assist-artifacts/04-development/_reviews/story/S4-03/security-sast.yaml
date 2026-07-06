@@ -1,0 +1,177 @@
+# security-sast reviewer — STORY gate (conditional fire: new numeric kernel reads caller-supplied record Mappings)
+# S4-03 — calibration reporting: ECE + Brier + per-bin reliability, per entity class (FR-005 / NFR-008 / NFR-004 / AX-003).
+reviewer: security-sast
+gate: story
+story_id: S4-03
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+
+independence:
+  bounded_context: true
+  shared_state: none
+  self_attested: true
+
+domain_pack_extensions:
+  developer_assistant_domain_packs: []          # developer-assistant.yaml -> domain_packs: [] (neither financial nor agentic-runtime active)
+  pack_patterns_merged: none                    # no reviewer-extensions catalog to merge; no finding carries source_pack
+  note: >
+    Project ships no domain pack; the no-real-PII invariant is a project-authored axiom
+    (AX-001) reinforced by hooks.sensitive_data_scan. This reviewer verified the invariant
+    directly against the owned files (regex + AST sweep) rather than via a pack pattern set.
+
+scope_reviewed:
+  owned_files:
+    - src/pii_anon_datasets/stats/calibration.py   # NEW — Bin + CalibrationResult (frozen dataclasses) + expected_calibration_error / brier_score / calibrate / calibration_by_entity_class + helpers _check_lengths/_bin_index/_reliability_bins
+    - src/pii_anon_datasets/stats/__init__.py       # MODIFIED — export-only: adds the 6 calibration symbols to the import block + __all__
+    - tests/test_calibration.py                     # 8 fr_005/nfr_008-tokened tests (RED 6f13d97 -> GREEN 483af11 -> REFACTOR a6c1cf6)
+  diff_range: 483af11..a6c1cf6   # GREEN 483af11 is the load-bearing change; REFACTOR a6c1cf6 is zip(strict=True) + cast() typing only (verified inert below)
+  story_diff_is_code_only: true   # only the 3 owned files + story doc changed; no dependency manifest, no data/corpus/snapshot/lattice/tag
+  note: >
+    Story §8 names the paths as stats/calibration.py & stats/__init__.py; the real source tree
+    roots them at src/pii_anon_datasets/stats/ (pythonpath=src). Reviewed the real files.
+    intervals.py / paired.py / power.py (prior stories, re-exported read-only) were NOT modified
+    and are out of this story's scope.
+
+threat_surface:
+  classification: pure-numerical-compute   # calibration math over confidence floats [0,1] + correctness ints {0,1} + synthetic entity_type label strings; no trust boundary, no capability, no egress, no I/O
+  inputs: "Sequence[float] confidences, Sequence[int] correct, int n_bins, optional str entity_class; calibration_by_entity_class takes Sequence[Mapping[str,object]] of caller-supplied records (entity_type/confidence/correct). No paths, no network, no deserialization, no file/corpus read."
+  trust_boundary_touched: false
+  capability_registry_touched: false
+  composition_root_ban_relevant: false   # Python pure-stdlib module; no SDK/crate dependency edge introduced
+  hsm_signing_path_touched: false
+  network_egress_added: false
+  unsafe_block_added: false               # Python; n/a — no ctypes/FFI/cffi either
+
+pure_stdlib_no_new_dependency:   # NFR-004 — PRIMARY dispatch concern
+  confirmed: true
+  calibration_py_imports: "statistics, collections.abc.{Mapping,Sequence}, dataclasses.dataclass, typing.{SupportsFloat,SupportsInt,cast}, __future__.annotations. NOTHING else."
+  init_py_imports: "intra-package only (.calibration, .intervals, .paired, .power)."
+  test_py_imports: "ast, pathlib, pytest, intra-package. (pathlib is used read-only on calibration_mod.__file__ to AST-self-inspect the source — not a runtime filesystem dependency of the module under test.)"
+  banned_modules_absent: true   # independent AST extraction — NONE of numpy / scipy / pandas / sklearn / torch / socket / requests / urllib / httpx / subprocess / pickle / marshal / shelve / yaml / secrets / os / sys / io / pathlib / open() present in calibration.py
+  no_numpy_scipy: true          # explicitly confirmed absent (math/statistics-only mandate held; this module imports statistics only, not even math)
+  eval_exec_dynimport_absent: true   # AST call-site scan: no eval / exec / compile / __import__ / input / open / getattr / setattr anywhere in calibration.py
+  no_nondeterminism: true       # {random, time, uuid, datetime, secrets} all absent (AST-confirmed) — deterministic (AX-002/AX-003); no RNG and no clock at all in this story
+  note: >
+    Independent AST top-level-import extraction yields exactly {__future__, collections,
+    dataclasses, statistics, typing}. The only grep 'read' hit in calibration.py is the
+    docstring word 'reported' (line 12 prose), not an executable call. Unlike S4-02 this
+    story introduces NO randomness whatsoever (no random/secrets import) -> no RNG/crypto
+    surface to adjudicate.
+
+ast_import_purity_guard:   # dispatch ask — confirm the in-tree guard is present and sound
+  present: true
+  test_fn: test_fr_005_nfr004_calibration_imports_no_nondeterminism   # [PROPERTY-TEST]
+  mechanism: "ast.parse + ast.walk over calibration_mod.__file__; collects top-level module of every ast.Import / ast.ImportFrom; asserts {random,time,uuid,datetime,secrets} disjoint from the imported set."
+  env_independent: true   # the guard is static AST over source; its verdict does not depend on the AGENT_SIMULATED runtime
+  reviewer_reproduced: true   # this reviewer ran an independent AST extraction and reached the identical clean result
+
+cast_typing_change_inert:   # dispatch ask — confirm the cast() changes are inert
+  confirmed: true
+  refactor_commit: a6c1cf6
+  changes:
+    - "typing.cast(SupportsFloat, rec['confidence']) / cast(SupportsInt, rec['correct']) replace the prior `# type: ignore[arg-type]` on the float()/int() coercions in calibration_by_entity_class."
+    - "zip(confidences, correct, strict=True) added on the 3 already-length-guarded iterations (expected_calibration_error, brier_score, _reliability_bins)."
+  runtime_semantics_unchanged: true
+  rationale: >
+    typing.cast is `return val` in CPython (a pure runtime no-op that only informs the static
+    checker) — the coerced values are still produced by the same float()/int() calls, so runtime
+    behaviour is byte-identical to GREEN. zip(strict=True) is defense-in-depth: it would raise
+    ValueError on a length mismatch, but every call site is already preceded by _check_lengths,
+    so it is redundant-but-safe and cannot alter outputs on valid (length-equal) input. Neither
+    change introduces an import, an IO path, a capability, or a new raising path on the happy path.
+    Both are inert from a security standpoint.
+
+calibration_by_entity_class_no_real_pii_path:   # dispatch ask — reads caller-supplied Mappings, no corpus/file I/O
+  reads_caller_supplied_mappings_only: true
+  ast_call_set_inside_fn: "{append, calibrate, cast, float, int, setdefault, str}"   # AST-enumerated
+  file_corpus_network_io_calls: none   # no open/read/load/loads/connect/glob/walk/Path/read_text in the function (or anywhere in calibration.py)
+  detail: >
+    calibration_by_entity_class iterates a caller-provided Sequence[Mapping], subscripts each
+    record for entity_type/confidence/correct, coerces to str/float/int, groups, and delegates to
+    calibrate. There is NO filesystem read, NO corpus load, NO real-PII ingestion path: the records
+    are supplied in-process by a trusted caller. entity_type is treated as an opaque grouping key
+    (str()'d), never parsed as or matched against PII.
+
+ax_001_no_real_pii:   # AX-001 + hooks.sensitive_data_scan
+  confirmed: true
+  test_data_shape: "confidence floats in [0,1] (0.05..1.00); correctness ints {0,1}; synthetic entity_type label strings {PERSON, EMAIL, X}."
+  pii_shaped_literals: none   # AST string-literal sweep of the test: zero email/@/.com, zero SSN (\d{3}-\d{2}-\d{4}), zero PAN/phone, zero honorific (Mr./Ms.), zero 'First Last' name pair, zero private-key/API-key literal
+  detail: >
+    The calibration API consumes ONLY confidence floats + correctness ints (+ entity_type used as
+    an opaque label). PERSON/EMAIL/X are synthetic ENTITY-CLASS tokens (schema labels), not PII
+    values. test_calibration.py fixtures contain no real-PII literal of any shape. The single
+    pathlib.read_text in the test targets calibration.py's OWN source (for the AST guard), not a
+    PII corpus/fixture. The no-real-PII invariant holds.
+
+float_domain_crash_safety:   # dispatch ask — empty bins, n=0, no float-domain crash
+  no_crash_confirmed: true
+  n_zero_short_circuits: true        # expected_calibration_error/brier_score/calibrate all return 0.0 (or an all-empty CalibrationResult) BEFORE any division when len==0
+  empty_bin_guarded: true            # ECE loop `if counts[m]==0: continue`; _reliability_bins emits Bin(lo,hi,0.0,0.0,0) for empty buckets — no x/0 division
+  conf_eq_1_0_clamped: true          # _bin_index = min(n_bins-1, int(conf*n_bins)) -> conf==1.0 lands in the last bin, no IndexError
+  degenerate_n_bins_1_safe: true     # n_bins=1 runtime-probed: single bin, counts sum to n, no division/range error
+  single_record_class_safe: true     # calibration_by_entity_class on a 1-record class (n=1) computes per-bin means without div-by-zero
+  empty_records_safe: true           # calibration_by_entity_class([]) -> {} (no crash, no I/O)
+  runtime_probed: true               # all of the above exercised at runtime by this reviewer; zero exceptions raised
+  single_raising_path: "len(confidences) != len(correct) -> ValueError (via _check_lengths) — the ONLY intentional raise; NFR-008 high-ECE is reported (meets_reference=False), never raised."
+
+catalog_pattern_scan:   # 15-pattern catalog + financial-pack PII patterns (pack inactive -> PII checked via AX-001 above)
+  composition_root_ban_violation: none        # #1  — Python module; no production-crate -> disallowed-SDK edge
+  capability_granted_outside_registry: none   # #2  — new pub fns are pure math, grant no capability/IO
+  trust_boundary_mediator_bypass: none        # #3  — no mediator/adapter layer in scope
+  unsafe_without_safety_comment: none         # #4  — no `unsafe` (Python; no FFI)
+  high_cve_new_transitive_dep: none           # #5  — zero new dependencies (no manifest touched)
+  hsm_port_signing_contract_bypass: none      # #6  — no HSM/signing path
+  new_egress_not_in_manifest: none            # #7  — no network egress added
+  hardcoded_credential_shape: none            # #8  — regex sweep for api_key/secret/token/password/AKIA/PRIVATE KEY clean
+  sql_nosql_string_interpolation: none        # #9  — no DB access / query string built
+  git_pinned_dependency: none                 # #10 — no dependency manifest change
+  denied_license_dependency: none             # #11 — no dependency added
+  wildcard_capability_scope: none             # #12 — no capability/scope grant
+  thread_spawn_crossing_boundary: none        # #13 — no tokio/thread/async-task spawn; single-threaded synchronous loops
+  architectural_egress_forbidden_import: none # #14 — imports are stdlib (statistics/dataclasses/typing/collections.abc) + intra-stats only; no cross-subsystem reach
+  weak_hash_md5_sha1: none                     # #15 — no hashlib/md5/sha1; no randomness of any kind in this story
+  pickle_marshal_yaml_load: none
+  dos_hang_unbounded_loop: none                # zero `while` loops; all loops are finite `for ... in range(n_bins)` / over the (sized) input — terminating, and only trusted in-process callers reach n_bins/inputs
+  cve_surface: "no new dependency introduced -> no new CVE / SBOM-diff surface at this story"
+
+test_execution:
+  owned_suite: "tests/test_calibration.py — 8 fr_005/nfr_008-tokened tests; reviewer ran them: 8 passed. (story §12: full suite 192 passed / 1 pre-existing skip, 0 regressions.)"
+  ast_self_guard_test: "test_fr_005_nfr004_calibration_imports_no_nondeterminism — statically enforces the stdlib/no-nondeterminism contract this reviewer relies on"
+  note: "AGENT_SIMULATED env per story §12 (Python 3.10, pytest). Security verdict rests on static analysis of the owned source + the in-tree AST guard + runtime crash-safety probes, all of which this reviewer reproduced independently and which are env-independent."
+
+findings: []   # zero findings at any severity
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+
+summary: >
+  S4-03 adds the calibration measurement surface of DC-09/FR-005: Expected Calibration Error
+  (equal-width bins, pinned idx=min(n_bins-1,int(conf*n_bins))), the Brier score, and a per-bin
+  reliability tuple, computable per entity class. The dispatch's load-bearing checks all pass.
+  PURE-STDLIB (NFR-004): an independent AST import extraction yields exactly {__future__,
+  collections.abc, dataclasses, statistics, typing} — no numpy/scipy, no network (socket/requests/
+  urllib/httpx), no eval/exec/compile/__import__, no subprocess, no pickle/marshal/yaml, no secrets,
+  no filesystem/open(). Unlike S4-02 this story introduces NO randomness at all (no random/secrets),
+  so there is no RNG/crypto surface and no weak-primitive question. The in-tree AST import-purity
+  guard (test_fr_005_nfr004_calibration_imports_no_nondeterminism) is present and statically pins out
+  {random,time,uuid,datetime,secrets}; this reviewer reproduced its clean result. AX-001 holds: the
+  API consumes only confidence floats + correctness ints (+ entity_type as an opaque label), the test
+  fixtures carry zero PII-shaped literals (no email/SSN/PAN/name/key), and PERSON/EMAIL/X are synthetic
+  entity-class tokens. calibration_by_entity_class reads caller-supplied in-process Mapping records ONLY
+  (AST call set {append,calibrate,cast,float,int,setdefault,str}) — no corpus load, no file read, no
+  real-PII ingestion path; the lone pathlib.read_text in the test targets calibration.py's own source
+  for the guard. Float-domain crash-safety is runtime-verified: n=0 short-circuits to 0.0 before any
+  division, empty bins are guarded (continue / empty-Bin branch), conf==1.0 clamps to the last bin via
+  min(), n_bins=1 and single-record/empty-records classes are all safe — zero exceptions on any
+  degenerate path; the SOLE intentional raise is len-mismatch -> ValueError, and NFR-008's high-ECE is
+  REPORTED via meets_reference (never gated/raised). The REFACTOR cast()/zip(strict=True) changes are
+  INERT: typing.cast is a runtime no-op (return val) and zip(strict=True) is redundant with the existing
+  _check_lengths guard, so runtime behaviour is identical to GREEN. No capability, trust-boundary, HSM,
+  composition-root, or egress edge (pure numeric Python); no new dependency -> no CVE/SBOM surface; no
+  DoS/hang (zero while-loops, all loops finite and reached only by trusted in-process callers). Zero
+  findings at any severity -> APPROVE.

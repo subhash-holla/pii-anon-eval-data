@@ -1,0 +1,148 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S3-04
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S3-04-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/scoring/reidentification.py:58
+    description: |
+      UP037 (quoted annotation `-> "RRSResult":` on `RRSResult.from_attack`) fires under
+      `ruff check`. This is a PRE-EXISTING nit from the S1 baseline (confirmed via
+      `git show f33b3e5^:src/pii_anon_datasets/scoring/reidentification.py` — line 58
+      reads `-> "RRSResult":` in the frozen `RRSResult.from_attack` classmethod). S3-04
+      was explicitly prohibited from modifying the frozen `RRSResult` contract.
+      Routing separately per the reviewer brief; NOT a hold for this story.
+    suggested_resolution: |
+      Track as a separate technical-debt item scoped to RRSResult. Fix in the sprint that
+      lifts the freeze on that class (or in a dedicated lint-debt story). The fix is a
+      one-character change: remove the quotes (`-> RRSResult:`) — valid here because
+      `from __future__ import annotations` is already active at line 19.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-04.md#12
+
+  - id: code-quality-S3-04-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/scoring/reidentification.py:69
+    description: |
+      `mypy --strict` reports `[type-arg] Missing type parameters for generic type "dict"`
+      on `def as_dict(self) -> dict:` inside `RRSResult`. PRE-EXISTING in the S1 baseline
+      (same line, same return type in `git show f33b3e5^`). S3-04 did not touch this line;
+      the frozen contract prohibition applies. Routing separately; NOT a hold.
+    suggested_resolution: |
+      Track alongside code-quality-S3-04-01 (same freeze-lift opportunity). Fix:
+      `def as_dict(self) -> dict[str, object]:` — the same pattern correctly applied to
+      `MeasuredRRS.as_dict` by the executor in the REFACTOR commit (379f086).
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-04.md#12
+
+  - id: code-quality-S3-04-03
+    severity: OBSERVATION
+    location: tests/test_reidentification_measured.py:70-202
+    description: |
+      All 9 test functions lack `-> None` return-type annotations. `mypy --strict` reports
+      `[no-untyped-def]` for each. However, this pattern is consistent with the existing
+      project baseline for test files (confirmed: `tests/test_detection.py` and every prior
+      S3 story test file carry the same omission). The executor scoped `mypy --strict` to
+      the production module only (`scoring/reidentification.py`), which is where the
+      regression risk lies. No `-> None` annotations are present in any prior test file in
+      this project; this is a project-wide test-file convention, not a per-story defect.
+    suggested_resolution: |
+      Optionally address project-wide in a single lint-debt pass by adding `-> None` to all
+      test functions, or configure `[mypy.overrides]` for the `tests` module to disable
+      `no-untyped-def`. Either fix could be part of a contributor-readiness gate pass.
+
+  - id: code-quality-S3-04-04
+    severity: OBSERVATION
+    location: tests/test_reidentification_measured.py:168,170
+    description: |
+      `mypy --strict --follow-imports=silent tests/test_reidentification_measured.py`
+      reports `[unused-ignore]` on the `# type: ignore[arg-type]` comments at lines 168
+      and 170 (inside `test_fr_007_reidx02_fractional_count_raises`). This is an artifact
+      of `--follow-imports=silent` silently dropping type info for `wilson_interval`; with
+      full import resolution mypy would see the `int` parameter type and the `arg-type`
+      ignore would be load-bearing. The comments are intentional and required: they allow
+      the test to pass float literals to a function that rejects them at runtime (which is
+      the exact behavior being tested). No real dead-ignore scenario — it is the incomplete
+      type graph under `--follow-imports=silent` on the test module.
+    suggested_resolution: |
+      No change needed for this story. If a future pass runs mypy with full import
+      resolution on the test package, the `[unused-ignore]` warnings will disappear
+      (the suppression becomes load-bearing again). Alternatively, document the silence with
+      a comment: `# type: ignore[arg-type]  # intentional: testing the runtime guard`.
+
+notes: |
+  REVIEW SUMMARY — S3-04 iter 1, code-quality gate, APPROVE.
+
+  All checks passed cleanly. Summary of evidence:
+
+  TDD RED-BEFORE-GREEN CONFIRMED:
+  - RED commit f33b3e5 is FIRST on the feature branch for S3-04 scope: adds
+    `tests/test_reidentification_measured.py` only; `MeasuredRRS` / `score_reidentification`
+    absent → ImportError (collection fails). Production code does not appear until the GREEN
+    commit bfa5cf9.
+  - GREEN commit bfa5cf9 adds `MeasuredRRS` + `score_reidentification` to
+    `scoring/reidentification.py` and the exports to `scoring/__init__.py`. 9/9 tests pass.
+  - REFACTOR commit 379f086 tightens mypy strict compliance on the ADDED lines only
+    (`as_dict` return type `dict[str, object]`, `out` local annotation). No test changes
+    except adding the load-bearing `isinstance(m, MeasuredRRS)` assertion in the [AUDIT] test.
+  - Full suite: 133 passed (124 prior + 9 new), 0 regressions.
+
+  SCOPE DISCIPLINE:
+  - `git diff f33b3e5^ 379f086 --name-only` returns exactly 4 files:
+    `S3-04.md` (story progress), `scoring/__init__.py`, `scoring/reidentification.py`,
+    `tests/test_reidentification_measured.py` — all within §8 "Files owned". Zero scope creep.
+
+  TEST NAMES:
+  - All 9 test functions carry `fr_007` or `fr_009` tokens.
+  - `pytest -k "fr_007 or fr_009"` selects all 9 (S3-01 gate lesson applied correctly).
+
+  RUFF:
+  - `scoring/__init__.py`: clean.
+  - `tests/test_reidentification_measured.py`: clean.
+  - `scoring/reidentification.py`: 1 finding (UP037 at line 58, PRE-EXISTING in S1 baseline,
+    inside frozen `RRSResult`, routed as OBSERVATION code-quality-S3-04-01).
+
+  MYPY --STRICT ON PRODUCTION MODULE (scoring/reidentification.py):
+  - 1 finding (bare `dict` at line 69, PRE-EXISTING in S1 baseline, inside frozen `RRSResult`,
+    routed as OBSERVATION code-quality-S3-04-02).
+  - All S3-04 ADDITIONS are mypy-strict-clean: `MeasuredRRS` dataclass fields fully typed,
+    `as_dict() -> dict[str, object]` with typed local, `score_reidentification` fully
+    annotated with `Sequence[Target]`, `Sequence[Persona]`, `-> MeasuredRRS`.
+
+  FROZEN CONTRACT VERIFIED:
+  - `git show f33b3e5^:src/pii_anon_datasets/scoring/reidentification.py` matches the current
+    `RRSResult` and `ANTI_ANONYMITY_CAVEAT` byte-for-byte: S3-04 only ADDED below the existing
+    class. The S1 `test_rrs_caveat.py` suite remains green (verified via full-suite 133 passed).
+
+  PUBLIC API DOCUMENTATION:
+  - `MeasuredRRS`: module-level docstring in `reidentification.py` (lines 83-92) documents
+    the class purpose, FR-007/FR-009/reidx-02 traceability, and every field via inline comments.
+  - `score_reidentification`: full docstring (lines 134-151) covering purpose, algorithm,
+    edge cases, and the guard-not-fabricate principle.
+  - Both conform to the project's existing documentation idiom. No missing-doc violation.
+
+  STRUCTURAL CORRECTNESS:
+  - `MeasuredRRS` is `@dataclass(frozen=True)` per §8b spec. Verified immutable.
+  - `reid_provenance: object | None = None` is the forward seam for S3-08 per spec.
+  - `as_dict()` nests `self.rrs.as_dict()` so `caveat` is always serialized (FR-009 / gov-01).
+    Pinned by the [AUDIT] test `test_fr_009_caveat_nonstrippable_in_measured_as_dict`.
+  - Integer guards on Wilson CI inputs: `correct`, `n_targets`, `n_guesses` are all produced
+    by `len()` or `sum(1 for ...)` — always int; no float conversion risk. reidx-02 guard
+    in `stats/intervals.py` confirmed active by test 7.
+  - n=0 edge handled gracefully: `wilson_interval(0, 0)` returns the sentinel `Interval(nan,
+    0.0, 1.0, 0, "wilson", conf)` from `stats/intervals.py`; no CI fabricated. Pinned by
+    the no-commit branch of test 8.
+
+  PRE-EXISTING NITS CONFIRMED OUT-OF-SCOPE:
+  - Both S1 nits (line 58 UP037 and line 69 bare `dict`) verified against the S1 baseline
+    at `git show f33b3e5^:src/pii_anon_datasets/scoring/reidentification.py`. They exist
+    in the frozen contract and S3-04 left them untouched per the directive. Routed as
+    OBSERVATIONs only, not blocks.
+
+review_time_seconds: 312
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

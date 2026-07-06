@@ -1,0 +1,117 @@
+reviewer: dev-assist-development-traceability
+
+scope_id: S6-01
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: traceability-S6-01-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:48
+    description: |
+      The traceability-matrix Status-Change-Log has no entry naming S6-01 as the
+      FR-023 (store half) / NFR-014 advancer. The latest log row is the 2026-05-30
+      FR-024 close; the UC-11 row (line 18: FR-023 | NFR-014 | MUST | AGENT_SIMULATED)
+      exists and is consistent, but no per-story advancement entry has been appended
+      for S6-01 yet. Non-blocking at the story gate — appending the 61-MUST/log entry
+      is the sprint-gate's refresh responsibility — but flagging for the sprint-gate
+      handoff so FR-023's now-partial state (store landed; policy/anti-gaming + CoI
+      still pending S6-02/S6-03) is reflected on the board.
+    suggested_resolution: |
+      At the S6 sprint gate, append a Status-Change-Log row recording S6-01 as the
+      FR-023 store-half / NFR-014 advancer (AGENT_SIMULATED), and note FR-023 remains
+      partial until S6-02 (policy/anti-gaming) and S6-03 (CoI) land.
+    references:
+      - dev-assist-artifacts/02-requirements/requirements-document.md#FR-023
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-014
+
+  - id: traceability-S6-01-02
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-6/S6-01.md:33
+    description: |
+      FR-023 is partitioned across S6 (store=S6-01, policy/anti-gaming=S6-02,
+      CoI=S6-03). S6-01 correctly claims only the store half (§3 Primary FR-023:
+      "held-out labels stay undistributed; submission provenance + attestation
+      logged"; §5 defers policy to S6-02 and CoI to S6-03). No double-claim exists
+      because S6-02.md and S6-03.md are not yet authored (absent) — S6-01 is the
+      sole current FR-023 claimant. When S6-02/S6-03 are authored, the gate should
+      confirm they claim the complementary FR-023 facets (functional-requirements.md
+      line 43 lists anti-gaming control / opt-in publish / dry-run / attestation /
+      per-slice strengths) without re-claiming the store, so the three remain a clean
+      1:1 partition rather than overlapping owners.
+    suggested_resolution: |
+      No action for S6-01. At S6-02/S6-03 story gates, verify each claims its FR-023
+      facet without re-claiming the append-only store, preserving the partition.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-023
+
+notes: |
+  Forward trace FR/NFR -> Story -> Test -> DC for S6-01 is intact and APPROVE-clean
+  (zero SHOWSTOPPER/CATASTROPHIC/MAJOR).
+
+  ID existence (no phantom IDs — SHOWSTOPPER cleared):
+    - FR-023 (neutral leaderboard): requirements-document.md:19 + functional-requirements.md:43.
+    - NFR-014 (governance neutrality / auditable): requirements-document.md:20 +
+      non-functional-requirements.md:32 ("leaderboard anti-gaming control active;
+      submission provenance logged").
+    - NFR-004 (deterministic, provenanced generation): non-functional-requirements.md:13.
+    - AX-002 (determinism axiom): non-functional-requirements.md:13 (NFR-004 traces to AX-002).
+    All four §3/§4 IDs are present on the canonical requirements surface.
+
+  Test-name token trace (story-gate core check — embedded FR/NFR IDs):
+    grep -nE "def test_(fr_023|nfr_014|nfr004)" tests/test_leaderboard_store.py ->
+      fr_023 = 4 (>=3 ✓): test_fr_023_store_is_append_only,
+                          test_fr_023_store_rejects_held_out_gold (6-way parametrized),
+                          test_fr_023_store_records_scores_not_gold,
+                          test_fr_023_leaderboard_cli_verify
+      nfr_014 = 2 (>=2 ✓): test_nfr_014_hash_chain_links_events,
+                          test_nfr_014_verify_chain_detects_tampering
+      nfr004  = 1 (>=1 ✓): test_nfr004_leaderboard_store_pure_stdlib
+    All thresholds met. Test bodies are semantically aligned to the embedded ID
+    (no finding #9: append-only introspection + grow-and-unchanged-line; forbidden-gold-key
+    ValueError reject with no-trace; prev_hash chain to GENESIS + monotonic seq; tamper ->
+    verify_chain False; deterministic re-append -> identical content_hash; AST stdlib guard
+    bans {random,time,uuid,datetime,secrets}; CLI verify rc 0 intact / non-zero tampered).
+
+  FR-023 partition / no double-claim (the load-bearing scope check):
+    grep -rln "FR-023" sprint-6/ -> only S6-01.md. S6-02.md and S6-03.md are ABSENT,
+    so there is no competing claimant. S6-01 claims only the store half (§3/§5). Logged
+    as OBSERVATION-02 for the future S6-02/S6-03 gates to preserve the partition.
+
+  S5-05 forward-reference resolution (clean, not a broken trace):
+    The S5-05 RED commit (c003174) authored test_fr_024_cli_leaderboard_graceful_until_s6
+    as an explicit self-retiring placeholder — its NAME encodes `_until_s6`, and S5-05
+    §8b line 327 names "S6" as its "named successor (graceful stub now)". The S6-01
+    diff (7ffbe06^..65153d7, tests/test_cli.py, 16 lines = +9/-7) is exactly that
+    retirement: rename -> test_fr_024_cli_leaderboard_wired_to_s6_seam; flip the two
+    now-false assertions (find_spec(...) is None -> is not None; "S6" in err -> usage/
+    verify message); rc==2 and no-Traceback preserved. The production CLI delegate
+    cli._cmd_leaderboard (S5-05-wired to leaderboard.main) is UNTOUCHED. This is a clean
+    forward-reference resolution (the placeholder's premise "absent until S6" is now
+    satisfied), disclosed transparently in §12 deviations #3 as a conscious cross-§8
+    boundary call. Not finding #13 (renamed/consolidated FR drift) — the FR-024 token
+    is preserved; only the placeholder's transient premise was retired.
+
+  DC linkage: §4 cites DC-13 (leaderboard & governance); §1 Parent epic = S6 (DC-13);
+  test docstring header carries "DC-13". S6-01 is not a surface/ story (owns
+  src/pii_anon_datasets/leaderboard/*), so no dc_to_module_audit 1:1-surface requirement
+  applies; the SEAM ownership (store carries gov-03 attestation that S6-03 produces) is
+  declared in §3/§5 and consistent.
+
+  provisional_status cascade: DC-13 = AGENT_SIMULATED, NOT DIVERGED. No DIVERGED cascade
+  required (no §10 Pass-2-divergence commitment owed). Story §1 / §4 / §12 all show
+  AGENT_SIMULATED consistently (matches source DC), with a real-CI Pass-2 commitment
+  logged in §12. traceability-matrix UC-11 row also AGENT_SIMULATED — consistent.
+
+  Orphans / Status / SHAs: no orphan IDs (every §3 ID is tested + on-surface).
+  Status == REVIEW. §12 carries all three TDD SHAs and all are present on
+  feat/v2-scoring-harness: RED 7ffbe06 ("leaderboard-store tests (failing — package
+  absent)"), GREEN 4bd0c2f ("append-only hash-chained leaderboard store (FR-023/NFR-014)"),
+  REFACTOR 65153d7 ("lint/format-clean ... ruff + mypy --strict"). Parent of RED is
+  703c3e3 (S5-02 close) per §12 — confirmed contiguous on the branch.
+
+review_time_seconds: 384
+
+context_bounds_respected: true

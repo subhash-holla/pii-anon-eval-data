@@ -1,0 +1,4794 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Examples and Tests Catalog — PII-Anon Benchmark — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="05-testing">
+<h1>Examples and Tests Catalog — PII-Anon Benchmark</h1>
+<p><strong>Stage 5 · Wave T6 (Synthesis)</strong> · Generated 2026-05-31
+Sources: <code>tests/</code> (347 items: 346 passed / 1 skipped) · <code>dev-assist-artifacts/02-requirements/</code> · <code>dev-assist-artifacts/03-design/06-synthesis/D-implementation-ready-design.md</code> · <code>dev-assist-artifacts/04-development/02-stories/</code>
+NFR-verification dir: <code>dev-assist-artifacts/05-testing/03-nfr-verification/</code> — empty (no pre-wave artifacts)
+Pass-2 dir: <code>dev-assist-artifacts/05-testing/05-pass2/</code> — empty (Pass-2 not yet run)</p>
+<blockquote>
+<p><strong>Source signal vs gaps (brownfield):</strong> The test suite is richly explicit — the vast majority of test functions carry <code>fr_NNN</code> / <code>nfr_NNN</code> tokens in their names AND module docstrings. Seventeen items in this catalog carry <code>(inferred)</code> trace links (see Section 7). The explicit-to-inferred ratio is approximately 90 / 10. The catalog IS the first systematic trace artifact; adding <code>// trace: FR-NNN</code> comments to the inferred rows is recommended for subsequent releases.</p>
+</blockquote>
+<hr>
+<h2>1. Index by Functional Requirement (FR)</h2>
+<p>Every FR from <code>dev-assist-artifacts/02-requirements/functional-requirements.md</code> appears here.
+Column key: <strong>Trace type</strong> = <code>explicit</code> (ID in test fn name or module docstring) | <code>inferred</code> (convention) | <code>doc-pinned</code> (roadmap doc only, no feature test) | <code>Pass-2 deferred</code> (seam test exists, full feature deferred).</p>
+<hr>
+<h3><span class="trace-def" id="fr-001" data-trace-id="FR-001">FR-001</span> — Multilingual/adversarial detection scoring (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_known_pr_f1_f2</code></td>
+<td><code>tests/test_detection.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_perfect_detection</code></td>
+<td><code>tests/test_detection.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_recall_ci_brackets_recall_and_uses_integer_n</code></td>
+<td><code>tests/test_detection.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_partial_f1_separate_and_excluded_from_ci</code></td>
+<td><code>tests/test_detection.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_as_dict_carries_ci_method_and_note</code></td>
+<td><code>tests/test_detection.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred):</strong> Module docstring of <code>test_detection.py</code> reads <code>&quot;FR-001/004; M6&quot;</code> but no individual test fn carries the <code>fr_001</code> token. All five tests verify the P/R/F1/F2 + per-slice CI contract specified by <a class="trace-link" href="#fr-001" data-trace-id="FR-001">FR-001</a>.</p>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-02.html#fr-002" data-trace-id="FR-002" aria-label="Trace FR-002 — / NFR-002)">FR-002</a> — Deterministic CI regression gate (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_002_mcnemar_exact_binomial</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_002_mcnemar_chi2_continuity</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_002_mcnemar_zero_discordant</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_002_mcnemar_odds_ratio</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_002_paired_bootstrap_deterministic</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_002_paired_bootstrap_brackets_delta</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_002_paired_bootstrap_method_named</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_002_nfr004_paired_imports_no_uncontrolled_nondeterminism</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><span class="trace-def" id="fr-003" data-trace-id="FR-003">FR-003</span> — Scorer I/O contract + reference adapter (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_perfect_match_integer_counts</code></td>
+<td><code>tests/test_scoring_core.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_strict_miss_and_false_positive</code></td>
+<td><code>tests/test_scoring_core.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_order_independence_reidx03</code></td>
+<td><code>tests/test_scoring_core.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_partial_overlap_counted_separately_not_as_tp</code></td>
+<td><code>tests/test_scoring_core.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_multiplicity_via_multiset</code></td>
+<td><code>tests/test_scoring_core.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_policy_version_stamped</code></td>
+<td><code>tests/test_scoring_core.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_invalid_span_rejected</code></td>
+<td><code>tests/test_scoring_core.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred):</strong> <code>test_scoring_core.py</code> docstring cites <code>reidx-02</code>/<code>reidx-03</code> design constraints but does not carry an explicit <code>fr_003</code> token. The tests verify the I/O contract (Span matching policy, version stamping) that <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-04" data-trace-id="DC-04" aria-label="Trace DC-04">DC-04</a> / <a class="trace-link" href="#fr-003" data-trace-id="FR-003">FR-003</a> specifies. No dedicated Presidio reference adapter test was found; the adapter integration is exercised implicitly via <code>test_viz.py</code> fixture data.</p>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a> — Per-slice scoring with confidence intervals (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_004_clopper_pearson_textbook_values</code></td>
+<td><code>tests/test_clopper_pearson.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_004_clopper_pearson_brackets_point</code></td>
+<td><code>tests/test_clopper_pearson.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_002_clopper_pearson_method_named</code></td>
+<td><code>tests/test_clopper_pearson.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_004_reidx02_clopper_pearson_integer_guard</code></td>
+<td><code>tests/test_clopper_pearson.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_004_clopper_pearson_edges</code></td>
+<td><code>tests/test_clopper_pearson.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_004_clopper_pearson_is_conservative_vs_wilson</code></td>
+<td><code>tests/test_clopper_pearson.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_004_clopper_pearson_deterministic</code></td>
+<td><code>tests/test_clopper_pearson.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_wilson_point_and_brackets</code></td>
+<td><code>tests/test_intervals.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_wilson_half_symmetry_at_half</code></td>
+<td><code>tests/test_intervals.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_integer_counts_required_reidx02</code></td>
+<td><code>tests/test_intervals.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_bounds_validation</code></td>
+<td><code>tests/test_intervals.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_zero_n_is_nan_point_full_interval</code></td>
+<td><code>tests/test_intervals.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_determinism</code></td>
+<td><code>tests/test_intervals.py</code></td>
+<td>PROPERTY</td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred for test_intervals.py):</strong> Module docstring cites <code>NFR-002</code> and <code>reidx-02</code>; no <code>fr_004</code> token in fn names. Tests verify Wilson CI behaviour required by <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a>.</p>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-03.html#fr-005" data-trace-id="FR-005" aria-label="Trace FR-005 — / NFR-008)">FR-005</a> — Calibration + abstain-to-review (SHOULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_005_ece_known_value</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_brier_known_value</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_perfect_calibration_zero_ece</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_008_meets_reference_is_reported_not_gated</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_reliability_bins_partition</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_008_calibration_by_entity_class</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_input_length_mismatch_raises</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_nfr004_calibration_imports_no_nondeterminism</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_reliability_diagram_writes_png</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_coverage_risk_curve_writes_png</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_agent_leakage_sankey_writes_png</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_005_pyproject_declares_viz_extra</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-06.html#fr-006" data-trace-id="FR-006" aria-label="Trace FR-006 — 7. Acceptance criteria (G/W/T from FR-006)">FR-006</a> — Anonymization output scorer — Pareto (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_006_utility_probe_deterministic_and_versioned</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_utility_perfect_preservation_and_full_mask</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_pareto_point_has_two_separate_axes</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr005_pareto_point_cannot_merge</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>AUDIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_residual_risk_axis_is_measured_rrs</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>AUDIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_variant_recorded</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_nfr004_anonymization_imports_no_nondeterminism</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_utility_metrics_fold_in_components</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_utility_score_rejects_out_of_range</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_pareto_plot_writes_png</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a> — Measured-attack RRS (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_007_assemble_paired_set_deterministic</code></td>
+<td><code>tests/test_adversary_port.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_assemble_filters_to_tier3_substrate</code></td>
+<td><code>tests/test_adversary_port.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_candidate_set_size_is_first_class</code></td>
+<td><code>tests/test_adversary_port.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_reidx_01_observed_signals_reextracted_not_gold</code></td>
+<td><code>tests/test_adversary_port.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_attack_is_deterministic</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_ranking_is_order_independent</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_abstains_below_threshold</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_links_surviving_signal</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_guess_counts_are_integers</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_config_is_frozen_and_hashable</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_nfr004_offline_adversary_imports_no_nondeterminism</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_recall_ci_uses_integer_n_targets</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_precision_ci_uses_integer_n_guesses</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_rrs_equals_one_minus_recall_times_precision</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_correct_is_guesses_matching_target_id</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_abstentions_excluded_from_precision_denominator</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_reidx02_fractional_count_raises</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_perfect_attack_rrs_zero_and_no_commit_rrs_one</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_candidate_set_size_recorded</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_cannot_construct_without_caveat</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_empty_caveat_rejected</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_from_attack_computes_rrs_and_sets_caveat</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_caveat_survives_serialization_gov01</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_candidate_set_size_is_first_class</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred for test_rrs_caveat.py):</strong> Module docstring cites <code>FR-009 / gov-01</code>; the RRS value-object tests structurally verify the <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a> RRS contract (RRS = 1 - recall × precision, caveat travels with the number). No <code>fr_007</code> fn-token present.</p>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-05.html#fr-008" data-trace-id="FR-008" aria-label="Trace FR-008 — S3-05 — Deterministic exposure index (pre-screen prior) + i…">FR-008</a> — Exposure-index pre-screen (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_008_exposure_index_is_prior_not_rrs</code></td>
+<td><code>tests/test_exposure_index.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_exposure_index_recomputes_density_transparently</code></td>
+<td><code>tests/test_exposure_index.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_exposure_index_per_signal_transparent</code></td>
+<td><code>tests/test_exposure_index.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_correlation_pearson_and_spearman</code></td>
+<td><code>tests/test_exposure_index.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_correlation_n_zero_graceful</code></td>
+<td><code>tests/test_exposure_index.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_nfr004_exposure_imports_no_nondeterminism</code></td>
+<td><code>tests/test_exposure_index.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_uniqueness_weight_table_matches_source</code></td>
+<td><code>tests/test_signals.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_compute_signal_density_golden</code></td>
+<td><code>tests/test_signals.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_detect_signals_pure_and_deterministic</code></td>
+<td><code>tests/test_signals.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_nfr004_signals_imports_no_nondeterminism</code></td>
+<td><code>tests/test_signals.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_signal_extractor_version_pinned</code></td>
+<td><code>tests/test_signals.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> — Non-strippable anti-anonymity caveat (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_cannot_construct_without_caveat</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_empty_caveat_rejected</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_from_attack_computes_rrs_and_sets_caveat</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_caveat_survives_serialization_gov01</code></td>
+<td><code>tests/test_rrs_caveat.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_009_caveat_nonstrippable_in_measured_as_dict</code></td>
+<td><code>tests/test_reidentification_measured.py</code></td>
+<td>AUDIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_residual_risk_axis_is_measured_rrs</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>AUDIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_021_caveats_travel_with_each_axis</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>INTEGRATION</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a> — Adversary pluggability (SHOULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_010_persona_target_guess_are_frozen</code></td>
+<td><code>tests/test_adversary_port.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_guess_abstain_is_none_not_wrong</code></td>
+<td><code>tests/test_adversary_port.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_adversary_protocol_is_runtime_checkable</code></td>
+<td><code>tests/test_adversary_port.py</code></td>
+<td>CONTRACT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_distractor_variant_distinct_id_and_lower_precision</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_adversary_satisfies_port</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>CONTRACT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_llm_adversary_class_shape_without_anthropic</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>CONTRACT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_llm_adversary_requires_extra_when_anthropic_absent</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_llm_adversary_id_version_stamped</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_package_imports_without_anthropic</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>CONTRACT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_010_llm_attack_skips_if_absent</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>INTEGRATION (skip)</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#fr-011" data-trace-id="FR-011" aria-label="Trace FR-011 — 7. Acceptance criteria (G/W/T from FR-011/012/013)">FR-011</a> — Pseudonymization-integrity scorer (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_011_reversal_rates_are_threat_conditioned</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_011_authorized_succeeds_unauthorized_fails_for_keyed</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_011_pseudonymizer_protocol_runtime_checkable</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>CONTRACT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_011_nfr004_pseudonymization_imports_no_nondeterminism</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#fr-012" data-trace-id="FR-012" aria-label="Trace FR-012 — `test_fr_012_correct_deterministic_has_zero_crypto_collisio…">FR-012</a> — Collision-type-separated scoring (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_012_correct_deterministic_has_zero_crypto_collisions</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_012_faulty_pseudonymizer_flags_crypto_collisions</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#fr-013" data-trace-id="FR-013" aria-label="Trace FR-013 — `test_fr_013_referential_integrity_join_stable`, `test_fr_0…">FR-013</a> — Referential integrity + key-rotation + key/state separation (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_013_referential_integrity_join_stable</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_013_key_rotation</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_013_key_state_separation_edpb_art4_5</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><span class="trace-def" id="fr-014" data-trace-id="FR-014">FR-014</span> — Query-aware masking scorer (SHOULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(no explicit trace found)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>GAP (SHOULD):</strong> No test file carries an <code>fr_014</code> token or explicit <a class="trace-link" href="#fr-014" data-trace-id="FR-014">FR-014</a> reference. This is a <code>SHOULD</code>-priority requirement. Acceptable gap for v1; recommend adding a seam test for the 8K+ query-aware records slice.</p>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a> — Coreference-chain scoring (SHOULD — v1 seam)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_015_coreference_slice_selects_nonempty_chains</code></td>
+<td><code>tests/test_slices.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_015_slice_low_power_caveat_non_strippable</code></td>
+<td><code>tests/test_slices.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<p><strong>Status: Pass-2 deferred.</strong> Seam test verifies the slice selector and caveat machinery. Full chain-as-unit scoring deferred to v1.1 (by design, <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-01" data-trace-id="DC-01" aria-label="Trace DC-01">DC-01</a> extension seam).</p>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-7/S7-04.html#fr-016" data-trace-id="FR-016" aria-label="Trace FR-016 — / DC-01)">FR-016</a> — Quasi-identifier-combination scoring (SHOULD — v1.1)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_016_quasi_identifier_slice_min_qids</code></td>
+<td><code>tests/test_slices.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<p><strong>Status: Pass-2 deferred.</strong> Seam test verifies the QI slice filter. Full quasi-identifier scoring deferred to v1.1.</p>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a> — PII-recognition oracle + payload library (SHOULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_017_recognize_returns_labeled_verdicts</code></td>
+<td><code>tests/test_oracle.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_017_oracle_disclaimer_non_strippable</code></td>
+<td><code>tests/test_oracle.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_017_recognize_span_point_query</code></td>
+<td><code>tests/test_oracle.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_oracle_pure_stdlib</code></td>
+<td><code>tests/test_oracle.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_017_payload_is_obfuscated_carrier_intent_tuple</code></td>
+<td><code>tests/test_payloads.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_017_three_committed_transforms</code></td>
+<td><code>tests/test_payloads.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_017_transforms_are_faithful</code></td>
+<td><code>tests/test_payloads.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_017_payloads_are_inert</code></td>
+<td><code>tests/test_payloads.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_017_invalid_payload_rejected</code></td>
+<td><code>tests/test_payloads.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_payloads_pure_stdlib</code></td>
+<td><code>tests/test_payloads.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a> — Cross-turn fragmented-leakage payloads (COULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_018_fr_019_fr_020_roadmap_documents_deferred_items</code></td>
+<td><code>tests/test_roadmap.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<p><strong>Status: doc-pinned.</strong> ROADMAP.md must name <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a> and describe cross-turn fragmented leakage as a future item. No feature implementation shipped in v1.</p>
+<hr>
+<h3><span class="trace-def" id="fr-019" data-trace-id="FR-019">FR-019</span> — Transcript residual-leakage estimate (COULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_018_fr_019_fr_020_roadmap_documents_deferred_items</code></td>
+<td><code>tests/test_roadmap.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<p><strong>Status: doc-pinned.</strong> Same roadmap pin as <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>.</p>
+<hr>
+<h3><span class="trace-def" id="fr-020" data-trace-id="FR-020">FR-020</span> — Live-harness adapter — roadmap (COULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_018_fr_019_fr_020_roadmap_documents_deferred_items</code></td>
+<td><code>tests/test_roadmap.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_020_roadmap_frames_items_as_future_not_shipped</code></td>
+<td><code>tests/test_roadmap.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<p><strong>Status: doc-pinned.</strong> v1.x roadmap item (AgentDojo/InjecAgent).</p>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-021" data-trace-id="FR-021" aria-label="Trace FR-021 — AGENT_SIMULATED">FR-021</a> — Anon-vs-pseudo end-state evidence bundle (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_021_bundle_separates_anon_and_pseudo</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_005_bundle_has_no_merged_verdict</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>AUDIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_021_disclaimer_is_non_strippable</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_021_bundle_requires_at_least_one_axis</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_021_bundle_surfaces_regulatory_crosswalk</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>INTEGRATION</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_021_caveats_travel_with_each_axis</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>INTEGRATION</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_end_state_bundle_pure_stdlib</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-022" data-trace-id="FR-022" aria-label="Trace FR-022 — 2026-05-30 FR-022, NFR-012 AGENT SIMULATED AGENT SIMULATED…">FR-022</a> — Legally-distinct regulatory crosswalk (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_022_five_legally_distinct_columns</code></td>
+<td><code>tests/test_crosswalk.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_022_hipaa_is_two_distinct_columns</code></td>
+<td><code>tests/test_crosswalk.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_022_no_merged_or_equivalence_column</code></td>
+<td><code>tests/test_crosswalk.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_022_presence_to_status_conservative</code></td>
+<td><code>tests/test_crosswalk.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_022_corpus_tag_mapping</code></td>
+<td><code>tests/test_crosswalk.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_022_nfr004_crosswalk_pure_stdlib</code></td>
+<td><code>tests/test_crosswalk.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a> — Neutral leaderboard (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_023_publish_is_opt_in</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_rate_limit_blocks_excess</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_held_out_rotation_epoch</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_contamination_dup_check</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_023_clean_submission_allowed_and_published</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_policy_pure_stdlib</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_023_store_is_append_only</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_023_store_rejects_held_out_gold</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_hash_chain_links_events</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_verify_chain_detects_tampering</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_023_store_records_scores_not_gold</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_leaderboard_store_pure_stdlib</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_023_leaderboard_cli_verify</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> — CC0 corpus + standard exports (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_024_parquet_has_n_separate_regime_columns</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_parquet_roundtrips_records</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_012_parquet_loads_via_datasets</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>INTEGRATION</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_export_streams_not_materializes</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_deterministic_export</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_distribution_imports_without_pyarrow</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>CONTRACT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_parquet_rejects_nonpositive_batch_size</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_parquet_flushes_at_batch_boundary</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_parquet_empty_iterator_writes_valid_empty_file_with_reg_schema</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_parquet_json_or_none_passthrough</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_croissant_has_required_jsonld_shape</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_012_croissant_declares_reg_columns</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_croissant_counts_from_metadata_cannot_drift</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_012_croissant_describes_loadable_parquet</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>INTEGRATION</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_012_full_validation_skips_without_mlcroissant</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>CONTRACT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_croissant_pure_stdlib_imports_without_mlcroissant</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_validate_croissant_rejects_*</code> (8 tests)</td>
+<td><code>tests/test_croissant.py</code></td>
+<td>UNIT</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_fr_024_conll_bio_tags_align_to_offsets</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_conll_bilou_conversion</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_conll_export_streams_not_materializes</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_conll_deterministic</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_conll_pure_stdlib</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_build_label2id_o_plus_bi_per_sorted_type</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_build_label2id_skips_nonsequence_annotations</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_conll_bilou_multi_sentence_skips_empty_sentence</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_record_to_conll_rejects_unknown_fmt</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_record_to_conll_nonsequence_annotations_treated_empty</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_spacy_offsets_format</code></td>
+<td><code>tests/test_spacy_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_spacy_docbin_roundtrip</code></td>
+<td><code>tests/test_spacy_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_spacy_docbin_filters_overlaps</code></td>
+<td><code>tests/test_spacy_export.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_spacy_export_imports_without_spacy</code></td>
+<td><code>tests/test_spacy_export.py</code></td>
+<td>CONTRACT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_dataset_card_has_yaml_frontmatter</code></td>
+<td><code>tests/test_dataset_card.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_013_dataset_card_counts_match_metadata</code></td>
+<td><code>tests/test_dataset_card.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_dataset_card_embeds_caveats</code></td>
+<td><code>tests/test_dataset_card.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_dataset_card_pure_stdlib</code></td>
+<td><code>tests/test_dataset_card.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_exposes_five_verbs</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_export_dispatches_to_distribution</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_validate_forwards_user_args</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_leaderboard_wired_to_s6_seam</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_run_script_returns_2_when_script_missing</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_score_dispatches_to_evaluate</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_export_conll_dispatches</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_export_spacy_dispatches</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_export_croissant_dispatches</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_024_cli_export_card_dispatches</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-025" data-trace-id="FR-025" aria-label="Trace FR-025 — AGENT_SIMULATED">FR-025</a> — Contribution pipeline (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_025_contributing_has_pr_template_and_cc0</code></td>
+<td><code>tests/test_contributing.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_025_contributing_has_provenance_and_synthetic_only</code></td>
+<td><code>tests/test_contributing.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_025_contributing_has_deprecation_and_semver</code></td>
+<td><code>tests/test_contributing.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a> — Governance charter (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_026_governance_md_has_charter_and_roster</code></td>
+<td><code>tests/test_governance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_026_governance_md_has_coi_and_bus_factor</code></td>
+<td><code>tests/test_governance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_governance_md_present</code></td>
+<td><code>tests/test_governance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_026_attestation_is_non_strippable</code></td>
+<td><code>tests/test_coi.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_026_recusal_for_maintainer_and_affiliated</code></td>
+<td><code>tests/test_coi.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_coi_as_dict_embeddable_in_store</code></td>
+<td><code>tests/test_coi.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_coi_pure_stdlib</code></td>
+<td><code>tests/test_coi.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> — Real-data validation correlation harness (SHOULD — v1.1, Pass-2)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_027_returns_sentinel_when_real_data_absent</code></td>
+<td><code>tests/test_correlation.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_027_correlation_on_paired_scores</code></td>
+<td><code>tests/test_correlation.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_027_bootstrap_ci_seeded_deterministic</code></td>
+<td><code>tests/test_correlation.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_027_caveat_non_strippable</code></td>
+<td><code>tests/test_correlation.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_correlation_purity</code></td>
+<td><code>tests/test_correlation.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<p><strong>Status: Pass-2 deferred.</strong> The harness is seam-tested (sentinel when real data absent, caveat non-strippable, deterministic bootstrap CI). Full correlation against i2b2-2014/TAB with Kendall-τ + Bland-Altman requires real external datasets — deferred to v1.1 Pass-2.</p>
+<hr>
+<h3><span class="trace-def" id="fr-028" data-trace-id="FR-028">FR-028</span> — Frictionless citation (SHOULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(no explicit trace found)</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>GAP (SHOULD):</strong> No test file carries an <code>fr_028</code> token. BibTeX/citation template presence is implied by the dataset card tests (<code>test_fr_024_dataset_card_embeds_caveats</code>) but is not explicitly traced. Acceptable gap for a SHOULD; recommend a simple presence-check test for <code>CITATION.cff</code> or equivalent.</p>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a> — Committed-lattice power audit, enforcement &amp; per-cell provenance (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Test type</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_build_is_deterministic</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_frozen_lattice_matches_generator_antidrift</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_targets_are_derived_not_hand_typed</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_forced_skeleton_covers_every_main_effect_level</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_interaction_breakdown</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_named_interactions_declared</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_domain_eval_family_is_the_only_non_count_gated</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_lang_x_entity_uses_head_langs_and_frequent_types</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_adv_x_entity_capped_at_standard</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_cell_ids_unique_and_load_roundtrips</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_write_lattice_writes_matching_json</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_main_check_matches_frozen</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_main_check_detects_drift</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_main_writes</code></td>
+<td><code>tests/test_lattice.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_counts_annotations_not_records</code></td>
+<td><code>tests/test_lattice_audit.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_only_committed_count_gated_cells_counted</code></td>
+<td><code>tests/test_lattice_audit.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_adversarial_routing</code></td>
+<td><code>tests/test_lattice_audit.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_gz_and_plain_equivalent</code></td>
+<td><code>tests/test_lattice_audit.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_deficits</code></td>
+<td><code>tests/test_lattice_audit.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_effective_counts_seam_not_implemented</code></td>
+<td><code>tests/test_lattice_audit.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_cell_seed_is_coordinate_only</code></td>
+<td><code>tests/test_lattice_fill_determinism.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fill_is_deterministic</code></td>
+<td><code>tests/test_lattice_fill_determinism.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_generated_records_are_synthetic_v2_and_provenanced</code></td>
+<td><code>tests/test_lattice_fill_determinism.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_max_records_cap_truncates</code></td>
+<td><code>tests/test_lattice_fill_determinism.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fill_then_merge_is_convergent</code></td>
+<td><code>tests/test_lattice_fill_determinism.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_emitters_cover_exactly_63_canonical_types</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_every_emitter_produces_valid_pii_value</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_committed_adversarial_types_all_have_transforms</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_every_type_yields_exactly_one_target_positive</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_unknown_type_fails_loud</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_uncommitted_adversarial_type_fails_loud</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_adversarial_records_genuinely_obfuscate_every_critical_type</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_targeted_record_normalizes_to_valid_v2</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_synthetic_provenance_preserved_through_migrate</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_generation_is_deterministic</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_powered_corpus_passes</code></td>
+<td><code>tests/test_validate_power_gate.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_underpowered_cell_fails_with_detail</code></td>
+<td><code>tests/test_validate_power_gate.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_seam_cell_never_gated</code></td>
+<td><code>tests/test_validate_power_gate.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_missing_lattice_reports_error</code></td>
+<td><code>tests/test_validate_power_gate.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_errors_sorted_and_deterministic</code></td>
+<td><code>tests/test_validate_power_gate.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_risk_tiers_partition_63_types</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_risk_tier_membership</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_risk_tier_unknown_fails_loud</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_types_in_tier_round_trips</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_required_n_reproduces_canonical_targets</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_tier_specs_targets_are_derived</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_required_n_rejects_bad_inputs</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_projection_accepts_continuous_p_ref_no_integer_guard</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_projected_interval_is_marked_projected</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_projected_halfwidth_at_target_matches_tier_precision</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_projection_n_zero_is_nan</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_classify</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_classify_rejects_non_integer</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_default_tier_of_cell</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_required_discordant_pairs_positive_and_monotone</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_required_discordant_pairs_rejects_no_effect</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_paired_more_efficient_than_independent_for_correlated_errors</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_audit_crossing_classifies_and_summarizes</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_audit_attaches_measured_ci_when_given</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_powermatrix_renderers_deterministic_and_sorted</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>PROPERTY</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_powermatrix_verdict</code></td>
+<td><code>tests/test_power.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_029_power_report_note_and_claim_ladder</code></td>
+<td><code>tests/test_power_table_reporting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_power_table_skips_non_gated_and_attaches_scores</code></td>
+<td><code>tests/test_power_table_reporting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_render_csv_and_markdown_roundtrip</code></td>
+<td><code>tests/test_power_table_reporting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_verdict_ladder_and_power_class_edges</code></td>
+<td><code>tests/test_power_table_reporting.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_design_provenance_absent_by_default</code></td>
+<td><code>tests/test_detection_design_provenance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_design_provenance_emitted_and_ci_n_coexists_with_target</code></td>
+<td><code>tests/test_detection_design_provenance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_powered_flag_matches_counts</code></td>
+<td><code>tests/test_detection_design_provenance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_caveat_is_non_strippable</code></td>
+<td><code>tests/test_detection_design_provenance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_power_table_rows_always_carry_provenance_and_exclude_seam</code></td>
+<td><code>tests/test_detection_design_provenance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_power_report_renders_verdict</code></td>
+<td><code>tests/test_detection_design_provenance.py</code></td>
+<td>UNIT</td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>2. Index by Non-Functional Requirement (NFR)</h2>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a> — Per-slice statistical power (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(covered by <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> gate tests; see <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> row)</td>
+<td>—</td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred):</strong> <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a> is operationalized by <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> (<code>validate.py --lattice</code>) and <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a> (power audit). The tests in <code>test_lattice.py</code>, <code>test_power.py</code>, <code>test_validate_power_gate.py</code> collectively enforce the per-cell positive-count vs. tiered target threshold that <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a> specifies. No test carries an explicit <code>nfr_001</code> fn-token.</p>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a> — CI on every metric (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_nfr_002_clopper_pearson_method_named</code></td>
+<td><code>tests/test_clopper_pearson.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_002_paired_bootstrap_method_named</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td>(Wilson CI method-name check in <code>test_intervals.py</code> module docstring)</td>
+<td><code>tests/test_intervals.py</code></td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a> — Per-language power transparency (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_nfr_003_per_language_table_has_row_per_language</code></td>
+<td><code>tests/test_language_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_language_x_type_matrix_grouped</code></td>
+<td><code>tests/test_language_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_low_power_cells_labeled</code></td>
+<td><code>tests/test_language_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_render_markdown_and_csv</code></td>
+<td><code>tests/test_language_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_no_corpus_read</code></td>
+<td><code>tests/test_language_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_nfr004_imports_no_nondeterminism</code></td>
+<td><code>tests/test_language_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_power_table_skips_non_gated_and_attaches_scores</code></td>
+<td><code>tests/test_power_table_reporting.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_render_csv_and_markdown_roundtrip</code></td>
+<td><code>tests/test_power_table_reporting.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_verdict_ladder_and_power_class_edges</code></td>
+<td><code>tests/test_power_table_reporting.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_003_slice_heatmap_writes_png</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a> — Deterministic, provenanced generation (MUST)</h3>
+<p>Enforced via AST import-purity guards present in virtually every test module. Explicit token appearances:</p>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_005_nfr004_calibration_imports_no_nondeterminism</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_006_nfr004_anonymization_imports_no_nondeterminism</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_nfr004_exposure_imports_no_nondeterminism</code></td>
+<td><code>tests/test_exposure_index.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_008_nfr004_signals_imports_no_nondeterminism</code></td>
+<td><code>tests/test_signals.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_conll_pure_stdlib</code></td>
+<td><code>tests/test_conll_export.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_croissant_pure_stdlib_imports_without_mlcroissant</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_crosswalk_pure_stdlib</code> (via <code>test_fr_022_nfr004_crosswalk_pure_stdlib</code>)</td>
+<td><code>tests/test_crosswalk.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_dataset_card_pure_stdlib</code></td>
+<td><code>tests/test_dataset_card.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_distribution_imports_without_pyarrow</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_end_state_bundle_pure_stdlib</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_leaderboard_store_pure_stdlib</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_oracle_pure_stdlib</code></td>
+<td><code>tests/test_oracle.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_payloads_pure_stdlib</code></td>
+<td><code>tests/test_payloads.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_policy_pure_stdlib</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_slices_pure_stdlib</code></td>
+<td><code>tests/test_slices.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_spacy_export_imports_without_spacy</code></td>
+<td><code>tests/test_spacy_export.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_coi_pure_stdlib</code></td>
+<td><code>tests/test_coi.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_cli_generate_never_targets_frozen_corpus</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_cli_thin_pure_stdlib</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_viz_behind_extra_import_guards</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_reporting_core_imports_without_matplotlib</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_viz_no_toplevel_matplotlib_import</code></td>
+<td><code>tests/test_viz.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_002_nfr004_paired_imports_no_uncontrolled_nondeterminism</code></td>
+<td><code>tests/test_paired.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr004_correlation_purity</code></td>
+<td><code>tests/test_correlation.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_011_nfr004_pseudonymization_imports_no_nondeterminism</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_fr_007_nfr004_offline_adversary_imports_no_nondeterminism</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> — Anon/pseudo metric separation (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_nfr005_pareto_point_cannot_merge</code></td>
+<td><code>tests/test_anonymization.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_005_bundle_has_no_merged_verdict</code></td>
+<td><code>tests/test_end_state_bundle.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_005_anon_and_pseudo_are_separate_modules</code></td>
+<td><code>tests/test_nfr005_separation.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_005_no_combined_deid_callable_in_scoring_public_api</code></td>
+<td><code>tests/test_nfr005_separation.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr005_report_has_no_anonymization_or_combined_field</code></td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="03-nfr-verification/nfr-verification-matrix.html#nfr-006" data-trace-id="NFR-006" aria-label="Trace NFR-006 — No real PII (AX-001 synthetic-only)">NFR-006</a> — No real PII (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(no explicit <code>nfr_006</code> fn-token found)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>GAP / ACCEPTABLE:</strong> <a class="trace-link" href="03-nfr-verification/nfr-verification-matrix.html#nfr-006" data-trace-id="NFR-006" aria-label="Trace NFR-006 — No real PII (AX-001 synthetic-only)">NFR-006</a> is primarily a release-blocking security audit (<code>/dev-assist-validate --sensitive-data</code>) rather than a unit test. The <code>test_contributing.py::test_fr_025_contributing_has_provenance_and_synthetic_only</code> test asserts CONTRIBUTING.md documents the synthetic-only invariant (inferred trace). The actual scan tooling is outside the <code>tests/</code> directory. No genuine test gap — appropriate for a security-scan NFR.</p>
+<hr>
+<h3><span class="trace-def" id="nfr-007" data-trace-id="NFR-007">NFR-007</span> — Adversary version-pinning (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_010_llm_adversary_id_version_stamped</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_fr_007_config_is_frozen_and_hashable</code></td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_fr_010_adversary_satisfies_port</code> (checks <code>adversary_id</code>)</td>
+<td><code>tests/test_offline_adversary.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td>(pseudonymization threat-model pinning comment <a class="trace-link" href="#nfr-007" data-trace-id="NFR-007">NFR-007</a>)</td>
+<td><code>tests/test_pseudonymization.py</code></td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred):</strong> No fn carries an explicit <code>nfr_007</code> token. The version-pinning contract is verified through the <code>adversary_id</code> stamping tests under <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a> and the frozen config test under <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>.</p>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-008" data-trace-id="NFR-008" aria-label="Trace NFR-008 — ECE ≤0">NFR-008</a> — Calibration target (SHOULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_nfr_008_meets_reference_is_reported_not_gated</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_008_calibration_by_entity_class</code></td>
+<td><code>tests/test_calibration.py</code></td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-009" data-trace-id="NFR-009" aria-label="Trace NFR-009 — cheap-adversary $0 + &lt;10min/1CPU">NFR-009</a> — Eval cost budget + cheap-adversary mode (SHOULD)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_010_llm_adversary_requires_extra_when_anthropic_absent</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_fr_010_package_imports_without_anthropic</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_fr_010_llm_attack_skips_if_absent</code></td>
+<td><code>tests/test_llm_adversary.py</code></td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred):</strong> Module docstring explicitly states <code>reidx-01 / NFR-009</code> but fn-tokens carry <code>fr_010</code>. The lazy-import and offline-default contract directly verifies <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-009" data-trace-id="NFR-009" aria-label="Trace NFR-009 — cheap-adversary $0 + &lt;10min/1CPU">NFR-009</a>&#39;s <code>$0 external cost</code> cheap-adversary mode.</p>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a> — Scorer throughput + runtime dimension (Pass-2)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(no test found)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>Status: Pass-2 deferred.</strong> NFR-010b/c are flagged <code>real_user_needed: true</code> in the requirements. No throughput benchmark or timing test exists. Legitimate gap; the requirement explicitly defers the numeric gate to Pass-2.</p>
+<hr>
+<h3><span class="trace-def" id="nfr-011" data-trace-id="NFR-011">NFR-011</span> — Coverage (63 types, 60 languages, 4 domains) (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_canonical_counts</code></td>
+<td><code>tests/test_taxonomy.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_every_type_has_a_known_category</code></td>
+<td><code>tests/test_taxonomy.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_helpers</code></td>
+<td><code>tests/test_taxonomy.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_category_partition_sums_to_total</code></td>
+<td><code>tests/test_taxonomy.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_emitters_cover_exactly_63_canonical_types</code></td>
+<td><code>tests/test_lattice_targeting.py</code></td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred):</strong> <code>test_taxonomy.py</code> docstring cites M1 drift fix; no <code>nfr_011</code> token. Tests verify the 63-type registry and partition. Language/domain coverage scans are enforced by <code>validate.py --lattice</code> (<a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>).</p>
+<hr>
+<h3><a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a> — Croissant/HF loadability (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_nfr_012_croissant_declares_reg_columns</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_012_croissant_describes_loadable_parquet</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_012_full_validation_skips_without_mlcroissant</code></td>
+<td><code>tests/test_croissant.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_012_parquet_loads_via_datasets</code></td>
+<td><code>tests/test_parquet_export.py</code></td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a> — Documentation currency / no drift (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_nfr_013_docs_use_canonical_record_count</code></td>
+<td><code>tests/test_doc_drift.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_013_docs_use_canonical_entity_count</code></td>
+<td><code>tests/test_doc_drift.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_013_doc_titles_are_v2</code></td>
+<td><code>tests/test_doc_drift.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_013_taxonomy_body_matches_registry</code></td>
+<td><code>tests/test_doc_drift.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_013_migration_has_v2_section</code></td>
+<td><code>tests/test_doc_drift.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_013_changelog_has_spwr_entry</code></td>
+<td><code>tests/test_doc_drift.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_013_dataset_card_counts_match_metadata</code></td>
+<td><code>tests/test_dataset_card.py</code></td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a> — Governance neutrality (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_nfr_014_governance_md_present</code></td>
+<td><code>tests/test_governance.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_coi_as_dict_embeddable_in_store</code></td>
+<td><code>tests/test_coi.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_rate_limit_blocks_excess</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_held_out_rotation_epoch</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_contamination_dup_check</code></td>
+<td><code>tests/test_leaderboard_policy.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_hash_chain_links_events</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_014_verify_chain_detects_tampering</code></td>
+<td><code>tests/test_leaderboard_store.py</code></td>
+<td>explicit</td>
+</tr>
+</tbody></table>
+<hr>
+<h3><span class="trace-def" id="nfr-015" data-trace-id="NFR-015">NFR-015</span> — License/ethics (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_fr_024_dataset_card_has_yaml_frontmatter</code> (checks <code>license: cc0-1.0</code>)</td>
+<td><code>tests/test_dataset_card.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_fr_025_contributing_has_pr_template_and_cc0</code></td>
+<td><code>tests/test_contributing.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>test_fr_024_dataset_card_embeds_caveats</code> (CC0-data / Apache-2.0-code split)</td>
+<td><code>tests/test_dataset_card.py</code></td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<p><strong>Note (inferred):</strong> No <code>nfr_015</code> fn-token. The CC0 + Apache-2.0 license split is verified through <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a> and <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-025" data-trace-id="FR-025" aria-label="Trace FR-025 — AGENT_SIMULATED">FR-025</a> tests. Full license audit is a reviewer/audit gate, not a unit test.</p>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a> — Harness test coverage ≥85% line / ≥70% branch (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(measured by coverage tooling; not a named test function)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>Note:</strong> <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a> is enforced by the CI coverage gate (<code>pytest --cov</code> + coverage thresholds), not by a named test function. The 346-passed suite constitutes the evidence base. No <code>nfr_016</code> test fn token found — acceptable (coverage is a tooling metric, not a testable assertion within the test suite itself).</p>
+<hr>
+<h3><span class="trace-def" id="nfr-017" data-trace-id="NFR-017">NFR-017</span> — Threshold-validation transparency (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(no explicit test found)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>Note:</strong> <a class="trace-link" href="#nfr-017" data-trace-id="NFR-017">NFR-017</a> is an audit completeness requirement (<code>_threshold-validation/</code> directory entries). It is verified by human/agent reviewer audit, not by a unit test. <code>dev-assist-artifacts/02-requirements/non-functional-requirements.md</code> records R10 outcomes inline. No genuine gap; this is an artifact-completeness check, not a code-testable property.</p>
+<hr>
+<h3><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> — Committed-lattice per-cell power hard gate (MUST)</h3>
+<table>
+<thead>
+<tr>
+<th>Test function</th>
+<th>File</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_nfr_018_cli_validate_keeps_power_gate_on</code></td>
+<td><code>tests/test_cli.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_018_reid_required_n_pins_section5_numbers</code></td>
+<td><code>tests/test_reid_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_018_reid_tier_specs_are_derived_not_typed</code></td>
+<td><code>tests/test_reid_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_018_reid_provenance_shape</code></td>
+<td><code>tests/test_reid_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_018_reid_provenance_attaches_to_measured_rrs</code></td>
+<td><code>tests/test_reid_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td><code>test_nfr_018_seam_does_not_mutate_frozen_lattice</code></td>
+<td><code>tests/test_reid_power.py</code></td>
+<td>explicit</td>
+</tr>
+<tr>
+<td>(all <code>test_lattice.py</code> tests enforce anti-drift round-trip; <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> cited in module docstring)</td>
+<td><code>tests/test_lattice.py</code></td>
+<td>inferred</td>
+</tr>
+<tr>
+<td>(all <code>test_validate_power_gate.py</code> tests enforce the non-zero exit on shortfall)</td>
+<td><code>tests/test_validate_power_gate.py</code></td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>3. Index by Design Component (DC)</h2>
+<table>
+<thead>
+<tr>
+<th>DC</th>
+<th>Component</th>
+<th>Primary FRs</th>
+<th>Verifying test files</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-01" data-trace-id="DC-01" aria-label="Trace DC-01">DC-01</a></strong></td>
+<td>Corpus &amp; slices</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a>/003/011/018</td>
+<td><code>test_lattice_targeting.py</code>, <code>test_lattice_fill_determinism.py</code>, <code>test_taxonomy.py</code>, <code>test_slices.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-02" data-trace-id="DC-02" aria-label="Trace DC-02">DC-02</a></strong></td>
+<td>Schema &amp; migration</td>
+<td><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a>, AX-002</td>
+<td><code>test_migration.py</code>, <code>test_manifest.py</code>, <code>test_doc_drift.py</code></td>
+<td>Verified by test (inferred)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-03" data-trace-id="DC-03" aria-label="Trace DC-03">DC-03</a></strong></td>
+<td>Generation pipeline</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a>/006, AX-001/002</td>
+<td><code>test_lattice_fill_determinism.py</code>, <code>test_lattice_targeting.py</code>, <code>test_cli.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-04" data-trace-id="DC-04" aria-label="Trace DC-04">DC-04</a></strong></td>
+<td>Scoring harness core — I/O contract</td>
+<td><a class="trace-link" href="#fr-003" data-trace-id="FR-003">FR-003</a></td>
+<td><code>test_scoring_core.py</code></td>
+<td>Verified by test (inferred)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-05" data-trace-id="DC-05" aria-label="Trace DC-05">DC-05</a></strong></td>
+<td>Detection scorer</td>
+<td><a class="trace-link" href="#fr-001" data-trace-id="FR-001">FR-001</a>/002/004/005</td>
+<td><code>test_detection.py</code>, <code>test_paired.py</code>, <code>test_clopper_pearson.py</code>, <code>test_intervals.py</code>, <code>test_calibration.py</code>, <code>test_viz.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-06" data-trace-id="DC-06" aria-label="Trace DC-06">DC-06</a></strong></td>
+<td>Anonymization scorer</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-06.html#fr-006" data-trace-id="FR-006" aria-label="Trace FR-006 — 7. Acceptance criteria (G/W/T from FR-006)">FR-006</a></td>
+<td><code>test_anonymization.py</code>, <code>test_viz.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a></strong></td>
+<td>Re-identification scorer</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>/008/009/010</td>
+<td><code>test_adversary_port.py</code>, <code>test_offline_adversary.py</code>, <code>test_llm_adversary.py</code>, <code>test_reidentification_measured.py</code>, <code>test_rrs_caveat.py</code>, <code>test_exposure_index.py</code>, <code>test_signals.py</code>, <code>test_reid_power.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-08" data-trace-id="DC-08" aria-label="Trace DC-08">DC-08</a></strong></td>
+<td>Pseudonymization-integrity scorer</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#fr-011" data-trace-id="FR-011" aria-label="Trace FR-011 — 7. Acceptance criteria (G/W/T from FR-011/012/013)">FR-011</a>/012/013</td>
+<td><code>test_pseudonymization.py</code>, <code>test_nfr005_separation.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-09" data-trace-id="DC-09" aria-label="Trace DC-09">DC-09</a></strong></td>
+<td>Statistical-power &amp; reporting engine</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a>/029, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a>/002/003/008/018</td>
+<td><code>test_power.py</code>, <code>test_power_table_reporting.py</code>, <code>test_language_power.py</code>, <code>test_lattice.py</code>, <code>test_lattice_audit.py</code>, <code>test_validate_power_gate.py</code>, <code>test_detection_design_provenance.py</code>, <code>test_viz.py</code>, <code>test_intervals.py</code>, <code>test_paired.py</code>, <code>test_clopper_pearson.py</code>, <code>test_calibration.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-10" data-trace-id="DC-10" aria-label="Trace DC-10">DC-10</a></strong></td>
+<td>Agentic oracle + payload library</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a>/018/019/020</td>
+<td><code>test_oracle.py</code>, <code>test_payloads.py</code>, <code>test_roadmap.py</code></td>
+<td>Verified by test (<a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a>); doc-pinned (<a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-11" data-trace-id="DC-11" aria-label="Trace DC-11">DC-11</a></strong></td>
+<td>Compliance/end-state bundle + crosswalk</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-021" data-trace-id="FR-021" aria-label="Trace FR-021 — AGENT_SIMULATED">FR-021</a>/022</td>
+<td><code>test_end_state_bundle.py</code>, <code>test_crosswalk.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-12" data-trace-id="DC-12" aria-label="Trace DC-12">DC-12</a></strong></td>
+<td>Distribution &amp; exports</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>/028, <a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a></td>
+<td><code>test_parquet_export.py</code>, <code>test_croissant.py</code>, <code>test_conll_export.py</code>, <code>test_spacy_export.py</code>, <code>test_dataset_card.py</code>, <code>test_cli.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-13" data-trace-id="DC-13" aria-label="Trace DC-13">DC-13</a></strong></td>
+<td>Leaderboard &amp; governance</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>/025/026, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+<td><code>test_leaderboard_store.py</code>, <code>test_leaderboard_policy.py</code>, <code>test_governance.py</code>, <code>test_coi.py</code>, <code>test_contributing.py</code></td>
+<td>Verified by test</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-14" data-trace-id="DC-14" aria-label="Trace DC-14">DC-14</a></strong></td>
+<td>Real-data validation harness</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a></td>
+<td><code>test_correlation.py</code></td>
+<td>Pass-2 deferred (seam tested)</td>
+</tr>
+<tr>
+<td><strong><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-15" data-trace-id="DC-15" aria-label="Trace DC-15">DC-15</a></strong></td>
+<td>Test suite &amp; CI</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a></td>
+<td>(all 49 test files)</td>
+<td>Verified by test</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>4. Index by Story</h2>
+<table>
+<thead>
+<tr>
+<th>Story</th>
+<th>Title (from §1 heading)</th>
+<th>Primary FR/NFR</th>
+<th>Key test files</th>
+<th>Test-type tags in story</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>S3-01</strong></td>
+<td>Adversary port + signals (<a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a>/008)</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-05.html#fr-008" data-trace-id="FR-008" aria-label="Trace FR-008 — S3-05 — Deterministic exposure index (pre-screen prior) + i…">FR-008</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td><code>test_adversary_port.py</code>, <code>test_signals.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[CONTRACT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>REVIEW/DONE</td>
+</tr>
+<tr>
+<td><strong>S3-02</strong></td>
+<td>Offline deterministic adversary (<a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>/010)</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td><code>test_offline_adversary.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code> <code>[CONTRACT-TEST]</code></td>
+<td>REVIEW/DONE</td>
+</tr>
+<tr>
+<td><strong>S3-03</strong></td>
+<td>LLM adversary (<a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a> secondary)</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-009" data-trace-id="NFR-009" aria-label="Trace NFR-009 — cheap-adversary $0 + &lt;10min/1CPU">NFR-009</a></td>
+<td><code>test_llm_adversary.py</code></td>
+<td><code>[CONTRACT-TEST]</code> <code>[UNIT-TEST]</code> <code>[INTEGRATION-TEST]</code></td>
+<td>REVIEW/DONE</td>
+</tr>
+<tr>
+<td><strong>S3-04</strong></td>
+<td>Measured RRS + <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> caveat</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>, <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a></td>
+<td><code>test_reidentification_measured.py</code>, <code>test_rrs_caveat.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[AUDIT]</code></td>
+<td>REVIEW/DONE</td>
+</tr>
+<tr>
+<td><strong>S3-05</strong></td>
+<td>Exposure-index pre-screen</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-05.html#fr-008" data-trace-id="FR-008" aria-label="Trace FR-008 — S3-05 — Deterministic exposure index (pre-screen prior) + i…">FR-008</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td><code>test_exposure_index.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>REVIEW/DONE</td>
+</tr>
+<tr>
+<td><strong>S3-06</strong></td>
+<td>Anonymization scorer Pareto</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-06.html#fr-006" data-trace-id="FR-006" aria-label="Trace FR-006 — 7. Acceptance criteria (G/W/T from FR-006)">FR-006</a>, <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></td>
+<td><code>test_anonymization.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[AUDIT]</code> <code>[PROPERTY-TEST]</code></td>
+<td>REVIEW/DONE</td>
+</tr>
+<tr>
+<td><strong>S3-07</strong></td>
+<td>Pseudonymization-integrity scorer</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#fr-011" data-trace-id="FR-011" aria-label="Trace FR-011 — 7. Acceptance criteria (G/W/T from FR-011/012/013)">FR-011</a>/012/013, <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></td>
+<td><code>test_pseudonymization.py</code>, <code>test_nfr005_separation.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[CONTRACT-TEST]</code></td>
+<td>REVIEW/DONE</td>
+</tr>
+<tr>
+<td><strong>S3-08</strong></td>
+<td>Re-id operating-point power seam</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a></td>
+<td><code>test_reid_power.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>REVIEW/DONE</td>
+</tr>
+<tr>
+<td><strong>S4-01</strong></td>
+<td>Clopper-Pearson + Wilson CIs</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a>, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a>/004</td>
+<td><code>test_clopper_pearson.py</code>, <code>test_intervals.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S4-02</strong></td>
+<td>Paired stats (McNemar/bootstrap)</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-02.html#fr-002" data-trace-id="FR-002" aria-label="Trace FR-002 — / NFR-002)">FR-002</a>, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a>/004</td>
+<td><code>test_paired.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S4-03</strong></td>
+<td>Committed-lattice + power engine</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>, AX-003</td>
+<td><code>test_lattice.py</code>, <code>test_power.py</code>, <code>test_validate_power_gate.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S4-04</strong></td>
+<td>Per-language power table</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a></td>
+<td><code>test_language_power.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S4-05</strong></td>
+<td>Coverage-hardening sprint 4</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a>/018</td>
+<td><code>test_power_table_reporting.py</code>, <code>test_detection_design_provenance.py</code></td>
+<td><code>[UNIT-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S5-01</strong></td>
+<td>Regulatory crosswalk</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-022" data-trace-id="FR-022" aria-label="Trace FR-022 — 2026-05-30 FR-022, NFR-012 AGENT SIMULATED AGENT SIMULATED…">FR-022</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td><code>test_crosswalk.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S5-02</strong></td>
+<td>Parquet export (streaming + regime columns)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a>/004</td>
+<td><code>test_parquet_export.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code> <code>[INTEGRATION-TEST]</code></td>
+<td>REVIEW</td>
+</tr>
+<tr>
+<td><strong>S5-03</strong></td>
+<td>Croissant + HF dataset card</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a>/013/004</td>
+<td><code>test_croissant.py</code>, <code>test_dataset_card.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[INTEGRATION-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S5-04</strong></td>
+<td>CoNLL export</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td><code>test_conll_export.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S5-05</strong></td>
+<td>CLI (5 thin dispatch verbs)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a>/004</td>
+<td><code>test_cli.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[CONTRACT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S5-06</strong></td>
+<td>End-state evidence bundle</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-021" data-trace-id="FR-021" aria-label="Trace FR-021 — AGENT_SIMULATED">FR-021</a>, <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>/004</td>
+<td><code>test_end_state_bundle.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[AUDIT]</code> <code>[INTEGRATION-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S5-07</strong></td>
+<td>Doc-drift enforcement</td>
+<td><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a></td>
+<td><code>test_doc_drift.py</code></td>
+<td><code>[UNIT-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S6-01</strong></td>
+<td>Governance (GOVERNANCE.md pins)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+<td><code>test_governance.py</code></td>
+<td><code>[UNIT-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S6-02</strong></td>
+<td>Leaderboard policy (opt-in, anti-gaming)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a>/004</td>
+<td><code>test_leaderboard_policy.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S6-03</strong></td>
+<td>CoI record + recusal</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a>/004</td>
+<td><code>test_coi.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S6-04</strong></td>
+<td>Leaderboard store (append-only, hash-chain)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a>/004</td>
+<td><code>test_leaderboard_store.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S6-05</strong></td>
+<td>Contribution pipeline (CONTRIBUTING.md)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-025" data-trace-id="FR-025" aria-label="Trace FR-025 — AGENT_SIMULATED">FR-025</a></td>
+<td><code>test_contributing.py</code></td>
+<td><code>[UNIT-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S7-01</strong></td>
+<td>Calibration + viz</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-03.html#fr-005" data-trace-id="FR-005" aria-label="Trace FR-005 — / NFR-008)">FR-005</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-008" data-trace-id="NFR-008" aria-label="Trace NFR-008 — ECE ≤0">NFR-008</a>/004</td>
+<td><code>test_calibration.py</code>, <code>test_viz.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S7-02</strong></td>
+<td>Oracle + payloads (agentic, bounded)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td><code>test_oracle.py</code>, <code>test_payloads.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S7-03</strong></td>
+<td>Roadmap pins (<a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020)</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020</td>
+<td><code>test_roadmap.py</code></td>
+<td><code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S7-04</strong></td>
+<td>Correlation harness seam</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td><code>test_correlation.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>S7-05</strong></td>
+<td>Coreference + QI slices seam</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td><code>test_slices.py</code></td>
+<td><code>[UNIT-TEST]</code> <code>[PROPERTY-TEST]</code></td>
+<td>DONE</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>5. Index by Example / Documentation Reference</h2>
+<p>No explicit examples directory or <code>demo/</code> folder was found at the repo root. The following documentation files serve as public-facing examples of requirements in action. None carry explicit <a class="trace-link" href="../00-validation/validation-report-2026-05-29-1200.html#fr-nnn" data-trace-id="FR-NNN" aria-label="Trace FR-NNN — ID-count drift ✅ PASS functional-requirements.md = 29 disti…">FR-NNN</a> tokens in their prose; all traces are inferred from section content.</p>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Relevant FR(s)</th>
+<th>How it demonstrates the FR</th>
+<th>Trace type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CONTRIBUTING.md</code></td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-025" data-trace-id="FR-025" aria-label="Trace FR-025 — AGENT_SIMULATED">FR-025</a></td>
+<td>PR template, CC0 license-compat check, provenance section, deprecation/semver policy</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>GOVERNANCE.md</code></td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+<td>Advisory-body roster, CoI statement re: <code>pii-anon-core</code>, bus-factor note, charter</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>ROADMAP.md</code></td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020</td>
+<td>Documents cross-turn fragmented leakage, transcript residual estimate, live-harness adapter as v1.x future items</td>
+<td>explicit (FR IDs appear in file, verified by <code>test_roadmap.py</code>)</td>
+</tr>
+<tr>
+<td><code>DATASHEET.md</code></td>
+<td><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a>, <a class="trace-link" href="#nfr-015" data-trace-id="NFR-015">NFR-015</a></td>
+<td>Gebru-format datasheet; license/intended-use; synthetic-only invariant</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>TAXONOMY.md</code></td>
+<td><a class="trace-link" href="#nfr-011" data-trace-id="NFR-011">NFR-011</a></td>
+<td>63 entity types listed; matches registry (verified by <code>test_doc_drift.py::test_nfr_013_taxonomy_body_matches_registry</code>)</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>MIGRATION.md</code></td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-02" data-trace-id="DC-02" aria-label="Trace DC-02">DC-02</a> (AX-002)</td>
+<td>v1.3.0→v2.0.0 migration instructions; deterministic script</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a></td>
+<td>Dataset card-equivalent public summary; counts/versions must match metadata</td>
+<td>inferred</td>
+</tr>
+<tr>
+<td><code>COMPARISON.md</code></td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> (context)</td>
+<td>Benchmark comparison context; external-validity caveats</td>
+<td>inferred</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>6. Coverage Roll-Up</h2>
+<h3>6.1 FR coverage summary</h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Count</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Total FRs declared</td>
+<td>29</td>
+<td><a class="trace-link" href="#fr-001" data-trace-id="FR-001">FR-001</a> through <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a></td>
+</tr>
+<tr>
+<td>Test-verified (explicit token)</td>
+<td>21</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-02.html#fr-002" data-trace-id="FR-002" aria-label="Trace FR-002 — / NFR-002)">FR-002</a>/004/005/006/007/008/009/010/011/012/013/015/016/017/021/022/023/024/025/026/029</td>
+</tr>
+<tr>
+<td>Test-verified (inferred trace)</td>
+<td>3</td>
+<td><a class="trace-link" href="#fr-001" data-trace-id="FR-001">FR-001</a>/003/027 (seam tests + module docstrings; see §7)</td>
+</tr>
+<tr>
+<td>Doc-pinned only (no feature test)</td>
+<td>3</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020 (ROADMAP.md + <code>test_roadmap.py</code> property tests)</td>
+</tr>
+<tr>
+<td>Pass-2 deferred (seam tested)</td>
+<td>2</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016 (slice selectors exist; full scoring deferred v1.1); <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> also deferred for full real-data run</td>
+</tr>
+<tr>
+<td>Genuine gap (SHOULD, no test at all)</td>
+<td>2</td>
+<td><a class="trace-link" href="#fr-014" data-trace-id="FR-014">FR-014</a> (query-aware masking scorer), <a class="trace-link" href="#fr-028" data-trace-id="FR-028">FR-028</a> (frictionless citation)</td>
+</tr>
+<tr>
+<td>Total accounted</td>
+<td>29 of 29</td>
+<td>Zero orphan FRs</td>
+</tr>
+</tbody></table>
+<h3>6.2 NFR coverage summary</h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Count</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Total NFRs declared</td>
+<td>18</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a> through <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+</tr>
+<tr>
+<td>Test-verified (explicit token)</td>
+<td>8</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a>/003/004/005/008/012/013/014</td>
+</tr>
+<tr>
+<td>Test-verified (inferred)</td>
+<td>5</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a>/007/009/011/015 (fn-tokens absent; requirements verified via FR-coupled tests)</td>
+</tr>
+<tr>
+<td>Pass-2 deferred</td>
+<td>1</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-010" data-trace-id="NFR-010" aria-label="Trace NFR-010 — throughput ≥1,000 rec/sec/8-core">NFR-010</a> (throughput; <code>real_user_needed: true</code>)</td>
+</tr>
+<tr>
+<td>Audit/tooling gate (no unit test warranted)</td>
+<td>3</td>
+<td><a class="trace-link" href="03-nfr-verification/nfr-verification-matrix.html#nfr-006" data-trace-id="NFR-006" aria-label="Trace NFR-006 — No real PII (AX-001 synthetic-only)">NFR-006</a> (security scan), <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-016" data-trace-id="NFR-016" aria-label="Trace NFR-016 — ≥85% line + CI green">NFR-016</a> (coverage tooling), <a class="trace-link" href="#nfr-017" data-trace-id="NFR-017">NFR-017</a> (artifact completeness)</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>1</td>
+<td>Explicitly verified via <code>test_reid_power.py</code> + lattice + validate gate tests</td>
+</tr>
+<tr>
+<td>Total accounted</td>
+<td>18 of 18</td>
+<td>Zero orphan NFRs</td>
+</tr>
+</tbody></table>
+<h3>6.3 Test-suite composition (347 test items)</h3>
+<table>
+<thead>
+<tr>
+<th>Test file</th>
+<th>Approx. items</th>
+<th>Primary FR/NFR</th>
+<th>Test types present</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test_adversary_port.py</code></td>
+<td>7</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a>/007</td>
+<td>UNIT, PROPERTY, CONTRACT</td>
+</tr>
+<tr>
+<td><code>test_anonymization.py</code></td>
+<td>9</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-06.html#fr-006" data-trace-id="FR-006" aria-label="Trace FR-006 — 7. Acceptance criteria (G/W/T from FR-006)">FR-006</a>, <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></td>
+<td>UNIT, AUDIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_calibration.py</code></td>
+<td>8</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-03.html#fr-005" data-trace-id="FR-005" aria-label="Trace FR-005 — / NFR-008)">FR-005</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-008" data-trace-id="NFR-008" aria-label="Trace NFR-008 — ECE ≤0">NFR-008</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_cli.py</code></td>
+<td>12</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>UNIT, CONTRACT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_clopper_pearson.py</code></td>
+<td>7</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a>, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_coi.py</code></td>
+<td>4</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_conll_export.py</code></td>
+<td>12</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_contributing.py</code></td>
+<td>3</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-025" data-trace-id="FR-025" aria-label="Trace FR-025 — AGENT_SIMULATED">FR-025</a></td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_correlation.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_croissant.py</code></td>
+<td>16</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a></td>
+<td>UNIT, INTEGRATION, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_crosswalk.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-022" data-trace-id="FR-022" aria-label="Trace FR-022 — 2026-05-30 FR-022, NFR-012 AGENT SIMULATED AGENT SIMULATED…">FR-022</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_dataset_card.py</code></td>
+<td>4</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_detection.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="#fr-001" data-trace-id="FR-001">FR-001</a>/004</td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_detection_design_provenance.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, AX-003</td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_doc_drift.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../00-validation/validation-report-2026-05-29-S3-close.html#nfr-013" data-trace-id="NFR-013" aria-label="Trace NFR-013 — doc-drift (NFR-013) ⚠️ MAJOR — KNOWN/SCHEDULED See below.">NFR-013</a></td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_end_state_bundle.py</code></td>
+<td>7</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-021" data-trace-id="FR-021" aria-label="Trace FR-021 — AGENT_SIMULATED">FR-021</a>, <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></td>
+<td>UNIT, AUDIT, INTEGRATION, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_exposure_index.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-05.html#fr-008" data-trace-id="FR-008" aria-label="Trace FR-008 — S3-05 — Deterministic exposure index (pre-screen prior) + i…">FR-008</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_governance.py</code></td>
+<td>3</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-026" data-trace-id="FR-026" aria-label="Trace FR-026 — AGENT_SIMULATED">FR-026</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_intervals.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a>, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_language_power.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_lattice.py</code></td>
+<td>14</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_lattice_audit.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_lattice_fill_determinism.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_lattice_targeting.py</code></td>
+<td>10</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="#nfr-011" data-trace-id="NFR-011">NFR-011</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_leaderboard_policy.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_leaderboard_store.py</code></td>
+<td>7</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-023" data-trace-id="FR-023" aria-label="Trace FR-023 — AGENT_SIMULATED">FR-023</a>, <a class="trace-link" href="../02-requirements/traceability-matrix.html#nfr-014" data-trace-id="NFR-014" aria-label="Trace NFR-014 — AGENT_SIMULATED">NFR-014</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_llm_adversary.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-009" data-trace-id="NFR-009" aria-label="Trace NFR-009 — cheap-adversary $0 + &lt;10min/1CPU">NFR-009</a></td>
+<td>CONTRACT, UNIT, INTEGRATION</td>
+</tr>
+<tr>
+<td><code>test_manifest.py</code></td>
+<td>3</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-02" data-trace-id="DC-02" aria-label="Trace DC-02">DC-02</a>, AX-002</td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_migration.py</code></td>
+<td>6</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-02" data-trace-id="DC-02" aria-label="Trace DC-02">DC-02</a>, AX-002</td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_nfr005_separation.py</code></td>
+<td>2</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></td>
+<td>UNIT, AUDIT</td>
+</tr>
+<tr>
+<td><code>test_offline_adversary.py</code></td>
+<td>9</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>/010</td>
+<td>UNIT, PROPERTY, CONTRACT</td>
+</tr>
+<tr>
+<td><code>test_oracle.py</code></td>
+<td>4</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_paired.py</code></td>
+<td>8</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-02.html#fr-002" data-trace-id="FR-002" aria-label="Trace FR-002 — / NFR-002)">FR-002</a>, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_parquet_export.py</code></td>
+<td>11</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>, <a class="trace-link" href="../04-development/02-stories/sprint-5/S5-03.html#nfr-012" data-trace-id="NFR-012" aria-label="Trace NFR-012 — loadability)">NFR-012</a></td>
+<td>UNIT, PROPERTY, INTEGRATION</td>
+</tr>
+<tr>
+<td><code>test_payloads.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-017" data-trace-id="FR-017" aria-label="Trace FR-017 — AGENT_SIMULATED">FR-017</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_power.py</code></td>
+<td>20</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_power_table_reporting.py</code></td>
+<td>4</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a></td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_pseudonymization.py</code></td>
+<td>8</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#fr-011" data-trace-id="FR-011" aria-label="Trace FR-011 — 7. Acceptance criteria (G/W/T from FR-011/012/013)">FR-011</a>/012/013, <a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a></td>
+<td>UNIT, CONTRACT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_reid_power.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_reidentification_measured.py</code></td>
+<td>9</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>/009</td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_roadmap.py</code></td>
+<td>2</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-018" data-trace-id="FR-018" aria-label="Trace FR-018 — 2026-05-31 FR-018, FR-019, FR-020 (roadmap) DOCUMENTED (v1.…">FR-018</a>/019/020</td>
+<td>PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_rrs_caveat.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a>/007</td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_scoring_core.py</code></td>
+<td>7</td>
+<td><a class="trace-link" href="#fr-003" data-trace-id="FR-003">FR-003</a>, <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-04" data-trace-id="DC-04" aria-label="Trace DC-04">DC-04</a></td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_signals.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-3/S3-05.html#fr-008" data-trace-id="FR-008" aria-label="Trace FR-008 — S3-05 — Deterministic exposure index (pre-screen prior) + i…">FR-008</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_slices.py</code></td>
+<td>4</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016</td>
+<td>UNIT, PROPERTY</td>
+</tr>
+<tr>
+<td><code>test_spacy_export.py</code></td>
+<td>4</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a></td>
+<td>UNIT, CONTRACT</td>
+</tr>
+<tr>
+<td><code>test_taxonomy.py</code></td>
+<td>4</td>
+<td><a class="trace-link" href="#nfr-011" data-trace-id="NFR-011">NFR-011</a></td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_validate_power_gate.py</code></td>
+<td>5</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>UNIT</td>
+</tr>
+<tr>
+<td><code>test_viz.py</code></td>
+<td>9</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-03.html#fr-005" data-trace-id="FR-005" aria-label="Trace FR-005 — / NFR-008)">FR-005</a>/006, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-04.html#nfr-003" data-trace-id="NFR-003" aria-label="Trace NFR-003 — transparency)">NFR-003</a></td>
+<td>UNIT, PROPERTY</td>
+</tr>
+</tbody></table>
+<p><strong>Total: 347 items.</strong> Reported run result: 346 passed / 1 skipped (<code>test_fr_010_llm_attack_skips_if_absent</code> — skips cleanly when <code>anthropic</code> is absent, by design).</p>
+<hr>
+<h2>7. Trace-by-Inference Flags</h2>
+<p>The following rows use inferred rather than explicit ID linkage. Human curator action: add <code># trace: FR-NNN</code> or <code>nfr_NNN</code> token to the test function name or module docstring to convert these to explicit trace links.</p>
+<table>
+<thead>
+<tr>
+<th>Row ID</th>
+<th>Test file</th>
+<th>Inferred-to FR/NFR</th>
+<th>Reason for inference</th>
+<th>Recommended action</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TBI-01</td>
+<td><code>test_detection.py</code> (all 5 fns)</td>
+<td><a class="trace-link" href="#fr-001" data-trace-id="FR-001">FR-001</a></td>
+<td>Module docstring says <code>FR-001/004</code>; no fn carries <code>fr_001</code> token</td>
+<td>Add <code>_fr_001</code> suffix or <code># trace: FR-001</code> comment to each fn</td>
+</tr>
+<tr>
+<td>TBI-02</td>
+<td><code>test_scoring_core.py</code> (all 7 fns)</td>
+<td><a class="trace-link" href="#fr-003" data-trace-id="FR-003">FR-003</a></td>
+<td>No <code>fr_003</code> token; <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-04" data-trace-id="DC-04" aria-label="Trace DC-04">DC-04</a>/reidx cited in docstring only</td>
+<td>Add <code>fr_003</code> token to fn names</td>
+</tr>
+<tr>
+<td>TBI-03</td>
+<td><code>test_intervals.py</code> (all 6 fns)</td>
+<td><a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#fr-004" data-trace-id="FR-004" aria-label="Trace FR-004 — / NFR-002)">FR-004</a>, <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a></td>
+<td>Module docstring cites both; no fn-level token</td>
+<td>Add <code>fr_004</code>/<code>nfr_002</code> tokens</td>
+</tr>
+<tr>
+<td>TBI-04</td>
+<td><code>test_rrs_caveat.py</code> (all 5 fns)</td>
+<td><a class="trace-link" href="../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a>/007</td>
+<td>Module docstring cites <code>FR-009/gov-01</code>; fn-names lack <code>fr_009</code>/<code>fr_007</code> tokens</td>
+<td>Add <code>fr_009</code> to relevant fns</td>
+</tr>
+<tr>
+<td>TBI-05</td>
+<td><code>test_lattice_fill_determinism.py</code> (all 5 fns)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td>No token in fn names; module docstring context implies <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>/<a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td>Add <code>fr_029</code>/<code>nfr004</code> tokens</td>
+</tr>
+<tr>
+<td>TBI-06</td>
+<td><code>test_lattice_targeting.py</code> (all 10 fns)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="#nfr-011" data-trace-id="NFR-011">NFR-011</a></td>
+<td>No fn-level tokens; inferred from lattice context and 63-type emitter check</td>
+<td>Add <code>fr_029</code>/<code>nfr_011</code> tokens</td>
+</tr>
+<tr>
+<td>TBI-07</td>
+<td><code>test_validate_power_gate.py</code> (all 5 fns)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>Module docstring cites both; fn names lack tokens</td>
+<td>Add <code>fr_029</code>/<code>nfr_018</code> tokens</td>
+</tr>
+<tr>
+<td>TBI-08</td>
+<td><code>test_lattice_audit.py</code> (all 6 fns)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>Module docstring cites both; fn names lack tokens</td>
+<td>Add <code>fr_029</code>/<code>nfr_018</code> tokens</td>
+</tr>
+<tr>
+<td>TBI-09</td>
+<td><code>test_migration.py</code> + <code>test_manifest.py</code></td>
+<td><a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-02" data-trace-id="DC-02" aria-label="Trace DC-02">DC-02</a>, <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-07.html#nfr-004" data-trace-id="NFR-004" aria-label="Trace NFR-004 — `test_fr_011_nfr004_pseudonymization_imports_no_nondetermin…">NFR-004</a></td>
+<td>Module docstrings cite <a class="trace-link" href="../03-design/06-synthesis/D-implementation-ready-design.html#dc-02" data-trace-id="DC-02" aria-label="Trace DC-02">DC-02</a>/AX-002; no FR/NFR fn-token</td>
+<td>Add <code>nfr004</code> or <code>dc_02</code> token</td>
+</tr>
+<tr>
+<td>TBI-10</td>
+<td><code>test_taxonomy.py</code> (all 4 fns)</td>
+<td><a class="trace-link" href="#nfr-011" data-trace-id="NFR-011">NFR-011</a></td>
+<td>Module docstring cites M1 fix; no <code>nfr_011</code> token</td>
+<td>Add <code>nfr_011</code> token</td>
+</tr>
+<tr>
+<td>TBI-11</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a> (no dedicated test)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-001" data-trace-id="NFR-001" aria-label="Trace NFR-001 — power ≥753/1,522">NFR-001</a></td>
+<td>Enforced by <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a> gate tests; no independent <code>nfr_001</code> test</td>
+<td>Add a <code>test_nfr_001_*</code> alias/wrapper in <code>test_validate_power_gate.py</code></td>
+</tr>
+<tr>
+<td>TBI-12</td>
+<td><a class="trace-link" href="#nfr-007" data-trace-id="NFR-007">NFR-007</a> version-pinning</td>
+<td><a class="trace-link" href="#nfr-007" data-trace-id="NFR-007">NFR-007</a></td>
+<td>Verified via <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a> tests; no <code>nfr_007</code> fn-token</td>
+<td>Add <code>nfr_007</code> annotation to <code>test_fr_010_llm_adversary_id_version_stamped</code></td>
+</tr>
+<tr>
+<td>TBI-13</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-009" data-trace-id="NFR-009" aria-label="Trace NFR-009 — cheap-adversary $0 + &lt;10min/1CPU">NFR-009</a> offline-adversary mode</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-009" data-trace-id="NFR-009" aria-label="Trace NFR-009 — cheap-adversary $0 + &lt;10min/1CPU">NFR-009</a></td>
+<td>Verified via <a class="trace-link" href="../04-development/02-stories/sprint-3/S3-01.html#fr-010" data-trace-id="FR-010" aria-label="Trace FR-010 — 7. Acceptance criteria (Given/When/Then from FR-010)">FR-010</a> LLM tests; module docstring cites <a class="trace-link" href="../02-requirements/_threshold-validation/findings-summary.html#nfr-009" data-trace-id="NFR-009" aria-label="Trace NFR-009 — cheap-adversary $0 + &lt;10min/1CPU">NFR-009</a></td>
+<td>Add <code>nfr_009</code> token to <code>test_fr_010_package_imports_without_anthropic</code></td>
+</tr>
+<tr>
+<td>TBI-14</td>
+<td><a class="trace-link" href="#nfr-011" data-trace-id="NFR-011">NFR-011</a> 63-type coverage</td>
+<td><a class="trace-link" href="#nfr-011" data-trace-id="NFR-011">NFR-011</a></td>
+<td>Taxonomy tests don&#39;t carry <code>nfr_011</code> token</td>
+<td>Add <code>nfr_011</code> token to <code>test_canonical_counts</code></td>
+</tr>
+<tr>
+<td>TBI-15</td>
+<td><a class="trace-link" href="#nfr-015" data-trace-id="NFR-015">NFR-015</a> license/ethics</td>
+<td><a class="trace-link" href="#nfr-015" data-trace-id="NFR-015">NFR-015</a></td>
+<td>Verified via <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-024" data-trace-id="FR-024" aria-label="Trace FR-024 — AGENT_SIMULATED">FR-024</a>/<a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-025" data-trace-id="FR-025" aria-label="Trace FR-025 — AGENT_SIMULATED">FR-025</a> dataset-card/contributing tests</td>
+<td>Add <code>nfr_015</code> token to <code>test_fr_024_dataset_card_has_yaml_frontmatter</code></td>
+</tr>
+<tr>
+<td>TBI-16</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> correlation harness</td>
+<td><a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a></td>
+<td>Seam tests exist and carry <code>fr_027</code> tokens — EXPLICIT; the inferred aspect is the deferred real-data path</td>
+<td>No action on token; document deferred portion in Pass-2 record</td>
+</tr>
+<tr>
+<td>TBI-17</td>
+<td><code>test_power.py</code> (all 20 fns)</td>
+<td><a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#fr-029" data-trace-id="FR-029" aria-label="Trace FR-029 — / sampling-design">FR-029</a>, <a class="trace-link" href="../02-requirements/_threshold-validation/findings-nfr-018-2026-05-29.html#nfr-018" data-trace-id="NFR-018" aria-label="Trace NFR-018 — Threshold Validation Findings (S-PWR work-stream)">NFR-018</a></td>
+<td>Module docstring cites both; individual fn names don&#39;t carry <code>fr_029</code>/<code>nfr_018</code></td>
+<td>Add <code>fr_029</code>/<code>nfr_018</code> tokens to fn names</td>
+</tr>
+</tbody></table>
+<p><strong>Inferred-vs-explicit ratio:</strong> ~52 test functions carry inferred traces out of ~347 total items ≈ 15% inferred, 85% explicit. This is a very good ratio for a brownfield project at this stage.</p>
+<hr>
+<h2>8. NFR Verification Directory</h2>
+<p><code>dev-assist-artifacts/05-testing/03-nfr-verification/</code> — <strong>empty at time of catalog generation.</strong>
+Pre-wave NFR verification artifacts were not separately staged. The test suite itself (346 passed) constitutes the primary NFR verification record for <a class="trace-link" href="../04-development/02-stories/sprint-4/S4-01.html#nfr-002" data-trace-id="NFR-002" aria-label="Trace NFR-002 — 7. Acceptance criteria (G/W/T from FR-004 / NFR-002)">NFR-002</a>/003/004/005/008/012/013/014/018.</p>
+<p>Pass-2 dir <code>dev-assist-artifacts/05-testing/05-pass2/</code> — <strong>empty.</strong> Pass-2 not yet run. Deferred items: NFR-010b/c (throughput), <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-027" data-trace-id="FR-027" aria-label="Trace FR-027 — 2026-05-28 FR-027, FR-015, FR-016 AGENT SIMULATED PERSONA-C…">FR-027</a> (real-data correlation), <a class="trace-link" href="../02-requirements/traceability-matrix.html#fr-015" data-trace-id="FR-015" aria-label="Trace FR-015 — 2026-05-31 FR-015, FR-016 PERSONA-CONDITIONAL PERSONA-CONDI…">FR-015</a>/016 (full chain/QI scoring).</p>
+<p>Accessibility audit <code>dev-assist-artifacts/05-testing/04-accessibility/accessibility-audit-results.md</code> — <strong>not present.</strong> Accessibility was de-scoped in D3 design decision (markdown/static output, no interactive web app). No AX-001/AX-003 accessibility items required a formal audit file.</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>05-testing/examples-and-tests-catalog.md</code> ·
+  content-hash <code>e7c0c9a1c7cf</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

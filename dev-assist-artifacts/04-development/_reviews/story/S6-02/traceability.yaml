@@ -1,0 +1,92 @@
+reviewer: dev-assist-development-traceability
+
+scope_id: S6-02
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: traceability-S6-02-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:18
+    description: |
+      The traceability-matrix Status-Change-Log carries no per-story advancement row
+      naming S6-02 as the FR-023 (policy / anti-gaming half) + NFR-014 advancer. The
+      UC-11 catalog row (line 18: FR-023 | NFR-014 | MUST | AGENT_SIMULATED) exists and
+      is consistent, and the matching S6-01 review already logged the same gap for the
+      store half (traceability-S6-01-01). Non-blocking at the story gate — appending the
+      61-MUST / Status-Change-Log entry is the S6 sprint-gate's refresh responsibility —
+      but flagged so FR-023's now-further-advanced partial state (store landed S6-01;
+      policy + anti-gaming landing S6-02; CoI still pending S6-03) is reflected on the
+      board at sprint close.
+    suggested_resolution: |
+      At the S6 sprint gate, append a Status-Change-Log row recording S6-02 as the
+      FR-023 policy/anti-gaming-half + NFR-014 advancer (AGENT_SIMULATED), and note
+      FR-023 remains partial until S6-03 (Conflict-of-Interest) lands.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-023
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-014
+
+  - id: traceability-S6-02-02
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-6/S6-02.md:48
+    description: |
+      FR-023 is partitioned across S6 as store=S6-01, policy/anti-gaming=S6-02,
+      CoI=S6-03. S6-02 correctly claims ONLY the policy/anti-gaming half: §2/§3 scope
+      it to opt-in publish + the three anti-gaming controls (rate-limit, held-out
+      rotation epoch, contamination/duplicate), and §5 declares S6-01 (store) DONE as
+      a dependency. No double-claim with S6-01 exists — S6-01 §3 scopes strictly to the
+      append-only store / provenance / undistributed-gold facet and does not implement
+      any policy control (confirmed: no rate-limit/opt-in/anti-gaming logic in S6-01).
+      The third FR-023 facet (Conflict-of-Interest, the S6-03 share) is unclaimed: no
+      S6-03.md is authored in sprint-6 yet, so FR-023 is not yet fully satisfied. This
+      is expected partition state, not an orphan or an over-claim — flagged only so the
+      sprint gate confirms S6-03 (CoI) is scheduled before declaring FR-023 complete.
+    suggested_resolution: |
+      None required at the story gate. At sprint close, confirm S6-03 (CoI) is authored
+      and claims the complementary FR-023 facet so the MUST closes 3/3.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-01.md
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-023
+
+notes: |
+  Forward FR/NFR -> Story -> Test -> DC chain for S6-02 is intact; APPROVE.
+
+  ID existence (all declared IDs resolve in the requirements baseline):
+    - FR-023 (neutral leaderboard) — requirements-document.md:19, functional-requirements.md,
+      traceability-matrix.md:18 (UC-11). EXISTS.
+    - NFR-014 (governance neutrality / auditable) — requirements-document.md:20. EXISTS.
+    - NFR-004 (deterministic, provenanced; pure-stdlib threshold) — non-functional-requirements.md:13
+      (canonical defn, linked to AX-002). EXISTS. (Note: the requirements-document.md prose index
+      enumerates only a MUST subset and omits NFR-004; the canonical NFR catalog defines it, so this
+      is NOT a phantom-ID SHOWSTOPPER.)
+    - AX-002 (determinism) — project-axioms.yaml:41 (id AX-pii-anon-002,
+      deterministic-reproducible-generation). EXISTS as a supporting axiom.
+    - DC-13 (leaderboard & governance) — §4 links it; AGENT_SIMULATED, not DIVERGED.
+
+  Test-token verification (grep tests/test_leaderboard_policy.py):
+    - def test_fr_023*  = 2  (>=2 required) — publish_is_opt_in:50, clean_submission_allowed_and_published:153
+    - def test_nfr_014* = 3  (>=3 required) — rate_limit_blocks_excess:71, held_out_rotation_epoch:103,
+      contamination_dup_check:125
+    - def test_nfr004*  = 1  (>=1 required) — policy_pure_stdlib:178
+    Total 6 tokened tests, matching §6/§12. Pattern #9 check (name vs body semantic match): the
+    nfr004 AST guard body bans exactly {random,time,uuid,datetime,secrets} and asserts package import
+    — semantically the NFR-004/AX-002 pure-stdlib + no-clock/RNG determinism claim. No mismatch.
+
+  TDD SHA verification (§12, on feat/v2-scoring-harness, current HEAD branch):
+    - RED      3f5fbe2 "[RED] S6-02: leaderboard policy tests (failing)"  — git branch --contains = 1
+    - GREEN    5b6e19c "[GREEN] S6-02: pure-stdlib submission policy"      — git branch --contains = 1
+    - REFACTOR 14d9f8d "[REFACTOR] S6-02: ruff-format + strict-mypy-clean" — git branch --contains = 1
+    All three resolve, carry the correct RED/GREEN/REFACTOR prefixes, and are on the named branch.
+
+  Status == REVIEW (§1:16). provisional_status == AGENT_SIMULATED (§1:20, §4, §12) — cascades cleanly
+  from DC-13 (AGENT_SIMULATED, explicitly NOT DIVERGED), so no DIVERGED Pass-2 commitment is required
+  in §10 and none is missing. No deferred-to-v0.2+ requirement is claimed. No orphan: every declared
+  ID has a tracing test (or, for AX-002, the determinism property test).
+  traceability.md (== traceability-matrix.md) row for FR-023/NFR-014 exists (UC-11, line 18); only the
+  per-story Status-Change-Log advancement entry is deferred to the sprint gate (finding -01).
+
+review_time_seconds: 300
+
+context_bounds_respected: true

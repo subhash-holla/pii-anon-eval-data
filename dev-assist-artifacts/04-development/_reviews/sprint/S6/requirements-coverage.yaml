@@ -1,0 +1,111 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S6
+
+gate: sprint
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S6-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:51
+    description: |
+      FR-023/025/026/NFR-014 are now recorded in the Status Change Log (2026-05-31) as
+      `AGENT_SIMULATED -> AGENT_SIMULATED (verified)`. The "(verified)" qualifier correctly
+      encodes that verification is AGENT_SIMULATED: every S6 test runs as a deterministic,
+      pure-stdlib agent-authored suite (325 passed / 1 skipped, leaderboard pkg 99% line cov),
+      NOT a real-user/real-CI signal. A real-CI Pass-2 (green run on hosted CI, not the local
+      agent run) remains owed before any of these four MUSTs can drop the AGENT_SIMULATED
+      qualifier — consistent with the repo-wide `provisional_status: AGENT_SIMULATED` posture
+      (functional-requirements.md:3, non-functional-requirements.md:3). This is an honest-state
+      observation, not a coverage gap: the sprint-level "verified" bar (named passing tests +
+      no orphan + deferral-successors resolved) is met.
+    suggested_resolution: |
+      At the release gate (S7), schedule the real-CI Pass-2 for FR-023/025/026/NFR-014: a
+      green hosted-CI run (lint + type + the five S6 suites) recorded as evidence, after which
+      the Status Change Log can transition these rows from "AGENT_SIMULATED (verified)" to
+      fully verified. No code change required at the S6 sprint gate.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-017
+      - dev-assist-artifacts/02-requirements/functional-requirements.md
+
+notes: |
+  SPRINT S6 (Leaderboard & governance, DC-13) — sprint-level coverage snapshot.
+
+  Roster: S6-01..S6-05, all DONE, every story gate APPROVE
+  (story syntheses S6-01, S6-02, S6-03, S6-04-05 all "Aggregate verdict: APPROVE").
+
+  ── Every S6 MUST verified by named passing tests + no orphan ──────────────────
+  FR-023 (Neutral leaderboard — held-out gold undistributed + opt-in publish + anti-gaming):
+    store (S6-01) — tests/test_leaderboard_store.py:
+      test_fr_023_store_is_append_only (no update/delete; second append grows file, line-1 bytes
+        unchanged), test_fr_023_store_rejects_held_out_gold (×6 forbidden keys
+        gold/gold_labels/held_out/held_out_labels/answers/ground_truth -> ValueError; nothing
+        written), test_fr_023_store_records_scores_not_gold (scores+config_version round-trip,
+        no gold key, deterministic re-append -> identical content hash),
+        test_fr_023_leaderboard_cli_verify (verify verb 0 intact / non-zero tampered).
+    policy (S6-02) — tests/test_leaderboard_policy.py:
+      test_fr_023_publish_is_opt_in (published only on publish_opt_in=True),
+      test_fr_023_clean_submission_allowed_and_published (clean path allowed+published, reasons==()).
+      anti-gaming: test_nfr_014_rate_limit_blocks_excess, test_nfr_014_held_out_rotation_epoch,
+      test_nfr_014_contamination_dup_check (rate-limit / rotation-epoch / contamination-dup all fire).
+  FR-025 (Contribution pipeline) — tests/test_contributing.py:
+      test_fr_025_contributing_has_pr_template_and_cc0,
+      test_fr_025_contributing_has_provenance_and_synthetic_only (provenance + synthetic-only/AX-001),
+      test_fr_025_contributing_has_deprecation_and_semver (deprecation/erratum + semver dated release).
+  FR-026 (Governance charter) — gov-03 code (S6-03) tests/test_coi.py:
+      test_fr_026_attestation_is_non_strippable (×4 empty/whitespace -> ValueError; default
+        NO_PREPUB_ATTESTATION),
+      test_fr_026_recusal_for_maintainer_and_affiliated (×5 maintainer/pii-anon-core recusal,
+        external = no recusal);
+    charter (S6-04) tests/test_governance.py:
+      test_fr_026_governance_md_has_charter_and_roster (charter + aspirational/AGENT_SIMULATED roster),
+      test_fr_026_governance_md_has_coi_and_bus_factor (CoI names pii-anon-core + recusal + honest
+        bus-factor=1 / single maintainer).
+  NFR-014 (Governance neutrality auditable) — composite, all three legs covered:
+      GOVERNANCE.md+roster+CoI present: test_nfr_014_governance_md_present;
+      anti-gaming active: test_nfr_014_rate_limit_blocks_excess / _held_out_rotation_epoch /
+        _contamination_dup_check;
+      provenance logged + tamper-evident: test_nfr_014_hash_chain_links_events,
+        test_nfr_014_verify_chain_detects_tampering, test_nfr_014_coi_as_dict_embeddable_in_store.
+
+  Orphan scan: traceability-matrix.md:26 "No orphan MUSTs" holds; all four S6 MUSTs map to >=1
+  named passing test (above). No silently-missing MUST. No competing/duplicate test claim
+  (pattern #13): tests/test_cli.py::test_fr_024_cli_leaderboard_wired_to_s6_seam is tokened
+  fr_024 (CLI verb routing) and only *references* the FR-023 CLI contract in a comment —
+  complementary wiring, not a second FR-023 claim.
+
+  Deferral-successor resolution (pattern #9 — invalid deferral check): the S6-03 story-gate
+  requirements-coverage reviewer flagged "don't mark FR-026 verified on S6-03 alone — S6-04/05
+  owed". S6-04 (GOVERNANCE.md) + S6-05 (CONTRIBUTING.md) both landed DONE *within this same
+  sprint S6*; the S6-04-05 combined story gate states "FR-025 + FR-026 + NFR-014 all verifiable
+  at the S6 sprint gate". Deferral target == this gate, not a post-release sprint — VALID,
+  now resolved.
+
+  ── Per-module coverage >= 85% on the new leaderboard package ──────────────────
+  `python3 -m pytest -q --cov=pii_anon_datasets.leaderboard --cov-report=term-missing` (full suite):
+      __init__.py 100% | coi.py 100% (0 miss) | policy.py 100% (0 miss) |
+      store.py 97% (1 line: 124 = blank-line `continue` in events()) | TOTAL 99%.
+    (Scoped to the 5 S6 test files alone, __init__.py reads 82% because the CLI usage-error
+    path 61-62 is exercised by tests/test_cli.py under the full suite; store ~97% either way.)
+    All four modules clear the >=85% line bar (NFR-016) with margin; store also meets the
+    >=70% branch bar (11/12 branches).
+  Full suite: `python3 -m pytest -q` -> 325 passed, 1 skipped (matches expected 325/1).
+
+  ── Markable-verified determination ────────────────────────────────────────────
+  FR-023, FR-025, FR-026, NFR-014 can all be marked verified at this sprint gate, qualifier
+  AGENT_SIMULATED (per repo-wide provisional_status; real-CI Pass-2 owed at S7 — see
+  coverage-S6-01). Status Change Log (traceability-matrix.md:51-54) already records all four
+  with dated S6 evidence; BLOCKED-reason staleness (pattern #14) — none, no S6 MUST is BLOCKED.
+
+  Domain packs: developer-assistant.yaml `domain_packs: []` — no pack reviewer-extensions to
+  merge; no source_pack findings.
+
+  Tier snapshot: this repo's MUST ledger is the traceability matrix (16 MUST FRs), not a
+  T1/T2/T3 tiered board; the four S6 governance/distribution MUSTs (FR-023/025/026 + NFR-014)
+  are fully covered at S6's planned bar. No CATASTROPHIC/MAJOR.
+
+review_time_seconds: 690
+
+context_bounds_respected: true

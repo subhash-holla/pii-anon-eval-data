@@ -1,6 +1,6 @@
 """Tests for scripts/lattice_targeting (P3; AX-001 synthetic-only, AX-002 determinism).
 
-Pins: EMITTERS cover EXACTLY the 63 canonical types; each emits a valid PIIValue; every
+Pins: EMITTERS cover EXACTLY the canonical types; each emits a valid PIIValue; every
 targeted record has exactly one positive of the requested type; adversarial cells genuinely
 obfuscate; records normalize to valid v2.0.0; generation is deterministic.
 """
@@ -28,9 +28,9 @@ def _factory(seed=1, lang="en"):
 
 
 # ── emitter completeness + validity (AX-001 fail-loud) ───────────────────────────────────
-def test_emitters_cover_exactly_63_canonical_types():
+def test_emitters_cover_exactly_66_canonical_types():
     assert set(lt.EMITTERS) == set(tx.CANONICAL_ENTITY_TYPES)
-    assert len(lt.EMITTERS) == 63
+    assert len(lt.EMITTERS) == 66
 
 
 def test_every_emitter_produces_valid_pii_value():

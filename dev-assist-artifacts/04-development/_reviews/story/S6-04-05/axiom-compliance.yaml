@@ -1,0 +1,91 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S6-04-05
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: axiom-S6-04-05-01
+    severity: OBSERVATION
+    location: GOVERNANCE.md:67
+    description: |
+      The CoI section claims the held-out gold labels are "never distributed and
+      are structurally excluded from the store." The "structurally excluded from
+      the store" half is fully substantiated in code: LeaderboardStore.append
+      rejects the forbidden payload keys {gold, gold_labels, held_out,
+      held_out_labels, answers, ground_truth} (store.py:55-58, 143-145) — i.e. a
+      forbidden-key reject, exactly as the doc states. The "never distributed"
+      half is a governance/process commitment about the held-out split (it has no
+      single code site to pin, and none in scope contradicts it). This is NOT an
+      over-claim — flagging only so a future reviewer reads "never distributed" as
+      a process promise rather than a code-enforced guarantee.
+    suggested_resolution: |
+      No change required. Optionally, a one-clause footnote distinguishing the
+      code-enforced part (forbidden-key reject in the store) from the process
+      part (the held-out split is not published) would make the epistemic warrant
+      even crisper, but the current wording is honest as written.
+    references:
+      - dev-assist-artifacts/00-axioms/project-axioms.yaml#AX-pii-anon-001
+      - src/pii_anon_datasets/leaderboard/store.py
+
+notes: |
+  Joint S6-04 (GOVERNANCE.md) + S6-05 (CONTRIBUTING.md) story gate — axiom-compliance
+  is the load-bearing reviewer here because epistemic honesty is the crux of a
+  governance charter. Every honesty/axiom invariant in the dispatch is UPHELD:
+
+  HONESTY-OVER-OPTICS (the crux) — UPHELD:
+  • Aspirational roster flagged: GOVERNANCE.md carries a top-level "Honesty note"
+    (lines 8-11) AND the Advisory-body section is explicitly stamped
+    "Status: ASPIRATIONAL / AGENT_SIMULATED" (line 39) stating the project does
+    NOT yet have a staffed advisory board.
+  • NO fabricated advisors: the roster is roles-only (a Seat / Perspective table,
+    lines 45-51). A textual scan found ZERO "Firstname Lastname" patterns, ZERO
+    Dr./Prof. honorifics, ZERO @-handles, ZERO emails in either doc — and the doc
+    itself states "No advisory member is named here because none exists yet —
+    naming fictitious advisors would itself be a governance failure" (lines 40-41).
+    This is the honesty-over-optics invariant, satisfied in both spirit and form.
+  • Honest bus-factor: "Bus factor = 1 ... single maintainer ... we do not hide it
+    behind an org chart" (lines 73-74). Stated plainly, no org-chart inflation.
+
+  CoI STATEMENT TRUE-OF-CODE (no over-claiming) — UPHELD:
+  • Names pii-anon-core as the maintaining affiliation (lines 57-58).
+  • Recusal control ties to S6-03 CoIRecord: GOVERNANCE.md cites
+    CoIRecord.requires_recusal — which EXISTS (coi.py:58) and is True for
+    maintainer / pii-anon-core affiliations (coi.py:37-60). Accurate.
+  • No-prepub attestation: cites NO_PREPUB_ATTESTATION — EXISTS (coi.py:30),
+    non-strippable via __post_init__ (coi.py:53-55). Accurate.
+  • Held-out gold "structurally excluded from the store" — forbidden-key reject in
+    store.append (store.py:143-145). Accurate (see finding -01 on the "never
+    distributed" process half).
+
+  NEUTRALITY-CONTROLS = SEAM-NOT-SERVICE (no over-claiming) — UPHELD:
+  • The doc says the leaderboard is "a governance seam, not a hosted service in v1"
+    (line 85) — matching store.py's own module docstring ("No hosted service in
+    v1"). Every named control maps to real, pure-stdlib code:
+      - verify_chain (store.py:154), hash-chained append-only log;
+      - held-out gold never stored / forbidden-key reject (store.py:55-58);
+      - opt-in publish + anti-gaming: rate-limit / rotation-epoch / duplicate in
+        leaderboard.policy.evaluate_submission (policy.py:62-86);
+      - CoI recusal as above.
+    The docs describe exactly what the code does — no advertised capability lacks
+    a code site.
+
+  AX-001 IN CONTRIBUTING.md — UPHELD:
+  • The "Provenance & synthetic-only" section (CONTRIBUTING.md:35-40) requires
+    synthetic-only, declared provenance (generator/seed/source_type), and "No real
+    PII ... (AX-001) ... even 'anonymized' real data ... will be rejected." This is
+    consistent with project axiom AX-pii-anon-001 (synthetic-only / no-real-PII),
+    the load-bearing ethical/legal invariant of a publishable PII benchmark.
+
+  EVIDENCE: all 6 property tests GREEN
+  (tests/test_governance.py 3/3 + tests/test_contributing.py 3/3 this run).
+  project-axioms.yaml carries no reviewer_hooks targeting
+  dev-assist-development-axiom-compliance (hooks target security/code-quality/
+  coverage/traceability); developer-assistant.yaml domain_packs: [] — no pack
+  reviewer-extensions to merge. Single OBSERVATION, non-blocking. APPROVE.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

@@ -38,7 +38,7 @@ def test_forced_skeleton_covers_every_main_effect_level():
     cells = lat.cells
     type_marginals = {c["dimensions"]["entity_type"] for c in cells
                       if c["interaction"] == "marginal:entity_type"}
-    assert type_marginals == set(tx.CANONICAL_ENTITY_TYPES)        # all 63 types
+    assert type_marginals == set(tx.CANONICAL_ENTITY_TYPES)        # all 66 types
     lang_marginals = {c["dimensions"]["language"] for c in cells
                       if c["interaction"] == "marginal:language"}
     assert len(lang_marginals) == 60                                # all 60 languages
@@ -50,10 +50,10 @@ def test_interaction_breakdown():
     from collections import Counter
     lat = L.build_committed_lattice()
     by_int = Counter(c["interaction"] for c in lat.cells)
-    assert by_int["language_x_entity_type"] == 492    # 12 head langs × 41 frequent types
+    assert by_int["language_x_entity_type"] == 697    # 17 head langs × 41 frequent types (2C powered rectangle)
     assert by_int["adversarial_x_entity_type"] == 66   # 3 faithful adv × 22 critical
     assert by_int["domain_x_track"] == 30              # 5×2 adv-track + 5×4 eval-family
-    assert lat.cell_count() == 730
+    assert lat.cell_count() == 938                      # 733 + (697−492) = +205 new LxE cells (2C)
 
 
 def test_named_interactions_declared():
@@ -72,7 +72,7 @@ def test_domain_eval_family_is_the_only_non_count_gated():
         assert "eval_family" in c["dimensions"]
     # everything else (incl. domain×adv_track) IS count-gated
     gated = lat.count_gated_cells()
-    assert len(gated) == 710
+    assert len(gated) == 918                            # 938 total − 20 eval-family seam
     assert all("eval_family" not in c["dimensions"] for c in gated)
 
 
@@ -81,8 +81,8 @@ def test_lang_x_entity_uses_head_langs_and_frequent_types():
     lxe = [c for c in lat.cells if c["interaction"] == "language_x_entity_type"]
     langs = {c["dimensions"]["language"] for c in lxe}
     types = {c["dimensions"]["entity_type"] for c in lxe}
-    assert "en" in langs and "nl" in langs and len(langs) == 12     # head languages (≥753 records)
-    assert "ru" not in langs                                         # ru has 431 records (< 753)
+    # 2C powered rectangle: the 5 new langs (ru/th/el/bn/he) are now head languages.
+    assert {"en", "nl", "ru", "th", "el", "bn", "he"} <= langs and len(langs) == 17  # 17 head langs (≥753)
     assert "PERSON_NAME" in types and len(types) == 41               # frequent types (≥753 positives)
     # a critical type in this rectangle keeps the critical (1522) target (max-of-members)
     iban = next(c for c in lxe if c["dimensions"]["entity_type"] == "IBAN")

@@ -1,5 +1,5 @@
 {
-  "cell_count": 730,
+  "cell_count": 938,
   "cells": [
     {
       "committed": true,
@@ -1170,9 +1170,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "API_KEY",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=API_KEY|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "API_KEY",
         "language": "de"
       },
       "id": "LxE:entity_type=API_KEY|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "API_KEY",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=API_KEY|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -1209,6 +1233,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=API_KEY|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "API_KEY",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=API_KEY|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -1290,6 +1326,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "API_KEY",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=API_KEY|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "API_KEY",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=API_KEY|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "API_KEY",
         "language": "zh"
       },
       "id": "LxE:entity_type=API_KEY|language=zh",
@@ -1314,9 +1374,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "BANK_ACCOUNT_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=BANK_ACCOUNT_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ACCOUNT_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=BANK_ACCOUNT_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ACCOUNT_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=BANK_ACCOUNT_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -1353,6 +1437,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=BANK_ACCOUNT_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ACCOUNT_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=BANK_ACCOUNT_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -1434,6 +1530,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "BANK_ACCOUNT_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=BANK_ACCOUNT_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ACCOUNT_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=BANK_ACCOUNT_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ACCOUNT_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=BANK_ACCOUNT_NUMBER|language=zh",
@@ -1458,9 +1578,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "BANK_ROUTING_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=BANK_ROUTING_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ROUTING_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=BANK_ROUTING_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ROUTING_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=BANK_ROUTING_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -1497,6 +1641,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=BANK_ROUTING_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ROUTING_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=BANK_ROUTING_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -1578,6 +1734,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "BANK_ROUTING_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=BANK_ROUTING_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ROUTING_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=BANK_ROUTING_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BANK_ROUTING_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=BANK_ROUTING_NUMBER|language=zh",
@@ -1602,9 +1782,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "BAR_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=BAR_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BAR_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=BAR_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BAR_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=BAR_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -1641,6 +1845,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=BAR_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BAR_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=BAR_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -1722,6 +1938,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "BAR_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=BAR_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BAR_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=BAR_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "BAR_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=BAR_NUMBER|language=zh",
@@ -1746,9 +1986,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "COURT_CASE_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=COURT_CASE_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "COURT_CASE_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=COURT_CASE_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "COURT_CASE_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=COURT_CASE_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -1785,6 +2049,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=COURT_CASE_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "COURT_CASE_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=COURT_CASE_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -1866,6 +2142,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "COURT_CASE_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=COURT_CASE_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "COURT_CASE_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=COURT_CASE_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "COURT_CASE_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=COURT_CASE_NUMBER|language=zh",
@@ -1890,9 +2190,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "CREDIT_CARD_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=CREDIT_CARD_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CREDIT_CARD_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=CREDIT_CARD_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CREDIT_CARD_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=CREDIT_CARD_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -1929,6 +2253,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=CREDIT_CARD_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CREDIT_CARD_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=CREDIT_CARD_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -2010,6 +2346,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "CREDIT_CARD_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=CREDIT_CARD_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CREDIT_CARD_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=CREDIT_CARD_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CREDIT_CARD_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=CREDIT_CARD_NUMBER|language=zh",
@@ -2034,9 +2394,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "CVV",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=CVV|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CVV",
         "language": "de"
       },
       "id": "LxE:entity_type=CVV|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CVV",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=CVV|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -2073,6 +2457,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=CVV|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CVV",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=CVV|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -2154,6 +2550,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "CVV",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=CVV|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CVV",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=CVV|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "CVV",
         "language": "zh"
       },
       "id": "LxE:entity_type=CVV|language=zh",
@@ -2178,9 +2598,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "DATE_OF_BIRTH",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=DATE_OF_BIRTH|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DATE_OF_BIRTH",
         "language": "de"
       },
       "id": "LxE:entity_type=DATE_OF_BIRTH|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DATE_OF_BIRTH",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=DATE_OF_BIRTH|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2217,6 +2661,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=DATE_OF_BIRTH|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DATE_OF_BIRTH",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=DATE_OF_BIRTH|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2298,6 +2754,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "DATE_OF_BIRTH",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=DATE_OF_BIRTH|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DATE_OF_BIRTH",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=DATE_OF_BIRTH|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DATE_OF_BIRTH",
         "language": "zh"
       },
       "id": "LxE:entity_type=DATE_OF_BIRTH|language=zh",
@@ -2322,9 +2802,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "DEA_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=DEA_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DEA_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=DEA_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DEA_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=DEA_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2361,6 +2865,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=DEA_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DEA_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=DEA_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2442,6 +2958,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "DEA_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=DEA_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DEA_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=DEA_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DEA_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=DEA_NUMBER|language=zh",
@@ -2466,9 +3006,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "DOCKET_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=DOCKET_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DOCKET_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=DOCKET_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DOCKET_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=DOCKET_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2505,6 +3069,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=DOCKET_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DOCKET_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=DOCKET_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2586,6 +3162,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "DOCKET_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=DOCKET_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DOCKET_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=DOCKET_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DOCKET_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=DOCKET_NUMBER|language=zh",
@@ -2610,9 +3210,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "DRIVER_LICENSE_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=DRIVER_LICENSE_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DRIVER_LICENSE_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=DRIVER_LICENSE_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DRIVER_LICENSE_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=DRIVER_LICENSE_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -2649,6 +3273,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=DRIVER_LICENSE_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DRIVER_LICENSE_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=DRIVER_LICENSE_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -2730,6 +3366,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "DRIVER_LICENSE_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=DRIVER_LICENSE_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DRIVER_LICENSE_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=DRIVER_LICENSE_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "DRIVER_LICENSE_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=DRIVER_LICENSE_NUMBER|language=zh",
@@ -2754,9 +3414,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "EMAIL_ADDRESS",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=EMAIL_ADDRESS|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMAIL_ADDRESS",
         "language": "de"
       },
       "id": "LxE:entity_type=EMAIL_ADDRESS|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMAIL_ADDRESS",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=EMAIL_ADDRESS|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2793,6 +3477,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=EMAIL_ADDRESS|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMAIL_ADDRESS",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=EMAIL_ADDRESS|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2874,6 +3570,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "EMAIL_ADDRESS",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=EMAIL_ADDRESS|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMAIL_ADDRESS",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=EMAIL_ADDRESS|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMAIL_ADDRESS",
         "language": "zh"
       },
       "id": "LxE:entity_type=EMAIL_ADDRESS|language=zh",
@@ -2898,9 +3618,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "EMPLOYEE_ID",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=EMPLOYEE_ID|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMPLOYEE_ID",
         "language": "de"
       },
       "id": "LxE:entity_type=EMPLOYEE_ID|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMPLOYEE_ID",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=EMPLOYEE_ID|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -2937,6 +3681,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=EMPLOYEE_ID|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMPLOYEE_ID",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=EMPLOYEE_ID|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -3018,6 +3774,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "EMPLOYEE_ID",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=EMPLOYEE_ID|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMPLOYEE_ID",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=EMPLOYEE_ID|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "EMPLOYEE_ID",
         "language": "zh"
       },
       "id": "LxE:entity_type=EMPLOYEE_ID|language=zh",
@@ -3042,9 +3822,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "HEALTH_CONDITION",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=HEALTH_CONDITION|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_CONDITION",
         "language": "de"
       },
       "id": "LxE:entity_type=HEALTH_CONDITION|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_CONDITION",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=HEALTH_CONDITION|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -3081,6 +3885,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=HEALTH_CONDITION|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_CONDITION",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=HEALTH_CONDITION|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -3162,6 +3978,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "HEALTH_CONDITION",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=HEALTH_CONDITION|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_CONDITION",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=HEALTH_CONDITION|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_CONDITION",
         "language": "zh"
       },
       "id": "LxE:entity_type=HEALTH_CONDITION|language=zh",
@@ -3186,9 +4026,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "HEALTH_INSURANCE_ID",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=HEALTH_INSURANCE_ID|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_INSURANCE_ID",
         "language": "de"
       },
       "id": "LxE:entity_type=HEALTH_INSURANCE_ID|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_INSURANCE_ID",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=HEALTH_INSURANCE_ID|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -3225,6 +4089,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=HEALTH_INSURANCE_ID|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_INSURANCE_ID",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=HEALTH_INSURANCE_ID|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -3306,6 +4182,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "HEALTH_INSURANCE_ID",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=HEALTH_INSURANCE_ID|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_INSURANCE_ID",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=HEALTH_INSURANCE_ID|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "HEALTH_INSURANCE_ID",
         "language": "zh"
       },
       "id": "LxE:entity_type=HEALTH_INSURANCE_ID|language=zh",
@@ -3330,9 +4230,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "IBAN",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=IBAN|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IBAN",
         "language": "de"
       },
       "id": "LxE:entity_type=IBAN|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IBAN",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=IBAN|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -3369,6 +4293,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=IBAN|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IBAN",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=IBAN|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -3450,6 +4386,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "IBAN",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=IBAN|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IBAN",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=IBAN|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IBAN",
         "language": "zh"
       },
       "id": "LxE:entity_type=IBAN|language=zh",
@@ -3474,9 +4434,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "INSURANCE_POLICY_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=INSURANCE_POLICY_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INSURANCE_POLICY_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=INSURANCE_POLICY_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INSURANCE_POLICY_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=INSURANCE_POLICY_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -3513,6 +4497,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=INSURANCE_POLICY_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INSURANCE_POLICY_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=INSURANCE_POLICY_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -3594,6 +4590,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "INSURANCE_POLICY_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=INSURANCE_POLICY_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INSURANCE_POLICY_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=INSURANCE_POLICY_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INSURANCE_POLICY_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=INSURANCE_POLICY_NUMBER|language=zh",
@@ -3618,9 +4638,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "INVOICE_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=INVOICE_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INVOICE_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=INVOICE_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INVOICE_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=INVOICE_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -3657,6 +4701,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=INVOICE_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INVOICE_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=INVOICE_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -3738,6 +4794,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "INVOICE_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=INVOICE_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INVOICE_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=INVOICE_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "INVOICE_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=INVOICE_NUMBER|language=zh",
@@ -3762,9 +4842,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "IP_ADDRESS",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=IP_ADDRESS|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IP_ADDRESS",
         "language": "de"
       },
       "id": "LxE:entity_type=IP_ADDRESS|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IP_ADDRESS",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=IP_ADDRESS|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -3801,6 +4905,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=IP_ADDRESS|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IP_ADDRESS",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=IP_ADDRESS|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -3882,6 +4998,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "IP_ADDRESS",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=IP_ADDRESS|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IP_ADDRESS",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=IP_ADDRESS|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "IP_ADDRESS",
         "language": "zh"
       },
       "id": "LxE:entity_type=IP_ADDRESS|language=zh",
@@ -3906,9 +5046,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "JOB_TITLE",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=JOB_TITLE|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "JOB_TITLE",
         "language": "de"
       },
       "id": "LxE:entity_type=JOB_TITLE|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "JOB_TITLE",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=JOB_TITLE|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -3945,6 +5109,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=JOB_TITLE|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "JOB_TITLE",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=JOB_TITLE|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4026,6 +5202,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "JOB_TITLE",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=JOB_TITLE|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "JOB_TITLE",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=JOB_TITLE|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "JOB_TITLE",
         "language": "zh"
       },
       "id": "LxE:entity_type=JOB_TITLE|language=zh",
@@ -4050,9 +5250,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "LICENSE_PLATE",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=LICENSE_PLATE|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LICENSE_PLATE",
         "language": "de"
       },
       "id": "LxE:entity_type=LICENSE_PLATE|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LICENSE_PLATE",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=LICENSE_PLATE|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4089,6 +5313,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=LICENSE_PLATE|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LICENSE_PLATE",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=LICENSE_PLATE|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4170,6 +5406,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "LICENSE_PLATE",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=LICENSE_PLATE|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LICENSE_PLATE",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=LICENSE_PLATE|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LICENSE_PLATE",
         "language": "zh"
       },
       "id": "LxE:entity_type=LICENSE_PLATE|language=zh",
@@ -4194,9 +5454,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "LOCATION_NAME",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=LOCATION_NAME|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LOCATION_NAME",
         "language": "de"
       },
       "id": "LxE:entity_type=LOCATION_NAME|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LOCATION_NAME",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=LOCATION_NAME|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4233,6 +5517,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=LOCATION_NAME|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LOCATION_NAME",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=LOCATION_NAME|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4314,6 +5610,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "LOCATION_NAME",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=LOCATION_NAME|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LOCATION_NAME",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=LOCATION_NAME|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "LOCATION_NAME",
         "language": "zh"
       },
       "id": "LxE:entity_type=LOCATION_NAME|language=zh",
@@ -4338,9 +5658,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "MAC_ADDRESS",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=MAC_ADDRESS|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MAC_ADDRESS",
         "language": "de"
       },
       "id": "LxE:entity_type=MAC_ADDRESS|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MAC_ADDRESS",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=MAC_ADDRESS|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4377,6 +5721,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=MAC_ADDRESS|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MAC_ADDRESS",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=MAC_ADDRESS|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4458,6 +5814,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "MAC_ADDRESS",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=MAC_ADDRESS|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MAC_ADDRESS",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=MAC_ADDRESS|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MAC_ADDRESS",
         "language": "zh"
       },
       "id": "LxE:entity_type=MAC_ADDRESS|language=zh",
@@ -4482,9 +5862,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "MEDICAL_RECORD_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=MEDICAL_RECORD_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICAL_RECORD_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=MEDICAL_RECORD_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICAL_RECORD_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=MEDICAL_RECORD_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4521,6 +5925,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=MEDICAL_RECORD_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICAL_RECORD_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=MEDICAL_RECORD_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4602,6 +6018,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "MEDICAL_RECORD_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=MEDICAL_RECORD_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICAL_RECORD_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=MEDICAL_RECORD_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICAL_RECORD_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=MEDICAL_RECORD_NUMBER|language=zh",
@@ -4626,9 +6066,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "MEDICATION_NAME",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=MEDICATION_NAME|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICATION_NAME",
         "language": "de"
       },
       "id": "LxE:entity_type=MEDICATION_NAME|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICATION_NAME",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=MEDICATION_NAME|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4665,6 +6129,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=MEDICATION_NAME|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICATION_NAME",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=MEDICATION_NAME|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4746,6 +6222,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "MEDICATION_NAME",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=MEDICATION_NAME|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICATION_NAME",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=MEDICATION_NAME|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "MEDICATION_NAME",
         "language": "zh"
       },
       "id": "LxE:entity_type=MEDICATION_NAME|language=zh",
@@ -4770,9 +6270,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "NATIONAL_ID_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=NATIONAL_ID_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NATIONAL_ID_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=NATIONAL_ID_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NATIONAL_ID_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=NATIONAL_ID_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -4809,6 +6333,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=NATIONAL_ID_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NATIONAL_ID_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=NATIONAL_ID_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -4890,6 +6426,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "NATIONAL_ID_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=NATIONAL_ID_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NATIONAL_ID_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=NATIONAL_ID_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NATIONAL_ID_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=NATIONAL_ID_NUMBER|language=zh",
@@ -4914,9 +6474,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "NPI_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=NPI_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NPI_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=NPI_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NPI_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=NPI_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -4953,6 +6537,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=NPI_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NPI_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=NPI_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -5034,6 +6630,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "NPI_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=NPI_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NPI_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=NPI_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "NPI_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=NPI_NUMBER|language=zh",
@@ -5058,9 +6678,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "ORGANIZATION_NAME",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=ORGANIZATION_NAME|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "ORGANIZATION_NAME",
         "language": "de"
       },
       "id": "LxE:entity_type=ORGANIZATION_NAME|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "ORGANIZATION_NAME",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=ORGANIZATION_NAME|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -5097,6 +6741,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=ORGANIZATION_NAME|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "ORGANIZATION_NAME",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=ORGANIZATION_NAME|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -5178,6 +6834,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "ORGANIZATION_NAME",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=ORGANIZATION_NAME|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "ORGANIZATION_NAME",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=ORGANIZATION_NAME|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "ORGANIZATION_NAME",
         "language": "zh"
       },
       "id": "LxE:entity_type=ORGANIZATION_NAME|language=zh",
@@ -5202,9 +6882,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PASSPORT_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=PASSPORT_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSPORT_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=PASSPORT_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSPORT_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=PASSPORT_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -5241,6 +6945,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=PASSPORT_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSPORT_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=PASSPORT_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -5322,6 +7038,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PASSPORT_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=PASSPORT_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSPORT_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=PASSPORT_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSPORT_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=PASSPORT_NUMBER|language=zh",
@@ -5346,9 +7086,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PASSWORD",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=PASSWORD|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSWORD",
         "language": "de"
       },
       "id": "LxE:entity_type=PASSWORD|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSWORD",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=PASSWORD|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -5385,6 +7149,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=PASSWORD|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSWORD",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=PASSWORD|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -5466,6 +7242,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PASSWORD",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=PASSWORD|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSWORD",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=PASSWORD|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PASSWORD",
         "language": "zh"
       },
       "id": "LxE:entity_type=PASSWORD|language=zh",
@@ -5490,9 +7290,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PERSON_NAME",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=PERSON_NAME|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PERSON_NAME",
         "language": "de"
       },
       "id": "LxE:entity_type=PERSON_NAME|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PERSON_NAME",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=PERSON_NAME|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -5529,6 +7353,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=PERSON_NAME|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PERSON_NAME",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=PERSON_NAME|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -5610,6 +7446,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PERSON_NAME",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=PERSON_NAME|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PERSON_NAME",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=PERSON_NAME|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PERSON_NAME",
         "language": "zh"
       },
       "id": "LxE:entity_type=PERSON_NAME|language=zh",
@@ -5634,9 +7494,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PHONE_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=PHONE_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PHONE_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=PHONE_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PHONE_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=PHONE_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -5673,6 +7557,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=PHONE_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PHONE_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=PHONE_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -5754,6 +7650,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PHONE_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=PHONE_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PHONE_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=PHONE_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PHONE_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=PHONE_NUMBER|language=zh",
@@ -5778,9 +7698,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PIN",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=PIN|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PIN",
         "language": "de"
       },
       "id": "LxE:entity_type=PIN|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PIN",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=PIN|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -5817,6 +7761,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=PIN|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PIN",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=PIN|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -5898,6 +7854,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PIN",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=PIN|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PIN",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=PIN|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PIN",
         "language": "zh"
       },
       "id": "LxE:entity_type=PIN|language=zh",
@@ -5922,9 +7902,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PROCEDURE_NAME",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=PROCEDURE_NAME|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PROCEDURE_NAME",
         "language": "de"
       },
       "id": "LxE:entity_type=PROCEDURE_NAME|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PROCEDURE_NAME",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=PROCEDURE_NAME|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -5961,6 +7965,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=PROCEDURE_NAME|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PROCEDURE_NAME",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=PROCEDURE_NAME|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -6042,6 +8058,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "PROCEDURE_NAME",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=PROCEDURE_NAME|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PROCEDURE_NAME",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=PROCEDURE_NAME|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "PROCEDURE_NAME",
         "language": "zh"
       },
       "id": "LxE:entity_type=PROCEDURE_NAME|language=zh",
@@ -6066,9 +8106,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "SALARY",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=SALARY|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SALARY",
         "language": "de"
       },
       "id": "LxE:entity_type=SALARY|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SALARY",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=SALARY|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -6105,6 +8169,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=SALARY|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SALARY",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=SALARY|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -6186,6 +8262,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "SALARY",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=SALARY|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SALARY",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=SALARY|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SALARY",
         "language": "zh"
       },
       "id": "LxE:entity_type=SALARY|language=zh",
@@ -6210,9 +8310,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "SOCIAL_SECURITY_NUMBER",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=SOCIAL_SECURITY_NUMBER|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SOCIAL_SECURITY_NUMBER",
         "language": "de"
       },
       "id": "LxE:entity_type=SOCIAL_SECURITY_NUMBER|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SOCIAL_SECURITY_NUMBER",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=SOCIAL_SECURITY_NUMBER|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -6249,6 +8373,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=SOCIAL_SECURITY_NUMBER|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SOCIAL_SECURITY_NUMBER",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=SOCIAL_SECURITY_NUMBER|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -6330,6 +8466,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "SOCIAL_SECURITY_NUMBER",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=SOCIAL_SECURITY_NUMBER|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SOCIAL_SECURITY_NUMBER",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=SOCIAL_SECURITY_NUMBER|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SOCIAL_SECURITY_NUMBER",
         "language": "zh"
       },
       "id": "LxE:entity_type=SOCIAL_SECURITY_NUMBER|language=zh",
@@ -6354,9 +8514,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "STREET_ADDRESS",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=STREET_ADDRESS|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "STREET_ADDRESS",
         "language": "de"
       },
       "id": "LxE:entity_type=STREET_ADDRESS|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "STREET_ADDRESS",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=STREET_ADDRESS|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -6393,6 +8577,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=STREET_ADDRESS|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "STREET_ADDRESS",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=STREET_ADDRESS|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -6474,6 +8670,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "STREET_ADDRESS",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=STREET_ADDRESS|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "STREET_ADDRESS",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=STREET_ADDRESS|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "STREET_ADDRESS",
         "language": "zh"
       },
       "id": "LxE:entity_type=STREET_ADDRESS|language=zh",
@@ -6498,9 +8718,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "SWIFT_BIC_CODE",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=SWIFT_BIC_CODE|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SWIFT_BIC_CODE",
         "language": "de"
       },
       "id": "LxE:entity_type=SWIFT_BIC_CODE|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SWIFT_BIC_CODE",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=SWIFT_BIC_CODE|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -6537,6 +8781,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=SWIFT_BIC_CODE|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SWIFT_BIC_CODE",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=SWIFT_BIC_CODE|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -6618,6 +8874,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "SWIFT_BIC_CODE",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=SWIFT_BIC_CODE|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SWIFT_BIC_CODE",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=SWIFT_BIC_CODE|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "SWIFT_BIC_CODE",
         "language": "zh"
       },
       "id": "LxE:entity_type=SWIFT_BIC_CODE|language=zh",
@@ -6642,9 +8922,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "TAX_ID",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=TAX_ID|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TAX_ID",
         "language": "de"
       },
       "id": "LxE:entity_type=TAX_ID|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TAX_ID",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=TAX_ID|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -6681,6 +8985,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=TAX_ID|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TAX_ID",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=TAX_ID|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 1522,
       "tier": "critical"
@@ -6762,6 +9078,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "TAX_ID",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=TAX_ID|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TAX_ID",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=TAX_ID|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 1522,
+      "tier": "critical"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TAX_ID",
         "language": "zh"
       },
       "id": "LxE:entity_type=TAX_ID|language=zh",
@@ -6786,9 +9126,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "TIMESTAMP",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=TIMESTAMP|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TIMESTAMP",
         "language": "de"
       },
       "id": "LxE:entity_type=TIMESTAMP|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TIMESTAMP",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=TIMESTAMP|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -6825,6 +9189,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=TIMESTAMP|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TIMESTAMP",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=TIMESTAMP|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -6906,6 +9282,30 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "TIMESTAMP",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=TIMESTAMP|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TIMESTAMP",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=TIMESTAMP|language=th",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TIMESTAMP",
         "language": "zh"
       },
       "id": "LxE:entity_type=TIMESTAMP|language=zh",
@@ -6930,9 +9330,33 @@
       "count_gated": true,
       "dimensions": {
         "entity_type": "USERNAME",
+        "language": "bn"
+      },
+      "id": "LxE:entity_type=USERNAME|language=bn",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "USERNAME",
         "language": "de"
       },
       "id": "LxE:entity_type=USERNAME|language=de",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "USERNAME",
+        "language": "el"
+      },
+      "id": "LxE:entity_type=USERNAME|language=el",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -6969,6 +9393,18 @@
         "language": "fr"
       },
       "id": "LxE:entity_type=USERNAME|language=fr",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "USERNAME",
+        "language": "he"
+      },
+      "id": "LxE:entity_type=USERNAME|language=he",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -7041,6 +9477,30 @@
         "language": "pt"
       },
       "id": "LxE:entity_type=USERNAME|language=pt",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "USERNAME",
+        "language": "ru"
+      },
+      "id": "LxE:entity_type=USERNAME|language=ru",
+      "interaction": "language_x_entity_type",
+      "target_n": 753,
+      "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "USERNAME",
+        "language": "th"
+      },
+      "id": "LxE:entity_type=USERNAME|language=th",
       "interaction": "language_x_entity_type",
       "target_n": 753,
       "tier": "standard"
@@ -7512,6 +9972,17 @@
       "committed": true,
       "count_gated": true,
       "dimensions": {
+        "entity_type": "GENETIC_DATA"
+      },
+      "id": "M:entity_type=GENETIC_DATA",
+      "interaction": "marginal:entity_type",
+      "target_n": 200,
+      "tier": "long_tail"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
         "entity_type": "HEALTH_CONDITION"
       },
       "id": "M:entity_type=HEALTH_CONDITION",
@@ -7842,6 +10313,17 @@
       "committed": true,
       "count_gated": true,
       "dimensions": {
+        "entity_type": "SEXUAL_ORIENTATION"
+      },
+      "id": "M:entity_type=SEXUAL_ORIENTATION",
+      "interaction": "marginal:entity_type",
+      "target_n": 200,
+      "tier": "long_tail"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
         "entity_type": "SOCIAL_MEDIA_HANDLE"
       },
       "id": "M:entity_type=SOCIAL_MEDIA_HANDLE",
@@ -7903,6 +10385,17 @@
       "interaction": "marginal:entity_type",
       "target_n": 753,
       "tier": "standard"
+    },
+    {
+      "committed": true,
+      "count_gated": true,
+      "dimensions": {
+        "entity_type": "TRADE_UNION_MEMBERSHIP"
+      },
+      "id": "M:entity_type=TRADE_UNION_MEMBERSHIP",
+      "interaction": "marginal:entity_type",
+      "target_n": 200,
+      "tier": "long_tail"
     },
     {
       "committed": true,
@@ -8627,7 +11120,7 @@
     "adversarial_x_entity_type"
   ],
   "seed": 42,
-  "source_metadata_version": "1.3.0",
+  "source_metadata_version": "2.2.0-dev",
   "tier_specs": {
     "critical": {
       "half_width": 0.005,

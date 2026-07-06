@@ -1,0 +1,77 @@
+name: Contribute a language or dialect
+description: Propose or contribute synthetic coverage for a new language/dialect (helps make the benchmark global)
+labels: ["language-contribution", "data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping make PII-Anon-Eval truly multilingual! See
+        **[docs/contributing-languages.md](../blob/main/docs/contributing-languages.md)** first.
+
+        🔒 **100% synthetic, CC0, no real PII (AX-001).** Do **not** paste real personal data or scraped
+        records. If you suspect a record contains real PII, report it privately via **SECURITY.md** with
+        only the `record_id`.
+  - type: input
+    id: bcp47
+    attributes:
+      label: Language tag (BCP-47)
+      description: Use the most specific true tag, incl. dialect/region subtags.
+      placeholder: "e.g. ta-IN, zh-Hant, pt-BR, ar-EG, en-IN"
+    validations:
+      required: true
+  - type: input
+    id: script
+    attributes:
+      label: Script (ISO 15924)
+      placeholder: "e.g. Taml, Hans, Arab, Deva, Latn"
+    validations:
+      required: true
+  - type: input
+    id: family
+    attributes:
+      label: Language family
+      placeholder: "e.g. Dravidian, Sinitic, Indo-Aryan, Austronesian"
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Contribution mode
+      options:
+        - "Mode A — language pack (generation recipe: templates + gazetteers + formats)"
+        - "Mode B — validated synthetic record batch (.jsonl)"
+        - "Proposal only (I can advise / review but not author yet)"
+    validations:
+      required: true
+  - type: dropdown
+    id: native
+    attributes:
+      label: Native-speaker review
+      options:
+        - "I am a native/fluent speaker and will review"
+        - "A native speaker will review"
+        - "Not yet — seeking a reviewer"
+    validations:
+      required: true
+  - type: input
+    id: count
+    attributes:
+      label: Approximate record count you can provide
+      placeholder: "e.g. ~300 (powered) or ~50 (coverage probe)"
+  - type: textarea
+    id: locale
+    attributes:
+      label: Locale realism notes
+      description: How do names / IDs / phone / address formats look in this locale? Any region-specific PII types (national ID schemes, etc.)?
+      placeholder: "e.g. Aadhaar-style 12-digit national IDs; +91 phone format; given-name/surname order…"
+    validations:
+      required: true
+  - type: checkboxes
+    id: agreements
+    attributes:
+      label: Integrity agreements
+      options:
+        - label: "All data I contribute is 100% SYNTHETIC — no real, scraped, or 'anonymized' real personal data."
+          required: true
+        - label: "I will dedicate my contribution to the public domain (CC0 1.0)."
+          required: true
+        - label: "I will run `python scripts/validate_contribution.py` and attach the PASS output to my PR."
+          required: true

@@ -90,6 +90,25 @@ class DetectionScore:
         return d
 
 
+def aggregate_detection_score(
+    pooled_tp: int, pooled_fp: int, pooled_fn: int, confidence: float = 0.95
+) -> DetectionScore:
+    """Build a DetectionScore from pooled integer counts (no spans), for post-hoc aggregation across
+    records when per-span hits are already summed (e.g. the aws-en collation). Same metric + Wilson-CI
+    logic as score_detection; partial credit is 0 at the aggregate level."""
+    counts = Counts(tp=pooled_tp, fp=pooled_fp, fn=pooled_fn, partial=0, policy=MATCHING_POLICY_VERSION)
+    n_pred, n_gold = counts.n_pred, counts.n_gold
+    precision = pooled_tp / n_pred if n_pred else 0.0
+    recall = pooled_tp / n_gold if n_gold else 0.0
+    f1 = _fbeta(1.0, precision, recall)
+    f2 = _fbeta(4.0, precision, recall)
+    return DetectionScore(
+        precision=precision, recall=recall, f1=f1, f2=f2,
+        recall_ci=wilson_interval(pooled_tp, n_gold, confidence),
+        precision_ci=wilson_interval(pooled_tp, n_pred, confidence),
+        counts=counts, partial_f1=f1, design_provenance=None)
+
+
 def score_detection(
     gold: Sequence[Span], pred: Sequence[Span], confidence: float = 0.95,
     design_provenance: "DesignProvenance | None" = None,

@@ -7,6 +7,22 @@ policy live in [GOVERNANCE.md](GOVERNANCE.md).
 How to contribute: **fork** → create a **branch** → open a **pull request** against `main`. Every PR is
 reviewed against the project's automated story/sprint review gates.
 
+### 🌏 Extending language & dialect coverage (most-wanted)
+
+No team can cover every language and dialect — the benchmark is designed to grow with the community.
+If you want to add a new language or dialect (especially across Asia and the Global South), start here:
+
+- **Guide:** [docs/contributing-languages.md](docs/contributing-languages.md) — the two contribution
+  modes (language pack vs validated record batch), the BCP-47 dialect convention, and the quality bar.
+- **What's most needed:** [docs/wanted-languages.md](docs/wanted-languages.md).
+- **Propose one:** open the *Contribute a language or dialect* issue
+  (`.github/ISSUE_TEMPLATE/language_contribution.yml`).
+- **Self-check before a PR:** `python scripts/validate_contribution.py contrib/<bcp47-tag>/records.jsonl`
+  (offset integrity, canonical enums, synthetic-only provenance, per-language coverage report).
+- **Scaffold:** copy `contrib/TEMPLATE-language-pack/` to `contrib/<bcp47-tag>/`.
+
+All language contributions follow the same non-negotiables below (CC0, 100% synthetic, declared provenance).
+
 ## Pull-request template
 
 Open a PR using this template (also mirrored in `.github/PULL_REQUEST_TEMPLATE.md` when present). A PR

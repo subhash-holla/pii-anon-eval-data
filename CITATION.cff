@@ -2,13 +2,13 @@ cff-version: 1.2.0
 message: "If you use this dataset, please cite it using these metadata."
 title: "PII Anonymization Evaluation Dataset: Three-Tier Synthetic Benchmark with Behavioral-Signal Annotations"
 type: dataset
-version: "2.0.0"
-date-released: "2026-05-28"
+version: "2.2.0"
+date-released: "2026-07-05"
 license: "CC0-1.0"
-doi: "10.5281/zenodo.20690979"
+doi: "10.5281/zenodo.21207288"
 url: "https://github.com/subhash-holla/pii-anon-eval-data"
 repository-code: "https://github.com/subhash-holla/pii-anon-eval-data"
-abstract: "575,604 fully synthetic records (60 languages, 63 entity types) for evaluating PII detection, anonymization quality, and resistance to LLM-based re-identification. 100% synthetic — contains NO real personal information (AX-001)."
+abstract: "782,677 fully synthetic records (60 languages, 66 entity types) for evaluating PII detection, anonymization quality, and resistance to LLM-based re-identification. 100% synthetic — contains NO real personal information (AX-001)."
 authors:
   - family-names: "Holla"
     given-names: "Subhash"

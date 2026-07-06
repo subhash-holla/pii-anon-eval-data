@@ -1,0 +1,43 @@
+signoff_id: SO-03-s4
+date: 2026-05-29
+type: work-stream-close
+stage: 04-development
+scope: >
+  Sprint S4 — Stats/reporting completion (DC-09). 5 stories S4-01..S4-05, strict TDD, every story
+  gate + the S4 sprint gate APPROVE. Clopper-Pearson exact CI (stdlib inverse-beta); paired McNemar
+  (exact + continuity-χ²) + seeded paired bootstrap (the FR-002 detector-regression measurement);
+  calibration (ECE/Brier/reliability per entity class, ECE≤0.05 reference reported-not-gated);
+  per-language + language×type power transparency; and the Information-Dense viz layer
+  (reliability/Pareto/slice-heatmap/Sankey/coverage-risk) behind a new [viz] extra.
+signer: AGENT_SIMULATED (developer-assistant); real-CI Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/04-development/02-stories/sprint-4/S4-0{1..5}.md
+  - src/pii_anon_datasets/stats/{intervals(+CP),paired,calibration}.py
+  - src/pii_anon_datasets/reporting/{language_power,viz}.py + power_table.py (coverage-completed)
+  - pyproject.toml ([viz] extra declared)
+  - dev-assist-artifacts/04-development/_reviews/story/S4-0{1..5}/ + _reviews/sprint/S4/
+
+decisions_acknowledged:
+  - "Clopper-Pearson implemented pure-stdlib via a hand-rolled inverse regularized incomplete beta (no scipy); textbook-verified (0/10,1/10,10/10 @95%) + CP⊇Wilson conservatism."
+  - "Paired bootstrap uses a LOCAL random.Random(seed) (never the module-global RNG) for byte-reproducibility (NFR-004); McNemar is the measurement side of the FR-002 detector-regression gate (distinct from the NFR-018 corpus-power gate)."
+  - "NFR-008 ECE≤0.05 is a REFERENCE reported via a meets_reference property — NEVER a submitter pass/fail gate (the benchmark cannot covertly fail submitters on calibration)."
+  - "matplotlib is the ONLY heavy dep, behind the [viz] extra, lazily imported; the stats/reporting CORE stays pure-stdlib (NFR-004); `import pii_anon_datasets.reporting` succeeds without matplotlib."
+  - "FR-005 is now COMPLETE across S4-03 (ECE/Brier/reliability) + S4-05 (reliability diagram + abstention coverage-risk curve — the facet flagged open at the S4-03 gate)."
+  - "AX-004/NFR-005: pareto_plot takes two-axis (residual_risk, utility) tuples and plots them x/y — no reporter fuses metric families into a de-id scalar."
+
+evidence:
+  - "pytest 211 passed / 1 skipped (the anthropic-absent contract skip); 0 regressions; 92% aggregate line; every stats+reporting module >=85% line (power_table 100%, intervals 87%, calibration 96%, paired 92%, viz 96%, language_power 97%)."
+  - "All 5 story gates APPROVE (25 reviewer YAMLs); S4 sprint gate APPROVE (requirements-coverage + performance + axiom-compliance)."
+  - "Sprint coverage-hardening 243ba63: power_table.py 74%->100% (DC-09 reporting completion) + fr_005 token fix — test-only."
+  - "S4-04 recovered from a long-run interruption (RED ae8ff0b/GREEN by executor; orchestrator finished REFACTOR b4e0335 + REVIEW); verified no work lost."
+  - "S-PWR guardrail HELD: eval_lattice.json (730 cells) untouched; tags v1.3.0 + pre-lattice-enrichment intact; reporters read NO corpus."
+
+findings_waived_to_pass2:
+  - "All S4 work AGENT_SIMULATED — real-CI Pass-2 owed before any S4 MUST counts RELEASE-verified (no DIVERGED DC; no statistical Pass-2)."
+  - "NFR-004 matplotlib-absence boundary verified at the sys.modules level (matplotlib IS installed here); a matplotlib-free venv import check is a Pass-2 nicety."
+  - "n_boot unbounded on paired_bootstrap (offline once-per-comparison; guard only if exposed to an external surface); FR-002 CI-fails-on-regression gate WIRING is a Stage-5/harness obligation (S4 ships the measurement half)."
+  - "Known doc-drift (NFR-013) still scheduled for S5-07."
+
+next: "S5 — exports/CLI (Parquet/Croissant/spaCy/CoNLL + pii-anon entry) + compliance (DC-11) + doc-drift (NFR-013)."

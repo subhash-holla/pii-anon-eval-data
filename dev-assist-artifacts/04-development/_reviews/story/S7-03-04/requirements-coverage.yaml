@@ -1,0 +1,93 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S7-03-04
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S7-03-04-01
+    severity: OBSERVATION
+    location: pyproject.toml:[tool.coverage.run]
+    description: |
+      Both stories (S7-03 §8/§12, S7-04 §8/§12) DEFER the OPTIONAL
+      `[tool.coverage.run] source += "pii_anon_datasets.validation"` and
+      `+= "pii_anon_datasets.subsets"` edits to the S7 sprint-close coverage step
+      (to avoid a concurrent-edit conflict on the shared pyproject.toml). Consequence:
+      the two new packages are not yet in the coverage `source` set, so their lines are
+      not measured by the coverage tool until close. This is in-scope-deferred-with-a-named
+      successor (S7 sprint-close coverage step) and the §8 spec marks the edit OPTIONAL —
+      non-blocking at the story gate, but it must actually land at sprint close or the
+      validation/ + subsets/ packages will be silently unmeasured.
+    suggested_resolution: |
+      At S7 sprint-close, add "pii_anon_datasets.validation" and "pii_anon_datasets.subsets"
+      to [tool.coverage.run] source in pyproject.toml and confirm the new packages report
+      coverage. Track as the named successor in the S7 sprint-gate coverage snapshot.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-03.md#12
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-04.md#12
+
+  - id: coverage-S7-03-04-02
+    severity: OBSERVATION
+    location: functional-requirements.md#FR-027 / FR-015 / FR-016
+    description: |
+      SEAM-vs-feature framing (informational, sanctioned by the dispatch). S7-03/04 deliver
+      the v1 SEAM only: the harness/loaders + the epistemic-honesty guards (RealDataAbsent
+      sentinel; non-strippable caveats; seeded local-RNG purity). The substantive v1.1/Pass-2
+      deliverables — the real i2b2-2014/TAB synthetic->real correlation (FR-027) and the actual
+      coreference-chain + quasi-identifier SCORING (FR-015/016) — are NOT closed here. These FRs
+      are SHOULD / v1.1 / PERSONA-CONDITIONAL and are carried on the requirements-coverage
+      release-gate Pass-2 roster. Recorded as seam-level-verified (not full-feature-closed) so
+      the release gate does not mistake the seam for the feature. Deferral has a named successor
+      (Stage-5 / S7 sprint-close Pass-2), satisfying coverage successor-discipline.
+    suggested_resolution: |
+      No action at story gate. At the release gate, ensure FR-015/016/027 remain on the Pass-2
+      roster and are NOT counted as fully verified until the real-data correlation and the
+      coreference/qid scoring land with passing evidence on the licensed corpus.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-03.md#5
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-04.md#12
+
+notes: |
+  COMBINED STORY gate for S7-03 (FR-027) + S7-04 (FR-015/016), iteration 1. Read-only.
+
+  Clause-to-test coverage map — every dispatch-named clause has a NAMED PASSING test; no
+  orphaned clause:
+    FR-027 sentinel-when-absent   -> test_fr_027_returns_sentinel_when_real_data_absent  PASS
+    FR-027 correlation math       -> test_fr_027_correlation_on_paired_scores             PASS
+    FR-027 seeded CI              -> test_fr_027_bootstrap_ci_seeded_deterministic         PASS
+    FR-027 non-strippable caveat  -> test_fr_027_caveat_non_strippable                    PASS
+    FR-015 coreference slice      -> test_fr_015_coreference_slice_selects_nonempty_chains PASS
+    FR-015 caveat                 -> test_fr_015_slice_low_power_caveat_non_strippable    PASS
+    FR-016 qid min_qids           -> test_fr_016_quasi_identifier_slice_min_qids           PASS
+    NFR-004 correlation purity    -> test_nfr004_correlation_purity                       PASS
+    NFR-004 slices purity         -> test_nfr004_slices_pure_stdlib                       PASS
+
+  Dispatch-specified selection run:
+    `python3 -m pytest tests/test_correlation.py tests/test_slices.py -k "fr_027 or fr_015 or fr_016 or nfr004" -q`
+    -> 9 passed (expected 9). All 9 node IDs collected + confirmed.
+
+  Full suite: 344 passed, 1 skipped (1 pre-existing skip) — matches both stories' REVIEW-state
+  claim; zero regressions attributable to S7-03/04.
+
+  Seam reality confirmed (not phantom/stub): src/pii_anon_datasets/validation/correlation.py
+  `correlate()` returns RealDataAbsent on None/[] real_scores and never fabricates a
+  CorrelationResult; src/pii_anon_datasets/subsets/slices.py SLICE_CAVEAT carries the
+  ~72%-formulaic / "external validity" / LIMITED honesty string; both __post_init__ guards
+  reject empty caveats (FR-015/016/027 non-strippable).
+
+  domain_packs: [] in developer-assistant.yaml — no active packs, no pack extensions to merge.
+
+  Successor-discipline: FR-015/016/027 are SHOULD/v1.1/PERSONA-CONDITIONAL; the deferred
+  real-data correlation + actual coreference/qid scoring are explicitly carried as
+  Pass-2 / release-gate roster items (S7-03 §5, S7-04 §12; corroborated by
+  dev-assist-artifacts/04-development/_reviews/sprint/S3/axiom-compliance.yaml:85 noting the
+  FR-027 real-data slice deferral). All in-scope clauses are verified-or-deferred-with-successor.
+
+  Story gate is below the normal coverage running floor (epic+); rendered here per explicit
+  combined-story dispatch. Verdict: zero SHOWSTOPPER/CATASTROPHIC/MAJOR -> APPROVE.
+
+review_time_seconds: 372
+
+context_bounds_respected: true

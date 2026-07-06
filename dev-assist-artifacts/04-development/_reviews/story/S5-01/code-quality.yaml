@@ -1,0 +1,92 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S5-01
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S5-01-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/compliance/crosswalk.py:170
+    description: |
+      Module-level `assert` at line 170 (structural invariant: dataclass field order matches
+      REGIMES) fires at import time and has no accompanying `# PANIC:` or `# SAFETY:` comment.
+      Under the project's active ruff config (select = ["E","F","I","UP","B"]), S101 is not
+      enabled, so this passes `ruff check` cleanly. The assert is not on a production runtime
+      call path — it is an import-time structural guard — and it holds verifiably. No
+      blocking concern; comment would clarify intent for future readers.
+    suggested_resolution: |
+      Add an inline comment documenting that this assert is an import-time structural invariant,
+      for example:
+        # IMPORT-TIME INVARIANT: field order must mirror REGIMES so as_columns() getattr loop
+        # is correct. Fails loudly at startup, not silently at runtime.
+        assert tuple(f.name for f in fields(RegulatoryCrosswalk))[:5] == REGIMES
+      No ruff/mypy rule change required.
+
+notes: |
+  REVIEW SCOPE: `src/pii_anon_datasets/compliance/__init__.py` (NEW),
+  `src/pii_anon_datasets/compliance/crosswalk.py` (NEW), `tests/test_crosswalk.py` (NEW).
+  Language profile: Python.
+
+  TDD TRAIL VERIFIED (strict mode):
+  - RED commit fdc3b450: test file + story stub only; `compliance/` package absent; collection
+    fails `ModuleNotFoundError: pii_anon_datasets.compliance`. This is a genuine RED — no
+    production code present, no false-pass risk.
+  - GREEN commit b86720e: compliance/ package introduced; 6/6 tests pass.
+  - REFACTOR commit 73846cb: ruff + mypy --strict clean; test #4 strengthened with
+    `isinstance(xwalk, RegulatoryCrosswalk)` assert and `__post_init__` empty-disclaimer
+    rejection; resolves ruff F401 unused-import finding (RegulatoryCrosswalk now exercised).
+
+  EXECUTOR-DISCLOSED DEVIATIONS — both confirmed sound:
+  1. "Test #3 grep caught its own docstring prose → reworded." Confirmed: the source grep in
+     test #3 reads `crosswalk_mod.__file__` (= crosswalk.py), NOT the test file itself. The
+     test file's docstring containing "deidentified" is irrelevant to the grep target.
+     Additionally, "deidentified" was correctly excluded from the grepped symbols because
+     `ccpa_deidentified` is a legitimately named FR-022 regime — only `compliant`, `overall`,
+     `equivalent` are checked. Deviation is sound.
+  2. "REFACTOR strengthened test #4 to use the unused import [RegulatoryCrosswalk]." Confirmed:
+     the REFACTOR commit adds `assert isinstance(xwalk, RegulatoryCrosswalk)` and the
+     `pytest.raises(ValueError)` block. RegulatoryCrosswalk is now meaningfully exercised (not
+     just imported), resolving ruff F401 semantically rather than via a noqa comment. Sound.
+
+  LINT / TYPE (re-run, not simulation):
+  - `ruff check` (project config: E/F/I/UP/B) on 3 owned files → All checks passed.
+  - `mypy --strict --follow-imports=silent` on 2 compliance/ modules → Success, 0 issues.
+
+  SCOPE DISCIPLINE:
+  - `git diff --name-only fdc3b45~1 HEAD` = compliance/__init__.py, compliance/crosswalk.py,
+    tests/test_crosswalk.py, S5-01.md (story doc). All within §8 owned files. Zero scope creep.
+
+  PURE-STDLIB VERIFIED (live, not simulation):
+  - AST import scan of crosswalk.py: only `__future__`, `collections`, `dataclasses`, `enum`.
+    Zero intersection with banned set {random, time, uuid, datetime, secrets}.
+
+  FROZEN DATACLASS + __post_init__ VERIFIED (live):
+  - Mutation attempt raises `FrozenInstanceError`. Confirmed frozen=True.
+  - `RegulatoryCrosswalk(..., disclaimer="   ")` raises `ValueError: crosswalk disclaimer
+    required`. Confirmed.
+
+  NO-MERGED-VERDICT VERIFIED (live grep):
+  - `compliant`, `overall`, `equivalent` — not found in crosswalk.py source.
+  - `deidentified` appears once in the module docstring as `reg_ccpa_deidentified` description.
+    This is the spec-named regime column, not a merged-verdict symbol. Correct.
+  - `reg_regulatory_domains` — not in source. Correct.
+
+  PYTEST (live re-run):
+  - `python3 -m pytest tests/test_crosswalk.py -v` → 6 passed in 0.11s.
+  - All 6 fr_022-tokened tests pass: five_legally_distinct_columns, hipaa_is_two_distinct_columns,
+    no_merged_or_equivalence_column, presence_to_status_conservative, corpus_tag_mapping,
+    nfr004_crosswalk_pure_stdlib.
+
+  DOCSTRING COVERAGE:
+  - All public surfaces have docstrings: `RegimeStatus`, `RegulatoryCrosswalk`, `as_dict()`,
+    `crosswalk_record()`, `as_columns()`, `__init__.py` module docstring. Module-level
+    `_record_tags()` (private) also has a docstring. Full coverage.
+
+  No `any`/`Any`/dynamic-type usage detected. No dev-dependencies pulled into production path.
+  No dead code detected. Test names embed `fr_022` token per story §6 requirement.
+
+review_time_seconds: 213
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

@@ -1,0 +1,90 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S3
+
+gate: sprint
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  INTEGRATION-scope axiom review across the whole S3 scorer suite (four metric families now
+  composed). Verified the families COMPOSE without axiom violation — the per-story gates
+  (S3-01..S3-08, all APPROVE at the axiom check) handled each module in isolation; this gate
+  confirms the cross-cutting picture. Zero MAJOR+. APPROVE.
+
+  Test baseline: `python3 -m pytest` → 167 passed, 1 skipped (2.70s). The single skip is
+  test_fr_010_llm_attack_skips_if_absent (tests/test_llm_adversary.py::Test 5), which
+  importorskip-guards the LIVE LLM attack path — a correct opt-in skip, not a failure.
+
+  ── AX-pii-anon-004 / NFR-005 (anon↔pseudo separation; the headline guarantee) — UPHELD ──
+  Verified at the FOUR-family integration scope, not just the S3-08 anon↔pseudo pair:
+    * Enumerated every entry point in scoring.__all__ (47 exports) and confirmed each public
+      scorer returns a DISTINCT typed result object, never a scalar and never a fused family:
+        match_strict→Counts · score_detection→DetectionScore · score_reidentification→MeasuredRRS
+        · exposure_index→ExposureIndex · score_pseudonymization→PseudonymizationReport
+        · score_anonymization→ParetoPoint · score_utility→UtilityScore.
+    * Detection family is NEVER pulled into anon/pseudo/reid (grep for `from .detection` /
+      DetectionScore in those modules returns empty) — detection is not fused with anon.
+    * RRS↔utility cannot be merged: ParetoPoint nests MeasuredRRS vs UtilityScore (different
+      types), exposes no combined/overall/deid/score field and no __float__ (test_nfr005_
+      pareto_point_cannot_merge: introspection + float() rejection + AST source grep).
+    * anon↔pseudo cross-module (S3-08 / test_nfr005_separation.py): distinct modules, neither
+      imports the other's result type, definition-anchored AST grep of BOTH sources + live
+      namespace check for {combined,deid,de_identification_score,overall_score,total_collisions},
+      the two scorers return different types, and no public callable returns a bare float/int.
+    * Within-module guards intact: PseudonymizationReport keeps the two collision integers
+      (intended_linkage vs unintended_crypto) SEPARATE — never summed (no total_collisions field).
+
+  ── AX-pii-anon-002 (determinism) — UPHELD ──
+    * Spot-check: the headline offline adversary path (OfflineDeterministicAdversary, |C|=3,
+      score_reidentification) is byte-identical across a re-run AND a candidate-pool reorder
+      (json.dumps(as_dict) equal) — the sort-then-truncate + (sim desc, persona_id asc) total
+      order holds. Result carries deterministic=True and the non-strippable FR-009 caveat.
+    * The LLM adversary is correctly deterministic=False, the SECONDARY figure, never wired to
+      a default/headline path; the only network egress, opt-in behind the [llm] extra.
+    * AST top-level import audit over ALL 11 scoring + 4 stats modules: ZERO of
+      {random,time,uuid,datetime,secrets} at module top level; hashlib (deterministic) is the
+      only crypto primitive (pseudonymization). Matches the per-module NFR-004 guard tests.
+
+  ── AX-pii-anon-003 (statistical rigor) — UPHELD ──
+    * Every published metric carries a named-method CI on INTEGER counts: detection P/R/F1/F2
+      via Wilson on (tp,n_gold)/(tp,n_pred) with partial_f1 EXCLUDED from CIs; RRS recall/
+      precision Wilson on (correct,n_targets)/(correct,n_guesses); pseudonymization unauthorized/
+      authorized reversal + crypto-collision Wilson on integer (k,n). wilson_interval raises
+      TypeError on fractional/bool counts (reidx-02) and returns the n=0 sentinel
+      Interval(nan,0,1,0,"wilson",conf) — CIs are never fabricated.
+    * reid power seam (stats/power.py) is NIST-derived: reid_required_n reuses required_n
+      (NIST/SEMATECH §7.2.4.2, one z-table); REID_TIER_SPECS targets DERIVED not hand-typed
+      (897@0.30/±3pp, 385@0.10/±3pp); ReidProvenance carries |C| + powered + the non-strippable
+      anti-anonymity caveat and attaches to MeasuredRRS. Detection DesignProvenance puts the
+      Wilson denominator beside the cell target with a non-strippable synthetic caveat.
+
+  ── AX-pii-anon-001 (synthetic-only) — UPHELD ──
+    * Real-PII heuristic scan (Luhn-valid cards, structural SSNs, real key shapes) over 39
+      scorer/stats/test files: zero real PII. (One Luhn match — `959963984540054` in
+      stats/intervals.py — is the documented z critical value 1.959963984540054 for 95%
+      confidence, a statistical constant, NOT PII.) signals.py fixtures are synthetic lexical
+      catalogues (jargon/location/topic word-lists); anonymization test data is inline synthetic
+      ("Jane Doe"/Boston) text.
+
+  ── NFR-004 (purity) — UPHELD ──
+    * scoring/stats core is pure-stdlib; pyproject declares anthropic ONLY under the optional
+      [llm] extra; `import pii_anon_datasets.scoring` succeeds with anthropic absent and does
+      NOT pull it into sys.modules (lazy import inside _require_anthropic only). All 47 exports
+      resolve. matplotlib (heatmap) and pyarrow/hf (distribution) are likewise optional/lazy.
+
+  ── Epistemic honesty — UPHELD ──
+    * Non-strippable structural caveats all confirmed as constructed invariants (empty → ValueError,
+      cannot build the object without them): RRS anti-anonymity caveat (RRSResult/MeasuredRRS,
+      "MUST NOT be cited as ... 'anonymized'"), exposure-index EXPOSURE_INDEX_NOTE ("NOT measured
+      RRS"), pseudonymization EDPB Art 4(5) note (cites "art"+"4(5)"), Pareto PARETO_SEPARATION_NOTE
+      ("NEVER combined into a single de-identification score"), DesignProvenance/ReidProvenance
+      synthetic-not-external-validity caveat. dev-log records Pass-2/follow-on limitations honestly
+      (synthetic-distribution power ≠ external validity, FR-027 real-data slice deferred). All 8
+      S3 story-gate axiom-compliance reviews are APPROVE — integration composes from approved parts.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

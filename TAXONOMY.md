@@ -2,7 +2,7 @@
 
 This document defines the entity types used in the PII-Anon Evaluation Dataset, organized into 9 categories. Each entry includes a definition, sensitivity classification, and regulatory relevance.
 
-> **Canonical set (v2.0.0): 63 entity types across 9 categories.** The authoritative, machine-readable source is `pii_anon_datasets.taxonomy` (derived directly from the corpus); `validate.py` accepts exactly those 63. This reconciles the prior three-way drift (48 in the old validator / "65" in the README / ~80 rows here). The tables below now list **exactly** those 63 types — one row per canonical type, in 1:1 correspondence with `taxonomy.ENTITY_REGISTRY` (enforced by `tests/test_doc_drift.py::test_nfr_013_taxonomy_body_matches_registry`).
+> **Canonical set (v2.2-dev): 66 entity types across 9 categories.** The authoritative, machine-readable source is `pii_anon_datasets.taxonomy` (derived directly from the corpus); `validate.py` accepts exactly those 66. This reconciles the prior three-way drift (48 in the old validator / "65" in the README / ~80 rows here), and adds 3 GDPR Art-9 special-category types in v2.2-dev (63→66). The tables below now list **exactly** those 66 types — one row per canonical type, in 1:1 correspondence with `taxonomy.ENTITY_REGISTRY` (enforced by `tests/test_doc_drift.py::test_nfr_013_taxonomy_body_matches_registry`).
 
 ## Sensitivity Classes
 
@@ -110,7 +110,7 @@ This document defines the entity types used in the PII-Anon Evaluation Dataset, 
 | `EMPLOYEE_ID` | direct | Employer-assigned identifier | "EMP-12345" |
 | `EDUCATION_LEVEL` | quasi | Highest education attained | "Master's degree" |
 
-## Category 9: Special Category Data (5 types)
+## Category 9: Special Category Data (8 types)
 
 These are GDPR Article 9 "special categories" requiring explicit consent for processing.
 
@@ -118,6 +118,9 @@ These are GDPR Article 9 "special categories" requiring explicit consent for pro
 |-------------|------------|------------|---------|---------------------|
 | `POLITICAL_OPINION` | sensitive | Political affiliation or view | "registered Democrat" | GDPR Art. 9 |
 | `RELIGIOUS_BELIEF` | sensitive | Religious affiliation | "Buddhist" | GDPR Art. 9 |
+| `SEXUAL_ORIENTATION` | sensitive | Sexual orientation or sex life | "bisexual" | GDPR Art. 9 |
+| `TRADE_UNION_MEMBERSHIP` | sensitive | Trade union affiliation | "Unite the Union member" | GDPR Art. 9 (Art. 9(2)(d)) |
+| `GENETIC_DATA` | sensitive | Genetic markers or sequencing data | "BRCA1 c.68_69delAG pathogenic variant" | GDPR Art. 9 |
 | `MARITAL_STATUS` | quasi | Relationship status | "married", "divorced" | Context-dependent |
 | `HOUSEHOLD_SIZE` | quasi | Number of household members | "4-person household" | Re-identification risk |
 | `VEHICLE_MODEL` | quasi | Vehicle make/model | "2022 Tesla Model 3" | Insurance/legal contexts |

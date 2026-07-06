@@ -1,0 +1,117 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S5
+
+gate: sprint
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S5-01
+    severity: OBSERVATION
+    location: tests/test_croissant.py:test_nfr_012_full_validation_skips_without_mlcroissant
+    description: |
+      NFR-012's full Croissant conformance arm (mlcroissant spec-validation) runs only the
+      skip-if-absent / RuntimeError path in this env — `mlcroissant` is not installed, so
+      `validate_with_mlcroissant` exercises the absent-branch (a PASS, asserting the `[croissant]`
+      install error) and the present-path branch is gated behind `pytest.importorskip("mlcroissant")`.
+      The literal NFR-012 validate-AND-load threshold IS met by the always-on pure-stdlib shape check
+      plus the real HF `datasets` Parquet round-trip with `reg_*` columns intact (test #4 genuinely ran:
+      pyarrow 23.0.1 + datasets 4.8.3 installed), so the MUST is satisfied for this sprint; only the
+      OPTIONAL full-spec conformance pass is deferred. Non-blocking.
+    suggested_resolution: |
+      Install the `[croissant]` extra on the Pass-2 CI image so the mlcroissant present-path branch
+      executes (un-skipped), upgrading NFR-012 from "validate-AND-load via shape-check + HF round-trip"
+      to "validate-AND-load via full mlcroissant conformance". Track under the standing real-CI Pass-2.
+    references:
+      - 02-requirements/non-functional-requirements.md#NFR-012
+      - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-03.md
+
+  - id: coverage-S5-02
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:Status-Change-Log
+    description: |
+      All five S5 MUST closures (FR-021, FR-022, FR-024, NFR-012, NFR-013) are recorded with
+      `provisional_status: AGENT_SIMULATED (verified)` — execution is under the agent harness
+      (pytest 9.0.2 / Python 3.10.6, local dev tree), not a real CI runner. The integration/loadability
+      tests genuinely RAN (real pyarrow/datasets/spaCy round-trips), so agent-simulated execution is
+      faithful, but a real-CI Pass-2 on the project image is still owed for every S5 requirement before
+      release-gate "verified" can drop the AGENT_SIMULATED qualifier. This is a standing, scheduled
+      Pass-2 (I/O-bound work; no benchmark hardware needed) — correctly tracked, not a sprint-gate
+      blocker. NOTE: zero S5 MUSTs carry `provisional_status: DIVERGED`, so no DIVERGED Pass-2
+      sample-size commitment is owed at this gate.
+    suggested_resolution: |
+      Schedule the real-CI Pass-2 run on the project CI image at/before the release gate; log the
+      outcome (confirmed/invalidated) in the traceability-matrix Status Change Log. Until Pass-2
+      completes, keep the AGENT_SIMULATED (verified) qualifier on all five S5 MUSTs.
+    references:
+      - 02-requirements/non-functional-requirements.md#NFR-017
+      - dev-assist-artifacts/02-requirements/traceability-matrix.md
+
+notes: |
+  SPRINT S5 REQUIREMENTS-COVERAGE SNAPSHOT (planned bar: every S5 MUST verified-by named passing
+  tests + no orphan; per-module coverage >=85% on new packages). All checks PASS; APPROVE.
+
+  ── Per-MUST verification (5/5 verified-or-deferred-with-successor; zero silently-missing) ──
+  - FR-021 (DPIA-input end-state bundle, anon/pseudo SEPARATE) — VERIFIED by S5-06.
+    tests/test_end_state_bundle.py: 5 `fr_021` tests (`-k fr_021` -> 5). Structural NFR-005/AX-004
+    separation (no merged/combined/overall/deid field, no __float__, import-time disjointness assert);
+    non-strippable DPIA disclaimer; FR-009 + EDPB Art 4(5) caveats travel unstripped; >=1 axis required.
+  - FR-022 (legally-distinct regulatory crosswalk, gov-02) — VERIFIED by S5-01.
+    tests/test_crosswalk.py: 6 `fr_022` tests (`-k fr_022` -> 6). 5 typed reg_* columns; HIPAA = 2
+    distinct legal-method columns; NO merged/equivalence/flattened `regulatory_domains` column
+    (the gov-02 v1.3.0 export_parquet.py:54 bug is fixed, not inherited).
+  - FR-024 (CC0 corpus + standard exports — FULLY CLOSED) — VERIFIED by S5-02/03/04/05 + JSONL.
+    34 `fr_024` tests (`-k fr_024` runs 34, all pass) spanning ALL six export-surface files:
+    test_parquet_export.py, test_croissant.py, test_dataset_card.py, test_conll_export.py,
+    test_spacy_export.py, test_cli.py. Parquet (N typed reg_* cols, streaming), Croissant + dataset
+    card, spaCy DocBin (real round-trip, spaCy 3.8.3) + CoNLL BIO/BILOU, `pii-anon` CLI (5 thin verbs,
+    DX-03 one copy-paste invocation), JSONL pre-existing. No orphan sub-clause.
+  - NFR-012 (Croissant validate-AND-load + Parquet loadability) — VERIFIED by S5-03 + S5-02.
+    tests/test_croissant.py (3 `nfr_012`) + tests/test_parquet_export.py (1 `nfr_012`). Real HF
+    `datasets.load_dataset("parquet", ...)` round-trip with reg_* columns intact (pyarrow 23.0.1 +
+    datasets 4.8.3 installed -> the validate-AND-load threshold genuinely ran, not stubbed); always-on
+    pure-stdlib shape check. Full mlcroissant conformance deferred to Pass-2 (finding coverage-S5-01).
+  - NFR-013 (documentation currency — zero current-state drift) — VERIFIED by S5-07.
+    tests/test_doc_drift.py: 6 `nfr_013` tests (`-k nfr_013` -> 6 + 1 in test_dataset_card.py = 7).
+    7 docs (README/DATASHEET/COMPARISON/TAXONOMY/MIGRATION/CHANGELOG/__init__) at canonical
+    575,604 / 2,486,438 / 63 (== taxonomy.ENTITY_TYPE_COUNT) / v2.0.0; all stale strings
+    (117,752 / 919,000 / 150K / 160K / ~1.24M / 65 / 57 / "159,891 (100%)") absent from current-state;
+    TAXONOMY body == registry; MIGRATION v2 section + CHANGELOG S-PWR entry present; history preserved.
+
+  ── Orphan-requirement scan ── ZERO orphans. Every S5 MUST resolves to >=1 named, token-selectable,
+  passing test (`fr_021`/`fr_022`/`fr_024`/`nfr_012`/`nfr_013` all `-k`-selectable and green). The
+  `nfr_018` power-gate guardrail (S5-05's validate-verb-keeps-gate-on) also resolves
+  (test_cli.py + test_reid_power.py, 6 passing) — no S5 story silently dropped a claimed requirement.
+
+  ── Per-module coverage (>=85% bar on new packages; coverage-hardening commit 35faf3a confirmed) ──
+  `pytest --cov=...{compliance,distribution,integrations,cli}` (term-missing):
+    cli.py 93% · crosswalk.py 95% · end_state_bundle.py 100% · compliance/__init__ 100% ·
+    conll_export.py 100% · croissant.py 99% · dataset_card.py 94% · parquet_export.py 99% ·
+    spacy_export.py 100% · integrations/__init__ 100% · conll_format.py 98% · distribution/__init__ 100%
+    — TOTAL 97% (462 stmts, 6 miss; 158 branch, 11 brpart). Every named module (cli.py /
+    conll_format.py / croissant.py / parquet_export.py) is now >=85% (35faf3a lifted cli 71->93,
+    conll_format 78->98, croissant 79->99, parquet_export 81->99; no production-logic change, edge-path
+    tests appended to existing files; cov source extended to the new packages so the gate measures them).
+
+  ── Full suite ── `python3 -m pytest -q` -> 290 passed, 1 skipped (matches the planned bar exactly;
+    the 1 skip is pre-existing and unchanged across S5).
+
+  ── DIVERGED + Pass-2 cross-check ── No S5 MUST carries provisional_status: DIVERGED; all are
+    AGENT_SIMULATED. Therefore no DIVERGED date+sample-size Pass-2 commitment is owed at this sprint
+    gate. The standing real-CI Pass-2 (all five MUSTs, AGENT_SIMULATED) is correctly scheduled and is a
+    release-gate prerequisite, not a sprint-gate blocker (finding coverage-S5-02).
+
+  ── Gate evidence ── All 7 story gates APPROVE 5/5 (synthesis.md present for S5-01..S5-07); Status
+    Change Log (traceability-matrix.md) records all 5 closures as AGENT_SIMULATED (verified) with
+    verified-by stories; FR-021->S5-06 and NFR-013->S5-07 matrix rows added at close (the forwarded
+    story-gate OBSERVATIONs are resolved). Domain packs: developer-assistant.yaml domain_packs: [] —
+    no pack extensions to merge; source_pack omitted on all findings.
+
+  VERDICT BASIS: zero SHOWSTOPPER / zero CATASTROPHIC / zero MAJOR -> APPROVE. Two OBSERVATIONs
+  (non-blocking): mlcroissant full-spec conformance deferred to Pass-2 CI image; real-CI Pass-2 owed
+  across the AGENT_SIMULATED S5 MUSTs.
+
+review_time_seconds: 1170
+
+context_bounds_respected: true

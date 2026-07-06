@@ -1,0 +1,162 @@
+# Traceability reviewer — STORY gate
+review:
+  reviewer: traceability
+  gate: story
+  story_id: S3-08
+  iteration: 1
+  mode: read-only
+  date: 2026-05-29
+  repo: /Users/subhashholla/Development/pii_anonymize_pseudonymize/pii-anon-core/pii-anon-eval-data
+  branch: feat/v2-scoring-harness
+  verdict: APPROVE
+  context_bounds_respected: true
+  independence_attestation: >
+    Findings derived solely from the artifacts named in the dispatch + their declared
+    sources. No other reviewer's output consulted. Verdict reached independently.
+  self_attestation: >
+    I verified the FR/NFR -> Story -> Test -> DC forward chain only. I did NOT judge test
+    quality (code-quality), NFR semantic depth beyond G/W/T (requirements-coverage /
+    axiom-compliance), NFR threshold attainment (performance-benchmark), or idiom
+    (code-quality). Those are out of my scope and excluded from this verdict.
+
+  scope_checked:
+    declared_ids_exist:
+      NFR-018:
+        exists: true
+        source: dev-assist-artifacts/02-requirements/non-functional-requirements.md:10
+        role: primary
+      NFR-005:
+        exists: true
+        source: dev-assist-artifacts/02-requirements/non-functional-requirements.md:14
+        role: primary
+      FR-029:
+        exists: true
+        source: dev-assist-artifacts/02-requirements/functional-requirements.md:51
+        role: supporting
+      FR-009:
+        exists: true
+        source: dev-assist-artifacts/02-requirements/functional-requirements.md:19
+        role: supporting
+      verdict: all_declared_ids_exist  # no SHOWSTOPPER (no phantom FR/NFR)
+
+    test_token_embedding:
+      requirement: every test fn carries an nfr_018 / nfr_005 token
+      reid_power_nfr_018_selection:
+        command: "python3 -m pytest tests/test_reid_power.py -k nfr_018 -q --co (PYTHONPATH=src)"
+        selected: 5
+        gt_zero: true
+      nfr005_separation_nfr_005_selection:
+        command: "python3 -m pytest tests/test_nfr005_separation.py -k nfr_005 -q --co (PYTHONPATH=src)"
+        selected: 2
+        gt_zero: true
+      untokened_test_fns: 0   # grep of `^def test_` minus nfr tokens == empty in both files
+      runs_green:
+        nfr_018: "5 passed"
+        nfr_005: "2 passed"
+        all_seven: "7 passed"
+      verdict: every_test_fn_tokened_and_selected
+
+    name_says_x_asserts_y:
+      finding: none
+      detail: >
+        Each nfr_018 test body asserts a re-id-power-ladder invariant (897/385 pin,
+        derived-not-typed REID_TIER_SPECS, ReidProvenance shape/track, MeasuredRRS
+        attach+serialize, frozen-lattice regression guard). Each nfr_005 test body
+        asserts cross-module anon/pseudo separation (distinct modules, no merged symbol
+        in source/live-namespace/__all__, distinct non-fused result types). No semantic
+        mismatch between test name token and assertion target.
+
+    seam_realizes_section5:
+      source: dev-assist-artifacts/03-design/sampling-design.md:121-123 (§5)
+      design_says: "d=±3pp at p=0.3 -> ~897 pairs/cell; p=0.1 -> ~385"
+      code_lands:
+        reid_required_n_0.30_0.030: 897   # == required_n(0.30,0.030), one z-table
+        reid_required_n_0.10_0.030: 385   # == required_n(0.10,0.030)
+        REID_TIER_SPECS_REID_HIGH_target_n_pairs: 897   # DERIVED, not hand-typed (test 2)
+        REID_TIER_SPECS_REID_LOW_target_n_pairs: 385
+      derivation: NIST proportion sizing n=ceil(z^2 p(1-p)/d^2), z=_z(0.95) shared with detection ladder
+      verdict: section5_numbers_match_exactly
+
+    reid_track_distinct_from_detection:
+      ReidProvenance.track: reidentification
+      distinct_from: detection track (DesignProvenance)
+      detection_ladder_preserved:
+        required_n_0.99_0.005: 1522
+        target_for_tier_standard: 753
+        long_tail: 200
+      verdict: reid_track_is_distinct_and_detection_ladder_intact
+
+    frozen_lattice_unmutated:
+      file: src/pii_anon_datasets/data/eval_lattice.json
+      cell_count_field: 730
+      len_cells: 730
+      test_pin (_FROZEN_LATTICE_CELL_COUNT): 730
+      regression_guard: test_nfr_018_seam_does_not_mutate_frozen_lattice (PASS)
+      verdict: code_only_seam_confirmed_no_cells_added
+
+    dc_provenance_cascade:
+      source_dc: DC-09 (reid seam) + DC-06/DC-08 (NFR-005 cross-module guard)
+      source_dc_state: AGENT_SIMULATED, not DIVERGED
+      story_provisional_status: AGENT_SIMULATED
+      cascade_match: true
+      diverged_cascade_applicable: false
+      verdict: provisional_status_matches_source_dc
+
+    dependencies:
+      S3-04: { needed: DONE, actual: DONE, ok: true }   # MeasuredRRS — ReidProvenance attaches
+      S3-06: { needed: DONE, actual: DONE, ok: true }   # anonymization.py (DC-06)
+      S3-07: { needed: DONE, actual: DONE, ok: true }   # pseudonymization.py (DC-08)
+      verdict: all_declared_deps_DONE
+
+    exports_present:
+      stats/__init__.py: [reid_required_n, ReidTier, ReidTierSpec, REID_TIER_SPECS, ReidProvenance]
+      power.py___all__: [reid_required_n, ReidTier, ReidTierSpec, REID_TIER_SPECS, ReidProvenance]
+      ok: true
+
+    docstring_citations:
+      power.py_reid_seam_cites: [NFR-018, "sampling-design.md §5", FR-009, reidentification]
+      test_reid_power_cites: [NFR-018, "§5"]
+      test_nfr005_cites: [NFR-005, AX-004]
+      ok: true
+
+    traceability_ledger:
+      ledger: dev-assist-artifacts/02-requirements/traceability-matrix.md
+      granularity: requirement-level (UC -> FR/NFR -> DC -> Story -> Test chain); NOT per-story rows
+      convention_confirmed_by: S3-01..S3-07 also have no per-story rows
+      source_reqs_present: NFR-018 + FR-029 logged in Status Change Log (2026-05-29 S-PWR entries)
+      missing_row_finding: false   # per-story row is not the repo convention; requirement-level rows exist
+      note: >
+        NFR-005 is a long-standing boolean NFR present in the matrix; NFR-018/FR-029 already
+        carry Status Change Log rows. No new ledger row is required by this repo's convention.
+
+    domain_packs:
+      active: none
+      financial_pack_extensions_merged: false
+
+  parity_with_evidence:
+    story_section12_claims_cross_checked: true
+    lattice_count_730: confirmed (story §12 + test pin + file all agree)
+    counts_897_385: confirmed
+    seven_tests_pass: confirmed (independently re-run, not trusted from §12)
+
+findings: []   # zero MAJOR+, zero MINOR, zero OBSERVATION
+
+summary:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+  total: 0
+  verdict: APPROVE
+  rationale: >
+    All four declared IDs (NFR-018, NFR-005, FR-029, FR-009) exist. Every test fn carries
+    the correct nfr_018/nfr_005 token; both -k selections return >0 (5 and 2) and run green
+    (7/7). The seam realizes sampling-design.md §5 exactly (897/385 at the re-id operating
+    point, derived from NIST required_n via one shared z-table, derived-not-typed). The reid
+    track is distinct (track=="reidentification") and the detection ladder (1522/753/200) is
+    preserved. The frozen eval_lattice.json is unmutated (730 cells, regression-guarded).
+    provisional_status (AGENT_SIMULATED) matches the source DC; no DIVERGED cascade applies.
+    All three declared dependencies (S3-04/06/07) are DONE. No name-says-X-asserts-Y mismatch.
+    The requirement-level traceability ledger already carries the source requirements; per-story
+    rows are not this repo's convention. Zero MAJOR+ -> APPROVE.

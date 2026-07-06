@@ -6,7 +6,7 @@ from direct-span detection. ``score_quasi_identifier`` aggregates the FRACTION o
 are re-identifying + integer counts over a corpus slice.
 
 Both the per-combo ``QidCombo`` and the aggregate ``QuasiIdScore`` carry a **non-strippable v1.1
-LOW-POWER caveat** (~72% formulaic synthetic enrichment — epistemic honesty; AX-003): empty ->
+LOW-POWER caveat** (79.2% formulaic synthetic enrichment — epistemic honesty; AX-003): empty ->
 ``ValueError``. Pure-stdlib + deterministic (NFR-004 / AX-002): test #6 is an AST guard pinning out
 {random, time, uuid, datetime, secrets}.
 """
@@ -89,7 +89,7 @@ def test_fr_016_caveat_non_strippable() -> None:
     """The v1.1 low-power caveat is non-strippable on BOTH dataclasses — [UNIT-TEST].
 
     ``QidCombo`` and ``QuasiIdScore`` constructed with an empty caveat raise ``ValueError``;
-    ``QUASI_IDENTIFIER_CAVEAT`` states the ~72%-formulaic limited-power / external-validity honesty
+    ``QUASI_IDENTIFIER_CAVEAT`` states the 79.2%-formulaic limited-power / external-validity honesty
     caveat (FR-016 v1.1; AX-003).
     """
     with pytest.raises(ValueError):
@@ -100,7 +100,7 @@ def test_fr_016_caveat_non_strippable() -> None:
         QuasiIdScore(n_combinations=0, n_reidentifying=0, k=2, fraction_reidentifying=0.0, caveat="")
 
     lowered = QUASI_IDENTIFIER_CAVEAT.lower()
-    assert "72%" in QUASI_IDENTIFIER_CAVEAT
+    assert "79.2%" in QUASI_IDENTIFIER_CAVEAT
     assert any(token in lowered for token in ("v1.1", "low", "limited"))
     assert any(token in lowered for token in ("external validity", "power"))
 

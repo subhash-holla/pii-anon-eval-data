@@ -4,7 +4,7 @@
 ``entity_tracking.coreference_chains`` (a chain scored as a UNIT — FR-015);
 ``quasi_identifier_slice(records, min_qids=2)`` selects records with >= ``min_qids``
 ``privacy_risk.quasi_identifiers`` (multi-span indirect identification — FR-016). Both carry a
-non-strippable v1.1 LOW-POWER caveat (~72% formulaic synthetic enrichment — epistemic honesty).
+non-strippable v1.1 LOW-POWER caveat (79.2% formulaic synthetic enrichment — epistemic honesty).
 
 Pure-stdlib (NFR-004 / AX-002): test #4 is an AST guard pinning out {random, time, uuid,
 datetime, secrets}. Every test fn carries an ``fr_015`` / ``fr_016`` / ``nfr004`` token.
@@ -80,7 +80,7 @@ def test_fr_015_slice_low_power_caveat_non_strippable() -> None:
     """The v1.1 low-power caveat is non-strippable: empty -> ValueError — [UNIT-TEST].
 
     A ``Slice`` constructed with ``caveat=""`` raises ``ValueError``; ``SLICE_CAVEAT`` states the
-    ~72%-formulaic limited-power / external-validity honesty caveat (FR-015/016 v1.1).
+    79.2%-formulaic limited-power / external-validity honesty caveat (FR-015/016 v1.1).
     """
     with pytest.raises(ValueError):
         Slice(name="coreference", records=(), caveat="")
@@ -88,7 +88,7 @@ def test_fr_015_slice_low_power_caveat_non_strippable() -> None:
         Slice(name="coreference", records=(), caveat="   ")
 
     lowered = SLICE_CAVEAT.lower()
-    assert "72%" in SLICE_CAVEAT
+    assert "79.2%" in SLICE_CAVEAT
     assert any(token in lowered for token in ("v1.1", "low", "limited"))
     assert any(token in lowered for token in ("external validity", "power"))
 

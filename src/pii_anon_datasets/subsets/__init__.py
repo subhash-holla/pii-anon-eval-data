@@ -9,7 +9,7 @@ corpus fields:
   ``privacy_risk.quasi_identifiers`` (multi-span indirect identification — FR-016).
 
 Each returns a :class:`~pii_anon_datasets.subsets.slices.Slice` value object carrying the
-non-strippable v1.1 low-power caveat (:data:`~pii_anon_datasets.subsets.slices.SLICE_CAVEAT`): ~72%
+non-strippable v1.1 low-power caveat (:data:`~pii_anon_datasets.subsets.slices.SLICE_CAVEAT`): 79.2%
 of the corpus is formulaic synthetic enrichment, so these slices have limited power and external
 validity (epistemic honesty about the synthetic monoculture).
 

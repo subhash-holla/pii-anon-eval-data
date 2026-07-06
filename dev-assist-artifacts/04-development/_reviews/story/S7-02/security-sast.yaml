@@ -1,0 +1,80 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S7-02
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY gate, S7-02 (injection payload library, iteration 1) — LOAD-BEARING AX-001 INERT
+  invariant. Verdict APPROVE: zero SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR. Bounded scope:
+  read S7-02.md, payloads.py, test_payloads.py, the adversary/__init__.py export block, the
+  pyproject.toml diff-vs-main, and the reviewer-output template. Tests run: 6 passed.
+
+  AX-001 INERT invariant — the crux — all five sub-criteria CONFIRMED:
+
+  1. NO WEAPONIZED CONTENT (PASS). grep of payloads.py for the mandated set
+     (ignore previous|<script|eval(|exec(|os.|subprocess|system(|__import__|jailbreak) returned
+     ZERO matches; an extended sweep (b64decode|pickle|marshal|compile(|getattr|setattr|globals|
+     locals|requests|urllib|socket|http) also ZERO. The only hits anywhere are the inert-marker
+     STRING LITERALS inside the AX-001 audit test itself (test_payloads.py:101 weaponized_markers
+     tuple), which is the test asserting their ABSENCE — correct, not a violation. The 3 transforms
+     only OBFUSCATE a PII span: base64_transform (b64ENCODE), ocr_transform (fixed _OCR_MAP literal
+     substitution, no unicodedata lookup), zero_width_transform (U+200B join). Carriers are inert
+     "<prefix>: {span}" templates (Please note / Nota / Remarque / Hinweis / 注意 / ملاحظة). These
+     are detector-robustness FIXTURES, not prompt-injection attacks.
+
+  2. render() IS A PLAIN STRING (PASS). render() is `self.carrier_template.format(span=...)` —
+     str.format on a literal template with a single named field; no f-string eval, no active/
+     callable/code-object content. test #4 asserts isinstance(rendered, str). as_dict() likewise
+     returns a plain dict of strings.
+
+  3. NON-STRIPPABLE INERTNESS DISCLAIMER (PASS). INERT_DISCLAIMER (payloads.py:57-60) states
+     "Inert" + "NOT a weaponized prompt injection (no active/executable content)" + "NEVER marketed
+     as agent-leakage scoring". It is a module constant AND a validated dataclass field whose
+     __post_init__ (L95-96) raises ValueError on empty/whitespace — a scope-misrepresentation guard
+     that cannot be silently dropped. test #4 pins empty -> ValueError and asserts the
+     inert/never/agent-leakage tokens. Mirrors the gate-approved S7-01 ORACLE_DISCLAIMER pattern.
+
+  4. base64 USE IS BENIGN (PASS). Sole base64 call is base64.b64encode(span.encode("utf-8")) —
+     ENCODE for obfuscation. NO b64decode of untrusted input, NO eval/exec/pickle/marshal after a
+     decode, NO unsafe deserialization in the module. (The lone b64decode is in test #3, decoding
+     the library's OWN output to prove the transform is faithful — a round-trip assertion, inert.)
+
+  5. NO REAL PII (PASS). Transforms operate on caller-supplied synthetic spans; the only span in
+     module/tests is the fabricated "Robin Vale" (and "0BFU5C8TED"). Regex sweep for real-PII
+     shapes (SSN ddd-dd-dddd / 13-16-digit card / email / 10+-digit phone) across module + tests:
+     ZERO matches.
+
+  No-egress / no-secrets / no-new-deps (PASS). Module imports are exactly {__future__, base64,
+  dataclasses} (test #6 AST-guards the {random,time,uuid,datetime,secrets} banned set disjoint).
+  Pure-stdlib (NFR-004), deterministic (AX-002): no network, no clock, no RNG, no filesystem write.
+  Credential/secret-shape sweep (AKIA / api_key= / secret= / password= / -----BEGIN / bearer):
+  ZERO matches. The pyproject.toml diff vs main (version 1.3.0->2.0.0, new [project.scripts]
+  pii-anon CLI entry, new [project.optional-dependencies] groups) is pre-existing v2-harness churn
+  OUTSIDE this story's owned files (§8: payloads.py + test_payloads.py NEW, __init__.py exports
+  MODIFIED) and adds NO runtime dependency to the scoring core; it is not introduced by S7-02 and
+  carries no new transitive CVE surface for this diff. __init__.py change is additive exports only.
+
+  Trojan-source check (defense-in-depth, beyond the brief): scanned both files for bidi-override /
+  control codepoints (U+202A-202E, U+2066-2069). ZERO found. The only non-ASCII in payloads.py is
+  (a) em-dashes in prose, (b) the single declared U+200B ZERO WIDTH SPACE constant _ZERO_WIDTH
+  (L28 — an intended, documented obfuscation primitive, recoverable via .replace(U+200B,"")), and
+  (c) the legitimate CJK/Arabic carrier prefixes. No hidden/homoglyph-spoofed source.
+
+  Domain packs: developer-assistant.yaml has no domain_packs key — no active pack. The
+  examples/financial security-sast extension is an example bundle (not active) and its patterns
+  (PII-in-logs, SSN/ABA/API-key-at-rest) are inapplicable: this module has no logging, no
+  persistence, and no real PII. No source_pack findings.
+
+  Common-findings catalog (15 patterns): none tripped — no composition-root/SDK-dep change, no
+  unsafe, no CVE-bearing dep added, no egress, no credential, no string-interpolation injection on a
+  gated path, no git= pin, no denied license, no wildcard scope, no weak hash (no md5/sha1; the only
+  hash-adjacent primitive is base64 encoding, which is not cryptographic).
+
+review_time_seconds: 540
+
+context_bounds_respected: true

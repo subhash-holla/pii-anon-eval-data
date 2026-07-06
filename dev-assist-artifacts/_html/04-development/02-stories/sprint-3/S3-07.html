@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>S3-07 — Pseudonymization-integrity scorer (the moat, DC-08) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="04-development">
+<h1>S3-07 — Pseudonymization-integrity scorer (the moat, <a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-08" data-trace-id="DC-08" aria-label="Trace DC-08">DC-08</a>)</h1>
+<blockquote>
+<p><strong>Cold-pickup</strong>: self-contained; §8b authoritative. <strong>Test names MUST carry <code>fr_NNN</code> tokens</strong>
+(<code>test_fr_011_*</code>, <code>test_fr_012_*</code>, <code>test_fr_013_*</code>). This is &quot;the moat&quot; — the threat-modeled,
+collision-separated, EDPB-Art-4(5)-aware pseudonymization scorer no competitor benchmark has.</p>
+</blockquote>
+<h2>1. Metadata</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Parent epic</strong></td>
+<td>S3 — Scorer trio (<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-06" data-trace-id="DC-06" aria-label="Trace DC-06">DC-06</a>/07/08)</td>
+</tr>
+<tr>
+<td><strong>Sprint</strong></td>
+<td>S-3 (Scorers)</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>Estimated agent-effort</strong></td>
+<td>M (≤3d)</td>
+</tr>
+<tr>
+<td><strong>Owner agent</strong></td>
+<td>dev-assist-development-executor (claimed 2026-05-29; RED→GREEN→REFACTOR complete)</td>
+</tr>
+<tr>
+<td><strong>Story gate</strong></td>
+<td>APPROVE (iter 1, 5/5 reviewers; <code>_reviews/story/S3-07/synthesis.md</code>)</td>
+</tr>
+<tr>
+<td><strong>provisional_status</strong></td>
+<td>AGENT_SIMULATED</td>
+</tr>
+</tbody></table>
+<h2>2. Goal</h2>
+<p>Implement the pseudonymization-integrity scorer (<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-08" data-trace-id="DC-08" aria-label="Trace DC-08">DC-08</a>, AX-004-separate from anonymization). Given a
+pseudonymizer-under-test + an <strong>enumerated attacker-capability threat model</strong>, emit: unauthorized vs
+authorized <strong>reversal rates</strong> (threat-conditioned, integer→Wilson); <strong>collision-type separation</strong>
+(intended deterministic-linkage collisions — a <em>feature</em> — reported SEPARATELY from unintended
+cryptographic collisions — a <em>fault</em>; <strong>a correct deterministic pseudonymizer is never penalized</strong>);
+<strong>referential integrity</strong> on reference joins; <strong>key-rotation</strong> pass/fail; and the decisive <strong>key/state
+separation</strong> test (can records be re-joined from the artifact ALONE without the external secret — EDPB
+Art. 4(5)). This is the moat the COMPARISON doc claims no competitor has.</p>
+<h2>3. Traced requirements</h2>
+<p><strong>Primary</strong>: <span class="trace-def" id="fr-011" data-trace-id="FR-011">FR-011</span> (threat-modeled unauthorized/authorized reversal), <span class="trace-def" id="fr-012" data-trace-id="FR-012">FR-012</span> (collision-type separation), <span class="trace-def" id="fr-013" data-trace-id="FR-013">FR-013</span> (referential integrity + key-rotation + key/state separation, EDPB Art 4(5)).
+<strong>Supporting</strong>: <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>/AX-004 (pseudonymization is its OWN module — never merged with anonymization).</p>
+<h2>4. Source DC + provisional_status</h2>
+<p><a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-08" data-trace-id="DC-08" aria-label="Trace DC-08">DC-08</a> (MUST, &quot;moat&quot;) · AGENT_SIMULATED · not DIVERGED.</p>
+<h2>5. Dependencies</h2>
+<p><strong>Must be DONE</strong>: S3-01 (uses the Protocol idiom + <code>wilson_interval</code>). ✅
+<strong>Blocks</strong>: S3-08 (the <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> cross-module separation test pairs pseudonymization.py with anonymization.py).</p>
+<h2>6. Test-first plan (RED→GREEN) — <code>fr_011</code>/<code>fr_012</code>/<code>fr_013</code> tokened</h2>
+<p><code>tests/test_pseudonymization.py</code> — use small INLINE reference <code>Pseudonymizer</code> implementations (no <code>scripts/</code> import):</p>
+<ul>
+<li><code>_ReversibleKeyedPseudonymizer</code> (deterministic, salted+keyed; same real→same pseudonym; reverse needs the secret) — the <em>correct</em> one,</li>
+<li><code>_BareMd5Pseudonymizer</code> (md5-no-salt, no secret — models the real <code>scripts/enrich_context_preservation.py::PseudonymGenerator</code>) — <em>fails Art 4(5)</em>,</li>
+<li><code>_CollidingPseudonymizer</code> (maps two DIFFERENT reals to the SAME pseudonym) — <em>faulty</em>.</li>
+</ul>
+<ol>
+<li><code>test_fr_012_correct_deterministic_has_zero_crypto_collisions</code> — for <code>_ReversibleKeyed</code>, <code>unintended_crypto_collisions == 0</code> AND <code>intended_linkage_collisions &gt; 0</code> (same real value repeated → same pseudonym = a feature); assert <strong>there is NO <code>total_collisions</code> field</strong> on the report (the moat guarantee — never sum the two) — <code>[AUDIT]</code>.</li>
+<li><code>test_fr_012_faulty_pseudonymizer_flags_crypto_collisions</code> — <code>_Colliding</code> yields <code>unintended_crypto_collisions &gt; 0</code> with a valid <code>crypto_collision_ci</code> (integer k,n) — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_011_reversal_rates_are_threat_conditioned</code> — <code>unauthorized_reversal</code>/<code>authorized_reversal</code> are <code>Interval</code>s with integer denominators, and the report records which <code>ThreatModel.model_id</code> they were measured against — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_011_authorized_succeeds_unauthorized_fails_for_keyed</code> — <code>_ReversibleKeyed</code>: authorized (HOLDS_KEY) reversal ≈ 1.0; unauthorized (ARTIFACT_ONLY) ≈ 0 — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_013_referential_integrity_join_stable</code> — a real entity repeated across records → same pseudonym (<code>join_consistent is True</code>, <code>broken_joins == 0</code>); a non-deterministic pseudonymizer breaks it — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_013_key_rotation</code> — for a rotating pseudonymizer: <code>post_rotation_authorized_reversal_succeeds is True</code> AND <code>cross_epoch_unauthorized_linkage_fails is True</code> — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_013_key_state_separation_edpb_art4_5</code> — <code>_BareMd5</code> → <code>rejoinable_from_artifact_alone is True</code> (correctly FAILS Art 4(5) — re-joinable with no secret); <code>_ReversibleKeyed</code> (salted) → <code>False</code>; the result note cites EDPB Art 4(5) — <code>[AUDIT]</code>.</li>
+<li><code>test_fr_011_pseudonymizer_protocol_runtime_checkable</code> — <code>Pseudonymizer</code> Protocol; conforming impl passes isinstance, missing-member fails — <code>[CONTRACT-TEST]</code>.</li>
+<li><code>test_nfr005_report_has_no_anonymization_or_combined_field</code> — <code>PseudonymizationReport</code> exposes no <code>utility</code>/<code>residual_risk</code>/<code>combined</code>/<code>deid</code>/<code>overall</code> field/property; <code>as_dict</code> has no merged score (AX-004 within-module guard; the cross-module guard is S3-08) — <code>[AUDIT]</code>.</li>
+<li><code>test_fr_011_nfr004_pseudonymization_imports_no_nondeterminism</code> — AST guard: pseudonymization.py imports none of {random,time,uuid,datetime,secrets} (hashlib is allowed — it&#39;s deterministic) — <code>[PROPERTY-TEST]</code>.</li>
+</ol>
+<h2>7. Acceptance criteria (G/W/T from <a class="trace-link" href="#fr-011" data-trace-id="FR-011">FR-011</a>/012/013)</h2>
+<blockquote>
+<p><strong>Given</strong> a pseudonymizer&#39;s output + an enumerated <code>ThreatModel</code>,
+<strong>When</strong> <code>score_pseudonymization(...)</code> runs,
+<strong>Then</strong> unauthorized-reversal-rate (vs that model) AND authorized-reversal-success are emitted (<a class="trace-link" href="#fr-011" data-trace-id="FR-011">FR-011</a>); intended-linkage vs unintended-crypto collisions are reported as SEPARATE integers, never summed (<a class="trace-link" href="#fr-012" data-trace-id="FR-012">FR-012</a>); referential integrity, key-rotation, and key/state-separation (EDPB Art 4(5)) verdicts are emitted (<a class="trace-link" href="#fr-013" data-trace-id="FR-013">FR-013</a>).
+<strong>Negative</strong>: a correct deterministic pseudonymizer has <code>unintended_crypto_collisions == 0</code> and is NOT penalized; no <code>total_collisions</code>/<code>combined</code>/<code>deid</code> field exists.</p>
+</blockquote>
+<h2>8. Files this story owns</h2>
+<p><strong>NEW</strong>: <code>src/pii_anon_datasets/scoring/pseudonymization.py</code>, <code>tests/test_pseudonymization.py</code>
+<strong>MODIFIED</strong>: <code>src/pii_anon_datasets/scoring/__init__.py</code> (export the scorer + result + Protocol + ThreatModel).</p>
+<h2>8b. Implementation spec (authoritative)</h2>
+<p>Pure-stdlib (<code>hashlib</code> allowed — deterministic). Frozen results. No RNG/clock.</p>
+<pre><code class="language-python">class AttackerCapability(str, Enum):
+    ARTIFACT_ONLY          = &quot;artifact_only&quot;            # sees pseudonymized output only (Art 4(5) baseline)
+    ARTIFACT_PLUS_AUX      = &quot;artifact_plus_auxiliary&quot;  # + web-like auxiliary
+    KNOWN_PLAINTEXT_SUBSET = &quot;known_plaintext_subset&quot;   # knows some (real→pseudo) pairs
+    CROSS_EPOCH_LINKAGE    = &quot;cross_epoch_linkage&quot;      # artifacts from 2 key epochs
+    HOLDS_KEY              = &quot;holds_key&quot;                 # authorized reversal (legitimate holder)
+
+@dataclass(frozen=True)
+class ThreatModel:
+    capabilities: tuple[AttackerCapability, ...]   # sorted, frozen
+    model_id: str                                  # version-pinned, e.g. &quot;pseudo-threat-v1&quot;
+
+@runtime_checkable
+class Pseudonymizer(Protocol):
+    pseudonymizer_id: str
+    def pseudonymize(self, value: str, entity_type: str, *, context_key: str) -&gt; str: ...
+    def reverse(self, pseudonym: str, entity_type: str, *, secret: object) -&gt; str | None: ...
+    # reverse returns None when not authorized/possible; `secret` is the held key/state
+
+@dataclass(frozen=True)
+class ReferentialIntegrityResult: join_consistent: bool; n_joins: int; broken_joins: int
+@dataclass(frozen=True)
+class KeyRotationResult: post_rotation_authorized_reversal_succeeds: bool; cross_epoch_unauthorized_linkage_fails: bool
+@dataclass(frozen=True)
+class KeyStateSeparationResult:
+    rejoinable_from_artifact_alone: bool
+    note: str   # MUST cite EDPB Art 4(5); non-empty (validate in __post_init__)
+
+@dataclass(frozen=True)
+class PseudonymizationReport:
+    threat_model: ThreatModel
+    unauthorized_reversal: Interval        # wilson_interval(reversed_without_secret, n_pseudonyms)
+    authorized_reversal: Interval          # wilson_interval(reversed_with_secret, n_pseudonyms)
+    intended_linkage_collisions: int       # same real → same pseudonym (FEATURE) — SEPARATE
+    unintended_crypto_collisions: int      # distinct reals → same pseudonym (FAULT) — SEPARATE
+    crypto_collision_ci: Interval          # wilson_interval(crypto_collisions, n_distinct_inputs)
+    referential_integrity: ReferentialIntegrityResult
+    key_rotation: KeyRotationResult
+    key_state_separation: KeyStateSeparationResult
+    pseudonymizer_id: str
+    # DELIBERATELY no total_collisions / combined / deid / overall / utility / residual_risk field.
+    def as_dict(self) -&gt; dict: ...
+
+def score_pseudonymization(pseudonymizer: Pseudonymizer, records, threat_model, *,
+                           secret, rotated_pseudonymizer=None, confidence: float = 0.95) -&gt; PseudonymizationReport: ...
+</code></pre>
+<p><strong>Check semantics</strong> (each a pure function; integer (k,n) → Wilson):</p>
+<ul>
+<li><strong>Unauthorized reversal</strong>: under ARTIFACT_ONLY/ARTIFACT_PLUS_AUX, attempt recovery WITHOUT the secret (dictionary/frequency attack over the candidate plaintext space); rate = recovered / n_pseudonyms.</li>
+<li><strong>Authorized reversal</strong>: under HOLDS_KEY, <code>reverse(p, secret=key)</code> success / n_pseudonyms.</li>
+<li><strong>Collision separation</strong>: group inputs by real value. <code>intended_linkage_collisions</code> = pseudonyms shared by inputs that are the SAME real value (correct). <code>unintended_crypto_collisions</code> = pseudonyms shared by DIFFERENT real values (fault). Report as TWO integers — never a sum.</li>
+<li><strong>Referential integrity</strong>: same real entity across records → same pseudonym (join key stable).</li>
+<li><strong>Key rotation</strong>: epoch A vs B; new key still authorizes reversal; an attacker with both epochs&#39; artifacts cannot link the same entity across epochs.</li>
+<li><strong>Key/state separation (EDPB Art 4(5))</strong>: can records be re-joined from the artifact ALONE, no external secret? For bare-md5 (deterministic function of input, no secret) → True (fails separation — the correct, important finding). For salted+keyed → False. Note cites Art 4(5).</li>
+</ul>
+<p><strong>The bare-md5 example fails Art 4(5) — that is a correct finding to EXPRESS, not a bug to hide.</strong> The real <code>scripts/enrich_context_preservation.py::PseudonymGenerator</code> is exactly this shape; cite it in a comment as the real-world example the Protocol admits.</p>
+<h2>9. Test type tags</h2>
+<p><code>[UNIT-TEST]</code> <code>[AUDIT]</code> (collision-separation + EDPB key/state separation + <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a> no-merge are privacy audits) <code>[CONTRACT-TEST]</code> (Pseudonymizer port) <code>[PROPERTY-TEST]</code> (import-purity)</p>
+<h2>10. Definition of Done</h2>
+<ul>
+<li><input disabled="" type="checkbox"> TDD RED→GREEN→REFACTOR (10 <code>fr_NNN</code>-tokened tests; RED precedes GREEN).</li>
+<li><input disabled="" type="checkbox"> <a class="trace-link" href="#fr-012" data-trace-id="FR-012">FR-012</a> moat guarantee: correct deterministic pseudonymizer → <code>unintended_crypto_collisions==0</code>, no <code>total_collisions</code> field (separate integers, never summed).</li>
+<li><input disabled="" type="checkbox"> <a class="trace-link" href="#fr-011" data-trace-id="FR-011">FR-011</a> reversal rates threat-conditioned (integer→Wilson, tied to <code>ThreatModel.model_id</code>).</li>
+<li><input disabled="" type="checkbox"> <a class="trace-link" href="#fr-013" data-trace-id="FR-013">FR-013</a> referential integrity + key-rotation + key/state separation (EDPB Art 4(5)) emitted; bare-md5 → <code>rejoinable_from_artifact_alone==True</code>.</li>
+<li><input disabled="" type="checkbox"> <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>/AX-004: no anonymization/combined/deid field on the report (within-module guard).</li>
+<li><input disabled="" type="checkbox"> Pure-stdlib (hashlib OK); <code>ruff</code>+<code>mypy --strict</code> clean on the new file; full suite 0 regressions.</li>
+</ul>
+<h2>11. Reviewer agents at story gate</h2>
+<p>code-quality · traceability · requirements-coverage · security-sast · axiom-compliance. (<code>[AUDIT]</code> reinforces security-sast for the collision/EDPB/no-merge privacy controls.)</p>
+<h2>12. Evidence on completion</h2>
+<p><strong>provisional_status: AGENT_SIMULATED</strong> — executed in-agent (no real CI run on real hardware).
+Pass 2 (real CI on CC0 runner) to be scheduled by the orchestrator before DONE is finalized.</p>
+<h3>TDD SHAs (RED → GREEN → REFACTOR)</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>SHA</th>
+<th>Subject</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RED</td>
+<td><code>49fbfba661166a0da85b26e6cc57a7dd33cbca1c</code></td>
+<td><code>[RED] S3-07: pseudonymization-integrity tests (failing)</code></td>
+</tr>
+<tr>
+<td>GREEN</td>
+<td><code>0ffedd83391c1e80712080bf6ef81b877af7b135</code></td>
+<td><code>[GREEN] S3-07: implement pseudonymization-integrity scorer (DC-08 moat)</code></td>
+</tr>
+<tr>
+<td>REFACTOR</td>
+<td><code>0e926420f495a37562f669d0241cdf6bb4c6e579</code></td>
+<td><code>[REFACTOR] S3-07: lint/type-clean (ruff + mypy --strict on new file)</code></td>
+</tr>
+</tbody></table>
+<p>RED was a genuine failing state: the test module imported <code>pii_anon_datasets.scoring.pseudonymization</code>
+before it existed → collection <code>ImportError</code> (all 10 tests failing). GREEN created the module; REFACTOR
+was lint/type-cleanup only (no behavior change — full suite identical 143 passed before and after).</p>
+<h3>Files</h3>
+<ul>
+<li><strong>NEW</strong> <code>src/pii_anon_datasets/scoring/pseudonymization.py</code> (the scorer + value objects + Protocol).</li>
+<li><strong>NEW</strong> <code>tests/test_pseudonymization.py</code> (10 <code>fr_NNN</code>/<code>nfr0NN</code>-tokened tests; 3 inline reference pseudonymizers).</li>
+<li><strong>MODIFIED</strong> <code>src/pii_anon_datasets/scoring/__init__.py</code> (exports <code>score_pseudonymization</code>, <code>PseudonymizationReport</code>, <code>Pseudonymizer</code>, <code>ThreatModel</code>, <code>AttackerCapability</code>, <code>ReferentialIntegrityResult</code>, <code>KeyRotationResult</code>, <code>KeyStateSeparationResult</code>, <code>PSEUDONYMIZATION_SCORER_VERSION</code>).</li>
+</ul>
+<h3>pytest excerpt (10/10 GREEN, all tokened)</h3>
+<pre><code>tests/test_pseudonymization.py::test_fr_012_correct_deterministic_has_zero_crypto_collisions PASSED
+tests/test_pseudonymization.py::test_fr_012_faulty_pseudonymizer_flags_crypto_collisions      PASSED
+tests/test_pseudonymization.py::test_fr_011_reversal_rates_are_threat_conditioned             PASSED
+tests/test_pseudonymization.py::test_fr_011_authorized_succeeds_unauthorized_fails_for_keyed  PASSED
+tests/test_pseudonymization.py::test_fr_013_referential_integrity_join_stable                 PASSED
+tests/test_pseudonymization.py::test_fr_013_key_rotation                                      PASSED
+tests/test_pseudonymization.py::test_fr_013_key_state_separation_edpb_art4_5                  PASSED
+tests/test_pseudonymization.py::test_fr_011_pseudonymizer_protocol_runtime_checkable          PASSED
+tests/test_pseudonymization.py::test_nfr005_report_has_no_anonymization_or_combined_field     PASSED
+tests/test_pseudonymization.py::test_fr_011_nfr004_pseudonymization_imports_no_nondeterminism PASSED
+10 passed in 0.13s
+</code></pre>
+<p>Full suite: <strong>143 passed</strong> (133 prior + 10 new), 0 regressions, <code>0.0s</code> clock-free.</p>
+<h3>Lint / type gate</h3>
+<ul>
+<li><code>ruff check</code> — <strong>clean</strong> on all owned + modified files (<code>pseudonymization.py</code>, <code>test_pseudonymization.py</code>, <code>__init__.py</code>).</li>
+<li><code>mypy --strict --follow-imports=silent src/.../pseudonymization.py</code> — <strong>zero diagnostics in the new file</strong>.
+The lone reported error is the <em>followed-but-unchecked</em> <code>reidentification.py:69</code> (<code>dict</code> type-arg) —
+<strong>pre-existing</strong> (foundation commit <code>75e9eed</code>, predates this story) and <strong>out of S3-07&#39;s §8 owned-files
+scope</strong>; not touched. See Deviations.</li>
+</ul>
+<h3>Requirement → test → control coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Req</th>
+<th>Test(s)</th>
+<th>Control expressed</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a class="trace-link" href="#fr-012" data-trace-id="FR-012">FR-012</a></td>
+<td><code>test_fr_012_correct_deterministic_has_zero_crypto_collisions</code> <code>[AUDIT]</code>, <code>test_fr_012_faulty_pseudonymizer_flags_crypto_collisions</code></td>
+<td><code>intended_linkage_collisions</code> (feature) and <code>unintended_crypto_collisions</code> (fault) are SEPARATE ints, never summed; correct deterministic pseudonymizer → <code>unintended_crypto_collisions == 0</code>; <strong>no</strong> <code>total_collisions</code> attr/key.</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="#fr-011" data-trace-id="FR-011">FR-011</a></td>
+<td><code>test_fr_011_reversal_rates_are_threat_conditioned</code>, <code>test_fr_011_authorized_succeeds_unauthorized_fails_for_keyed</code>, <code>test_fr_011_pseudonymizer_protocol_runtime_checkable</code> <code>[CONTRACT]</code></td>
+<td>reversal rates are integer→Wilson <code>Interval</code>s pinned to <code>ThreatModel.model_id</code>; keyed → authorized≈1.0 / unauthorized≈0.0; <code>@runtime_checkable Pseudonymizer</code> Protocol.</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="#fr-013" data-trace-id="FR-013">FR-013</a></td>
+<td><code>test_fr_013_referential_integrity_join_stable</code>, <code>test_fr_013_key_rotation</code>, <code>test_fr_013_key_state_separation_edpb_art4_5</code> <code>[AUDIT]</code></td>
+<td>join stability; post-rotation authorized reversal succeeds + cross-epoch unauthorized linkage fails; <strong>bare-md5 → <code>rejoinable_from_artifact_alone == True</code></strong> (correctly FAILS Art 4(5) — finding EXPRESSED in the cited <code>note</code>); salted+keyed → <code>False</code>.</td>
+</tr>
+<tr>
+<td><a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#nfr-005" data-trace-id="NFR-005" aria-label="Trace NFR-005 — check catches headline-merge but reporting/compliance could…">NFR-005</a>/AX-004</td>
+<td><code>test_nfr005_report_has_no_anonymization_or_combined_field</code> <code>[AUDIT]</code></td>
+<td>report exposes no <code>utility</code>/<code>residual_risk</code>/<code>combined</code>/<code>deid</code>/<code>overall</code>/<code>total_collisions</code> field or <code>as_dict</code> key (within-module guard; cross-module guard is S3-08).</td>
+</tr>
+<tr>
+<td><span class="trace-def" id="nfr-004" data-trace-id="NFR-004">NFR-004</span></td>
+<td><code>test_fr_011_nfr004_pseudonymization_imports_no_nondeterminism</code> <code>[PROPERTY]</code></td>
+<td>AST guard: imports none of <code>{random,time,uuid,datetime,secrets}</code>; <code>hashlib</code> present (deterministic).</td>
+</tr>
+</tbody></table>
+<h3>How the bare-md5 EDPB Art 4(5) finding is EXPRESSED (not hidden)</h3>
+<p><code>_BareMd5Pseudonymizer</code> (no salt, no secret — the shape of the real
+<code>scripts/enrich_context_preservation.py::PseudonymGenerator</code>) produces a pseudonym that is a pure
+deterministic function of the input. <code>_keyless_rejoinable(...)</code> re-derives the keyless public digests
+(<code>md5</code>/<code>sha256</code> + common truncations) of the closed-world candidate plaintexts and matches them against
+the artifact tokens; a hit ⇒ <code>rejoinable_from_artifact_alone = True</code>. The scorer then emits a <strong>non-empty
+<code>KeyStateSeparationResult.note</code> citing <code>EDPB / GDPR Art. 4(5)</code></strong> stating the artifact is self-rejoinable
+and therefore does NOT satisfy the &quot;additional information held separately&quot; safeguard — and names the real
+<code>PseudonymGenerator</code> as the in-repo example. This is surfaced as the report&#39;s verdict, never suppressed.</p>
+<h3>Deviations / notes for reviewers</h3>
+<ol>
+<li><strong><code>reidentification.py:69</code> mypy type-arg (PRE-EXISTING, OUT OF SCOPE):</strong> under <code>--follow-imports=silent</code>
+mypy follows the sibling import and reports its <code>dict</code> missing type-params. It originates in foundation
+commit <code>75e9eed</code> (and was already present before S3-07), and <code>reidentification.py</code> is NOT in this story&#39;s
+§8 owned files. Per scope discipline I did not edit it. The <strong>new file itself is mypy-strict clean</strong>. A
+one-line follow-up (<code>dict</code> → <code>dict[str, object]</code> at that line, matching <code>:105</code>) is suggested as a separate
+chore, not folded into S3-07.</li>
+<li><strong><code>crypto_collision_ci</code> denominator semantics:</strong> <code>n</code> = number of <em>distinct real input values</em>; <code>k</code> =
+distinct reals caught in an unintended (different-real) collision. So the CI reads &quot;fraction of distinct
+inputs involved in a crypto collision,&quot; keeping (k,n) integer for Wilson (reidx-02 honored).</li>
+<li><strong>Unauthorized-reversal / rejoinability attack is closed-world</strong> over the candidate plaintext space (the
+artifact&#39;s own distinct real values). This is the principled, signature-compatible realization of the
+§8b &quot;dictionary/frequency attack over the candidate plaintext space&quot; — it needs only the artifact + public
+hashes (no secret), which is exactly what makes a keyless scheme fail and a keyed scheme pass.</li>
+<li><strong><code>_held_secret_of</code> (rotated epoch):</strong> the key-rotation check reverses epoch-B tokens using epoch B&#39;s own
+held secret when the instance exposes one (best-effort <code>getattr</code>), else the passed <code>secret</code>. This keeps the
+&quot;new key still authorizes reversal&quot; probe honest for a rotated instance keyed differently from the primary,
+without widening the <code>Pseudonymizer</code> Protocol surface.</li>
+<li><strong>AGENT_SIMULATED:</strong> no real CI/hardware; Pass-2 real run pending (see top of §12).</li>
+</ol>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>04-development/02-stories/sprint-3/S3-07.md</code> ·
+  content-hash <code>e20cdf5b02bb</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,51 @@
+signoff_id: SO-08-cap02-requirements
+date: 2026-06-01
+type: stage-close
+stage: 02-requirements
+capability: CAP-02
+scope: >
+  CAP-02 Requirements (R0-R10). 62 requirements: 25 FRs (FR-030..054; 16 MUST / 8 SHOULD / 1 COULD) +
+  37 NFRs (NFR-019..055; 32 MUST / 4 SHOULD / 1 COULD) + 2 MUST-grade baseline gates. The 3 hard
+  preconditions all land in MUST (P1 audited-stats run path / P2 seam reconciliation / P3 powered sampler).
+  New axiom AX-pii-anon-005 (pre-registered/reproducible assessment, 6-element bar, run-type-scoped) CONFIRMED
+  at R7 and registered in 00-axioms/project-axioms.yaml. Traceability matrix: 0 orphans (0/8 UC, 0/25 FR,
+  0/37 NFR); the 3 uncovered MUST-PGOs are explicitly-scoped-OUT re-id/RRS goals with named roadmap hooks.
+  R10 threshold validation: NFR-038 + NFR-035 ACCEPTED; NFR-023 DIVERGED -> tightened (small_n_cutoff 30 -> 15).
+signer: AGENT_SIMULATED (developer-assistant); real-user Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/assessment-workflow/02-requirements/_bridge/uc-pgo-map.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/functional-requirements.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/non-functional-requirements.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/interview-guide.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/interview-synthesis.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/survey-instrument.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/survey-analysis.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/prioritization-decisions.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/requirements-document.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/traceability-matrix.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/methodology.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/audit-report.md
+  - dev-assist-artifacts/assessment-workflow/02-requirements/_threshold-validation/findings-summary.md
+  - dev-assist-artifacts/00-axioms/project-axioms.yaml (AX-pii-anon-005 added)
+
+decisions_acknowledged:
+  - "AX-pii-anon-005 CONFIRMED (6/6 R6 respondents; one adopted sharpening: element 6 binds leaderboard-submission AND filing-grade) and registered in the project axioms registry; the Development axiom-compliance reviewer will enforce it."
+  - "P1 (SHOWSTOPPER): the assessment run path uses ONLY the audited eval-data/stats core; FR-042 + NFR-019/020/021/022 enforce that pii-rate-elo analysis/significance.py::SignificanceTester is unreachable on the call graph (verified firsthand fabricated)."
+  - "P2: dataset seam reconciled to v2.0.0 / 575,604 / CC0 / annotations via a versioned crosswalk (FR-030/031) + regression contract pinning {version, record-count, 63-type, schema-fingerprint, content-hash} (NFR-040/041)."
+  - "P3: powered lattice-stratified sampler emits the PowerMatrix verdict + per-cell named shortfall vs REALIZED positives (FR-032/033/034; NFR-035/036/037/038/039)."
+  - "Default-mode reconciliation recorded: powered-representative = CLI DEFAULT (always power-labelled, never silently LARGE); full-corpus = citable leaderboard (opt-in); a run-type designation (smoke/dev/leaderboard-submission/filing-grade) scopes both pre-registration enforcement and the AX-005 rigor bar; manifest-reproducibility is universal."
+  - "No-regression encoded as MUST-grade gates: NFR-050 run-path import discipline; NFR-051 pii-rate-elo gates green; NFR-052 no corpus regen; NFR-053 NFR-018 power gate inherited; NFR-054 doc-drift 0 (NFR-013 inherited); NFR-055 four metric families never merged (AX-004/NFR-005 inherited)."
+
+evidence:
+  - "28 agents: 1 UC<->PGO bridger + 1 interview-guide author + 6 simulated interviewees + 1 interview synth + FR author + NFR author + 1 survey author + 6 survey respondents + 1 prioritization analyst + 1 canonical author + 1 verification strengthener + 6 threshold validators + 1 threshold synth."
+  - "Orphan check PASS: 0/8 UC, 0/25 FR, 0/37 NFR; AX-001..005 each wired to >=1 FR + >=1 NFR; every brief-required coverage point (a)-(h) lands on >=1 UC + FR + NFR."
+  - "R9 strengthened verification criteria in place; R10 applied one DIVERGED-resolution edit (NFR-023 small_n_cutoff 30 -> 15), cross-doc-reconciled NFR-023 <-> FR-040 <-> audit-report."
+
+findings_waived_to_pass2:
+  - "All persona/PGO/UC reasoning AGENT_SIMULATED. P-dpo / assurance lens is FIRST-CONTACT (UC-22 + compliance FRs trace to one un-re-confirmed lens). 3 MEDIUM personas UNSEATED at R6 (FR-048 operating-point + MEDIUM bundles adjudicated vs R3 priority). All -> Pass-2 re-elicitation."
+  - "NFR-023 small_n_cutoff integer (15) carries real_user_needed: true for Pass-2."
+  - "NFR-010b (inherited cycle-1 throughput floor) stays INSUFFICIENT_EVIDENCE (not re-pinned by CAP-02)."
+
+next: "Stage 3 Design (5-Diamond Cascade + Synthesis): D1 Design Cases (DC-16+) -> D2 Workflow -> D3 UI/CLI surfaces -> D4 System -> D5 Architecture -> D6 Synthesis. Resolve: loader strategy (prefer canonical load_dataset import + v2.0.0-fixed fallback parser + regression contract); sample-manifest schema; stratified covering sampler algorithm; assessment preset config (run_significance_tests:false); observability run-record schema; pre-registration artifact; module placement (eval-data assessment/ + pii-rate-elo configs/adapter/CLI). Run: /dev-assist-design"

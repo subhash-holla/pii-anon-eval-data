@@ -1,0 +1,203 @@
+reviewer: requirements-coverage
+gate: story
+story_id: S5-02
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+independence_attestation: >-
+  Findings derived solely from the S5-02 story file, its owned source/test files
+  (distribution/{__init__,parquet_export}.py, tests/test_parquet_export.py), the
+  S5-01 crosswalk dependency it imports, the superseded scripts/export_parquet.py,
+  the requirements/traceability docs, and independent re-runs of pytest + coverage.
+  No peer reviewer output (axiom-compliance / security-sast / traceability already
+  present in this dir) was consulted. Verdict reflects only requirements-coverage
+  scope: every §7 acceptance clause + §6 test maps to a passing test, and the
+  claimed FR-024(Parquet)/NFR-012/gov-02 slice is verified-or-deferred. Test-quality,
+  semantic-FR holding, and should-this-requirement-exist judgements are out of scope.
+self_attestation:
+  read_story: true
+  read_owned_source: true
+  reran_tests: true
+  reran_coverage: true
+
+scope_summary: >-
+  S5-02 delivers the Parquet slice of FR-024 (MUST) with the gov-02 fix (N separate
+  typed reg_* regime columns, no flattened regulatory_domains blob) and NFR-012-adjacent
+  HF-datasets loadability. All six §6 tokened tests in tests/test_parquet_export.py
+  PASS on independent re-run (6 passed in ~1.5s; pyarrow 23.0.1 + datasets 4.8.3
+  genuinely installed, so the INTEGRATION/loadability tests RAN — not stubbed). Full
+  suite 223 passed, 1 skipped on independent re-run — 0 regressions, exactly matching
+  the §10/§12 claim (217 prior + 6 new; pre-existing skip unchanged). Independently
+  measured line coverage on pii_anon_datasets.distribution.parquet_export = 85.45%
+  (55 stmts, 8 missed) — meets the >=85% line bar. Each §7 G/W/T clause + each negative
+  clause maps to a passing assertion. The 4 CRITICAL checks (a) 5 reg_* cols + no blob,
+  (b) HF datasets load with regime cols surviving, (c) one-shot-generator streaming,
+  (d) >=85% line coverage are all independently verified.
+
+scope_note_for_sprint_gate: >-
+  FR-024 is a MUST spanning JSONL + Parquet + Croissant + spaCy + CoNLL + dataset card.
+  S5-02 covers ONLY the Parquet slice (correctly scoped; Croissant -> S5-03, CLI export
+  verb -> S5-05 per story §5). After S5-02: the FR-024 Parquet sub-clause is VERIFIED and
+  NFR-012 HF-datasets loadability of the Parquet artifact is VERIFIED; gov-02 (MAJOR SME
+  finding, sme-heuristic-findings.md:29) is fully closed for the export surface. NOT YET
+  covered by FR-024 overall: Croissant validate+load (the literal NFR-012 threshold names
+  the Croissant file; S5-03), spaCy/CoNLL exports, dataset card. provisional_status
+  AGENT_SIMULATED (not DIVERGED) -> no Pass-2 DIVERGED cross-check applies; a Pass-2
+  real-CI re-run is scheduled (I/O-bound, no special hardware) and is appropriate.
+
+coverage_evidence:
+  fr_024_parquet:
+    requirement: "FR-024 (Parquet slice) — CC0 corpus standard export to Parquet; deterministic load"
+    priority: MUST
+    status: verified
+    scope: partial-slice-of-MUST (Parquet only; Croissant/spaCy/CoNLL/card are sibling stories)
+    test_file: tests/test_parquet_export.py
+    coverage_module: pii_anon_datasets.distribution.parquet_export
+    coverage_line_pct: 85.45
+    coverage_line_stmts: 55
+    coverage_line_missed: 8
+    coverage_threshold_pct: 85
+    tests:
+      - name: test_fr_024_parquet_has_n_separate_regime_columns
+        type: INTEGRATION-TEST
+        result: pass
+        maps_to: "§7 Then (each regime its own typed column); §7 Negative (no flattened blob); §6 #1; CRITICAL(a)"
+      - name: test_fr_024_parquet_roundtrips_records
+        type: INTEGRATION-TEST
+        result: pass
+        maps_to: "§7 Then (round-trippable); §6 #2"
+      - name: test_fr_024_export_streams_not_materializes
+        type: UNIT-TEST
+        result: pass
+        maps_to: "§7 Given/Then (streamed, no full materialization); §6 #4; CRITICAL(c)"
+      - name: test_fr_024_deterministic_export
+        type: PROPERTY-TEST
+        result: pass
+        maps_to: "§7 Then (deterministic load); §6 #5"
+  nfr_012:
+    requirement: "NFR-012 — HF datasets loadability (Parquet artifact loads via the datasets loader, not mere presence)"
+    priority: MUST
+    status: verified
+    scope: partial (Parquet-via-datasets verified; Croissant-file validate+load is S5-03)
+    test_file: tests/test_parquet_export.py
+    note: >-
+      datasets 4.8.3 IS installed; test genuinely calls datasets.load_dataset("parquet", ...)
+      and asserts all 5 reg_* regime columns survive the HF load and the gdpr signal persists.
+      The literal NFR-012 threshold also names the Croissant file (S5-03) — tracked at sprint gate.
+    tests:
+      - name: test_nfr_012_parquet_loads_via_datasets
+        type: INTEGRATION-TEST
+        result: pass
+        maps_to: "§7 Then (loadable via HF datasets); §6 #3; CRITICAL(b)"
+  gov_02:
+    requirement: "gov-02 (MAJOR SME finding) — N legally-distinct typed regime columns; do NOT inherit the flattened export_parquet.py:54 blob"
+    priority: MAJOR-finding-remediation
+    status: verified
+    evidence: >-
+      Old bug confirmed present at scripts/export_parquet.py:54
+      (row["regulatory_domains"] = json.dumps(...)). New module DROPS regulatory_domains
+      via _DROP_FIELDS and emits 5 typed reg_* columns from S5-01 crosswalk.as_columns.
+      Test #1 asserts all 5 columns present, independently addressable (hipaa fans out to
+      BOTH HIPAA columns), AND absence of any regulatory_domains blob column.
+    tests:
+      - name: test_fr_024_parquet_has_n_separate_regime_columns
+        type: INTEGRATION-TEST
+        result: pass
+        maps_to: "gov-02 remediation; §7 Negative; CRITICAL(a)"
+  nfr_004:
+    requirement: "NFR-004 (adjacent) — core pure-stdlib; pyarrow lazy behind [distribution] extra"
+    priority: MUST-adjacent
+    status: verified
+    note: not the primary trace of this story; pinned as a §7 negative clause.
+    tests:
+      - name: test_nfr004_distribution_imports_without_pyarrow
+        type: CONTRACT-TEST
+        result: pass
+        maps_to: "§7 Negative (package imports without pyarrow; export w/o extra -> clear RuntimeError naming install cmd); §6 #6"
+
+acceptance_clause_map:
+  given_streamed_records: { covered_by: test_fr_024_export_streams_not_materializes, result: pass }
+  then_each_regime_own_typed_column: { covered_by: test_fr_024_parquet_has_n_separate_regime_columns, result: pass }
+  then_no_flattened_regulatory_domains_blob: { covered_by: test_fr_024_parquet_has_n_separate_regime_columns, result: pass }
+  then_round_trippable: { covered_by: test_fr_024_parquet_roundtrips_records, result: pass }
+  then_loadable_via_hf_datasets: { covered_by: test_nfr_012_parquet_loads_via_datasets, result: pass }
+  then_produced_by_streaming_no_materialization: { covered_by: test_fr_024_export_streams_not_materializes, result: pass }
+  then_deterministic_load: { covered_by: test_fr_024_deterministic_export, result: pass }
+  negative_no_single_flattened_regime_column: { covered_by: test_fr_024_parquet_has_n_separate_regime_columns, result: pass }
+  negative_distribution_imports_without_pyarrow: { covered_by: test_nfr004_distribution_imports_without_pyarrow, result: pass }
+  negative_export_without_extra_clear_install_error: { covered_by: test_nfr004_distribution_imports_without_pyarrow, result: pass }
+
+verification_runs:
+  target_tests:
+    cmd: "python3 -m pytest tests/test_parquet_export.py -q"
+    result: "6 passed"
+    deps_present: { pyarrow: "23.0.1", datasets: "4.8.3" }
+  full_suite:
+    cmd: "python3 -m pytest"
+    result: "223 passed, 1 skipped"
+    regressions: 0
+    matches_story_claim: true
+  coverage:
+    cmd: "coverage run --source=pii_anon_datasets.distribution.parquet_export -m pytest tests/test_parquet_export.py"
+    line_pct: 85.45
+    stmts: 55
+    missed: 8
+    threshold_pct: 85
+    meets_bar: true
+    note: >-
+      The combined branch-inclusive Cover column reads 81%, but NFR-016 scopes BRANCH
+      coverage to scoring/stats only (pyproject [tool.coverage.run] source = scoring,stats;
+      branch=true). The distribution package's bar is LINE coverage, which is 85.45%
+      ((55-8)/55). Missed lines (65,122,133,144-145,151-154,168) are defensive/edge paths:
+      JSON None-block branch, batch_size<=0 ValueError, empty-batch flush early-return, the
+      mid-stream batch-flush-at-threshold (tests use 4 records < default 10_000 batch_size),
+      and the zero-records empty-Parquet path (_empty_schema). None of these are the load-bearing
+      gov-02 / streaming / loadability behaviors, all of which ARE covered.
+
+findings:
+  - id: RC-S5-02-01
+    severity: OBSERVATION
+    title: "Line coverage clears the bar but by a thin 0.45-pt margin; edge paths uncovered"
+    detail: >-
+      Line coverage is 85.45% (55 stmts, 8 missed) vs the >=85% bar — PASS, but with little
+      headroom. The 8 missed lines are the batch-flush-at-threshold path (144-145: tests pass
+      only 4 records, well under the default batch_size=10_000, so the multi-batch streaming
+      loop never iterates a second batch) and the zero-records empty-Parquet path
+      (148-154,168 / _empty_schema). The streaming CONTRACT is still proven dynamically by
+      test #4 (one-shot generator driven to exhaustion), and the gov-02 empty-schema columns
+      are asserted indirectly via as_columns({}). Out-of-scope to require here (test-design is
+      code-quality's call), but a future test driving batch_size=2 over 4 records (to exercise
+      a real second batch flush) and one exporting [] (empty corpus) would harden the
+      streaming + empty-file guarantees and lift branch coverage. Non-blocking.
+    location: "src/pii_anon_datasets/distribution/parquet_export.py:144-145,148-154,168"
+  - id: RC-S5-02-02
+    severity: OBSERVATION
+    title: "NFR-012 literal threshold also names the Croissant file (S5-03) — sprint-gate carry"
+    detail: >-
+      NFR-012's text is 'Croissant file validates AND loads via the HF datasets loader'. S5-02
+      verifies the Parquet artifact loads via datasets (genuinely ran), which satisfies the
+      loadability spirit for the Parquet export, but the Croissant-validate-and-load half is
+      S5-03's surface. Recording so the sprint gate does not prematurely mark NFR-012 fully
+      satisfied on S5-02 alone. No defect in S5-02; correct scoping.
+    location: "dev-assist-artifacts/02-requirements/non-functional-requirements.md:28; story §5"
+
+diverged_pass2_crosscheck:
+  applicable: false
+  reason: >-
+    Story provisional_status is AGENT_SIMULATED, not DIVERGED. No MUST FR/NFR in this story's
+    scope carries provisional_status: DIVERGED, so no Pass-2 confirmed/invalidated commitment
+    is required for verification. The scheduled Pass-2 real-CI re-run (I/O-bound exporter, no
+    benchmark hardware) is appropriate and does not gate this story.
+
+orphan_scan:
+  result: none
+  note: >-
+    FR-024 (Parquet), NFR-012 (loadability), and gov-02 each trace to a passing test in this
+    story. No §7 clause or §6 test is left without a passing test. The S5-01 dependency
+    (crosswalk.as_columns) is DONE and imported read-only.
+
+summary:
+  major_plus_findings: 0
+  findings_total: 2
+  findings_by_severity: { SHOWSTOPPER: 0, CATASTROPHIC: 0, MAJOR: 0, MINOR: 0, OBSERVATION: 2 }
+  verdict_rule: "APPROVE iff zero MAJOR+ — satisfied (0 MAJOR+)."

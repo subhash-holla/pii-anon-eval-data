@@ -9,9 +9,10 @@ so the three-way drift the taxonomy module fixed (48 / 65 / ~80) cannot recur th
 
 The card embeds four non-strippable, load-bearing caveats:
 
-* :data:`TRAIN_VS_EVAL` — the 159,891 tier3_evaluation records are the ~27.8% EVALUATION substrate,
-  NOT the whole 575,604-record corpus;
-* :data:`ENRICHMENT_DISCLOSURE` — ~72% of records are synthetic_lattice_enrichment power-fill
+* :func:`_substrate_caveat` — the 159,891 (frozen, pre-enrichment) tier3_evaluation records are the
+  EVALUATION substrate, NOT the whole detection corpus (the corpus total is drawn live from metadata,
+  so it cannot drift — matching DATASHEET's fraction-free phrasing);
+* :data:`ENRICHMENT_DISCLOSURE` — 79.2% of records are synthetic_lattice_enrichment power-fill
   (synthetic power is not external validity);
 * :data:`POWER_SENTENCE` — the §7 authoritative power statement (sampling-design.md §7), verbatim;
 * the CC0-data / Apache-2.0-code license split (locked revision #11).
@@ -32,19 +33,33 @@ from pii_anon_datasets.distribution.croissant import load_metadata
 POWER_SENTENCE: str = (
     "PII-Anon v2 is powered for all single-factor marginal recall claims (95% Wilson "
     "CIs; credential/financial-critical types to ±0.5pp at recall 0.99, standard to ±1pp at 0.98) and "
-    "for three pre-registered 2-way interactions (language×entity-type on a 12×41 committed rectangle, "
-    "domain×track, adversarial-type×entity-type). It is not powered for the full multilingual×entity-type "
+    "for three pre-registered 2-way interactions (language×entity-type on a committed rectangle, "
+    "domain×track, adversarial-type×entity-type). The corpus carries a committed evaluation lattice "
+    "powering 17 languages across 11 writing systems (Latin, Han, Japanese, Hangul, Arabic, Devanagari, "
+    "Cyrillic, Thai, Greek, Bengali, Hebrew) to statistically-calibrated positive-count targets "
+    "(critical n≥1522, standard n≥753). It is not powered for the full multilingual×entity-type "
     "grid or any ≥3-way interaction; those are reported as exploratory. Synthetic-distribution power is "
     "not external validity — see the real-data correlation slice."
 )
 ENRICHMENT_DISCLOSURE: str = (
-    "~72% of records carry provenance.source_type="
+    "79.2% of records carry provenance.source_type="
     "'synthetic_lattice_enrichment' (the S-PWR power fill); synthetic power is not external validity."
 )
-TRAIN_VS_EVAL: str = (
-    "The 159,891 tier3_evaluation records are the ~27.8% EVALUATION substrate of the "
-    "575,604-record corpus (behavioral-signal / RRS scoring runs on this substrate), NOT the whole corpus."
-)
+# The Tier-3 EVALUATION substrate is FROZEN at the pre-enrichment corpus size (enrichment-report.json
+# before.records): the S-PWR power-fill + 2A/2B/2C expansion add DETECTION-substrate records, not more
+# behavioral-signal/RRS-scored records, so this count does not grow with the corpus total.
+TIER3_EVAL_RECORDS: int = 159_891
+
+
+def _substrate_caveat(total_records: int) -> str:
+    """The train-vs-eval substrate caveat. The corpus total is drawn LIVE from metadata (never
+    hardcoded) so it tracks the current corpus; the fraction is intentionally omitted (matching
+    DATASHEET's authoritative phrasing) to avoid a stale ratio when the total grows."""
+    return (
+        f"The {TIER3_EVAL_RECORDS:,} tier3_evaluation records are the EVALUATION substrate of the "
+        f"{total_records:,}-record corpus (behavioral-signal / RRS scoring runs on this substrate), "
+        "NOT the whole corpus."
+    )
 
 
 def _size_category(total_records: int) -> str:
@@ -146,7 +161,7 @@ def build_dataset_card(
     ``language`` list, ``task_categories`` (token-classification), ``pretty_name``, ``tags``.
     Body: a description with the canonical ``total_records`` / ``total_annotations`` / ``entity_types``
     (== :data:`taxonomy.ENTITY_TYPE_COUNT`) / ``languages`` / ``evaluation_dimensions``;
-    :data:`TRAIN_VS_EVAL`; :data:`ENRICHMENT_DISCLOSURE`; :data:`POWER_SENTENCE`; the CC0-data /
+    :func:`_substrate_caveat`; :data:`ENRICHMENT_DISCLOSURE`; :data:`POWER_SENTENCE`; the CC0-data /
     Apache-2.0-code split.
 
     ``baseline_results`` (optional): a ``baselines`` leaderboard dict (or ``BaselineResults``). When given,
@@ -173,7 +188,7 @@ def build_dataset_card(
         "the five legally-distinct regulatory regime signals (gov-02 / FR-022) as separate `reg_*` "
         "columns — no merged compliance verdict.\n\n"
         "## Train vs. evaluation substrate\n\n"
-        f"{TRAIN_VS_EVAL}\n\n"
+        f"{_substrate_caveat(total_records)}\n\n"
         "## Synthetic-enrichment disclosure\n\n"
         f"{ENRICHMENT_DISCLOSURE}\n\n"
         "## Statistical power\n\n"

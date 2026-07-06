@@ -1,0 +1,171 @@
+# Requirements-coverage review — STORY gate
+schema: dev-assist/reviewer-verdict/v1
+reviewer: requirements-coverage
+gate: story
+story_id: S3-06
+iteration: 1
+mode: read-only
+reviewed_at: "2026-05-29"
+reviewer_model: claude-opus-4-8[1m]
+
+target:
+  story_file: dev-assist-artifacts/04-development/02-stories/sprint-3/S3-06.md
+  primary_requirement: FR-006        # anonymization privacy-utility Pareto (never merged)
+  supporting_requirements: [NFR-005, AX-004, FR-009]
+  source_dc: DC-06                   # MUST · AGENT_SIMULATED · not DIVERGED
+  owned_files:
+    new: [src/pii_anon_datasets/scoring/anonymization.py, tests/test_anonymization.py]
+    modified: [src/pii_anon_datasets/scoring/__init__.py]
+
+verdict: APPROVE
+finding_count: 1                      # 0 MAJOR+, 0 MINOR, 1 OBSERVATION
+blocking_findings: 0
+context_bounds_respected: true
+self_attestation: >-
+  Verdict derived solely from the S3-06 story file, tests/test_anonymization.py,
+  the reused S3-04 reidentification.py, scoring/__init__.py, the developer-assistant.yaml
+  domain-pack config, git history of the owned/reused files, and a live re-run of the
+  test suite. No reliance on the executor's self-report; every load-bearing claim was
+  independently re-verified. No findings from other reviewers' domains were authored.
+
+# ── Coverage matrix: each §7 acceptance clause + each §6 test → passing test ──
+coverage:
+  acceptance_clauses:
+    - clause: "Pareto point emitted with two axes (privacy=MeasuredRRS, utility=token-preservation-v1)"
+      covered_by: [test_fr_006_pareto_point_has_two_separate_axes]
+      status: VERIFIED
+    - clause: "residual re-id risk axis is a MeasuredRRS under the declared adversary threat model"
+      covered_by: [test_fr_006_pareto_point_has_two_separate_axes, test_fr_006_residual_risk_axis_is_measured_rrs]
+      status: VERIFIED
+    - clause: "downstream utility axis is a pinned token-preservation-v1 probe"
+      covered_by: [test_fr_006_utility_probe_deterministic_and_versioned, test_fr_006_utility_perfect_preservation_and_full_mask]
+      status: VERIFIED
+    - clause: "two axes are separate nested objects — never merged into one number (NEGATIVE)"
+      covered_by: [test_nfr005_pareto_point_cannot_merge]
+      status: VERIFIED
+    - clause: "no attr/property/__float__ yields a single privacy+utility scalar (NEGATIVE)"
+      covered_by: [test_nfr005_pareto_point_cannot_merge]
+      status: VERIFIED
+    - clause: "residual-risk caveat is non-strippable (FR-009)"
+      covered_by: [test_fr_006_residual_risk_axis_is_measured_rrs]
+      status: VERIFIED
+    - clause: "scored anonymized_* variant label recorded on the ParetoPoint"
+      covered_by: [test_fr_006_variant_recorded]
+      status: VERIFIED
+
+  section6_tests:
+    - { id: 1, name: test_fr_006_utility_probe_deterministic_and_versioned, type: UNIT-TEST,     result: PASS }
+    - { id: 2, name: test_fr_006_utility_perfect_preservation_and_full_mask, type: UNIT-TEST,     result: PASS }
+    - { id: 3, name: test_fr_006_pareto_point_has_two_separate_axes,         type: UNIT-TEST,     result: PASS }
+    - { id: 4, name: test_nfr005_pareto_point_cannot_merge,                  type: AUDIT,         result: PASS }
+    - { id: 5, name: test_fr_006_residual_risk_axis_is_measured_rrs,         type: AUDIT,         result: PASS }
+    - { id: 6, name: test_fr_006_variant_recorded,                          type: UNIT-TEST,     result: PASS }
+    - { id: 7, name: test_fr_006_nfr004_anonymization_imports_no_nondeterminism, type: PROPERTY-TEST, result: PASS }
+
+# ── Critical checks dispatched by the gate ──
+critical_checks:
+  a_residual_risk_is_measured_MeasuredRRS:
+    status: PASS
+    evidence: >-
+      anonymization.py reimplements NO RRS internals (grep: no RRSResult / wilson_interval /
+      from_attack / recall*precision arithmetic — sole match is a docstring). score_anonymization
+      makes one live call score_reidentification(adversary, targets, candidates, |C|, confidence)
+      at line 225, which runs adversary.attack(...). Test #5 drives the REAL
+      OfflineDeterministicAdversary end-to-end and asserts adversary_id == "offline-deterministic-v1".
+      reidentification.py is git-untouched by S3-06 (last commits are S3-04's GREEN/REFACTOR).
+      Conclusion: the privacy axis is a genuinely MEASURED MeasuredRRS, NOT a precomputed field.
+  b_utility_is_pinned_token_preservation_v1_probe:
+    status: PASS
+    evidence: >-
+      UTILITY_PROBE_VERSION == "token-preservation-v1"; asserted in tests #1 and #3
+      (UtilityScore.probe == "token-preservation-v1"). Deterministic (test #1: score_utility(x)==score_utility(x));
+      perfect preservation -> 1.0 and full-mask -> <0.5 (test #2). Real Jaccard over placeholder-stripped
+      content tokens — non-placeholder, deterministic, stdlib.
+  c_never_merged_into_one_number_structurally_enforced:
+    status: PASS
+    evidence: >-
+      Test #4 [AUDIT] enforces no-merge three ways: (A) hasattr introspection over
+      {combined,overall,overall_score,deid,de_identification_score,deidentification_score,score}
+      on instance AND class + float(point) raises TypeError (no __float__); (B) as_dict() keys are
+      EXACTLY {privacy,utility,variant,note}, two distinct dicts; (C) AST grep of anonymization.py
+      proves none of the forbidden names is defined as a function/field/assignment (the names appear
+      only in docstrings + the PARETO_SEPARATION_NOTE prose). The two axes are nested objects of
+      DIFFERENT types (MeasuredRRS vs UtilityScore); no arithmetic field fuses them. The frozen
+      weights INSIDE UtilityScore combine utility COMPONENTS only — that is explicitly permitted and
+      does not violate the axis-merge prohibition. FR-006 "never merged into one number" is structural.
+
+# ── Re-run evidence (independent, this session) ──
+test_rerun:
+  command: "python3 -m pytest tests/test_anonymization.py -q"
+  result: "7 passed in 0.12s"
+  selectors:
+    - { cmd: "pytest -k fr_006", count: 6 }
+    - { cmd: "pytest -k nfr005", count: 1 }
+    - { cmd: "pytest -k nfr004", count: 1 }
+  full_suite:
+    command: "python3 -m pytest -q"
+    result: "150 passed in 1.98s"
+    regressions: 0
+    matches_story_claim: true        # story §12 predicts 150 passed; observed 150
+
+token_discipline:
+  section6_test_functions: 7
+  fr_006_functions: 6
+  nfr005_functions: 1
+  nfr004_token_present: true         # carried inside the single import-purity fn (#7)
+  matches_section6: true
+
+deviation_review:
+  red_test_count:
+    declared: "§6 lists 7 tests; §8b additionally mandates empty-note rejection"
+    handling: "empty-note ValueError folded into test #4 step (D) rather than an 8th fn"
+    assessment: ACCEPTABLE
+    rationale: >-
+      The §8b construction invariant IS asserted (pytest.raises(ValueError) on note='   ').
+      Folding it into the no-merge audit keeps the file at the §6-mandated 7 fns. No coverage gap;
+      deviation is explicitly disclosed in the story §"Deviation note". Not a finding.
+
+domain_packs:
+  active: []                         # developer-assistant.yaml domain_packs == [] AND extends.domain_packs == []
+  reviewer_extensions_merged: none
+  note: >-
+    No domain packs active; project invariants (no-real-PII, determinism, statistical power) are
+    project-authored axioms, not pack-sourced. No requirements-coverage pack extension to merge.
+
+diverged_pass2_crosscheck:
+  applicable: false
+  reason: "DC-06 provisional_status is AGENT_SIMULATED, NOT DIVERGED. No Pass-2 threshold commitment in scope."
+  note: >-
+    AGENT_SIMULATED Pass-2 real-CI run is scheduled at orchestrator integration per story §12; that is
+    an execution-environment caveat, not a DIVERGED-NFR threshold obligation — outside this gate's no-merge check.
+
+findings:
+  - id: S3-06-RC-OBS-1
+    severity: OBSERVATION
+    title: "Sprint-gate scorer-family completeness signal (informational, not a story-scope gap)"
+    detail: >-
+      With S3-06 substantively closing FR-006 (DC-06 anon), the scorer trio's coverage is now:
+      detection DC-05 (S1, done), anonymization DC-06 (S3-06, this story), pseudonymization DC-08
+      (S3-07, REVIEW), residual-risk RRS DC-07 (S3-04, done). All three families plus the shared RRS
+      axis are PRESENT. This is the sprint-gate signal requested in the dispatch; it is informational
+      only — coverage adjudication across families runs at the S3 epic/sprint gate, not at this story
+      gate. No action required of S3-06.
+    blocking: false
+
+notes_for_sprint_gate:
+  fr_006_now_substantively_covered: true
+  scorer_families_present:
+    detection_DC05: { source_story: S1, status: done }
+    anonymization_DC06: { source_story: S3-06, status: "REVIEW (this gate: APPROVE)" }
+    pseudonymization_DC08: { source_story: S3-07, status: REVIEW }
+    residual_risk_DC07: { source_story: S3-04, status: done }
+  caveat: >-
+    All DC-06 evidence is AGENT_SIMULATED; the real-CI Pass-2 run is owed at orchestrator integration.
+    For sprint/release adjudication, FR-006 is verified at the AGENT_SIMULATED bar — confirm the Pass-2
+    real-CI run before counting DC-06 as release-verified.
+
+out_of_scope_deferred:
+  - "Test quality / assertion craftsmanship (-> code-quality, traceability)"
+  - "Whether the no-merge invariant semantically satisfies AX-004 (-> axiom-compliance)"
+  - "Source-grep / AST-guard adequacy as a security control (-> security-sast)"
+  - "Whether FR-006 should exist (-> SME / W8, not per-story reviewer)"

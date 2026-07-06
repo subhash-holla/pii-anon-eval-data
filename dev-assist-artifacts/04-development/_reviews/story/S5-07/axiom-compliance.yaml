@@ -1,0 +1,94 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S5-07
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: axiom-S5-07-01
+    severity: OBSERVATION
+    location: README.md:376
+    description: |
+      The v2.0.0 entry retains one literal "65" inside the historical-reconciliation
+      phrase: "canonical 63-type entity registry (pii_anon_datasets.taxonomy)
+      reconciling prior 48/65/80 doc drift". This is a record of the drift that the
+      reconciliation resolved (it asserts "canonical 63-type" in the same clause),
+      NOT a current-state entity-count claim — so epistemic honesty is upheld (the
+      prior drift is surfaced, not hidden). The doc-drift test's stale-string set
+      ("65 entity types" / "65 types") correctly does not match this phrase, and the
+      executor's §12 evidence already flags it as intentional. No action required;
+      logged for traceability only.
+    suggested_resolution: |
+      No change needed. If a future reader finds the bare "65" ambiguous, it could be
+      qualified inline (e.g., "reconciling the prior 48/65/80 figures that had drifted
+      across docs"), but this is stylistic and out of scope for the NFR-013 gate.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-07.md#8b
+      - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-07.md#12
+
+notes: |
+  Story-gate axiom slice for S5-07 (doc-drift remediation, iteration 1). All axioms
+  triggered by the diff are UPHELD and grounded in real substrate (not the story's
+  self-report). Verification performed against git diff 7dd5341..HEAD plus live reads
+  of metadata.json and taxonomy.
+
+  EPISTEMIC HONESTY (the crux) — all three key caveats SURFACE, not hide:
+    1. ~72% formulaic synthetic_lattice_enrichment disclosure present in README:30/39,
+       DATASHEET:24, MIGRATION:36, CHANGELOG:44 — each explicitly frames it as
+       *formulaic* and raising statistical power.
+    2. "synthetic-distribution power is not external validity" appears verbatim in
+       README:39, DATASHEET:123, MIGRATION:36, CHANGELOG:49 — with the "see the
+       real-data correlation slice" pointer preserved.
+    3. Train-vs-eval note (159,891 = the ~27.8% Tier-3 EVALUATION substrate, NOT
+       "100%") in README:3/25/28/37, DATASHEET:24, COMPARISON:27, MIGRATION:36. The
+       stale "159,891 (100%)" string is ABSENT from all current-state docs (correctly
+       reframed to "27.8% — Tier-3 evaluation substrate").
+
+  NO FABRICATION — competitor figures: exactly the two authorized deltas changed
+  (Nemotron 200K→~100K; AI4Privacy 580K→~220K). SPY (8.7K) and PIILO (22K) left as-is;
+  every competitor entity-type cell (55+/20-54/18/55/14/7/6) and subset size
+  (clinical 11.7K, code 5.7K) is byte-identical to base 7dd5341 — only PII-Anon's own
+  cells changed. The "competitor figures as published by their authors (as of 2026);
+  verify against primary sources" sourcing note + the PII-Bench-vs-"PIIBench"
+  disambiguation were ADDED (COMPARISON:5). Note: the Nemotron table delta to ~100K now
+  reconciles the table with Nemotron's own pre-existing strengths text ("Large scale
+  (100K)") — improves internal consistency. The three PII-Anon scale multipliers
+  (~200x / ~440x / ~26x) are arithmetically grounded in 575,604 ÷ each competitor's
+  PUBLISHED count (206 / 443 / 26) — PII-Anon's own number, not an invented competitor
+  figure. PII-Anon's own counts (575,604 / 2,486,438 / 63 / 2.0.0) match
+  pii_anon.metadata.json exactly — no self-fabrication. Content-lint clean: no new bare
+  superlative / accuracy claim (no "99.9%", "state-of-the-art", "100% accurate", etc.)
+  added in any doc diff.
+
+  HISTORY PRESERVED (AX-002 / provenance integrity): the CHANGELOG diff is ADD-ONLY
+  (the S-PWR sub-entry under the existing [2.0.0]); all [1.3.0]/[1.2.0]/[1.1.0]/[1.0.0]
+  entries — including the 1.3.0 "159,891 (100%)" lines (CHANGELOG:110-111) and the
+  1.2.0 "57 → 65" expansion (CHANGELOG:174/188) — are untouched. MIGRATION's only
+  deletion is the title line; the historical v1.0.0→v1.1.0 guide and its
+  Statistics-Comparison table (117,752 / ~68K) are preserved verbatim. The diff only
+  ADDS v2.0.0 / S-PWR content and reframes current-state counts, exactly as required.
+
+  GUARDRAILS (untouched): git diff --name-only 7dd5341..HEAD == exactly 7 owned docs +
+  tests/test_doc_drift.py + the story file. NO corpus (*.jsonl.gz), eval_lattice.json,
+  pii_anon.metadata.json, *.parquet, or git tag in the diff; tags v1.3.0 and
+  pre-lattice-enrichment exist and are unmoved.
+
+  M1 SINGLE-SOURCE-OF-TRUTH: tests/test_doc_drift.py:26 sets
+  CANONICAL_ENTITY_COUNT = tx.ENTITY_TYPE_COUNT and the taxonomy test compares against
+  tx.CANONICAL_ENTITY_TYPES (test:90) — derived from the registry, never hardcoded.
+  Live substrate confirms taxonomy.ENTITY_TYPE_COUNT == 63 and
+  len(CANONICAL_ENTITY_TYPES) == 63, so the doc-test's canonical count is grounded in
+  real substrate, not a stale literal. pytest -k nfr_013 → 6/6 PASS (re-run locally,
+  Python 3.10.6).
+
+  Out-of-scope items correctly untouched and acknowledged in §12 (pre-existing
+  mypy [type-arg] on __init__.py:61). Correctness of the underlying figures and the
+  TAXONOMY 63-row prune mechanics belong to traceability / requirements-coverage;
+  the style of the caveat phrasing is executor design judgment — both outside this
+  reviewer's scope.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

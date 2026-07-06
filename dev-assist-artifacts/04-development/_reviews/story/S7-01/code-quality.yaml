@@ -1,0 +1,83 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S7-01
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  TDD evidence — strict discipline (require_red_commit: true):
+
+    RED    132f760  tests/test_oracle.py added (108 lines); oracle.py absent.
+                    Collection fails: ImportError cannot import name 'ORACLE_DISCLAIMER'
+                    — failure is for the intended reason, not a malformed test.
+    GREEN  9269943  oracle.py added (85 lines) + __init__.py additive exports (+16 lines).
+                    4/4 oracle tests pass (329 passed, 1 skipped; Δ+4, 0 regressions).
+    REFACTOR 19a4dfc  ruff isort merge in test_oracle.py + ruff-format whitespace on
+                    oracle.py; __init__.py blank-line fix. No behavior change.
+                    mypy --strict --follow-imports=silent: Success (oracle.py).
+
+  Live tool results (reviewer-executed):
+    ruff check oracle.py test_oracle.py          → All checks passed!
+    ruff check scoring/adversary/__init__.py      → All checks passed!
+    mypy --strict --follow-imports=silent oracle.py → Success: no issues found in 1 source file
+    pytest tests/test_oracle.py -q               → 4 passed in 0.13s
+
+  Diff scope (58e1edb..HEAD) = exactly 4 files:
+    src/pii_anon_datasets/scoring/adversary/oracle.py  (NEW)
+    src/pii_anon_datasets/scoring/adversary/__init__.py (MODIFIED — additive only)
+    tests/test_oracle.py                               (NEW)
+    dev-assist-artifacts/.../S7-01.md                  (story file — natural companion)
+  No files outside §8 owned set touched. base.py / offline_adversary.py / llm_adversary.py
+  all show empty diff (confirmed). No scope creep.
+
+  FR/NFR token embedding in test names — all 4 tests comply:
+    test_fr_017_recognize_returns_labeled_verdicts    [UNIT-TEST]
+    test_fr_017_oracle_disclaimer_non_strippable       [UNIT-TEST]
+    test_fr_017_recognize_span_point_query             [UNIT-TEST]
+    test_nfr004_oracle_pure_stdlib                     [PROPERTY-TEST]
+
+  Public API surface coverage (oracle.py):
+    Module-level docstring: present, references FR-017, DC-10, NFR-004, AX-001/AX-002.
+    ORACLE_DISCLAIMER: module constant, inline comment (Non-strippable FR-017).
+    RecognizedEntity: frozen dataclass — type-annotated fields; no standalone docstring
+      but frozen + typed fields are self-documenting; absence of per-class docstring is
+      MINOR style; not blocking given field clarity.
+    OracleVerdict: class docstring present ("Labeled-entity verdicts for a record +
+      the non-strippable FR-017 disclaimer.").
+    recognize(): one-line docstring present.
+    recognize_span(): one-line docstring present.
+    _entities(): private helper (leading underscore) — no docstring required.
+
+  Non-strippable disclaimer invariant verified live:
+    ORACLE_DISCLAIMER.lower() contains: "recognition" ✓, "never" ✓, "agent-leakage" ✓,
+    "fr-017" ✓. __post_init__ rejects empty and whitespace-only strings. OracleVerdict
+    field has non-empty default (ORACLE_DISCLAIMER) — validator always fires at construction.
+
+  §8b implementation fidelity:
+    All public symbols match spec verbatim: ORACLE_DISCLAIMER, RecognizedEntity (start,
+    end, entity_type, text), OracleVerdict (recognized, disclaimer, __post_init__, labels(),
+    as_dict()), _entities, recognize, recognize_span. Differences are ruff-format whitespace
+    only — no behavioral deviation.
+
+  __init__.py additive check:
+    Existing exports (ADVERSARY_PORT_VERSION, Adversary, Guess, Persona, Target,
+    OfflineDeterministicAdversary, OfflineAdversaryConfig, DEFAULT_OFFLINE_CONFIG,
+    OFFLINE_ADVERSARY_VERSION, LLMAdversary, make_adversary_id, LLM_ADVERSARY_VERSION)
+    all retained in both the import block and __all__. No removals.
+
+  unwrap/panic patterns: not applicable (Python).
+  No dynamic `Any` used in oracle.py or test_oracle.py without justification (the
+    `Any` in __init__.py `Record = dict[str, Any]` predates this story).
+  No dead code — every function/class in oracle.py is exercised by the test suite.
+  No dev-dependencies imported at runtime (pure-stdlib: __future__, collections.abc,
+    dataclasses only).
+  No non-determinism: AST guard (test 4) statically verified; zero banned modules.
+  No production path uses of unwrap/assert/raise without explicit guard (only __post_init__
+    raises ValueError on empty disclaimer — that is intentional contract enforcement).
+
+review_time_seconds: 214
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

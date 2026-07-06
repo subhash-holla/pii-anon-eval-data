@@ -1,0 +1,96 @@
+# Axiom-compliance review — STORY gate S3-03 (LLM adversary, FR-010 secondary)
+schema_version: 1
+reviewer: dev-assist-development-axiom-compliance
+gate: story
+story_id: S3-03
+iteration: 1
+mode: read-only
+timestamp: 2026-05-29
+verdict: APPROVE
+context_bounds_respected: true
+
+summary: >
+  S3-03 implements the pluggable LLM re-identification adversary (FR-010) as the
+  honestly-labeled NON-DETERMINISTIC SECONDARY figure. All three axioms in scope are
+  upheld: AX-002/reidx-01 (deterministic=False; offline S3-02 headline untouched),
+  NFR-009/NFR-004 (offline-default; anthropic is a lazy import behind the [llm] extra,
+  package imports clean without it — verified runtime + AST), and AX-001 (zero real-PII
+  in prompt construction or test fixtures). No existing contract weakened: the S3-03
+  commit boundary touches only the four owned files; base.py Protocol and the offline
+  headline adversary are outside the delta. Full suite 160 passed / 1 skipped, 0 regressions.
+
+axioms_in_scope:
+  - id: AX-pii-anon-002        # reidx-01 / AX-002 — honesty: non-reproducible adversary flagged
+    name: deterministic-reproducible-generation
+    triggered_by: >
+      Story adds an LLM-based (non-deterministic) adversary whose MeasuredRRS must NOT be
+      citable as the reproducible headline.
+    upheld: true
+    evidence:
+      - "LLMAdversary.deterministic = False — verified statically (src .../llm_adversary.py:115) and at runtime."
+      - "Module + class docstrings explicitly frame it as the non-deterministic SECONDARY; the headline RRS uses the offline deterministic adversary (S3-02)."
+      - "FR-010 version-pinning honored: adversary_id is version-stamped 'llm:<model>@<date>' via make_adversary_id(); frozen per (model,date) so the secondary figure stays comparable/auditable (provenance per AX-002's LLM-path clause)."
+      - "Offline headline intact: OfflineDeterministicAdversary still sets deterministic = True; offline_adversary.py is NOT in the S3-03 commit delta (966c038^..5652f6e)."
+  - id: AX-pii-anon-001        # AX-001 — synthetic-only, no real PII
+    name: synthetic-only-no-real-pii
+    triggered_by: >
+      Story constructs LLM prompts from persona/target text and ships inline test fixtures.
+    upheld: true
+    evidence:
+      - "Zero matches for real-PII heuristics (SSN 3-2-4, 13-16 digit cards, email, phone, sk-/api-key tokens) across all four owned files."
+      - "Prompt builder (_build_prompt) interpolates ONLY caller-supplied persona/target text; hard-codes no identifiers."
+      - "Only inline 'data' is four synthetic, innocuous behavioral strings (p_boston / p_fitness); no real natural-person data."
+
+verification_performed:
+  - check: "Package imports without anthropic; no eager import at load (NFR-009 / NFR-004 / reidx-01)"
+    method: runtime_import_plus_ast_scan
+    result: PASS
+    detail: >
+      `import pii_anon_datasets.scoring` + `from pii_anon_datasets.scoring import LLMAdversary`
+      succeed with anthropic absent; 'anthropic' stays OUT of sys.modules after import. AST of
+      llm_adversary.py: top-level imports = [__future__, collections.abc, typing, base] — zero
+      top-level anthropic; exactly one NESTED anthropic import (inside _require_anthropic).
+  - check: "Export does NOT eagerly import anthropic (scoring + adversary __init__ re-exports stay offline-safe)"
+    method: runtime_sys_modules_assertion
+    result: PASS
+    detail: "Both __init__ re-exports route through the lazy module; loading the scoring surface pulls no network dep."
+  - check: "Lazy guard raises a clear [llm]-extra install error when anthropic absent and no client injected"
+    method: source_read_plus_test_2
+    result: PASS
+    detail: "_require_anthropic() raises RuntimeError naming 'pip install pii-anon-datasets[llm]' (test_fr_010_..._requires_extra_when_anthropic_absent)."
+  - check: "deterministic=False (secondary), not the deterministic headline (AX-002 honesty)"
+    method: runtime_plus_static
+    result: PASS
+  - check: "AX-001 real-PII heuristic scan over the four owned files"
+    method: pattern_scan
+    result: PASS
+  - check: "No existing contract weakened (base Adversary Protocol + offline headline)"
+    method: commit_boundary_diff
+    result: PASS
+    detail: >
+      S3-03 delta (966c038^..5652f6e) = exactly the 4 owned files (+ story doc):
+      llm_adversary.py (new), test_llm_adversary.py (new), adversary/__init__.py (+13 export),
+      scoring/__init__.py (+23/-8). base.py and offline_adversary.py NOT touched. The -8 lines
+      are isort re-ordering of the .anonymization import block (symbols retained), not contract removals.
+  - check: "Regression / suite health"
+    method: pytest
+    result: PASS
+    detail: "tests/test_llm_adversary.py: 4 passed, 1 skipped (live path importorskip). Full suite: 160 passed, 1 skipped, 0 failures."
+
+findings: []
+
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+  total: 0
+
+self_attestation:
+  independent_review: true
+  bounds_respected: true
+  statement: >
+    Reviewed only S3-03's axiom slice against the project axiom registry. Did not assess
+    AI-output correctness, provenance-chip styling, or performance (out of scope). Verdict
+    derived solely from the owned diff, the axiom registry, and direct repo verification.

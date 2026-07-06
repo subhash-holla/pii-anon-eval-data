@@ -1,0 +1,100 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S3-02
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S3-02-01
+    severity: OBSERVATION
+    location: tests/test_offline_adversary.py:184-187
+    description: |
+      test_fr_010_distractor_variant_distinct_id_and_lower_precision uses a "precision proxy"
+      that includes `guessed_persona_id == "t-boston"` in the base_correct check. This is a
+      target_id ("t-boston"), not a persona_id — the base adversary will never guess a
+      target_id, so the `or` branch is vacuously dead. The correctness logic still works because
+      the base case correctly resolves to "p-boston" (the real persona_id) and the distractor
+      case resolves to "d-boston-1" (lexicographic winner among tied decoys), producing
+      base_correct=True and distractor_correct=False. The test passes and the property holds —
+      but the dead branch obscures intent.
+    suggested_resolution: |
+      Simplify the base_correct check to `base_guesses[0].guessed_persona_id == "p-boston"`.
+      This removes the dead `"t-boston"` branch and makes the assertion's intent transparent.
+      Non-blocking; raise to MINOR in a future lint-hardening story if desired.
+
+notes: |
+  GATE CHECKS SUMMARY
+
+  Build / lint / type:
+  - `ruff check offline_adversary.py` → All checks passed
+  - `ruff check test_offline_adversary.py` → All checks passed
+  - `ruff check adversary/__init__.py scoring/__init__.py` → All checks passed
+  - `mypy --strict --follow-imports=silent offline_adversary.py` → Success: no issues found
+  Pre-existing repo-wide ruff findings and S1 mypy type-arg errors in sibling modules
+  (core.py, detection.py, reidentification.py) are out of S3-02 scope and are NOT held
+  against this story.
+
+  Test execution:
+  - `python3 -m pytest tests/test_offline_adversary.py -q` → 9 passed in 0.13s
+  - `python3 -m pytest -q` (full suite) → 124 passed in 2.04s (0 regressions)
+  - `pytest -k fr_007` → 7 passed, 2 deselected (correct)
+  - `pytest -k fr_010` → 2 passed, 7 deselected (correct)
+  All 9 test names carry canonical fr_NNN tokens (fr_007 × 7, fr_010 × 2).
+
+  TDD ordering (RED → GREEN → REFACTOR):
+  - RED 2e4344d: tests/test_offline_adversary.py + story file only — no production code.
+    Commit message confirms "Tests fail at collection: implementation absent." Ordering is
+    correct; RED is the first commit on the feature branch touching S3-02 test file.
+  - GREEN 07149a6: offline_adversary.py + adversary/__init__.py + scoring/__init__.py +
+    test correction. All three REFACTOR-eligible files are within §8 owned-files set.
+  - REFACTOR f78e8b8: offline_adversary.py only — drops redundant per-target re-sort.
+    Strictly within owned files.
+
+  Scope discipline (§8 "Files owned"):
+  - RED touches: S3-02.md (story file, non-code), tests/test_offline_adversary.py → clean.
+  - GREEN touches: offline_adversary.py, adversary/__init__.py, scoring/__init__.py,
+    tests/test_offline_adversary.py → exactly the §8 NEW + MODIFIED set. Clean.
+  - REFACTOR touches: offline_adversary.py only → within scope. Clean.
+  No out-of-scope edits detected in any of the three commits.
+
+  Test correction verification (disclosed §12):
+  The RED test_fr_007_config_is_frozen_and_hashable originally asserted
+  `cats == sorted(cats)` — a full 7-way alphabetical sort. This is WRONG against §8b,
+  where the spec literal explicitly places "quasi_identifier_token" (q…) LAST after the six
+  behavioral categories, not between "professional_domain" and "temporal_patterns" where
+  alphabetic sort would place it. Confirmed via runtime: `sorted(cats)` would produce
+  ['interest_topics', 'location_signals', 'personal_anecdote', 'professional_domain',
+  'quasi_identifier_token', 'temporal_patterns', 'writing_style'] — placing QI at index 4,
+  not 6. The correction in GREEN aligns to §8b's literal (six behavioral cats sorted, QI
+  appended) while still pinning the determinism/stampability property required by §6 item 8.
+  Production DEFAULT_OFFLINE_CONFIG matches §8b verbatim. The RED test was wrong, not the
+  production code — no bug hidden.
+
+  Import purity (NFR-004 / AX-002):
+  AST scan of offline_adversary.py finds only: __future__, base, collections, dataclasses,
+  signals. None of {random, time, uuid, datetime, secrets} or any network/LLM module is
+  present. Pure-stdlib confirmed statically and dynamically (AST guard test passes).
+
+  Idiomatic Python / type discipline:
+  - Full type hints on every function and method (PEP 484 / mypy --strict clean).
+  - `OfflineAdversaryConfig` is a frozen, hashable dataclass as required by §8b.
+  - No bare `except`, no `print`, no mutable defaults, no `Any`, no `unwrap`-equivalent.
+  - No `any`/`interface{}`-without-justification (no dynamic typing at all).
+  - `_weighted_jaccard` correctly handles the empty-union case (returns 0.0).
+  - The tie-break implementation (pool pre-sorted ascending by persona_id; strict `>` keeps
+    first on ties) is verified to produce a total order: three-ordering test confirms
+    lexicographically-smallest persona_id wins on identical scores, input-order-independently.
+
+  Docstring coverage:
+  Every public symbol has module-level or class/function-level docstrings:
+  `OfflineAdversaryConfig`, `OfflineAdversaryConfig.weight_of`, `DEFAULT_OFFLINE_CONFIG`,
+  `OfflineDeterministicAdversary`, `OfflineDeterministicAdversary.attack`. Module docstring
+  is comprehensive and cites FR/NFR/AX references explicitly.
+
+  One minor OBSERVATION logged (finding code-quality-S3-02-01): a dead `or` branch in
+  test_fr_010's correctness predicate. Non-blocking; the test property is sound.
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed
+
+review_time_seconds: 285
+context_bounds_respected: true

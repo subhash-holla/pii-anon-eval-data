@@ -2,26 +2,101 @@
 
 All notable changes to the PII-Anon Evaluation Dataset are documented here.
 
-## [Unreleased]
+## [2.2.0] - 2026-07-04
 
-### Added — Baseline detector leaderboard
-- **Detector leaderboard** (`pii-anon baselines`): a reproducible, **F2-ranked**
-  precision/recall/F1/F2 leaderboard of **11 PII detectors** on the v2.0.0 English `test`
-  split (30,995 records / 201,701 gold spans) — **8 local** (regex, scrubadub, spaCy,
-  Stanza, Flair, GLiNER, Presidio, Piiranha) + **3 cloud DLP** (AWS Comprehend, GCP DLP,
-  Azure AI Language). Every number routes through the audited scorer (Wilson 95% CIs;
-  strict-v1 span matching; relaxed `partial_f1` excluded from the CIs) with a per-detector
-  label-map coverage (reachable / 63) disclosure. **Headline:** GLiNER (a free local model)
-  is statistically tied with AWS Comprehend for top F2 (0.735 vs 0.737) and outscores GCP
-  DLP and Azure AI Language. Synthetic-only (AX-001). Full tables + per-domain / per-type
-  breakdowns in `BASELINES.md`; the cloud rows are a single budget-gated run of
-  non-deterministic managed services.
-- **Baseline adapters** under `baselines/` behind a uniform `DetectorAdapter` contract:
-  8 local + 3 cloud, each with a native→63-type label map. Cloud DLP detectors are
-  budget-gated behind `--cloud`; the GCP DLP adapter carries retry-on-429 + exponential
-  backoff for the per-minute request quota.
-- Leaderboard wired into `BASELINES.md`, `README.md`, `DATASHEET.md`, and the generated
-  dataset card (`pii-anon export --format card --baselines …`).
+**Content-version cut.** Bumps the content version 2.1.0 -> 2.2.0 across the corpus (`version` /
+`schema_version` record fields), validator, `pyproject`, and content-facing docs. This consolidates the
+2A/2B/2C working increments and ships the re-scored baseline leaderboard. Publication metadata + DOI
+remain at the archived **v2.0.0**; the Zenodo re-mint (archived version 2.0.0 -> 2.2.0) and the
+HuggingFace re-upload are the release's remaining manual step.
+
+### Added -- corpus expansion (2A / 2B / 2C)
+- 3 GDPR Art-9 special-category types (`SEXUAL_ORIENTATION`, `TRADE_UNION_MEMBERSHIP`, `GENETIC_DATA`);
+  canonical taxonomy 63 -> **66**. All 6 Art-9 types powered to >=400 spans across 12 powered languages
+  (POLITICAL_OPINION 608, RELIGIOUS_BELIEF 608, ETHNICITY 609, SEXUAL_ORIENTATION 408,
+  TRADE_UNION_MEMBERSHIP 408, GENETIC_DATA 408). Art-9 synthetic values are English-anchored
+  (per-language localization deferred to 2D).
+- Powered ru/th/el/bn/he into the committed-lattice rectangle (12->17 languages, 6->11 writing systems);
+  corpus 578,469 -> **782,677** records / **3,107,240** annotations; lattice 733 -> **938** committed cells.
+- Native-script name pools for Greek / Bengali / Hebrew; native-Thai person-name pool (SP-I).
+- Per-record `art9_special_categories[]` (B-5); additive honesty renames `coherence_assumed` +
+  `qid_type_count_risk_label` (B-6); jurisdiction-identifier-type count (B-7, **8/66** entity types are
+  national/jurisdiction-specific identifiers; illustrative, not a per-jurisdiction completeness claim).
+- `_NON_PERSONAL` record set (~417 records) -> `reg_gdpr` is now **discriminative** (`in_scope` vs
+  `out_of_scope`); was a 100%-constant `in_scope` column in all prior releases.
+- **Gold spot-check (2F)** -- single-pass author gold-validity corroboration on a stratified ~500-span
+  sample (`results/tier-a/gold_spotcheck.md`): type-correctness **1.000** (HT-weighted, Wilson 95%
+  [0.984,1.000]), realism **1.000**, blind type-recovery **0.927** [0.868,0.961] (124 blind spans) +
+  blind-realism **1.000** [0.970,1.000]. A disclosed post-hoc AMEND to the preregistration; **NOT
+  inter-annotator agreement / kappa** (AX-002), synthetic-only (AX-001). SME-panel-reviewed design.
+
+### Added -- baseline detector leaderboard
+- **Detector leaderboard** (`pii-anon baselines`): a reproducible, **F2-ranked** precision/recall/F1/F2
+  leaderboard of **11 PII detectors** on the English `test` split (31,048 records / 201,880 gold spans) --
+  **8 local** (regex, scrubadub, spaCy, Stanza, Flair, GLiNER, Presidio, Piiranha) + **3 cloud DLP**
+  (AWS Comprehend, GCP DLP, Azure AI Language), re-scored on the frozen v2.2.0 substrate. Every number
+  routes through the audited scorer (Wilson 95% CIs; strict-v1 span matching; relaxed `partial_f1`
+  excluded from the CIs) with a per-detector label-map coverage (reachable / 66) disclosure.
+  **Headline:** GLiNER (a free local model) is F2-competitive with AWS Comprehend (0.734 vs 0.736) -- a
+  precision/recall trade-off: AWS holds a paired-significant **+1.19pp recall** edge (McNemar p=1.4e-33)
+  while GLiNER matches on F2 via higher precision; both outscore GCP DLP and Azure AI Language. AWS
+  macro-F2 (0.27) is a real full cloud run, not a recall-only placeholder. Synthetic-only (AX-001). Full
+  tables + per-domain / per-type breakdowns in `BASELINES.md`; the cloud rows are a single budget-gated
+  run of non-deterministic managed services.
+- **Per-script Wilson recall lower-bound** column (the 2C carry-forward) in
+  `results/tier-a/multilingual_by_script.md`, plus the harness sanity leaderboard rows (B-4: null /
+  always-PERSON / oracle) -- both land on the re-scored substrate.
+- **Baseline adapters** under `baselines/` behind a uniform `DetectorAdapter` contract: 8 local + 3 cloud,
+  each with a native->canonical label map (built against the frozen 63-type registry; the 3 Art-9 types
+  are unreachable-by-construction, so coverage reports as reachable/66). Cloud DLP detectors are
+  budget-gated behind `--cloud`; the GCP DLP adapter carries retry-on-429 + exponential backoff.
+  Leaderboard wired into `BASELINES.md`, `README.md`, `DATASHEET.md`, and the generated dataset card.
+
+### Changed
+- `ETHNICITY` sensitivity class corrected to `sensitive_attribute` uniformly (was mislabeled
+  `quasi_identifier` in some records).
+- `script` field canonicalized corpus-wide to ISO 15924 codes (fixed `Latn` mislabels for `ta`/`te`/`my`
+  + collapsed human-readable/ISO duplicate labels such as `Cyrillic`->`Cyrl`, `Bengali`->`Beng`).
+  Distinct writing systems: 32 (inflated dual-naming) -> **19** (genuine ISO 15924 codes).
+- JSON-schema `entity_type` enum reconciled to exactly the canonical 66 (dropped 23 unused cruft entries).
+
+### Migration
+The v2.2.0 corpus is a deterministic rebuild (SP-I native-Thai names + the 2A/2B/2C expansion) followed by
+a byte-safe `version` / `schema_version` re-stamp (`scripts/bump_content_version.py`); `data/MANIFEST.sha256`
+is the archival receipt. A corpus rebuild on an already-enriched corpus must SKIP
+`scripts/enrich_nested_and_ai_era.py` (it mints a fresh AI-era batch each run -- non-idempotent). The
+frozen paper substrate (EX00) advances its version label to 2.2.0 with byte-identical detector numbers.
+
+### Note
+Non-name PII values remain English/US-anchored synthetic across all 60 languages (per-language value
+localization deferred to 2D); `hi`/`th` non-name values are English-anchored. The Zenodo DOI + HuggingFace
+re-mint (archived version 2.0.0 -> 2.2.0) are the release's remaining manual step.
+
+---
+
+## [2.1.0] - 2026-06-17
+
+**Additive honesty release (working/unarchived).** No synthetic-content regeneration; no Zenodo/HF re-mint
+(deferred to v2.2.0). All v2.0.0 keys preserved.
+
+### Added
+- Honest field aliases + caveats that travel into the shipped data: `token_overlap_jaccard_*`,
+  `context_preservation.legal_category` / `residual_quasi_identifier` / `_caveat`,
+  `tier3_evaluation.exposure_index_prior` / `_caveat`, `privacy_risk._caveat`,
+  `reg_hipaa_phi_present` column, and file-level schema-metadata disclaimers.
+- Cost-normalized leaderboard companion + harness sanity bounds (null / always-PERSON / oracle).
+- C1/C2/C3 contribution-tiering figure; public FR-027 external-validity protocol.
+- `scripts/v2_0_0_to_v2_1_0.py`, `src/pii_anon_datasets/honesty.py`, `scripts/check_version_sync.py`.
+
+### Changed
+- Documentation: `semantic_similarity_*` disclosed as token-Jaccard; per-split AI-era counts; explicit
+  "no record anonymised under Recital 26" statement.
+
+### Migration
+v2.0.0 is pinned at git tag `v2.0.0`. Run `PYTHONPATH=src python scripts/v2_0_0_to_v2_1_0.py` (deterministic,
+additive). Legacy consumers: `compat.to_v2_record(rec)` restores the v2.0.0 shape.
+
+---
 
 ## [2.0.0] - 2026-05-28
 

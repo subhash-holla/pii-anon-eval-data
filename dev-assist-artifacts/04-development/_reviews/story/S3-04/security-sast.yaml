@@ -1,0 +1,90 @@
+# Story-gate security-sast review — canonical YAML
+reviewer: security-sast
+gate: story
+story_id: S3-04
+iteration: 1
+audit_tagged: true
+reviewed_at: "2026-05-29"
+verdict: APPROVE
+context_bounds_respected: true
+independence_attested: true
+
+scope:
+  branch: feat/v2-scoring-harness
+  owned_paths:
+    - src/pii_anon_datasets/scoring/reidentification.py   # ADDED MeasuredRRS + score_reidentification
+    - src/pii_anon_datasets/scoring/__init__.py           # export
+    - tests/test_reidentification_measured.py             # NEW (9 fr_NNN tests)
+  primary_check: "FR-009/gov-01 [AUDIT] — non-strippable anti-anonymity caveat on the measured RRS"
+  evidence_shas:
+    red: f33b3e5
+    green: bfa5cf9
+    refactor: 379f086
+
+# ── PRIMARY CHECK (the [AUDIT] privacy control) ──
+audit_findings:
+  fr_009_caveat_nonstrippable:
+    status: PASS
+    claim: "No code path can serialize an RRS number without its anti-anonymity caveat."
+    evidence:
+      - "MeasuredRRS.as_dict() (reidentification.py:105-123) ALWAYS sets out['rrs'] = self.rrs.as_dict(); the nested RRSResult.as_dict() (:69-79) ALWAYS emits the 'caveat' key."
+      - "MeasuredRRS exposes exactly ONE serializer (as_dict); grep for asdict/to_dict/model_dump/json.dump found no alternate path that could emit rrs without the caveat."
+      - "MeasuredRRS.rrs is a mandatory, non-defaulted field (default is MISSING) — a MeasuredRRS cannot exist without an RRSResult."
+      - "RRSResult.caveat is mandatory + non-defaulted (default=MISSING, default_factory=MISSING); RRSResult.__post_init__ ALSO rejects empty/whitespace caveat (ValueError). Construct-without-caveat raises TypeError (verified live)."
+      - "Both RRSResult and MeasuredRRS are frozen dataclasses — the caveat cannot be mutated/blanked post-construction."
+    test_proves_it:
+      name: test_fr_009_caveat_nonstrippable_in_measured_as_dict
+      file: tests/test_reidentification_measured.py:144-158
+      result: "PASS (9/9 in file pass). Asserts d['rrs'] is a dict, 'caveat' in d['rrs'], and the literal 'MUST NOT be cited' substring survives nesting — proves the caveat travels with the number, not merely that a key exists."
+  frozen_rrsresult_contract_preserved:
+    status: PASS
+    evidence:
+      - "git diff f33b3e5..bfa5cf9 on reidentification.py: the RRSResult class body (incl. mandatory non-defaulted `caveat` field, __post_init__ guard, from_attack, as_dict) and ANTI_ANONYMITY_CAVEAT are byte-identical; the only edits are additive (module docstring note, 2 imports, MeasuredRRS + score_reidentification appended below)."
+
+# ── inertness / supply-chain / AX-001 ──
+secondary_checks:
+  pure_stdlib:
+    status: PASS
+    detail: "Imports limited to __future__, collections.abc.Sequence, dataclasses, and first-party ..stats.intervals + .adversary.base. No third-party deps; no git=/url-pinned deps introduced."
+  inert_surface:
+    status: PASS
+    detail: "Scan of all 3 owned files for eval/exec/compile/__import__/subprocess/os.system/popen/pickle/marshal/shelve/yaml/socket/requests/urllib/httpx/open()/Path/tempfile/getenv/environ/secrets/token/password/api_key found no executable matches (sole hit is the literal 'fr_007' inside a test docstring). No network, no filesystem, no process spawn, no deserialization."
+  weak_crypto:
+    status: PASS
+    detail: "No md5/sha1 or any hash primitive introduced."
+  hardcoded_credentials:
+    status: PASS
+    detail: "No credential/API-key/token shapes. The only string literals are the inert ANTI_ANONYMITY_CAVEAT (pre-existing S1) and test fixtures."
+  injection_paths:
+    status: PASS
+    detail: "No SQL/NoSQL/shell string interpolation. Logic is pure arithmetic over caller-supplied counts; no capability-gated sink."
+  ax_001_synthetic_only:
+    status: PASS
+    detail: "score_reidentification operates ONLY over caller-supplied Persona/Target/Guess value objects (frozen, read-only). No real-PII ingestion path, no file/network read. Target.observed_signals is re-extracted upstream per reidx-01; this scorer neither reads gold nor any external source."
+  capability_boundary:
+    status: NOT_APPLICABLE
+    detail: "Python eval-data harness; no capability registry / trust-boundary / HSM-port / egress-manifest in scope for this story."
+
+findings: []   # zero findings at any severity
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+
+decision:
+  approve_iff_zero_major_plus: true
+  major_plus_count: 0
+  verdict: APPROVE
+  rationale: >
+    The [AUDIT] FR-009 privacy control holds structurally: MeasuredRRS.as_dict() is the
+    sole serializer and unconditionally nests RRSResult.as_dict(), whose mandatory
+    non-defaulted (and __post_init__-guarded, frozen) caveat field makes an RRS number
+    impossible to emit without its anti-anonymity caveat. The [AUDIT] test proves this on
+    the literal caveat text. The frozen RRSResult/ANTI_ANONYMITY_CAVEAT contract is
+    byte-preserved (additive diff only). The added code is pure-stdlib, fully inert
+    (no eval/exec/subprocess/pickle/yaml/network/secrets/filesystem), AX-001-compliant
+    (operates only over caller-supplied synthetic frozen objects), with no real-PII path
+    and no weak crypto / injection / hardcoded-secret surface.

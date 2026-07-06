@@ -1,0 +1,61 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S6-03
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  All 15 catalog patterns checked; zero SHOWSTOPPER/CATASTROPHIC/MAJOR findings.
+
+  TDD discipline (strict mode, config.tdd.discipline=strict): RED commit 0dfe825 introduces
+  tests/test_coi.py only (no production file) and fails at collection with
+  ImportError: cannot import name 'coi' from 'pii_anon_datasets.leaderboard' — the canonical
+  RED failure reason. GREEN commit d4e310f introduces coi.py + __init__.py wiring, completing
+  the pair. REFACTOR commit 2b88750 is a marker (no edits needed — code was verbatim-clean).
+  Triad sequence is correct and ordered.
+
+  Lint/type: ruff check coi.py tests/test_coi.py -> "All checks passed!" (exit 0 confirmed).
+  ruff check __init__.py -> clean. mypy --strict --follow-imports=silent coi.py -> "Success:
+  no issues found in 1 source file" (exit 0 confirmed). mypy on __init__.py likewise clean.
+
+  Test suite: pytest tests/test_coi.py -v -> 11 passed in 0.12s (4 logical tests; 2
+  parametrized: attestation-empty x4, recusal-affiliations x5; plus 1 integration, 1 property).
+  All test names carry fr_026/nfr_014/nfr004 tokens per §6 requirement.
+
+  Idiomatic: coi.py follows the established crosswalk.py non-strippable-disclaimer baseline
+  (module constant + non-defaulted-validated field + __post_init__ guard). `frozen=True`
+  dataclass is idiomatic for a value object. No unwrap()/expect()/non-null-assertion.
+  No `any`/Any/interface{} without comment. As-dict returns dict[str, object] — appropriate
+  for the mixed-type provenance payload.
+
+  Docstrings: coi.py carries a full module docstring (22 lines) cross-referencing FR-026,
+  gov-03, NFR-014, NFR-004, AX-002. CoIRecord class docstring is present. as_dict() has
+  an inline doc. __init__.py carries an updated module docstring including the S6-03 API.
+  Every public symbol (CoIRecord, NO_PREPUB_ATTESTATION, requires_recusal, as_dict) is
+  documented at the appropriate level.
+
+  Scope discipline: diff touches exactly 4 paths —
+    dev-assist-artifacts/04-development/02-stories/sprint-6/S6-03.md (story file)
+    src/pii_anon_datasets/leaderboard/coi.py (§8 NEW)
+    src/pii_anon_datasets/leaderboard/__init__.py (§8 MODIFIED)
+    tests/test_coi.py (§8 NEW)
+  store.py, policy.py, and all corpus/lattice/tags files are untouched. Zero scope creep.
+
+  Domain packs: developer-assistant.yaml.domain_packs = [] (none active). Pack-extension
+  protocol step skipped; built-in catalog only. No source_pack findings to emit.
+
+  Pure-stdlib: coi.py imports only __future__ and dataclasses. The AST guard test
+  (test_nfr004_coi_pure_stdlib) verifies this at runtime. No production module imports
+  a dev-dependency.
+
+  Non-determinism: no clock/RNG/filesystem usage outside tmp_path in tests. Test using
+  store round-trips uses pytest tmp_path fixture — deterministic and isolated.
+
+  No dead code observed. No inconsistent error wrapping. No lint-warning deny-bypass.
+
+review_time_seconds: 143
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

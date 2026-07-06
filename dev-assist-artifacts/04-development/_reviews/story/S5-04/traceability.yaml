@@ -1,0 +1,76 @@
+reviewer: dev-assist-development-traceability
+
+scope_id: S5-04
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  FR/NFR -> Story -> Test -> DC chain VERIFIED for S5-04 (spaCy + CoNLL exporters, iteration 1).
+
+  ID existence (zero SHOWSTOPPER):
+  - FR-024 exists — functional-requirements.md:44 ("CC0 corpus + standard exports … spaCy + CoNLL
+    formats … deterministic load", UC-12, MUST). Story §3 Primary claim is exact.
+  - NFR-004 exists — non-functional-requirements.md:13 ("Deterministic, provenanced generation";
+    byte-identical re-run; AX-002). Story §3 Supporting claim (pure-stdlib CoNLL + lazy spaCy) is the
+    determinism attribute NFR-004 governs.
+  - AX-001 / AX-002 are project axioms (traceability-matrix.md "Axiom -> NFR linkage": AX-pii-anon-001
+    no-real-PII -> NFR-006/015; AX-pii-anon-002 determinism -> NFR-004). The story cites them as axiom
+    references, not as FR/NFR IDs — valid, not finding #2.
+
+  Token-named test pinning (every declared ID -> a `pytest -k`-selectable test):
+  - `pytest -k fr_024` selects EXACTLY 7 (>= 7 floor): 4 in test_conll_export.py
+    (bio_tags_align_to_offsets, bilou_conversion, export_streams_not_materializes, deterministic)
+    + 3 in test_spacy_export.py (offsets_format, docbin_roundtrip, docbin_filters_overlaps).
+    All 7 PASS on feat/v2-scoring-harness.
+  - `pytest -k nfr004` selects EXACTLY 2 (>= 2 floor): test_nfr004_conll_pure_stdlib (AST guard banning
+    {random,time,uuid,datetime,secrets} from BOTH conll_format.py and conll_export.py) +
+    test_nfr004_spacy_export_imports_without_spacy (lazy-import contract + AST guard: spacy only inside
+    _require_spacy). Both PASS.
+  - Every test fn name embeds the token WITH an underscore (test_fr_024_*, test_nfr004_*) so `-k` selects;
+    confirmed by `grep -nE "def test_(fr_024|nfr004)"` (9 hits) and by running the -k subsets.
+  - Semantic match (finding #9 cleared): test bodies assert what the token claims — BIO/BILOU char-offset
+    alignment, one-shot streaming, byte-identical determinism, pure-stdlib AST guards, real DocBin
+    round-trip preserving ents+labels+offsets, and the lazy-spaCy RuntimeError naming the [baselines]
+    extra. No token-name/assertion mismatch.
+
+  FR-024 partition-by-artifact (no double-claim — finding #3/#12 cleared):
+  - S5-02 -> Parquet, S5-03 -> Croissant + dataset card, S5-04 -> spaCy + CoNLL, S5-05 -> CLI export verb.
+  - S5-01 references FR-024 only as the upstream column producer ("the Parquet exporter uses these
+    columns") — not a competing export-artifact owner. S5-04 is the sole owner of the spaCy/CoNLL artifact.
+    No two stories claim the same FR-024 sub-artifact.
+
+  Orphan scan (finding #1 cleared both directions):
+  - Nothing in §3 lacks a test: FR-024 (7 tests), NFR-004 (2 tests), AX-002 (determinism tests #4 + DocBin),
+    AX-001 (synthetic in-memory fixtures, local writes, no egress — asserted in _record docstrings).
+  - No test claims an out-of-scope ID: the only requirement tokens in either test file are
+    fr_024 / FR-024 / nfr004 / NFR-004 / AX-001 / AX-002 (grep-confirmed). No stray FR-/NFR- IDs.
+
+  DC linkage: §4 cites DC-12 (distribution) under parent epic S5-A. Matches traceability-matrix.md chain
+  note (PGO -> UC -> FR/NFR -> DC -> Story -> Test) and UC-12 -> FR-024. DC-12 is AGENT_SIMULATED, NOT
+  DIVERGED.
+
+  provisional_status cascade (finding #15 / DIVERGED-cascade cleared): source DC-12 = AGENT_SIMULATED
+  (not DIVERGED). Story §1 metadata + §4 both show provisional_status: AGENT_SIMULATED — matches the source.
+  No DIVERGED cascade obligation (no Pass-2-commitment-in-DoD requirement triggers).
+
+  Status + TDD SHAs: Status == REVIEW (§1). §12 lists RED 589567f / GREEN dd71da6 / REFACTOR 99f58f1; all
+  three `git branch --contains` to feat/v2-scoring-harness with the matching RED/GREEN/REFACTOR subjects.
+  GREEN subject embeds FR-024. RED-before-GREEN ancestry holds (589567f -> dd71da6 -> 99f58f1).
+
+  traceability tracking: this repo records per-story DC->Story->Test linkage via
+  _reviews/story/<id>/traceability.yaml (siblings S5-02, S5-03 present) — this artifact IS that row. The
+  central traceability-matrix.md is the Stage-2 forward map and already carries FR-024 under UC-12; no
+  central-row update is owed at the story gate. Finding #4 N/A.
+
+  Method note: `pytest --collect-only -q` on pytest 9.0.2 prints the compact "<file>: <N>" summary (not
+  per-node `path::test_name` lines); the 7/2 selection counts were therefore confirmed by RUNNING the -k
+  subsets (7 dots / 2 dots, all passing) and by the -v collect node-id listing, not by grepping the -q
+  summary.
+
+review_time_seconds: 240
+
+context_bounds_respected: true

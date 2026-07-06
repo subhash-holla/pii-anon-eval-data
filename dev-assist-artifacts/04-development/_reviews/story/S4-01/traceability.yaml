@@ -1,0 +1,85 @@
+reviewer: traceability
+gate: story
+story_id: S4-01
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+independence_attestation: >
+  Reviewed independently against the forward FR/NFR -> Story -> Test -> DC chain only.
+  No code authored or modified; read-only. Verdict reflects traceability scope, not
+  code quality, semantic FR validation beyond G/W/T, or NFR-threshold attainment.
+scope:
+  primary_requirements: [FR-004, NFR-002]
+  supporting: [AX-003, NFR-004, reidx-02]
+  source_dc: DC-09
+  provisional_status: AGENT_SIMULATED
+  owned_files:
+    - src/pii_anon_datasets/stats/intervals.py
+    - src/pii_anon_datasets/stats/__init__.py
+    - tests/test_clopper_pearson.py
+
+checks:
+  requirement_ids_exist:
+    status: PASS
+    fr_004: "functional-requirements.md:12 — '...a Wilson or Clopper-Pearson CI accompanies each metric (never bare Wald/point). (UC-02; MUST)'"
+    nfr_002: "non-functional-requirements.md:8 — '100% of published metrics carry n + a CI with the method named (Wilson/Clopper-Pearson); zero bare point estimates.'"
+  test_tokens_embedded:
+    status: PASS
+    fr_004_selector: "pytest -k fr_004 -> collected 7 / 6 selected / 6 passed (>0)"
+    nfr_002_selector: "pytest -k nfr_002 -> collected 7 / 1 selected / 1 passed (>0)"
+    note: "All 7 test functions carry an fr_004 or nfr_002 token; union covers the file."
+  symbol_docstrings_cite_requirements:
+    status: PASS
+    detail: >
+      intervals.py module docstring cites NFR-002; clopper_pearson_interval docstring
+      cites FR-004 (Beta-quantile bounds), NFR-002 (method=='clopper-pearson'), NFR-004
+      (pure stdlib), reidx-02 (integer guard). test module docstring cites FR-004/NFR-002.
+  contract_realized:
+    status: PASS
+    fr_004_clopper_pearson_option: "clopper_pearson_interval implemented as a second named CI method alongside wilson_interval; both exported from stats/__init__.py"
+    nfr_002_method_named: "Interval.method == 'clopper-pearson' surfaced via as_dict(); asserted in test_nfr_002_clopper_pearson_method_named"
+  name_says_x_asserts_y:
+    status: PASS
+    detail: "All 7 test bodies assert what their names declare (textbook bounds, bracketing, method name, integer guard, edges, CP-contains-Wilson, determinism). No mismatch."
+  dependency_done:
+    status: PASS
+    detail: >
+      Declared dep 'S1' (Interval + wilson_interval + _z). No sprint-1 story dir exists,
+      but development-log.md:10 records 'S1 Foundations ... DONE (this session)' incl.
+      'DC-09(partial) Wilson CI'. Deliverables present in code (Interval, wilson_interval,
+      _z, tests/test_intervals.py) and Wilson suite 6/6 green after the integer-guard was
+      factored into shared _require_int_counts (S1 behavior preserved).
+  surface_story_dc_audit:
+    status: N/A
+    detail: "Not a surface story (no surface/ path touched; 'surfaced via as_dict' is prose). dc_to_module_audit not applicable at this gate."
+  provisional_status_cascade:
+    status: PASS
+    detail: >
+      Source DC-09 is not DIVERGED (DIVERGED items are FR-015/016/027 -> DC-01/DC-14 per
+      D-implementation-ready-design.md:86). Story provisional_status AGENT_SIMULATED matches
+      source; §12 records a Pass-2 commitment (real CI on hardware) before the tag clears.
+      No DIVERGED cascade required.
+  traceability_matrix_row:
+    status: PASS
+    detail: "traceability-matrix.md:9 'UC-02 ... | FR-004, FR-029 | NFR-001, NFR-002, NFR-003, NFR-018 | MUST | AGENT_SIMULATED' covers both claimed IDs."
+
+evidence:
+  - "pytest -k fr_004 -q -> 6 passed (6 selected, 1 deselected)"
+  - "pytest -k nfr_002 -q -> 1 passed (1 selected, 6 deselected)"
+  - "pytest tests/test_clopper_pearson.py -q -> 7 passed"
+  - "pytest tests/test_intervals.py -q -> 6 passed (S1 Wilson preserved)"
+
+findings: []
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 0
+
+self_attestation: >
+  I reviewed only the forward-traceability chain for S4-01 within the dispatched bounds.
+  Both FR-004 and NFR-002 exist in 02-requirements/ with the exact 'Clopper-Pearson option'
+  and 'method named' contracts; both pytest token selectors select >0 and pass; docstrings
+  cite the requirements; the method=='clopper-pearson' contract is realized; the S1 dependency
+  is DONE; provisional_status cascade is correct; no name/assert mismatch. Zero MAJOR+ findings.

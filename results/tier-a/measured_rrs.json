@@ -1,0 +1,172 @@
+{
+  "candidate_set_size": 2000,
+  "n_paired": 2000,
+  "adversary_id": "offline-deterministic-v1",
+  "variants": {
+    "original_control": {
+      "rrs": {
+        "rrs": 0.21854399999999996,
+        "reid_recall": 0.884,
+        "reid_precision": 0.884,
+        "candidate_set_size": 2000,
+        "adversary_id": "offline-deterministic-v1",
+        "deterministic": true,
+        "caveat": "RRS is a relative re-identification-resistance metric under a specific, version-pinned synthetic adversary. It is NOT an anonymity threshold and MUST NOT be cited as evidence that output is 'anonymized' under GDPR/HIPAA."
+      },
+      "reid_recall_ci": {
+        "point": 0.884,
+        "low": 0.8692237823494589,
+        "high": 0.8973039253385389,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "reid_precision_ci": {
+        "point": 0.884,
+        "low": 0.8692237823494589,
+        "high": 0.8973039253385389,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "correct": 1768,
+      "n_targets": 2000,
+      "n_guesses": 2000,
+      "candidate_set_size": 2000,
+      "adversary_id": "offline-deterministic-v1",
+      "deterministic": true
+    },
+    "masked": {
+      "rrs": {
+        "rrs": 0.99999375,
+        "reid_recall": 0.0025,
+        "reid_precision": 0.0025,
+        "candidate_set_size": 2000,
+        "adversary_id": "offline-deterministic-v1",
+        "deterministic": true,
+        "caveat": "RRS is a relative re-identification-resistance metric under a specific, version-pinned synthetic adversary. It is NOT an anonymity threshold and MUST NOT be cited as evidence that output is 'anonymized' under GDPR/HIPAA."
+      },
+      "reid_recall_ci": {
+        "point": 0.0025,
+        "low": 0.0010683087284139143,
+        "high": 0.005839153316432755,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "reid_precision_ci": {
+        "point": 0.0025,
+        "low": 0.0010683087284139143,
+        "high": 0.005839153316432755,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "correct": 5,
+      "n_targets": 2000,
+      "n_guesses": 2000,
+      "candidate_set_size": 2000,
+      "adversary_id": "offline-deterministic-v1",
+      "deterministic": true
+    },
+    "generalized": {
+      "rrs": {
+        "rrs": 0.9999746063991874,
+        "reid_recall": 0.005,
+        "reid_precision": 0.005078720162519045,
+        "candidate_set_size": 2000,
+        "adversary_id": "offline-deterministic-v1",
+        "deterministic": true,
+        "caveat": "RRS is a relative re-identification-resistance metric under a specific, version-pinned synthetic adversary. It is NOT an anonymity threshold and MUST NOT be cited as evidence that output is 'anonymized' under GDPR/HIPAA."
+      },
+      "reid_recall_ci": {
+        "point": 0.005,
+        "low": 0.0027181808584985597,
+        "high": 0.009179695949941846,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "reid_precision_ci": {
+        "point": 0.005078720162519045,
+        "low": 0.002761011042803101,
+        "high": 0.00932382157975636,
+        "n": 1969,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "correct": 10,
+      "n_targets": 2000,
+      "n_guesses": 1969,
+      "candidate_set_size": 2000,
+      "adversary_id": "offline-deterministic-v1",
+      "deterministic": true
+    },
+    "pseudonymized": {
+      "rrs": {
+        "rrs": 0.999996,
+        "reid_recall": 0.002,
+        "reid_precision": 0.002,
+        "candidate_set_size": 2000,
+        "adversary_id": "offline-deterministic-v1",
+        "deterministic": true,
+        "caveat": "RRS is a relative re-identification-resistance metric under a specific, version-pinned synthetic adversary. It is NOT an anonymity threshold and MUST NOT be cited as evidence that output is 'anonymized' under GDPR/HIPAA."
+      },
+      "reid_recall_ci": {
+        "point": 0.002,
+        "low": 0.0007780273070510575,
+        "high": 0.005131351785076866,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "reid_precision_ci": {
+        "point": 0.002,
+        "low": 0.0007780273070510575,
+        "high": 0.005131351785076866,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "correct": 4,
+      "n_targets": 2000,
+      "n_guesses": 2000,
+      "candidate_set_size": 2000,
+      "adversary_id": "offline-deterministic-v1",
+      "deterministic": true
+    },
+    "llm_sanitized": {
+      "rrs": {
+        "rrs": 0.999996,
+        "reid_recall": 0.002,
+        "reid_precision": 0.002,
+        "candidate_set_size": 2000,
+        "adversary_id": "offline-deterministic-v1",
+        "deterministic": true,
+        "caveat": "RRS is a relative re-identification-resistance metric under a specific, version-pinned synthetic adversary. It is NOT an anonymity threshold and MUST NOT be cited as evidence that output is 'anonymized' under GDPR/HIPAA."
+      },
+      "reid_recall_ci": {
+        "point": 0.002,
+        "low": 0.0007780273070510575,
+        "high": 0.005131351785076866,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "reid_precision_ci": {
+        "point": 0.002,
+        "low": 0.0007780273070510575,
+        "high": 0.005131351785076866,
+        "n": 2000,
+        "method": "wilson",
+        "confidence": 0.95
+      },
+      "correct": 4,
+      "n_targets": 2000,
+      "n_guesses": 2000,
+      "candidate_set_size": 2000,
+      "adversary_id": "offline-deterministic-v1",
+      "deterministic": true
+    }
+  }
+}

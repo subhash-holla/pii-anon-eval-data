@@ -34,10 +34,16 @@ DETECTOR_REGISTRY: dict[str, str] = {
     "azure": "baselines.azure_baseline",
     "pii_anon": "baselines.pii_anon_baseline",
     "pii_anon_swarm": "baselines.pii_anon_swarm_baseline",
+    "null": "baselines.null_baseline",
+    "always_person_name": "baselines.always_person_name_baseline",
+    "oracle": "baselines.oracle_perfect_baseline",
 }
 
 CLOUD_DETECTORS: tuple[str, ...] = ("aws", "gcp", "azure")
-LOCAL_DETECTORS: tuple[str, ...] = tuple(n for n in DETECTOR_REGISTRY if n not in CLOUD_DETECTORS)
+SANITY_DETECTORS: tuple[str, ...] = ("null", "always_person_name", "oracle")
+LOCAL_DETECTORS: tuple[str, ...] = tuple(
+    n for n in DETECTOR_REGISTRY if n not in CLOUD_DETECTORS and n not in SANITY_DETECTORS
+)
 
 
 def _ensure_repo_on_path() -> None:

@@ -1,6 +1,65 @@
-# Migration Guide (≤ v2.0.0)
+# Migration Guide
 
-This guide covers schema migrations for the PII-Anon Evaluation Dataset: the latest **v1.3.0 → v2.0.0** breaking-schema migration, and the historical **v1.0.0 → v1.1.0** migration. Each section is self-contained — jump to the version pair you are upgrading from.
+This guide covers schema migrations for the PII-Anon Evaluation Dataset. Each section is self-contained — jump to the version pair you are upgrading from.
+
+---
+
+# v2.0.0 → v2.1.0
+
+This section covers the **additive honesty release** between PII-Anon v2.0.0 and **v2.1.0**. This is a non-breaking, additive-only migration — all v2.0.0 keys are preserved.
+
+## What changed
+
+| Area | v2.0.0 | v2.1.0 |
+|------|--------|--------|
+| `version` / `schema_version` | `2.0.0` | `2.1.0` |
+| `context_preservation.utility_metrics` | `semantic_similarity_*` | adds honest aliases `token_overlap_jaccard_*` + `_caveat` |
+| `context_preservation` | base fields only | adds `legal_category`, `residual_quasi_identifier`, `_caveat` |
+| `tier3_evaluation` | `re_identification_resistance_score` | adds alias `exposure_index_prior` + `_caveat` |
+| `privacy_risk` | base fields only | adds `_caveat` |
+| top-level (parquet column) | — | adds `reg_hipaa_phi_present` |
+| parquet file metadata | — | adds schema-level disclaimers (`ax_001`, `honesty_fixes_applied`, etc.) |
+
+### New honesty fields (additive — no existing keys removed)
+
+| Field | Location | Description |
+|-------|----------|-------------|
+| `token_overlap_jaccard_*` | `context_preservation.utility_metrics` | Honest alias for `semantic_similarity_*` (token-overlap Jaccard, not semantic embedding) |
+| `_caveat` | `context_preservation.utility_metrics` | Discloses that `semantic_similarity_*` is token-Jaccard, `coherence_preserved_*` is a constant, and `information_loss_ratio` is a prior |
+| `legal_category` | `context_preservation` | GDPR/legal classification for each anonymized variant |
+| `residual_quasi_identifier` | `context_preservation` | Flags variants that retain a partial identifier (quasi-identifier risk) |
+| `_caveat` | `context_preservation` | States that no variant is demonstrated anonymised under GDPR Recital 26 |
+| `exposure_index_prior` | `tier3_evaluation` | Honest alias for `re_identification_resistance_score` (heuristic prior, not a measured attack) |
+| `_caveat` | `tier3_evaluation` | Discloses the heuristic-prior nature of the RRS score |
+| `_caveat` | `privacy_risk` | Discloses that `k_anonymity_estimate` is a quasi-identifier-type-count proxy, not a measured k |
+| `reg_hipaa_phi_present` | top-level / parquet column | Mirrors `reg_hipaa_safe_harbor` for clarity |
+
+## Back-compatibility for legacy consumers
+
+Code written against the flat v2.0.0 shape can restore it per record via `compat.to_v2_record()`:
+
+```python
+from pii_anon_datasets.compat import to_v2_record
+
+for rec in load_dataset():
+    v20 = to_v2_record(rec)  # strips honesty additions; restores v2.0.0 shape
+```
+
+## Running the v2.0.0 → v2.1.0 migration
+
+The transform is deterministic and additive (existing keys preserved, new keys added):
+
+```bash
+# Migrate the canonical corpus in place (additive honesty layer)
+PYTHONPATH=src python scripts/v2_0_0_to_v2_1_0.py
+
+# Sample mode (first 200 records, writes a .v21.jsonl.gz without replacing the original)
+PYTHONPATH=src python scripts/v2_0_0_to_v2_1_0.py --limit 200 --no-replace
+```
+
+v2.0.0 is pinned at git tag `v2.0.0`. Publication metadata (Zenodo DOI, CITATION.cff) remain at v2.0.0 until a formal re-mint in v2.2.0.
+
+> **Distribution artifacts (disclosed):** the fully re-stamped `version`/`schema_version` = `2.1.0` records live in the **canonical jsonl source** (`src/pii_anon_datasets/{data,splits,subsets}/*.jsonl.gz` — what `load_dataset()` returns). The shipped `dist/*.parquet` and `dist/croissant.json` were given the additive honesty layer **in place** rather than re-exported from the migrated source, so their per-record `version` field and the croissant `version` still read `2.0.0` (matching the archived DOI) — with the honesty fields, `reg_hipaa_phi_present` column, and file-level caveat metadata added on top. A full re-export to stamp the dist artifacts at 2.1.0 is folded into the v2.2.0 release. This is intentional for the local/working v2.1.0 (no re-mint this phase).
 
 ---
 

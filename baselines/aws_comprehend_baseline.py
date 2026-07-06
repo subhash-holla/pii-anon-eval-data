@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib.util
 import os
 
+from pii_anon_datasets.baselines import cloud_languages
 from pii_anon_datasets.baselines.contract import AdapterSpan, coverage_of
 
 _REGION = os.environ.get("AWS_REGION", "us-east-1")
@@ -52,6 +53,13 @@ class _AwsComprehendAdapter:
     model_id = "aws-comprehend-detect-pii-entities"
     label_map = LABEL_MAP
     deterministic = False
+    # The dataset language code for the current run (the orchestrator sets this per shard before build());
+    # ``detect`` maps it to Comprehend's LanguageCode. AWS Comprehend PII is English-only, so in practice
+    # this stays "en" — but it is threaded for symmetry + the supports_language guard.
+    language = "en"
+
+    def supports_language(self, language: str) -> bool:
+        return cloud_languages.is_supported(self.name, language)
 
     def available(self) -> bool:
         has_lib = importlib.util.find_spec("boto3") is not None
@@ -76,7 +84,7 @@ class _AwsComprehendAdapter:
     def detect(self, text: str, model: object) -> list[AdapterSpan]:
         if not text:
             return []
-        resp = model.detect_pii_entities(Text=text, LanguageCode="en")
+        resp = model.detect_pii_entities(Text=text, LanguageCode=cloud_languages.api_code(self.name, self.language))
         out: list[AdapterSpan] = []
         for ent in resp.get("Entities", []):
             et = self.map_label(str(ent.get("Type", "")))

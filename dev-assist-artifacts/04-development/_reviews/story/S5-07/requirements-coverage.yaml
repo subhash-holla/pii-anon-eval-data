@@ -1,0 +1,130 @@
+reviewer: dev-assist-development-requirements-coverage
+
+scope_id: S5-07
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: coverage-S5-07-01
+    severity: MINOR
+    location: README.md:351
+    description: |
+      The README "Documentation" index still describes MIGRATION.md as the
+      "v1.0.0 to v1.1.0 migration guide". MIGRATION.md was retitled this story
+      to "Migration Guide (≤ v2.0.0)" and now leads with the v1.3.0 → v2.0.0
+      section. The index line understates the file's current coverage. This is
+      a description-text staleness, NOT an NFR-013 measured field
+      (record/annotation/entity-type/version are all correct), so it does not
+      block the gate or the NFR-013 close — but it is a residual doc-currency
+      nit a stricter doc-drift reader would flag.
+    suggested_resolution: |
+      Update README.md:351 to "MIGRATION.md — v1.3.0 → v2.0.0 (and historical
+      v1.0.0 → v1.1.0) migration guide". Outside the 6 pinned nfr_013 assertions,
+      so consider folding into the S5-07 iteration-2 doc-drift pass rather than
+      re-opening RED.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-013
+
+  - id: coverage-S5-07-02
+    severity: OBSERVATION
+    location: README.md:348
+    description: |
+      README.md:348 advertises "Pugh chart comparison with 10 competing
+      benchmarks", but COMPARISON.md (this story's remediated state) tabulates
+      9 competitors (Nemotron, AI4Privacy, Gretel, PII-Bench, TAB, PIILO, SPY,
+      BigCode + the docs/PUGH_CHART_ANALYSIS.md detail). Not an NFR-013 field
+      and not in scope of the pinned tests; surfaced only as an adjacent
+      currency nicety. (docs/PUGH_CHART_ANALYSIS.md is out of the bounded
+      context, so the "10" may be reconcilable there — left as OBSERVATION.)
+    suggested_resolution: |
+      Confirm the competitor count against COMPARISON.md + PUGH_CHART_ANALYSIS.md
+      and align the README descriptor (likely "9"). Non-blocking; iteration-2 nit.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-013
+
+notes: |
+  NFR-013 (documentation currency — zero current-state drift; Datasheet complete)
+  is VERIFIED at this story gate. Every clause of the requirement is satisfied and
+  machine-pinned. Independent verification (read-only) below; I did not rely solely
+  on the story's self-attestation.
+
+  CANONICAL TRUTH confirmed against the real source of truth:
+    - src/pii_anon_datasets/data/pii_anon.metadata.json:
+        version 2.0.0 · total_records 575,604 · total_annotations 2,486,438 ·
+        entity_types 63 · entity_categories 9 · languages 60 · evaluation_dimensions 7.
+    - taxonomy.ENTITY_TYPE_COUNT == 63 (derived from ENTITY_REGISTRY, CATEGORY_COUNT == 9).
+    (The dispatch brief's path data/pii_anon.metadata.json is stale; the live canonical
+     file is src/pii_anon_datasets/data/pii_anon.metadata.json — same values, noted for the record.)
+
+  IDENTICAL-VALUE check across the NFR-013 doc set (README/DATASHEET/COMPARISON/TAXONOMY/__init__):
+    - 575,604 present: README (title L3 + Overview L16 + Citation + train-vs-eval),
+      DATASHEET (Composition L22 + train-vs-eval), COMPARISON (Records row + scale chart + USP),
+      __init__ docstring. ✔
+    - 2,486,438 present: README Overview L17, DATASHEET L22. COMPARISON's competitor matrix
+      tabulates record-count + entity-type only (no annotation column) — §8b does not require the
+      annotation count in COMPARISON; README + DATASHEET (the docs §8b/§7 name for it) both carry it. ✔
+    - 63 entity types present + derived: README (title, Overview, "(9 categories, 63 types)",
+      per-category table 6/2/12/10/10/8/6/4/5, citation), DATASHEET (L22, L40), COMPARISON
+      (Entity-types row 63), TAXONOMY (title + canonical-set note + body), __init__ ("63 entity types
+      (canonical: taxonomy.ENTITY_TYPE_COUNT)"). The doc-test derives 63 from the registry, not a literal. ✔
+    - version 2.0.0 in every title/header: README L1, DATASHEET L1, COMPARISON L3, TAXONOMY L1,
+      __version__ from pyproject (single source). ✔
+
+  RESIDUAL-STALE-STRING scan (current-state contexts only; historical CHANGELOG/MIGRATION/version-history
+  legitimately preserved and excluded per the §7 negative clause):
+    - 117,752 / 919,000 / 913,983 / 914K : ZERO in current-state docs. The only 117K hit is
+      README:379 version-history ("v1.1.0 — … 117K records") = a historical changelog-style line, legitimate.
+    - 150K / 160K / 159K-records / 151,752 / 151K : ZERO in current-state docs.
+    - ~1.24M / 1.21M / 1,219,637 : ZERO.
+    - "65 types"/"65 entity types" : ZERO. (README's "prior 48/65/80 doc drift" is a record of the
+      reconciliation, not a current count.) "57 types"/"57 entity types" : ZERO (README:255 "57,414 …
+      across 63 entity types" is the diverse-PII-types record count, not an entity-type count).
+    - v1.1.0 / v1.3.0 in DATASHEET/COMPARISON header (first 12 lines, the test's title scope) : ZERO.
+      Remaining v1.x mentions are NEW-in-vX provenance labels / MIGRATION-pointer / version-history — legitimate.
+    - "159,891 (100%)" mis-frame : ZERO in current-state docs (reframed to "159,891 (27.8% — the Tier-3
+      evaluation substrate)" in README L25/L28; the historical "(100%)" survives only inside CHANGELOG [1.3.0]
+      and is correctly preserved).
+
+  COMPLETENESS clauses:
+    - MIGRATION.md: retitled "≤ v2.0.0"; has a real "v1.3.0 → v2.0.0" section mentioning tier3_evaluation,
+      content-addressed record_id (+ provenance.v1_3_0_record_id lineage), the canonical 63-type registry,
+      compat.to_v1_record(), and the S-PWR enrichment; historical v1.0.0→v1.1.0 guide preserved verbatim. ✔
+    - CHANGELOG.md: [2.0.0] carries the S-PWR sub-entry (575,604 + synthetic_lattice_enrichment + 710 cells
+      + NFR-018 PASS + tags); all historical [1.3.0]/[1.2.0]/[1.1.0]/[1.0.0] entries untouched. ✔
+    - TAXONOMY body == registry: independent recompute → 63 backticked tokens == the 63 ENTITY_REGISTRY
+      types, 0 extra / 0 missing; per-category HEADER counts (6/2/12/10/10/8/6/4/5) match
+      taxonomy.types_in_category() exactly. ✔
+    - Epistemic-honesty caveats SURFACED (axiom-compliance overlap, noted not owned): the §7 power sentence
+      is verbatim in README + DATASHEET; the ~72% synthetic_lattice_enrichment disclosure with
+      "synthetic-distribution power is not external validity" appears in README/DATASHEET/MIGRATION/CHANGELOG;
+      the 27.8% train-vs-eval note appears in README (×3) + DATASHEET + COMPARISON. ✔
+
+  TEST EVIDENCE (real local Python 3.10.6, real file reads — no simulation needed for doc assertions):
+    - `pytest tests/test_doc_drift.py -k nfr_013` → 6 passed in 0.11s (expected 6). ✔
+    - Full suite `pytest` → 263 passed, 1 skipped (matches §12; the 1 skip is pre-existing; +6 new, 0 regressions). ✔
+    - All 6 are nfr_013-tokened [PROPERTY-TEST]s pinning record-count, entity-count (registry-derived),
+      v2 titles, TAXONOMY==registry, MIGRATION v2 section, CHANGELOG S-PWR entry.
+
+  SCOPE-DISCIPLINE / GUARDRAILS: `git diff --stat 703c3e3` for this story touches exactly the 8 owned files
+  (+272/−77); corpus *.jsonl.gz, metadata.json, eval_lattice.json, scoring/stats code, and git tags are all
+  untouched. No domain packs active (developer-assistant.yaml domain_packs: []), so no pack-extension findings.
+
+  NFR-013 CLOSE RECOMMENDATION: YES — NFR-013 can be marked CLOSED for the current-state docs. Zero
+  current-state drift on the four measured fields across the named doc set; the invariant is now
+  machine-enforced (the doc-drift suite forbids the stale strings going forward). Caveat for the close
+  record: the dispatch brief and NFR-013 threshold name a Croissant file as part of the identical-value
+  set; Croissant is not in this story's bounded context (S5-07 owns the 7 prose docs + __init__, not the
+  Croissant/HF metadata — that is NFR-012's surface). NFR-013's documentation-prose drift is closed here;
+  if a Croissant file carries its own record/entity/version fields, the close should note that the
+  Croissant arm is covered under NFR-012 (Croissant loadability) at its own gate, not re-litigated here.
+
+  DIVERGED / Pass-2: provisional_status is AGENT_SIMULATED, NOT DIVERGED — no DIVERGED Pass-2 commitment
+  applies to this story. The only deferred verification is the real-CI re-run of the doc-drift suite,
+  already scheduled as Pass 2 at the sprint gate (§12); since these are deterministic file-read assertions
+  that pass locally, that is a confirmation re-run, not an open-threshold risk.
+
+review_time_seconds: 540
+
+context_bounds_respected: true

@@ -1,0 +1,147 @@
+# Traceability reviewer — STORY gate review
+schema: dev-assist/reviewer-finding/v1
+reviewer: traceability
+gate: story
+story_id: S3-07
+iteration: 1
+mode: read-only
+reviewed_at: "2026-05-29"
+reviewer_email: subhashholla23@gmail.com
+context_bounds_respected: true
+
+subject:
+  story_path: dev-assist-artifacts/04-development/02-stories/sprint-3/S3-07.md
+  primary_requirements: [FR-011, FR-012, FR-013]
+  supporting_requirements: [NFR-005, NFR-004, AX-004]
+  source_dc: DC-08
+  provisional_status_declared: AGENT_SIMULATED
+  owned_files:
+    - src/pii_anon_datasets/scoring/pseudonymization.py
+    - src/pii_anon_datasets/scoring/__init__.py
+    - tests/test_pseudonymization.py
+
+verdict: APPROVE
+finding_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 2
+  total: 2
+
+# ----------------------------------------------------------------------------
+# Verification evidence (all forward-trace checks PASSED)
+# ----------------------------------------------------------------------------
+checks_passed:
+  - id: fr-ids-exist
+    detail: >-
+      FR-011 (line 23), FR-012 (line 24), FR-013 (line 25) all defined in
+      02-requirements/functional-requirements.md. NFR-005 defined in
+      non-functional-requirements.md:14 (Anon/pseudo metric separation; AX-004; boolean).
+      DC-08 defined in 03-design/06-synthesis/D-implementation-ready-design.md:25
+      (Pseudonymization-integrity scorer → FR-011/012/013, MUST "moat").
+  - id: test-token-selection
+    detail: >-
+      `pytest -k fr_011 --co` selects 4; `-k fr_012` selects 2; `-k fr_013` selects 3 —
+      each >0. All 10 tests carry an fr_NNN/nfr0NN token. Full suite GREEN: 10 passed.
+  - id: docstrings-cite-requirements
+    detail: >-
+      Module docstring pseudonymization.py:1 cites "DC-08; FR-011/012/013; NFR-005/AX-004".
+      Symbol docstrings: Pseudonymizer Protocol cites FR-011 (:101); PseudonymizationReport
+      cites NFR-005/AX-004 (:165); KeyStateSeparationResult cites EDPB Art 4(5) (:142).
+      Test module docstring (:1) cites FR-011/FR-012/FR-013 + NFR-005/NFR-004.
+  - id: fr-012-genuinely-realized
+    detail: >-
+      Collision-type SEPARATION is real, not named-only. Runtime check: keyed-correct →
+      intended=1, crypto=0 (repeated "Alice" feature NOT penalized); colliding-faulty →
+      crypto=2 (distinct reals Alice+Bob → one token) with Wilson CI (n=4, method=wilson).
+      PseudonymizationReport carries NO total_collisions field; as_dict() never sums.
+      Asserted in test_fr_012_correct_deterministic_has_zero_crypto_collisions (:150) and
+      test_fr_012_faulty_pseudonymizer_flags_crypto_collisions (:168).
+  - id: fr-013-edpb-genuinely-realized
+    detail: >-
+      EDPB Art-4(5) key/state separation is real. Runtime: bare-md5 → rejoinable=True with
+      note citing "4(5)" and naming the real PseudonymGenerator; keyed-salted → rejoinable=False.
+      _keyless_rejoinable (:301) runs a closed-world dictionary attack over candidate plaintexts.
+      Referential integrity n_joins=1/broken=0; key-rotation verified across distinct epochs A/B
+      (test_fr_013_key_rotation :254 uses keyA/keyB instances). Asserted in
+      test_fr_013_key_state_separation_edpb_art4_5 (:273) and test_fr_013_referential_integrity_join_stable (:221).
+  - id: fr-011-threat-conditioned-genuinely-realized
+    detail: >-
+      Threat-conditioned reversal is real. Runtime: keyed → authorized=1.000 / unauthorized=0.000;
+      bare-md5 → unauthorized=1.000 (artifact-alone recovery). Rates are integer→Wilson Intervals
+      pinned to ThreatModel.model_id ("pseudo-threat-v1"). Asserted in
+      test_fr_011_reversal_rates_are_threat_conditioned (:187) and
+      test_fr_011_authorized_succeeds_unauthorized_fails_for_keyed (:205).
+  - id: no-name-says-x-asserts-y
+    detail: >-
+      Every fr_NNN-tokened test's body asserts the property its name claims. No semantic
+      mismatch between embedded ID and assertion. (Cross-checked all 10 test bodies.)
+  - id: dependencies-valid
+    detail: >-
+      §5 declares S3-01 must be DONE. S3-01.md Status = DONE; provisional_status AGENT_SIMULATED.
+      pseudonymization.py imports wilson_interval/Interval from ..stats.intervals (Interval exposes
+      point/n/method/as_dict — all test-referenced fields exist). Dependency satisfied.
+  - id: traceability-matrix-row
+    detail: >-
+      02-requirements/traceability-matrix.md:13 UC-06 pseudo-integrity row carries
+      FR-011, FR-012, FR-013 | NFR-005 | MUST | AGENT_SIMULATED. Matrix is explicitly
+      UC/epic-level at this stage (line 3: "DC → Story → Test in later stages"); no per-story
+      row is the maintained convention here. Story's FR/NFR claim is present in the matrix.
+  - id: provisional-status-cascade
+    detail: >-
+      Story provisional_status=AGENT_SIMULATED matches source DC-08 (AGENT_SIMULATED, NOT DIVERGED,
+      per §4 and matrix UC-06 row). No DIVERGED cascade applies — no Pass-2-in-DoD requirement triggered.
+      §12 correctly records AGENT_SIMULATED with Pass-2 (real CI) pending before DONE.
+  - id: surface-story-na
+    detail: >-
+      Not a surface story (owns scoring/ module files, not surface/). No dc_to_module audit
+      applies; no 1:1 surface mapping required.
+  - id: owned-file-scope-honored
+    detail: >-
+      git diff over RED..REFACTOR (49fbfba~1..0e92642) shows exactly 4 files changed:
+      S3-07.md, scoring/__init__.py, scoring/pseudonymization.py, tests/test_pseudonymization.py.
+      reidentification.py was NOT touched — confirms §8 owned-file scope and the §12 Deviation #1
+      claim (reidentification.py:69 bare `dict` is pre-existing, line 69 verified `def as_dict(self) -> dict:`).
+
+# ----------------------------------------------------------------------------
+# Observations (non-blocking; OUT of MAJOR+ band)
+# ----------------------------------------------------------------------------
+findings:
+  - id: TRACE-S3-07-OBS-1
+    severity: OBSERVATION
+    title: NFR-004 traced via test token but not listed in §3 Traced requirements
+    detail: >-
+      test_fr_011_nfr004_pseudonymization_imports_no_nondeterminism (:330) and the docstrings
+      trace NFR-004 (determinism/AX-002). §3 "Traced requirements" lists only NFR-005/AX-004 as
+      supporting; NFR-004 is realized and tested but not enumerated in §3. The §12 coverage table
+      DOES list NFR-004, so the trace is recoverable. Purely a §3-completeness nit.
+    locations:
+      - dev-assist-artifacts/04-development/02-stories/sprint-3/S3-07.md:31
+    suggestion: >-
+      Add "NFR-004 (import-purity/determinism)" to §3 Supporting for symmetry with the §12 table.
+    blocking: false
+  - id: TRACE-S3-07-OBS-2
+    severity: OBSERVATION
+    title: Matrix could gain an optional DC-08→Story/Test forward row
+    detail: >-
+      The matrix is UC-level by design at this stage, so this is not a defect. When the
+      DC→Story→Test layer is populated (per matrix line 3), a DC-08 → S3-07 →
+      test_fr_011/012/013_* row would complete the forward chain to the test granularity.
+    locations:
+      - dev-assist-artifacts/02-requirements/traceability-matrix.md:13
+    suggestion: >-
+      Optional: at sprint/epic gate, add a DC-08 row linking S3-07 + its fr_NNN tests.
+    blocking: false
+
+self_attestation:
+  independent_review: true
+  no_code_modified: true
+  evidence_executed_locally: true
+  statement: >-
+    I reviewed S3-07 solely for forward FR/NFR→Story→Test→DC traceability within my scope.
+    I read the story, requirements, design (DC-08), the owned module/tests/__init__, the
+    matrix, S3-01 status, and the RED..REFACTOR git diff. I ran the pytest -k token selections
+    and a runtime harness to confirm the moat properties are genuinely realized (not just named).
+    I did not assess test quality, idiom, semantic FR-coverage beyond G/W/T, or NFR thresholds
+    (other reviewers' scope). No files other than this review were created or modified.

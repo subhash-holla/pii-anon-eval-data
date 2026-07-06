@@ -1,0 +1,25 @@
+{
+  "a": "gliner",
+  "b": "aws",
+  "n_gold": 201880,
+  "recall_a": 0.7162869031107588,
+  "recall_b": 0.7281900138696256,
+  "delta_recall": -0.011903110758866742,
+  "delta_recall_ci95": [
+    -0.013845229839508574,
+    -0.010000866851595092
+  ],
+  "mcnemar": {
+    "b": 18577,
+    "c": 20980,
+    "statistic": 145.85544909876887,
+    "p_value": 1.3961825460849315e-33,
+    "method": "mcnemar-chi2-continuity",
+    "odds_ratio": 0.8854623450905624
+  },
+  "f2_a": 0.7337317498155572,
+  "f2_b": 0.7359667338850986,
+  "b_count_a_hit_b_miss": 18577,
+  "c_count_a_miss_b_hit": 20980,
+  "significant": true
+}

@@ -1,0 +1,63 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S6-02
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  TDD discipline: strict RED->GREEN->REFACTOR confirmed.
+    RED  3f5fbe2 — tests/test_leaderboard_policy.py + story CLAIMED->IN_PROGRESS; policy.py absent
+                   (ImportError at collection: "cannot import name 'policy'"). Correct RED: failure is
+                   the missing production module, not a test bug.
+    GREEN 5b6e19c — policy.py per §8b; 4 exports in leaderboard/__init__.py; 6/6 policy tests GREEN,
+                   full suite 302->308 passed, 0 regressions.
+    REFACTOR 14d9f8d — ruff-format + strict-mypy-clean (-> None, tmp_path: pathlib.Path, None-guard);
+                       no behaviour change; all counts stable.
+
+  Lint / type checks (re-run, not executor-reported):
+    ruff check src/pii_anon_datasets/leaderboard/policy.py tests/test_leaderboard_policy.py
+      -> All checks passed!
+    mypy --strict --follow-imports=silent src/pii_anon_datasets/leaderboard/policy.py
+      -> Success: no issues found in 1 source file
+    ruff check src/pii_anon_datasets/leaderboard/__init__.py
+      -> All checks passed!
+    mypy --strict --follow-imports=silent src/pii_anon_datasets/leaderboard/__init__.py
+      -> Success: no issues found in 1 source file
+  Note: ruff does not enforce E501 for this project (no [tool.ruff] section in pyproject.toml;
+  default ruff config skips line-length). Long lines in docstrings (~100-113 chars) are inside
+  docstring prose / RST cross-references and are ruff-accepted without a noqa suppressor.
+
+  Test quality: all 6 test names embed FR/NFR tokens (fr_023 x2, nfr_014 x3, nfr004 x1) per §6.
+  Tests are isolated (tmp_path tempdir only, no real FS/network/clock), deterministic, and fully
+  annotated (mypy --strict clean on the test file — exceeds S6-01 precedent).
+
+  Scope discipline: git diff d65a714..HEAD touches exactly the 4 files listed in §8 + §12 evidence:
+    - dev-assist-artifacts/04-development/02-stories/sprint-6/S6-02.md  (story doc, non-source)
+    - src/pii_anon_datasets/leaderboard/__init__.py                      (§8 MODIFIED)
+    - src/pii_anon_datasets/leaderboard/policy.py                        (§8 NEW)
+    - tests/test_leaderboard_policy.py                                   (§8 NEW)
+  store.py is untouched (git diff d65a714 HEAD -- store.py returns empty).
+
+  Public API surface: all 5 module-level symbols (PolicyConfig, Submission, PolicyDecision,
+  _prior_submitted, evaluate_submission) carry docstrings; the private helper _prior_submitted
+  has a one-line docstring. Module has a comprehensive module docstring covering load-bearing
+  contracts. __init__.py has a module docstring and all 4 exported policy symbols are in __all__.
+
+  Production-path safety: no bare except, no type:ignore, no noqa suppressors. No unwrap/
+  non-null-assertion equivalents. The only .get() calls are on Mapping[str, object] payloads
+  (type-safe; returns Optional which is handled by direct equality comparison — correct behaviour
+  when the key is absent, since None != any valid submitter string).
+
+  Implementation fidelity (§8b): policy.py is verbatim §8b with non-behavioral additions of
+  (a) module docstring and (b) ruff-format line-wrapping. All field names, defaults, signatures,
+  control order, and the published = allowed and publish_opt_in invariant are preserved exactly.
+
+  No domain-pack extensions active (domain-packs/ contains only _schema/ and examples/).
+
+review_time_seconds: 247
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

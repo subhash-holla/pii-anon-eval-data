@@ -36,12 +36,14 @@ ships the callable oracle (the seam); the live-harness integration is future wor
 The following ship their **v1 seam** now, with the full feature deferred to a v1.1 / real-data Pass-2:
 
 - **FR-015 / FR-016 — Coreference-chain & quasi-identifier-combination scoring.** v1 ships the slice
-  loaders (`pii_anon_datasets.subsets.slices`) with a non-strippable ~72%-formulaic low-power caveat; the
+  loaders (`pii_anon_datasets.subsets.slices`) with a non-strippable 79.2%-formulaic low-power caveat; the
   actual chain-as-a-unit / quasi-identifier-combination *scoring* is v1.1.
 - **FR-027 — Real-data validation correlation.** v1 ships the correlation harness
   (`pii_anon_datasets.validation.correlation`) with Kendall-τ / Spearman + seeded bootstrap + Bland-Altman;
   but the real i2b2-2014 / TAB data is not present, so the harness returns a `RealDataAbsent` sentinel and
   **never fabricates** a correlation. The synthetic→real transfer delta is a real-data Pass-2 deliverable.
+  See the public [External-Validity Protocol (FR-027)](docs/external-validity-protocol.md) for the
+  pre-registered statistical plan (τ\*=0.60, seed 20260603), verdict mapping, and activation flow.
 
 ## Honesty note
 

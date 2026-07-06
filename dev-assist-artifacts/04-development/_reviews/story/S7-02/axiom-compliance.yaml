@@ -1,0 +1,74 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S7-02
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: axiom-S7-02-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/scoring/adversary/payloads.py:135
+    description: |
+      Cosmetic axiom-adjacent residue (non-blocking): the module imports exactly
+      {__future__, base64, dataclasses} — `unicodedata` is NOT imported (the OCR
+      map is a fixed literal, so no Unicode lookup is needed). The module docstring
+      was correctly aligned to this in REFACTOR, but test_nfr004_payloads_pure_stdlib's
+      docstring still reads "only base64 + unicodedata + stdlib" (verbatim from the
+      §6 contract). This does NOT affect any axiom: the AST guard asserts only the
+      ABSENCE of the banned nondeterministic set {random,time,uuid,datetime,secrets},
+      which is empirically disjoint from the real import set — AX-002 (determinism)
+      and NFR-004 (pure-stdlib) both hold. The executor disclosed this as deviation #2
+      in §12. Purely a prose/comment naming nit, not a capability or determinism issue.
+    suggested_resolution: |
+      Optional (no axiom impact): drop "unicodedata" from the test #6 docstring to
+      match the actual import surface, OR leave as-is since §6 wording is contractual
+      and the assertion is unaffected. No code change required for axiom compliance.
+    references:
+      - dev-assist-artifacts/04-development/02-stories/sprint-7/S7-02.md#8b
+      - requirements.md#NFR-004
+      - requirements.md#AX-002
+
+notes: |
+  AX-001 (INERT synthetic fixtures) — THE CRUX — fully upheld and empirically verified
+  (span="Robin Vale", all 3 transforms):
+    * render() returns a plain `str` (e.g. 'Please note: Um9iaW4gVmFsZQ=='), never a
+      callable/code object — no executable carrier.
+    * Zero weaponized/active markers across the FULL surface (render + carrier_template +
+      obfuscated_span + disclaimer): no '<script', no 'ignore previous instructions',
+      no 'ignore all previous'. Carriers are benign multilingual "Please note/Nota/
+      Remarque/Hinweis/注意/ملاحظة: {span}" templates — detector-robustness fixtures,
+      NOT prompt injections.
+    * INERT_DISCLAIMER is non-strippable: __post_init__ rejects empty AND whitespace-only
+      (`.strip()`) disclaimers with ValueError (confirmed both paths). The constant states
+      "inert" + "never" + "agent-leakage" (NEVER marketed as agent-leakage scoring,
+      FR-017/AX-001). `python -m pytest -k fr_017 -q` => 5 passed.
+
+  AX-002 (determinism) / faithful transforms — upheld:
+    * base64 decodes back to the span (round-trip exact).
+    * zero_width strips U+200B back to the span (and U+200B is genuinely inserted).
+    * ocr is a fixed deterministic homoglyph map — a GENUINE transform, not identity
+      ('Robin Vale' -> 'R0b1n V@13'; 'oOlIiseaBgtz' -> '0011153@8972') — byte-identical
+      across repeated runs. No clock / RNG / network / FS-write anywhere.
+
+  FR-017 tuple — upheld: build_payloads(span) yields EXACTLY the 3 committed transforms;
+  tag tuple ("base64","ocr","zero_width") == INTENT_TAGS; each obfuscated_span != raw.
+
+  NFR-004 (pure-stdlib) — upheld: AST import set = {__future__, base64, dataclasses};
+  banned {random,time,uuid,datetime,secrets} fully disjoint. `-k nfr004 -q` => 1 passed.
+
+  Scope hygiene: diff fe9630b^..b8ad21f confined to the 3 §8-owned files (payloads.py NEW,
+  test_payloads.py NEW, __init__.py ADDITIVE export block), +275/-0; payloads.py ABSENT at
+  RED (fails for the right reason) — sibling oracle/base/adversary modules untouched.
+
+  No new capability is "authored" — these are side-effect/derivation fixtures over a span
+  (zero-authored-capabilities spirit respected). No user-visible AI-generated surface here,
+  so provenance/coverage-block axioms are not triggered by this story's slice.
+
+  AX-001 + AX-002 both verified empirically, not merely read. Zero SHOWSTOPPER/CATASTROPHIC/
+  MAJOR/MINOR. Full module: 6 passed.
+
+review_time_seconds: 270
+
+context_bounds_respected: true

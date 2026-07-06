@@ -1,0 +1,166 @@
+reviewer: traceability
+gate: story
+story_id: S4-02
+iteration: 1
+verdict: APPROVE
+context_bounds_respected: true
+independence_attestation: >
+  Reviewed independently against the forward FR/NFR -> Story -> Test -> DC chain only.
+  No code authored or modified; strictly read-only. Verdict reflects traceability scope
+  only -- not code quality, semantic FR validation beyond G/W/T, idiom, or NFR-threshold
+  attainment (those belong to code-quality / requirements-coverage / axiom-compliance /
+  performance-benchmark).
+self_attestation: >
+  I executed the two pytest token-selection commands myself and read the owned source,
+  tests, requirements, and design docs before forming a verdict. Findings below cite the
+  exact file:line evidence consulted.
+
+scope:
+  primary_requirements: [FR-002, NFR-002]
+  supporting: [AX-003, NFR-004]
+  source_dc: DC-09
+  provisional_status: AGENT_SIMULATED
+  owned_files:
+    - src/pii_anon_datasets/stats/paired.py
+    - src/pii_anon_datasets/stats/__init__.py
+    - tests/test_paired.py
+
+checks:
+  requirement_ids_exist:
+    status: PASS
+    fr_002: "functional-requirements.md:10 -- 'FR-002 -- Deterministic CI regression gate ... (UC-01; MUST)'. Also enumerated requirements-document.md:19."
+    nfr_002: "non-functional-requirements.md:8 -- 'NFR-002 -- CI on every metric ... 100% of published metrics carry n + a CI with the method named ... zero bare point estimates.' Also requirements-document.md:20."
+    note: >
+      FR-002's canonical title is 'Deterministic CI regression gate'. The story scopes
+      FR-002 to its *detector A/B regression* facet (paired McNemar). This is NOT an
+      orphan/invented claim: the design authoritatively splits FR-002 into two gates and
+      assigns the paired-McNemar A/B-regression gate to FR-002 explicitly (see
+      contract_realized). Both IDs are declared and exist. No SHOWSTOPPER.
+
+  test_tokens_embedded:
+    status: PASS
+    fr_002_selector: "python3 -m pytest tests/test_paired.py -k fr_002 -q -> 7 selected, 7 passed (>0)."
+    nfr_002_selector: "python3 -m pytest tests/test_paired.py -k nfr_002 -q -> 1 selected, 1 passed (>0)."
+    full_file: "tests/test_paired.py -> 8 passed."
+    detail: >
+      8 test fns total; all 8 carry an fr_002 or nfr_002 token. test_fr_002_nfr004_paired_
+      imports_no_uncontrolled_nondeterminism carries fr_002 (NOT nfr_002) so it counts under
+      the fr_002 selector -- both selectors are independently >0 as required.
+
+  symbol_docstrings_cite_requirements:
+    status: PASS
+    detail: >
+      paired.py module docstring cites FR-002 (line 1), NFR-002 (line 9), NFR-004 (line 13).
+      mcnemar_exact / mcnemar_chi2 docstrings name their methods and cite NFR-004 (closed-form
+      erfc, pure stdlib). paired_bootstrap_recall_delta docstring cites NFR-002 ('method ==
+      "paired-bootstrap"', line 125) and NFR-004 (local random.Random(seed), line 127).
+      test_paired.py module + per-test docstrings cite FR-002 / NFR-002 / NFR-004 / AX-002.
+
+  contract_realized:
+    status: PASS
+    fr_002_paired_not_ci_overlap: >
+      sampling-design.md:74 (S3.2 two-gate distinction, R10 refinement #1, load-bearing):
+      'Detector A/B regression gate (FR-002, separate): comparing two systems' recall on
+      shared gold MUST use a paired McNemar / discordant-pair test (not CI-overlap) ...
+      stats/power.py::required_discordant_pairs() sizes it.' Echoed in the NFR-018 R10
+      findings (findings-nfr-018-2026-05-29.md:27) and D-implementation-ready-design.md:68
+      (stats = 'paired (mcnemar/bootstrap)'). The realization in paired.py is McNemar exact
+      (two-sided binomial tail, math.comb) + Edwards continuity-chi2 (erfc closed form) over
+      the discordant pairs (b, c), plus a paired bootstrap on the recall-delta. A grep of
+      paired.py for overlap/wilson/clopper/independent returns ONLY docstring lines that
+      explicitly DISCLAIM the CI-overlap heuristic (line 4) -- no CI-overlap code path exists.
+      Contract met: paired test, discordant-pair semantics, not CI-overlap.
+    nfr_002_method_named: >
+      Every McNemarResult constructed (paired.py:75,79,95,101) sets method in
+      {mcnemar-exact, mcnemar-chi2-continuity, mcnemar-chi2}; both bootstrap Interval returns
+      (paired.py:134,155) set method='paired-bootstrap'. as_dict() round-trips method on both
+      result types. Asserted in test_nfr_002_paired_bootstrap_method_named (named method on the
+      Interval AND on both McNemar variants).
+
+  name_says_x_asserts_y:
+    status: PASS
+    detail: >
+      All 8 test bodies assert what their names declare: exact-binomial tail values
+      (0.001953125 / 1.0); continuity-chi2 = 2.7 with erfc p and the larger uncorrected 3.333;
+      b+c==0 -> (0.0, 1.0); odds_ratio b/c with None at c==0; bootstrap same-seed byte-identity
+      + different-seed divergence + global-RNG-irrelevance; percentile interval brackets the
+      observed delta with n==len(pairs) and low>0 on an A>B set; named methods; and the AST
+      determinism guard (banned-import disjointness + no module-global random.<fn>). No
+      semantic name/assert mismatch.
+
+  dependency_done:
+    status: PASS
+    detail: >
+      Declared dep 'S1' (stats/intervals.py Interval). development-log.md:10 records
+      'S1 Foundations ... DONE (this session)' incl. 'DC-09(partial) Wilson CI'. Interval
+      present and reused read-only; its frozen-dataclass field order
+      (point, low, high, n, method, confidence; intervals.py:20-26) matches the positional
+      construction in paired.py:134,155. No out-of-scope edit to intervals.py (story declares
+      it untouched; S4-01 just landed it / extended it, also DONE per _reviews/story/S4-01).
+      'Blocks: Stage 5' is forward-only, no gating impact here.
+
+  surface_story_dc_audit:
+    status: N/A
+    detail: >
+      Not a surface story: owned files are stats-core modules (Clean DC-09 core), no surface/
+      path touched, and no dc_to_module_audit script exists in the repo. 1:1 DC<->module
+      mapping audit not applicable at this gate.
+
+  provisional_status_cascade:
+    status: PASS
+    detail: >
+      Source DC-09 is AGENT_SIMULATED and NOT DIVERGED (S4-02.md:33; DIVERGED items are
+      FR-015/016/027 -> DC-01/DC-14 per D-implementation-ready-design.md:86). Story metadata
+      provisional_status: AGENT_SIMULATED (S4-02.md:17) matches the source DC. No DIVERGED
+      cascade obligation. S12 (S4-02.md:119-121) records the required Pass-2 commitment
+      (real CI on real hardware, orchestrator-scheduled) before DONE is ratified. Cascade OK.
+
+  traceability_row:
+    status: PASS
+    detail: >
+      No dev-side traceability.md exists in this workflow. The only matrix
+      (02-requirements/traceability-matrix.md) is a Stage-2 artifact that explicitly scopes
+      its chain to 'PGO -> UC -> FR/NFR -> (DC -> Story -> Test in later stages)' (line 3) and
+      carries no per-story rows. The immediately-prior story-gate precedent (S4-01,
+      _reviews/story/S4-01/traceability.yaml, APPROVE) added no matrix row and was not faulted
+      for it. Consistent with precedent: no row is owed by this story. Recorded as an
+      OBSERVATION, not a finding.
+
+findings:
+  - id: TRACE-S4-02-01
+    severity: OBSERVATION
+    title: "FR-002 canonical title is 'Deterministic CI regression gate'; story uses its paired-McNemar A/B-regression facet"
+    detail: >
+      A reader diffing the story's 'FR-002 (detector A/B regression -- paired McNemar)'
+      against functional-requirements.md:10 ('Deterministic CI regression gate') could suspect
+      a mismatched claim. It is NOT: the design's load-bearing two-gate split
+      (sampling-design.md:74 + findings-nfr-018-2026-05-29.md:27) assigns the paired-McNemar
+      A/B-regression gate to FR-002 by name, and FR-002 is a MUST. No action required; noted so
+      a future reader does not misread the title delta as Common-Finding #2 (declares an FR that
+      doesn't exist) or #9 (name embeds ID, body unrelated). Both are ruled out here.
+    location: "functional-requirements.md:10 ; sampling-design.md:74 ; dev-assist-artifacts/04-development/02-stories/sprint-4/S4-02.md:28"
+  - id: TRACE-S4-02-02
+    severity: OBSERVATION
+    title: "nfr_002 selector resolves to a single test"
+    detail: >
+      Only test_nfr_002_paired_bootstrap_method_named carries the nfr_002 token (selector = 1,
+      passing -- requirement '>0' met). NFR-002's named-method contract for the McNemar variants
+      is additionally asserted inside that same nfr_002 test, so coverage is not thin; flagged
+      only for visibility.
+    location: "tests/test_paired.py:114-124"
+
+summary:
+  major_plus_count: 0
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 2
+  rationale: >
+    All forward-trace checks PASS. Both IDs exist; both pytest token selectors are >0 and green;
+    symbol + test docstrings cite FR-002/NFR-002/NFR-004; the FR-002 paired contract (McNemar over
+    discordant pairs, not CI-overlap) is realized and design-sanctioned; every result carries a
+    NAMED method (NFR-002); no name/assert mismatch; dep S1 is DONE; provisional_status cascades
+    correctly from DC-09 (AGENT_SIMULATED, not DIVERGED) with a Pass-2 commitment logged; not a
+    surface story so the DC<->module audit is N/A; and no traceability row is owed (per the
+    Stage-2 matrix scope + S4-01 precedent). Zero MAJOR-or-above -> APPROVE.

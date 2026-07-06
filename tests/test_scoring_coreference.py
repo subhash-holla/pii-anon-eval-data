@@ -5,7 +5,7 @@ mentions is recovered by the detector (any-mention semantics — FR-015). ``scor
 aggregates the FRACTION of chains leaked + integer counts over a corpus slice.
 
 Both the per-chain ``ChainLeak`` and the aggregate ``CoreferenceScore`` carry a **non-strippable
-v1.1 LOW-POWER caveat** (~72% formulaic synthetic enrichment — epistemic honesty; AX-003): empty
+v1.1 LOW-POWER caveat** (79.2% formulaic synthetic enrichment — epistemic honesty; AX-003): empty
 -> ``ValueError``. Pure-stdlib + deterministic (NFR-004 / AX-002): test #5 is an AST guard pinning
 out {random, time, uuid, datetime, secrets}.
 """
@@ -80,7 +80,7 @@ def test_fr_015_caveat_non_strippable() -> None:
     """The v1.1 low-power caveat is non-strippable on BOTH dataclasses — [UNIT-TEST].
 
     ``ChainLeak`` and ``CoreferenceScore`` constructed with an empty caveat raise ``ValueError``;
-    ``COREFERENCE_CAVEAT`` states the ~72%-formulaic limited-power / external-validity honesty
+    ``COREFERENCE_CAVEAT`` states the 79.2%-formulaic limited-power / external-validity honesty
     caveat (FR-015 v1.1; AX-003).
     """
     with pytest.raises(ValueError):
@@ -91,7 +91,7 @@ def test_fr_015_caveat_non_strippable() -> None:
         CoreferenceScore(n_chains=0, n_leaked=0, fraction_leaked=0.0, caveat="")
 
     lowered = COREFERENCE_CAVEAT.lower()
-    assert "72%" in COREFERENCE_CAVEAT
+    assert "79.2%" in COREFERENCE_CAVEAT
     assert any(token in lowered for token in ("v1.1", "low", "limited"))
     assert any(token in lowered for token in ("external validity", "power"))
 

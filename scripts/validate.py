@@ -34,7 +34,7 @@ from pii_anon_datasets.taxonomy import (
     SENSITIVITY_CLASSES as VALID_SENSITIVITIES,
 )
 
-SCHEMA_VERSION = "2.0.0"
+SCHEMA_VERSION = "2.2.0"  # current content schema version (tracks pyproject; see check_version_sync.py Tier-1)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_INPUT = REPO_ROOT / "src" / "pii_anon_datasets" / "data" / "pii_anon.jsonl.gz"

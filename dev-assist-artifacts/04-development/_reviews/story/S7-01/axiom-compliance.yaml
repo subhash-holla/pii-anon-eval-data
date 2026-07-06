@@ -1,0 +1,53 @@
+reviewer: dev-assist-development-axiom-compliance
+scope_id: S7-01
+gate: story
+verdict: APPROVE
+findings: []
+notes: |
+  S7-01 PII-recognition oracle (FR-017; DC-10 bounded) — axiom slice clean. Iteration 1.
+  Domain packs: none active (developer-assistant.yaml domain_packs: []). Project-axiom
+  registry (dev-assist-artifacts/00-axioms/project-axioms.yaml) read: AX-pii-anon-001/002
+  apply to this story; their reviewer_hooks target security-sast + code-quality (not this
+  reviewer), but both invariants are nonetheless upheld below.
+
+  NON-STRIPPABLE DISCLAIMER (FR-017 scope guard — the load-bearing, non-strippable
+  "never agent-leakage scoring" guard): UPHELD.
+    - src/.../oracle.py:23-27 ORACLE_DISCLAIMER module constant present.
+    - oracle.py:43 OracleVerdict.disclaimer is a validated field defaulting to the
+      constant; oracle.py:45-47 __post_init__ raises ValueError on empty AND
+      whitespace-only (`not self.disclaimer.strip()` — verified live: "   " rejected).
+      Form matches story §8b authoritative reference impl (line 79: "module constant +
+      non-defaulted-validated field"; line 105 shows the defaulted-but-validated field).
+      The VALIDATION, not the absence of a default, is what makes it non-strippable.
+    - Disclaimer text carries all four required tokens (case-insensitive): "recognition",
+      "never", "agent-leakage", "FR-017".
+    - pytest tests/test_oracle.py -k fr_017 -q => 3 passed (recognize labeled verdicts;
+      disclaimer non-strippable; recognize_span point query).
+
+  RECOGNITION-ONLY (the DC-10-bounded scope invariant): UPHELD.
+    - recognize() -> OracleVerdict(labeled RecognizedEntity spans); recognize_span() ->
+      RecognizedEntity|None. Both only project gold annotations into labeled spans.
+    - grep oracle.py for agent-leakage|leak|scor|cross-turn|residual|live-harness: every
+      hit (lines 8-12 docstring, 22 comment, 25-26 constant) is the disclaimer's explicit
+      OUT-OF-SCOPE prose. Executable body (lines 29-EOF) contains ZERO scoring / leak /
+      cross-turn / residual / harness / measure symbols (AST+regex scan: NONE). The oracle
+      makes no agent-leakage scoring claim — the scope guard holds.
+
+  NFR-004 PURE-STDLIB: UPHELD.
+    - AST import scan: top-level imports == {__future__, collections, dataclasses}; banned
+      set {random, time, uuid, datetime, secrets} disjoint; nothing outside the allowlist.
+    - pytest -k nfr004 -q => 1 passed (the in-suite AST property test mirrors this).
+
+  AX-002 DETERMINISM: UPHELD. No clock/RNG (subset of NFR-004 evidence). recognize().as_dict()
+  byte-identical across two runs (verified live); pure sort-free projection of input order.
+
+  AX-001 SYNTHETIC-GOLD-ONLY: UPHELD. oracle.py carries no PII literals. Test fixture uses
+  fabricated "Robin Vale" + robin@example.test (RFC-2606 reserved .test TLD). Real-PII
+  heuristic scan (gmail/yahoo/etc. domains, SSN pattern, Luhn-prefix card) over oracle.py +
+  test_oracle.py => zero matches.
+
+  Full suite: pytest tests/test_oracle.py -q => 4 passed.
+  No SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR / OBSERVATION. No banned content-lint /
+  bare-claim prose in module or test docstrings.
+review_time_seconds: 300
+context_bounds_respected: true

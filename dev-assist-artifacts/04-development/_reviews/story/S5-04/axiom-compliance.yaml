@@ -1,0 +1,98 @@
+reviewer: dev-assist-development-axiom-compliance
+
+scope_id: S5-04
+
+gate: story
+
+verdict: APPROVE
+
+findings:
+  - id: axiom-S5-04-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/distribution/conll_export.py:46
+    description: |
+      The inline comment `f.write("\n")  # double blank line between documents`
+      describes the EXTRA separator write, but the literal effect is a SINGLE
+      "\n" appended between two records that each already end on a blank line —
+      yielding one blank line at the doc boundary (verified: live output ends
+      `line\tO\n\nGamma\tO`), the same shape as the inter-sentence separator,
+      NOT two blank lines. The story §8b "Deviation 1" already documents this
+      (verbatim-ported `record_to_conll` ends each record on one trailing "\n";
+      keeping the verbatim impl was the discipline-correct call). The comment
+      is carried over from the brownfield CLI and is now slightly misleading.
+      NO axiom is affected: AX-002 determinism holds (byte-identical across two
+      live runs, sha 9b855ba36299) and the thin-wrap invariant holds. This is a
+      comment-accuracy nit, logged for code-quality, not an axiom breach.
+    suggested_resolution: |
+      Optional (non-blocking): retune the comment to "extra blank-line separator
+      between documents (one written newline; record_to_conll already ends each
+      record on a blank line)" so the prose matches the single-"\n" write.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-004
+      - dev-assist-artifacts/00-axioms/project-axioms.yaml#AX-pii-anon-002
+
+notes: |
+  STORY-gate axiom slice for S5-04 (spaCy + CoNLL exporters, FR-024). Touched
+  axioms at this layer: AX-pii-anon-002 (deterministic generation) and
+  NFR-004 (pure-stdlib CoNLL core + lazy spaCy), with AX-pii-anon-001
+  (synthetic-only / no egress) as a boundary check. AX-pii-anon-003
+  (statistical power) and AX-pii-anon-004 (anon/pseudo metric separation) are
+  NOT triggered — this is an export-format story, no metric/score path. No
+  domain packs active (developer-assistant.yaml domain_packs: []); axioms read
+  from the project-authored registry. project-axioms.yaml reviewer_hooks for
+  AX-002 target dev-assist-development-code-quality (not me); the code-quality
+  reviewer owns the seed/RNG-leak hook — I verified the axiom OUTCOME here.
+
+  Independent verification (not relying on §12 self-report):
+
+  - NFR-004 / pure-stdlib (PASS). `pytest -k nfr004` on both files green (1+1).
+    AST guard (test #5) confirms integrations/conll_format.py AND
+    distribution/conll_export.py import NONE of {random,time,uuid,datetime,
+    secrets}. spaCy import isolated to `_require_spacy` (test #9 AST guard:
+    module-top import statements carry no spacy; bare `import spacy` only inside
+    _require_spacy; the function-local `from spacy.tokens import DocBin` is
+    reached only AFTER the guard gates the extra). I independently blocked spacy
+    at the builtins.__import__ level and cold-imported the module: import
+    succeeds, `to_spacy_offsets` runs pure-stdlib, and `export_spacy_docbin`
+    raises RuntimeError naming `pip install pii-anon-datasets[baselines]`.
+
+  - AX-002 determinism (PASS). Beyond test #4, I exported a multi-record corpus
+    TWICE live: CoNLL bio byte-identical (sha 9b855ba36299), bilou byte-identical,
+    and the real spaCy 3.8.3 DocBin byte-identical (sha ebdf82989600 both runs).
+    No clock/RNG anywhere (AST). spaCy offsets sorted by (start,end) — verified
+    out-of-order annotations come back sorted; one reused `spacy.blank` pipeline.
+
+  - thin-wrap discipline (PASS). AST of conll_export.py: defines ONLY
+    `export_conll`; references `record_to_conll`; ZERO tagging symbols
+    (_tokenize_simple/_assign_bio_tags/_bio_to_bilou/build_label2id absent from
+    both defs and name-refs). Only two call targets in the module: `open` and
+    `record_to_conll`. No `list()`/`len()` on the input — one-pass streaming;
+    test #3 drives a one-shot generator to exhaustion.
+
+  - DocBin correctness (PASS). test_fr_024_spacy_docbin_filters_overlaps drives
+    BOTH the misaligned path (char_span(...,"contract") -> None -> skipped, the
+    MISALIGNED mid-token span) AND the overlap path (SURNAME [5,10) overlapping
+    PERSON [0,10) dropped via spacy.util.filter_spans), asserting result
+    [(0,10,PERSON)] with no overlapping ents. Round-trip test #7 confirms ents +
+    labels + char offsets survive from_disk. RAN for real (spaCy 3.8.3 present).
+
+  - AX-001 (PASS). Egress grep over the 4 new modules + 2 tests: the ONLY hit is
+    the word "upload" inside a spacy_export.py docstring asserting "no ... HF
+    upload (AX-001)" — a negation, not a call site. Writes are LOCAL only
+    (conll: open(out_path,"w"); spacy: db.to_disk(out_path)). Fixtures are
+    synthetic in-memory literals (_record builders); no corpus/jsonl/gz reads;
+    the `load_dataset` token appears only in docstrings noting the brownfield
+    CLI side-effect was deliberately NOT ported.
+
+  §8b deviations reviewed: (1) single-blank doc separator vs the "double blank
+  line" comment — keeping the verbatim-ported impl is correct; logged above as
+  the lone OBSERVATION. (2) dropped unused `# type: ignore[import-untyped]`
+  (spaCy ships py.typed) — lint/type hygiene, axiom-neutral. Neither perturbs
+  an axiom. Full suite per §12: 242 passed, 1 skipped; the 9 new tests
+  (7 fr_024 + 2 nfr004) pass and the -k token counts match (4+3 / 1+1).
+
+  Zero SHOWSTOPPER / CATASTROPHIC / MAJOR. APPROVE.
+
+review_time_seconds: 360
+
+context_bounds_respected: true

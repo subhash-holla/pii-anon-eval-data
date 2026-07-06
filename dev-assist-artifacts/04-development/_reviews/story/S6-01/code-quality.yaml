@@ -1,0 +1,64 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S6-01
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  Lint (ruff check): All checks passed — zero warnings across
+  src/pii_anon_datasets/leaderboard/__init__.py,
+  src/pii_anon_datasets/leaderboard/store.py,
+  tests/test_leaderboard_store.py,
+  tests/test_cli.py.
+
+  Type check (mypy --strict --follow-imports=silent): Success — no issues found in 2 source files.
+
+  TDD discipline (strict): RED->GREEN->REFACTOR confirmed in git log 79b0b01..HEAD.
+    7ffbe06 [RED]     leaderboard-store tests (failing — leaderboard package absent at collection)
+    4bd0c2f [GREEN]   append-only hash-chained leaderboard store (FR-023 / NFR-014)
+    65153d7 [REFACTOR] lint/format-clean the leaderboard store (ruff + mypy --strict)
+  RED commit causes a genuine ImportError at collection — the package was absent, exactly as
+  designed. This is valid RED evidence: 0 of 7 test functions could be collected, let alone run.
+
+  Test run: 26 passed in 0.15 s — 12 from test_leaderboard_store.py (7 functions; #2 parametrized
+  over 6 forbidden keys = 6 cases) + 14 from test_cli.py. Zero failures, zero warnings.
+
+  All 7 test functions carry fr_023/nfr_014/nfr004 tokens in their names, satisfying the
+  FR/NFR-pinning requirement. Tests use tmp_path throughout — no real filesystem, no clock/RNG,
+  no network. Fully deterministic and isolated.
+
+  Idiomatic style: frozen dataclass + as_dict pattern is idiomatic and consistent with the §8b
+  spec. Canonical JSON (sort_keys=True, separators) for deterministic hashing is correct and
+  well-commented. File open mode "a" is explicitly commented "APPEND only — never rewrites prior
+  lines." Module and per-item docstrings present on every public surface: EventType, GENESIS_HASH,
+  LeaderboardEvent, LeaderboardStore, content_hash, as_dict, events, append, verify_chain, main.
+  Private _hash and _FORBIDDEN_PAYLOAD_KEYS have inline comments explaining their contract.
+
+  Scope discipline: the diff touches exactly
+  src/pii_anon_datasets/leaderboard/__init__.py (NEW — §8 owned),
+  src/pii_anon_datasets/leaderboard/store.py (NEW — §8 owned),
+  tests/test_leaderboard_store.py (NEW — §8 owned),
+  tests/test_cli.py (+16/−7 — justified successor edit, §12 §8b-deviations).
+  No production cli.py was touched. The test_cli.py change is minimal and correct: retires the
+  obsolete _until_s6 placeholder (whose encoded premise was "package absent"), flips the two
+  now-false assertions to the post-S6 truth (find_spec is not None; usage/verify in stderr), and
+  preserves the rc==2 / no-Traceback invariants that were already passing. Treated as
+  in-scope-by-succession per the briefing and §12 disclosure; no silent scope creep.
+
+  No unwrap()/expect()/non-null-assertion on production paths. No use of any/Any/interface{}.
+  No dead code observed. No dev-dependency imported at production runtime. No inconsistent error
+  wrapping. Error path in append raises ValueError with a clear FR-023 citation and the sorted
+  forbidden key list — informative without leaking gold data.
+
+  One minor observation (non-blocking): content_hash() and the ValueError raise in append are
+  both long single lines (~100 chars) that narrowly fit under the project's 119-col limit but
+  could benefit from wrapping for readability. ruff reports them as clean, so this is a style
+  note only.
+
+review_time_seconds: 98
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

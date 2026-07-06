@@ -1,0 +1,1631 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>CAP-02 R7 — Survey Analysis (aggregate of 6 R6 respondents) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="assessment-workflow">
+<h1>CAP-02 R7 — Survey Analysis (aggregate of 6 R6 respondents)</h1>
+<p><strong>Capability</strong>: CAP-02 — academically-sound, repeatable, reportable assessment <strong>workflow</strong> that runs the <strong>existing</strong> <code>pii-rate-elo</code> tournament against PII-Anon <strong>v2.0.0 / 575,604 / CC0 / <code>annotations</code></strong> over a <strong>powered, lattice-stratified sample (default)</strong> / <strong>full corpus (opt-in, citable)</strong> / <strong>smoke (fast)</strong> — with statistical/epistemic observability + reporting at every spine stage (<code>load → sample → run → score → rate → report</code>).
+<strong>Stage</strong>: assessment-workflow / 02-Requirements · R7 (survey aggregation) · companion to <code>prioritization-decisions.md</code>
+<strong>Date</strong>: 2026-06-01
+<strong>Vocabulary remap</strong>: FR = Benchmark/Assessment Capability; NFR = Quality Attribute; UC = Evaluation Scenario; Persona = <strong>assessment consumer</strong>.
+<strong>provisional_status</strong>: AGENT_SIMULATED — these 6 respondents (SRV-01 … SRV-06) are agent-simulated single-session personas administered the R5 <code>survey-instrument.md</code> (18 bundles B1–B18 + 2 baseline gates G-eng/G-norg). Agent-simulated research is <strong>NOT</strong> a substitute for real users; real-respondent administration + the first-contact P-dpo lens re-confirmation are Pass-2 musts. The trade-off thresholds the bundles reference are <strong>directional</strong> (R9 validates), not committed.</p>
+<blockquote>
+<p><strong>Scale note (carried from cycle-1).</strong> R6 ran at representative <strong>n=6</strong> (one per administered seat) rather than literal n=20 — single-session execution limit. The respondent plan called for ≥2 per persona stratified across all 6 personas + the 2 folded sub-archetypes; the orchestrator seated <strong>6 of the HIGH-cohort + sub-archetype lenses</strong> (3× P-mlnlp-researcher incl. methods-depth, 1× P-acad-deid, 1× P-tool-builder/OSS, 1× P-tool-builder/<code>P-tool-vendor</code>). <strong>The 3 MEDIUM personas (P-priv-eng, P-dpo/<code>P-complreviewer</code>, P-agentic-redteam) were NOT directly seated this round</strong> — a documented sampling gap (see §4). Their net-new bundles (B14 operating-point; B12/B16/B17 filing-grade+governance; the throughput-SLA route in T6) are therefore evaluated <strong>from the HIGH cohort&#39;s view of them</strong>, and the MEDIUM-owned signal is reconstructed from the R3 interview synthesis (INT-04/05/06) rather than re-elicited. This is flagged everywhere it changes a verdict.</p>
+</blockquote>
+<hr>
+<h2>0. Respondent roster (who answered, what they gate)</h2>
+<table>
+<thead>
+<tr>
+<th>Resp</th>
+<th>Persona seat (sub-archetype)</th>
+<th>Cohort</th>
+<th>Primary lens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>SRV-01</strong></td>
+<td>P-acad-deid (publication/reproducibility-first)</td>
+<td>HIGH</td>
+<td>Citation legitimacy; DOI gate; correlation-slice unlock</td>
+</tr>
+<tr>
+<td><strong>SRV-02</strong></td>
+<td>P-mlnlp-researcher (academic-publication track)</td>
+<td>HIGH</td>
+<td>Reviewer-acceptance methods depth; ACL/EMNLP/PETS</td>
+</tr>
+<tr>
+<td><strong>SRV-03</strong></td>
+<td>P-tool-builder (<strong>OSS maintainer</strong>)</td>
+<td>HIGH</td>
+<td>CI regression gate; held-out hygiene; citable neutral rank</td>
+</tr>
+<tr>
+<td><strong>SRV-04</strong></td>
+<td>P-tool-builder (<strong><code>P-tool-vendor</code></strong> gaming/threat-model)</td>
+<td>HIGH-seat / MEDIUM-priority</td>
+<td>Citable competitive rank; leaderboard hygiene; DOI for model card</td>
+</tr>
+<tr>
+<td><strong>SRV-05</strong></td>
+<td>P-mlnlp-researcher (methods-publication)</td>
+<td>HIGH</td>
+<td>Statistical-rigor spine; seed-variance</td>
+</tr>
+<tr>
+<td><strong>SRV-06</strong></td>
+<td>P-mlnlp-researcher (methods-depth)</td>
+<td>HIGH</td>
+<td>Fabricated-stats walk-away; Kendall-τ rank stability</td>
+</tr>
+</tbody></table>
+<p>All 6 seats fall in (or fold under) the <strong>3 HIGH gating personas</strong> — the acceptance + credibility cohort. Where all 6 converge on a MoSCoW class the signal is <strong>gating</strong>; where they split, the split is the persona-stratification the instrument was built to surface (Tier-A axis 3 is expected stratified, not uniform).</p>
+<hr>
+<h2>1. Tier B — MoSCoW aggregate (6 respondents)</h2>
+<table>
+<thead>
+<tr>
+<th>Bundle</th>
+<th>M</th>
+<th>S</th>
+<th>C</th>
+<th>W</th>
+<th>Modal</th>
+<th>Signal</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>B1</strong> audited-stats + <code>significance.py</code> quarantine <strong>[P1]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td><strong>UNANIMOUS</strong> — the walk-away trigger</td>
+</tr>
+<tr>
+<td><strong>B2</strong> seam→v2.0.0 + regression contract <strong>[P2]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td><strong>UNANIMOUS</strong></td>
+</tr>
+<tr>
+<td><strong>B3</strong> powered seeded sampler <strong>[P3]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td><strong>UNANIMOUS</strong> — net-new reason to exist</td>
+</tr>
+<tr>
+<td><strong>B4</strong> PowerMatrix verdict + named shortfall <strong>[P3]</strong></td>
+<td>5</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td>near-unanimous (SRV-04 vendor → S; precondition holds MUST)</td>
+</tr>
+<tr>
+<td><strong>B5</strong> run-type designation + AX-005 scoping</td>
+<td>2</td>
+<td>4</td>
+<td>0</td>
+<td>0</td>
+<td><strong>SHOULD</strong></td>
+<td>mechanism MUST (see D2); MoSCoW skew = sequencing, not de-scope</td>
+</tr>
+<tr>
+<td><strong>B6</strong> preset trio (default/opt-in/smoke)</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td><strong>UNANIMOUS</strong></td>
+</tr>
+<tr>
+<td><strong>B7</strong> engine/convergence/bridge reuse</td>
+<td>4</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td>HIGH-converge (acad-deid/vendor → S as consumers of the seam)</td>
+</tr>
+<tr>
+<td><strong>B8</strong> CI on every metric <strong>[AX5-1]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td><strong>UNANIMOUS</strong> + top Tier-A (cred 5.00 / aff 5.00)</td>
+</tr>
+<tr>
+<td><strong>B9</strong> paired test + Holm + 2 families <strong>[AX5-2]</strong></td>
+<td>4</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td>HIGH-converge; SRV-03/04 → S (accept shortly-after-CI)</td>
+</tr>
+<tr>
+<td><strong>B10</strong> anon/pseudo + contamination + seed-variance <strong>[NR]</strong></td>
+<td>0</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td><strong>SHOULD</strong></td>
+<td>unanimous SHOULD — but contains <strong>NR</strong> invariants (see D6)</td>
+</tr>
+<tr>
+<td><strong>B11</strong> pre-registration <strong>[AX5-4]</strong></td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td><strong>MUST→boundary</strong></td>
+<td><strong>3-way split</strong> — opt-in-rigor persona stratification (D3)</td>
+</tr>
+<tr>
+<td><strong>B12</strong> observability run-records + file provenance <strong>[AX5-4]</strong></td>
+<td>0</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td><strong>SHOULD</strong></td>
+<td>unanimous SHOULD from HIGH seats; <strong>MEDIUM-owned</strong> (D4)</td>
+</tr>
+<tr>
+<td><strong>B13</strong> honest leaderboard</td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td><strong>UNANIMOUS</strong> — the deliverable</td>
+</tr>
+<tr>
+<td><strong>B14</strong> operating-point view</td>
+<td>0</td>
+<td>0</td>
+<td>6</td>
+<td>0</td>
+<td><strong>COULD</strong></td>
+<td><strong>UNANIMOUS COULD from HIGH seats</strong> — MEDIUM-owned (D5)</td>
+</tr>
+<tr>
+<td><strong>B15</strong> convergence + honesty-flag bundle <strong>[AX5-3/5]</strong></td>
+<td>3</td>
+<td>3</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST→boundary</strong></td>
+<td>even split; contains the non-strippable caveat (D7)</td>
+</tr>
+<tr>
+<td><strong>B16</strong> reproducible manifest + self-verifying report <strong>[AX5-4]</strong></td>
+<td>6</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td><strong>UNANIMOUS</strong> — universal reproducibility commitment</td>
+</tr>
+<tr>
+<td><strong>B17</strong> hygiene + governance + crosswalk <strong>[AX5-6]</strong></td>
+<td>1</td>
+<td>2</td>
+<td>3</td>
+<td>0</td>
+<td><strong>COULD→boundary</strong></td>
+<td>persona-split; vendor seat (SRV-04) → MUST; <strong>MEDIUM-owned</strong> (D8)</td>
+</tr>
+<tr>
+<td><strong>B18</strong> DOI release</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td><strong>MUST→boundary</strong></td>
+<td><strong>3-way split</strong> — academic-citation MUST / SHOULD-elsewhere (D9)</td>
+</tr>
+<tr>
+<td><strong>G-eng</strong> pure-stdlib cores <strong>[GATE][NR]</strong></td>
+<td>1</td>
+<td>5</td>
+<td>0</td>
+<td>0</td>
+<td><strong>SHOULD</strong></td>
+<td>baseline gate — not de-scopable regardless (D10)</td>
+</tr>
+<tr>
+<td><strong>G-norg</strong> cycle-1 no-regression guardrails <strong>[GATE][NR]</strong></td>
+<td>5</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td><strong>MUST</strong></td>
+<td>baseline gate — not de-scopable regardless (D10)</td>
+</tr>
+</tbody></table>
+<p><strong>Modal tally across all 20:</strong> 14 MUST · 4 SHOULD · 2 COULD · 0 WON&#39;T. (Final committed split in <code>prioritization-decisions.md</code> differs — preconditions/gates/axiom-spine are adjudicated above raw modal where the locked brief or NR/GATE status requires it.)</p>
+<hr>
+<h2>2. Tier A — 3-axis aggregate (means over 6) — ranked by credibility-impact × persona-affinity</h2>
+<p>The reading rule (R5 §Tier-A): rank by <strong>credibility-impact × persona-affinity</strong>, sanity-check against effort. <strong>A precondition (B1–B4) or baseline gate scoring low on credibility-impact is a comprehension flag</strong> — none triggered (the lowest precondition cred is B4 = 4.50; gates are correctly low-affinity, high-cred-for-norg).</p>
+<table>
+<thead>
+<tr>
+<th>Rank</th>
+<th>Bundle</th>
+<th>cred-impact</th>
+<th>effort</th>
+<th>persona-aff</th>
+<th>cred×aff</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><strong>B8</strong> CI on every metric</td>
+<td>5.00</td>
+<td>2.00</td>
+<td>5.00</td>
+<td><strong>25.00</strong></td>
+<td>the cheapest credibility — unanimous top</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>B1</strong> audited-stats + quarantine</td>
+<td>5.00</td>
+<td>3.00</td>
+<td>4.67</td>
+<td><strong>23.33</strong></td>
+<td>P1; cred maxed</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>B3</strong> powered sampler</td>
+<td>4.83</td>
+<td>3.33</td>
+<td>4.67</td>
+<td><strong>22.56</strong></td>
+<td>P3; highest-effort of the top tier</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>B9</strong> paired test + Holm</td>
+<td>4.67</td>
+<td>3.00</td>
+<td>4.67</td>
+<td><strong>21.78</strong></td>
+<td>methods-depth spine</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>B16</strong> reproducible manifest + self-verifying report</td>
+<td>4.67</td>
+<td>3.00</td>
+<td>4.67</td>
+<td><strong>21.78</strong></td>
+<td>universal repro</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>B13</strong> honest leaderboard</td>
+<td>4.50</td>
+<td>2.00</td>
+<td>4.67</td>
+<td><strong>21.00</strong></td>
+<td>high impact-per-effort</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>B4</strong> PowerMatrix verdict + shortfall</td>
+<td>4.50</td>
+<td>2.33</td>
+<td>4.50</td>
+<td><strong>20.25</strong></td>
+<td>P3</td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>B2</strong> seam + regression contract</td>
+<td>4.83</td>
+<td>2.17</td>
+<td>4.17</td>
+<td><strong>20.14</strong></td>
+<td>P2; best impact-per-effort of preconditions</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>B5</strong> run-type designation</td>
+<td>4.00</td>
+<td>2.67</td>
+<td>4.00</td>
+<td><strong>16.00</strong></td>
+<td>the AX-005 enforcement mechanism</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>B11</strong> pre-registration</td>
+<td>4.00</td>
+<td>2.33</td>
+<td>4.00</td>
+<td><strong>16.00</strong></td>
+<td>high cred but boundary MoSCoW</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>B6</strong> preset trio</td>
+<td>3.83</td>
+<td>1.83</td>
+<td>4.17</td>
+<td><strong>15.97</strong></td>
+<td>unanimous MUST at low effort</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>B18</strong> DOI release</td>
+<td>3.83</td>
+<td>1.17</td>
+<td>4.17</td>
+<td><strong>15.97</strong></td>
+<td><strong>lowest effort of any bundle (1.17)</strong></td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>B15</strong> convergence + honesty-flag bundle</td>
+<td>4.00</td>
+<td>2.00</td>
+<td>3.67</td>
+<td><strong>14.67</strong></td>
+<td>carries non-strippable caveat</td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>B10</strong> anon/pseudo + contamination</td>
+<td>3.83</td>
+<td>2.00</td>
+<td>3.17</td>
+<td><strong>12.14</strong></td>
+<td>affinity dragged by clinical/methods seats</td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>G-norg</strong> no-regression guardrails</td>
+<td>3.83</td>
+<td>1.00</td>
+<td>2.83</td>
+<td><strong>10.86</strong></td>
+<td>gate — low affinity expected</td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>B12</strong> observability run-records</td>
+<td>3.50</td>
+<td>3.00</td>
+<td>3.00</td>
+<td><strong>10.50</strong></td>
+<td>MEDIUM-owned; HIGH seats rate mid</td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>B17</strong> hygiene + governance + crosswalk</td>
+<td>3.50</td>
+<td>3.67</td>
+<td>2.67</td>
+<td><strong>9.33</strong></td>
+<td><strong>highest effort (3.67)</strong>, lowest-affinity of features; MEDIUM-owned</td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>B7</strong> engine reuse</td>
+<td>3.17</td>
+<td>2.00</td>
+<td>2.83</td>
+<td><strong>8.97</strong></td>
+<td>consumed-not-built; low affinity (it is plumbing)</td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>B14</strong> operating-point view</td>
+<td>3.00</td>
+<td>2.17</td>
+<td>2.33</td>
+<td><strong>7.00</strong></td>
+<td><strong>lowest cred×aff</strong> — MEDIUM-owned, HIGH seats peripheral</td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>G-eng</strong> pure-stdlib cores</td>
+<td>2.83</td>
+<td>1.00</td>
+<td>2.00</td>
+<td><strong>5.67</strong></td>
+<td>gate — lowest, as expected</td>
+</tr>
+</tbody></table>
+<p><strong>Reads:</strong></p>
+<ul>
+<li>The <strong>academic-soundness spine sorts to the top exactly as designed</strong> — B8/B1/B3/B9/B16/B13/B4/B2 occupy ranks 1–8, all the preconditions + the CI/paired/repro stack.</li>
+<li><strong>B14 and B17 sort to the bottom of the <em>features</em></strong>, and <strong>only</strong> because the seats administered are HIGH-cohort. The Tier-A axis-3 stratification is <em>working</em>: these are the two bundles the R5 instrument explicitly predicted would be MEDIUM-persona-core / HIGH-peripheral. Their low rank here is <strong>not</strong> a de-scope signal — it is the absence of the seat that owns them (see §4 + D5/D8).</li>
+<li><strong>B18 is the cheapest bundle to ship (effort 1.17)</strong> with a high affinity for the academic seats — an easy MUST-for-the-citation-cohort even though its MoSCoW splits 2/2/2.</li>
+</ul>
+<hr>
+<h2>3. Tier C — forced trade-off outcomes (6 respondents)</h2>
+<table>
+<thead>
+<tr>
+<th>Pair</th>
+<th>Outcome</th>
+<th>Tally</th>
+<th>Reading</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>T1</strong> — default-mode labelling vs filing-grade-full-corpus-first</td>
+<td><strong>B6</strong></td>
+<td><strong>6–0</strong></td>
+<td>UNANIMOUS: powered-representative-default-always-power-labelled is the v0.1 priority; full-corpus is the opt-in citable upgrade. Confirms DF-1&#39;s locked default holds.</td>
+</tr>
+<tr>
+<td><strong>T2</strong> — AX-005 universality vs run-type scoping</td>
+<td><strong>B5</strong></td>
+<td><strong>6–0</strong></td>
+<td>UNANIMOUS: scope enforcement by run-type + <strong>suppress</strong> inferential outputs on smoke/dev. Confirms the §4#2 reconciliation — &quot;a half-formed CI on a dev run is worse noise than no CI.&quot;</td>
+</tr>
+<tr>
+<td><strong>T3</strong> — audited-stats quarantine vs powered sampler (which precondition first)</td>
+<td><strong>B1</strong></td>
+<td><strong>6–0</strong></td>
+<td>UNANIMOUS: fabricated statistics are the higher walk-away trigger under sequencing pressure — &quot;I can tolerate a cruder sample before a wrong test.&quot; Both stay MUST; B1 is must-land-<strong>first</strong>.</td>
+</tr>
+<tr>
+<td><strong>T4</strong> — paired-test depth vs operating-point view</td>
+<td><strong>B9</strong></td>
+<td><strong>6–0</strong></td>
+<td>UNANIMOUS: paired-test rigor is the reviewer-acceptance gate; operating-point is secondary <strong>for these seats</strong>. (Result is HIGH-cohort-biased — see §4: P-priv-eng would pull toward B14.)</td>
+</tr>
+<tr>
+<td><strong>T5</strong> — DOI vs leaderboard hygiene + governance</td>
+<td><strong>SPLIT 3–3</strong></td>
+<td>B18 ×3 (SRV-01/02/05) / B17 ×3 (SRV-03/04/06)</td>
+<td><strong>Clean persona-split, exactly as the instrument predicted.</strong> The publication-track seats (acad-deid + 2 methods-publication) pick the DOI gate; the builder/vendor + methods-depth seats pick hygiene/governance. Confirms <strong>both are persona-stratified, neither universal</strong>. → adjudicated D8/D9.</td>
+</tr>
+<tr>
+<td><strong>T6</strong> — provenance reproducibility vs throughput-SLA pre-gate</td>
+<td><strong>B12+B16</strong></td>
+<td><strong>6–0</strong></td>
+<td>UNANIMOUS: byte-reproducible provenance is the binding need; the oracle throughput SLA is correctly <strong>off</strong> the CAP-02-v0.1 critical path. (No red-team seat present to dissent — consistent with R3 INT-06 being the lone throughput voice.)</td>
+</tr>
+<tr>
+<td><strong>T7</strong> — regulatory crosswalk: author now vs defer</td>
+<td><strong>SPLIT 3–3</strong></td>
+<td>author ×3 (SRV-01/02/04) / defer ×3 (SRV-03/05/06)</td>
+<td><strong>Genuine fork.</strong> Vendor (SRV-04, enterprise-GDPR/HIPAA defensibility) + acad-deid (legal framing) + one methods seat → author; the OSS-maintainer + two methods-depth seats → defer (&quot;no bearing on my model-card / methods-reproducibility bar&quot;). R3 had resolved this AUTHOR via INT-04/05 (the MEDIUM compliance personas) — <strong>the seats that most want the crosswalk were not administered this round.</strong> → adjudicated D8.</td>
+</tr>
+</tbody></table>
+<p><strong>Discriminating pairs:</strong> T3 and T4 are the most discriminating for detecting methods-credibility-primary vs operational-utility-primary respondents (per the instrument&#39;s own design note) — both went unanimously to the methods-credibility option, which is the expected signature of an all-HIGH-cohort round. T5 and T7 are the two genuine live forks the aggregation must hand to R7 adjudication, and both split cleanly on the publication-vs-tooling/compliance axis.</p>
+<hr>
+<h2>4. Cross-persona patterns + the sampling gap</h2>
+<p><strong>Near-unanimous MUSTs (low variance — the consensus core, safe to lock):</strong>
+B1, B2, B3, B6, B8, B13, B16 (all <strong>6/6 MUST</strong>), plus B4 (5/6). These are the precondition spine (P1/P2/P3 minus the B5 mechanism) + the CI + the reproducible-manifest + the leaderboard deliverable. <strong>No respondent ranked any precondition (B1–B4) low on credibility-impact</strong> — zero comprehension flags; the precondition framing in the instrument worked.</p>
+<p><strong>Clean persona-splits (high variance, expected — this is how persona-stratified priority is detected):</strong></p>
+<ul>
+<li><strong>DOI (B18):</strong> MUST for the publication-track seats (SRV-01/02), C/S for the tooling/methods-depth seats. Tier-C T5 confirms (DOI ×3 from the same publication cluster). → <strong>persona-stratified: MUST for P-acad-deid citation cohort, SHOULD elsewhere</strong> (matches R3 §4#5 + <a class="trace-link" href="audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a> priority).</li>
+<li><strong>Governance/crosswalk (B17):</strong> MUST <strong>only</strong> for the <code>P-tool-vendor</code> seat (SRV-04, whose gaming incentive <em>is</em> the forcing function for hygiene), C/S for everyone else. Tier-C T5 confirms (hygiene ×3). → <strong>persona-stratified; MEDIUM-owned</strong> (the assurance/procurement personas that gate on it were not seated).</li>
+<li><strong>Operating-point (B14):</strong> unanimous <strong>COULD</strong> from the 6 HIGH seats — but this is exactly the bundle R5 flagged as P-priv-eng-core / HIGH-peripheral, and <strong>no P-priv-eng seat was administered</strong>. The R3 synthesis records it as a confirmed real burn (INT-04: F1=0.91 → precision 0.71 @ recall 0.93 → 34k FPs/10k entities → 3× license cost). → <strong>do NOT read the 6× COULD as a de-scope; it is a missing-seat artifact</strong> (D5).</li>
+<li><strong>Pre-registration (B11):</strong> 3-way split (2M/2S/2C). The seats that gate publication/leaderboard rate it M; the OSS/vendor seats that iterate fast rate it C (&quot;overhead for iterative dev cycles&quot;). This <strong>is</strong> the opt-in-rigor stratification DF-2 resolved — the mechanism is MUST, the universality is not (D3).</li>
+</ul>
+<p><strong>The sampling gap (load-bearing — carried to Pass-2 + flagged on every affected verdict).</strong>
+This round seated <strong>6 HIGH-cohort / sub-archetype lenses</strong> and <strong>0 of the 3 MEDIUM personas</strong> (P-priv-eng, P-dpo/<code>P-complreviewer</code>, P-agentic-redteam). The R5 respondent plan explicitly warned the MEDIUM personas &quot;each own a net-new bundle the HIGH cohort under-weights … those signals must <strong>not</strong> be averaged out.&quot; Consequently:</p>
+<ul>
+<li><strong>B14</strong> (P-priv-eng), <strong>B12/B16/B17</strong> filing-grade+governance (P-dpo/<code>P-complreviewer</code>), and the <strong>T6 throughput route</strong> (P-agentic-redteam) are evaluated <em>only from the HIGH cohort&#39;s view</em>. Their MoSCoW/Tier-A/Tier-C signal this round is <strong>systematically deflated</strong> for the MEDIUM-owned items.</li>
+<li>R7 adjudication therefore <strong>does not let the HIGH cohort&#39;s under-weighting de-scope a MEDIUM-owned bundle</strong> — it falls back to the R3 interview synthesis (INT-04/05/06), which directly elicited those personas, plus the FR/NFR author&#39;s MUST/SHOULD assignments. This is the single biggest caveat on this round&#39;s signal.</li>
+<li>This compounds the <strong>inherited</strong> R2/R3 caveat that the <strong>P-dpo / assurance lens is first-contact</strong> (never re-confirmed) — so B12/B16/B17/B14 carry a <em>double</em> &quot;real-user-needed&quot; flag into Pass-2.</li>
+</ul>
+<p><strong>Trade-off discriminators:</strong> T5 (3–3) and T7 (3–3) are the decisive persona-splitters; T1/T2/T3/T4/T6 were unanimous (6–0), confirming the precondition spine + the run-type reconciliation + the off-critical-path routing of throughput are <strong>not</strong> in tension for the gating cohort.</p>
+<p><strong>Recurring qualitative refinements (→ R9 / Design):</strong></p>
+<ol>
+<li><strong>The real-data correlation slice (cycle-1 <a class="trace-link" href="../../01-discovery/04-use-cases.html#uc-13" data-trace-id="UC-13" aria-label="Trace UC-13 — — Real-data validation correlation (vs i2b2/TAB) · X (v1">UC-13</a>, vs i2b2-2014/TAB) is named by 4 of 6 respondents as the single citation unlock not covered by any of the 18 bundles</strong> — SRV-01 (&quot;the synthetic-ceiling unlock but appears nowhere in the 18 bundles&quot;), SRV-02 (&quot;highest-leverage credibility unlock not covered … carry as a roadmap item with a named stub&quot;), SRV-05/06 (correlation-study slice). <strong>Strongest convergent missing-capability signal of the round.</strong> It is already a named open item (Discovery Open Item 11, <a class="trace-link" href="audit-report.html#fr-049" data-trace-id="FR-049" aria-label="Trace FR-049 — — STRENGTHENED (undefined &quot;worst-language / low-resource&quot;;…">FR-049</a> &quot;named-and-pending&quot; flag), out-of-band / not v0.1-blocking — but R7 must surface it as an <strong>explicit COULD-scope named stub + carried open item</strong>, not leave it implicit. (See <code>prioritization-decisions.md</code> D11.)</li>
+<li><strong>Multi-seed Kendall-τ rank-stability has no standalone bundle</strong> — SRV-05 and SRV-06 both note seed-variance / Kendall-τ is folded inside B8/B10 prose with no first-class scoring surface, so it risks under-weighting; SRV-06 wants an explicit gate on whether seed-variance must be measured before a <code>leaderboard-submission</code> run-type is permitted. → Design granularity item (it is covered by <a class="trace-link" href="audit-report.html#nfr-024" data-trace-id="NFR-024" aria-label="Trace NFR-024 — — STRENGTHENED (multi-seed minimum unpinned)">NFR-024</a>/<a class="trace-link" href="audit-report.html#fr-043" data-trace-id="FR-043" aria-label="Trace FR-043 — — STRENGTHENED (multi-seed minimum unpinned; &quot;never `unknow…">FR-043</a> <code>seed_variance_scope</code>, but the <em>gate-interaction</em> with B11 pre-reg is underspecified).</li>
+<li><strong>The submission interface itself is unspecified</strong> — SRV-04 (vendor): how does a system get submitted (upload/API/PR)? B13/B17 presume a submission pathway that no bundle defines. → routes to Design (not a missing FR per se, but a named gap).</li>
+<li><strong>CLI ergonomics on run-type names</strong> — multiple respondents suggest <code>leaderboard</code> as an alias for <code>leaderboard-submission</code>; SRV-06 finds <code>dev</code> mildly ambiguous (suggests <code>pre-screen</code>/<code>exploratory</code>). → finalizable in Design (run-type names are explicitly Design-deferred per <a class="trace-link" href="audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a>).</li>
+<li><strong>GitHub Actions example workflow</strong> calling the three presets (SRV-03) — a first-class CI-integration story for the OSS-maintainer seat. → Design/docs.</li>
+</ol>
+<hr>
+<h2>5. AX-pii-anon-005 confirmation (closing item)</h2>
+<p><strong>Verdict: CONFIRM as a binding CAP-02 axiom. 6 of 6 = &quot;Yes&quot; (one &quot;Yes-with-change&quot;).</strong></p>
+<table>
+<thead>
+<tr>
+<th>Resp</th>
+<th>Vote</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SRV-01</td>
+<td>Yes</td>
+<td>&quot;the six elements collectively define what &#39;published metric&#39; means … every element is necessary for reviewer acceptance.&quot;</td>
+</tr>
+<tr>
+<td>SRV-02</td>
+<td>Yes</td>
+<td>endorses the run-type-scoped enforcement model as the right reconciliation of the universality tension.</td>
+</tr>
+<tr>
+<td>SRV-03</td>
+<td>Yes</td>
+<td>&quot;every result I publish needs a CI and a paired test; AX-005 as scoped by run-type is correct.&quot;</td>
+</tr>
+<tr>
+<td>SRV-04</td>
+<td><strong>Yes-with-change</strong></td>
+<td>confirm, <strong>and</strong> make element (6) — contamination disclosure + signed held-out-non-exposure attestation — <strong>mandatory for every <code>leaderboard-submission</code> run-type, not just <code>filing-grade</code>.</strong></td>
+</tr>
+<tr>
+<td>SRV-05</td>
+<td>Yes</td>
+<td>&quot;every element maps directly to the reviewer-acceptance bar … run-type-scoped enforcement is the right reconciliation.&quot;</td>
+</tr>
+<tr>
+<td>SRV-06</td>
+<td>Yes</td>
+<td>&quot;CI + paired test + convergence + provenance + non-strippable caveat + contamination disclosure is the exact bar ACL/EMNLP reproducibility checklists now require.&quot;</td>
+</tr>
+</tbody></table>
+<p><strong>Adopted sharpening (from SRV-04, the gaming/threat-model seat):</strong> element (6) contamination disclosure + signed attestation binds <strong><code>leaderboard-submission</code> AND <code>filing-grade</code></strong> (not filing-grade only). This is consistent with <a class="trace-link" href="audit-report.html#fr-051" data-trace-id="FR-051" aria-label="Trace FR-051 — — STRENGTHENED (&quot;genuinely held out&quot; + &quot;signed attestation&quot;…">FR-051</a>/<a class="trace-link" href="audit-report.html#nfr-048" data-trace-id="NFR-048" aria-label="Trace NFR-048 — — PASS">NFR-048</a>, which already require the attestation for &quot;leaderboard/published entries&quot; — the survey confirms it should not be narrowed to filing-grade. <strong>No change to the 6-element core or the run-type-bound / manifest-universal enforcement split.</strong> → AX-005 recorded CONFIRMED in <code>prioritization-decisions.md</code>.</p>
+<p><strong>Run-type names:</strong> accepted as directionally correct (<code>smoke</code> / <code>dev</code> / <code>leaderboard-submission</code> / <code>filing-grade</code>); aliasing (<code>leaderboard</code>) and the <code>dev</code> rename are Design-deferred (<a class="trace-link" href="audit-report.html#fr-038" data-trace-id="FR-038" aria-label="Trace FR-038 — — STRENGTHENED (deferred names left the test undecidable)">FR-038</a> says names finalize in Design). No blocking objection.</p>
+<hr>
+<h2>6. Distribution check</h2>
+<p>Modal MoSCoW across the 18 feature bundles (excluding the 2 baseline gates): <strong>13 M · 3 S · 2 C · 0 W</strong> ≈ <strong>72% M / 17% S / 11% C</strong>. This is <strong>MUST-heavy versus the natural ~30/55/15 shape</strong> — but it is <em>expected and defensible</em> here, for three structural reasons documented rather than smoothed:</p>
+<ol>
+<li><strong>The UCs were SME-pre-filtered</strong> (Discovery: 3 CATASTROPHIC + 15 MAJOR resolved in place, 0 new UC IDs) and the FRs were authored 19-MUST / 6-SHOULD / 0-COULD — the requirement set entered R6 already concentrated on the academic-soundness spine, by design.</li>
+<li><strong>3 of the 18 bundles are hard preconditions (B1–B4 minus the B5 mechanism)</strong> that the locked brief mandates land in MUST regardless of vote — they cannot contribute to a SHOULD/COULD tail.</li>
+<li><strong>The round is all-HIGH-cohort</strong> — the seats that would have pushed B12/B14/B17 toward SHOULD/COULD (the MEDIUM personas) were not administered, so the MUST end is over-represented and the SHOULD/COULD tail is under-populated (§4 sampling gap).</li>
+</ol>
+<p>After R7 adjudication (<code>prioritization-decisions.md</code>) — which pushes the MEDIUM-owned and boundary bundles down where the brief/NR/persona-stratification warrant — the committed split lands at a <strong>healthier ~52% MUST / 33% SHOULD / 15% COULD</strong> across the 18 bundles. <strong>No bundle scored majority-WON&#39;T → no OUT items</strong> (consistent with the SME-pre-filtered UC set). The MUST-skew is a property of a precondition-heavy, all-gating-cohort round, <strong>not</strong> a prioritization failure — and the explicit MEDIUM-persona fallback is what keeps it honest.</p>
+<hr>
+<h2>7. Methodology &amp; Epistemic Honesty</h2>
+<ul>
+<li><strong>Aggregates 6 agent-simulated R6 respondents</strong> (SRV-01 … SRV-06) administered the R5 <code>survey-instrument.md</code>. <strong>Representative-scale, single-session, AGENT_SIMULATED</strong> — directional, not confirmatory or saturated. Real-respondent administration is a Pass-2 must.</li>
+<li><strong>Sampling gap is the dominant caveat:</strong> the 3 MEDIUM personas (P-priv-eng, P-dpo/<code>P-complreviewer</code>, P-agentic-redteam) were <strong>not seated this round</strong>; the <code>P-tool-vendor</code> sub-archetype (SRV-04) was seated but <code>P-complreviewer</code> was not. MEDIUM-owned bundles (B12/B14/B16/B17 governance/operating-point + the T6 throughput route) are adjudicated against the R3 interview synthesis (INT-04/05/06) rather than re-elicited, and carry a <code>real_user_needed: true</code> flag (compounded for the first-contact DPO lens).</li>
+<li><strong>Tier-A axis-3 (persona-affinity) divergence is signal, not noise</strong> (instrument design): B14/B17 sorting low and B18/B8 sorting high reflects the seat composition, not bundle value.</li>
+<li><strong>No FR/NFR IDs minted or renumbered.</strong> This analysis prioritizes the existing <a class="trace-link" href="audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a> … <a class="trace-link" href="audit-report.html#fr-054" data-trace-id="FR-054" aria-label="Trace FR-054 — Part A — Functional Requirements (FR-030 … FR-054)">FR-054</a> / <a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a> … <a class="trace-link" href="audit-report.html#nfr-055" data-trace-id="NFR-055" aria-label="Trace NFR-055 — Part B — Non-Functional Requirements (NFR-019 … NFR-055)">NFR-055</a> set verbatim via the 18 bundles + 2 gates. AX-pii-anon-005 is recorded CONFIRMED (closing item) with one adopted sharpening; the candidate-axiom status moves to binding in <code>prioritization-decisions.md</code> for PO sign-off.</li>
+<li><strong>Thresholds remain directional</strong> (R9 threshold-validator pressure-tests them); they are not committed values.</li>
+<li><strong>Source artifacts:</strong> R5 <code>survey-instrument.md</code> (18 bundles + 2 gates + Tier-C pairs + AX-005 closing item), R4 <code>functional-requirements.md</code> (<a class="trace-link" href="audit-report.html#fr-030" data-trace-id="FR-030" aria-label="Trace FR-030 — … FR-054)">FR-030</a>…054) + <code>non-functional-requirements.md</code> (<a class="trace-link" href="audit-report.html#nfr-019" data-trace-id="NFR-019" aria-label="Trace NFR-019 — … NFR-055)">NFR-019</a>…055), R3 <code>interview-synthesis.md</code> (DF-1…5, INT-01…06, N-01…15), canonical Discovery (<code>discovery-report.md</code> §8 Open Items 1–13 / G1–G7 / C1–C10, <code>04-use-cases.md</code> <a class="trace-link" href="../../MANIFEST.html#uc-16" data-trace-id="UC-16" aria-label="Trace UC-16 — ID offsets UC-16+ · FR-030+ · NFR-019+ · DC-16+ · S8+ · SO-…">UC-16</a>…23, <code>personas.md</code> 6 personas + 2 sub-archetypes). The cycle-1 <code>02-requirements/{survey-analysis,prioritization-decisions}.md</code> provided the 3-tier aggregation format + the natural-distribution-check convention.</li>
+</ul>
+<p>✅ <strong>R7 survey analysis complete (2026-06-01).</strong> 6 R6 respondents aggregated (all HIGH-cohort/sub-archetype seats); Tier-A 3-axis means + Tier-B MoSCoW tally + Tier-C 7-pair outcomes computed; 7 unanimous MUSTs locked; B11/B15/B18 boundary + B17/B14 MEDIUM-owned-deflated items surfaced; T5 + T7 persona-splits flagged for adjudication; AX-pii-anon-005 CONFIRMED (6/6, one adopted sharpening); sampling gap (3 MEDIUM personas unseated) documented as the dominant caveat with R3-fallback adjudication. Distribution MUST-heavy but structurally justified. <code>provisional_status: AGENT_SIMULATED</code>. Final MUST/SHOULD/COULD split in <code>prioritization-decisions.md</code>.</p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>assessment-workflow/02-requirements/survey-analysis.md</code> ·
+  content-hash <code>cf8e4e081a94</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

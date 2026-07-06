@@ -1,0 +1,48 @@
+signoff_id: SO-04-s5
+date: 2026-05-30
+type: work-stream-close
+stage: 04-development
+scope: >
+  Sprint S5 — Exports/CLI (DC-12) + Compliance end-state bundle (DC-11) + Documentation-drift
+  remediation (NFR-013). 7 stories S5-01..S5-07, strict TDD, every story gate + the S5 sprint gate
+  APPROVE. FR-024 fully closed (Parquet + Croissant 1.0 JSON-LD + HF dataset card + spaCy DocBin +
+  CoNLL BIO/BILOU + the `pii-anon` 5-verb CLI; JSONL pre-existing). NFR-012 closed (Croissant
+  validate-AND-load via HF `datasets`, gov-02 reg_* columns intact; + Parquet loadability). FR-021
+  closed (DPIA-input EndStateBundle keeping anonymization (DC-06 Pareto) and pseudonymization (DC-08
+  integrity) evidence SEPARATE per NFR-005/AX-004, non-strippable "informs, does not make, a
+  determination" disclaimer). FR-022/gov-02 (S5-01) + NFR-013 (7 docs canonical, zero current-state
+  drift, pinned by tests/test_doc_drift.py) closed.
+signer: AGENT_SIMULATED (developer-assistant); real-CI Pass-2 required
+provisional_status: AGENT_SIMULATED
+
+inputs:
+  - dev-assist-artifacts/04-development/02-stories/sprint-5/S5-0{1..7}.md
+  - src/pii_anon_datasets/distribution/{parquet_export,croissant,dataset_card,conll_export,spacy_export}.py
+  - src/pii_anon_datasets/integrations/conll_format.py
+  - src/pii_anon_datasets/compliance/{crosswalk,end_state_bundle}.py
+  - src/pii_anon_datasets/cli.py + pyproject.toml ([project.scripts] pii-anon + croissant extra + coverage source extended)
+  - README.md, DATASHEET.md, COMPARISON.md, TAXONOMY.md, MIGRATION.md, CHANGELOG.md, src/pii_anon_datasets/__init__.py (NFR-013)
+  - dev-assist-artifacts/04-development/_reviews/story/S5-0{1..7}/ + _reviews/sprint/S5/
+
+decisions_acknowledged:
+  - "NFR-012 literal threshold (validate AND load) met in this env without mlcroissant: validate_croissant() is an always-on pure-stdlib schema-shape check, and the described Parquet loads via HF `datasets` with the five reg_* regime columns intact (genuinely RAN). Full mlcroissant spec-conformance is skip-if-absent (the [croissant] extra is not installed) -> Pass-2 CI image."
+  - "gov-02 survives end-to-end: crosswalk emits N legally-distinct typed regime columns (HIPAA split into Safe-Harbor + Expert-Determination), the Parquet exporter writes them as N reg_* columns (no flattened regulatory_domains blob), and the Croissant recordSet declares them. No merged/equivalence verdict anywhere."
+  - "FR-021 EndStateBundle keeps the anonymization and pseudonymization evidence in SEPARATE keys (NFR-005/AX-004): no combined/overall/deid field, no __float__, an import-time structural assert; the FR-009 anti-anonymity caveat and the EDPB Art 4(5) key-state note travel unstripped; the non-strippable DPIA disclaimer is __post_init__-validated."
+  - "CLI is 5 THIN dispatch verbs (no business logic): export -> distribution (lazy); validate/generate/score -> trusted repo scripts via subprocess (fixed paths, no shell=True); leaderboard -> graceful-until-S6. The validate verb NEVER injects --no-power-gate (NFR-018 power gate stays ON, test-asserted). generate never targets the frozen corpus. main -> int."
+  - "Counts cannot drift: the dataset card + Croissant pull every count from data/pii_anon.metadata.json; entity_types == taxonomy.ENTITY_TYPE_COUNT (==63) asserted; the static docs (S5-07) are pinned to the same canonical 575,604/2,486,438/63/v2.0.0 by tests/test_doc_drift.py."
+  - "Epistemic honesty (S5-07): the ~72% synthetic_lattice_enrichment + synthetic!=external-validity (§7 power sentence) + 159,891=27.8% Tier-3 eval substrate caveats are SURFACED across README/DATASHEET/MIGRATION/CHANGELOG; competitor figures only the two authorized deltas (Nemotron 200K->~100K, AI4Privacy 580K->~220K) + a sourcing note; CHANGELOG/MIGRATION history preserved (ADD-ONLY)."
+
+evidence:
+  - "pytest 290 passed / 1 skipped (the anthropic-absent contract skip); 0 regressions; every new S5 module >=85% line after the proactive coverage-hardening 35faf3a (cli 71->93%, integrations/conll_format 78->98%, croissant 79->99%, parquet_export 81->99%); crosswalk 95%, end_state_bundle 100%, conll_export 100%, spacy_export 100%, dataset_card 94%."
+  - "All 7 story gates APPROVE (S5-01/02 prior session; S5-03..07 this session — 25 reviewer YAMLs, S5-05 fully clean 0-findings); S5 sprint gate APPROVE (requirements-coverage + performance + axiom-compliance), carrying forward unanimous per-story code-quality/traceability/security-sast."
+  - "NFR-004 purity boundary verified by force-blocking pyarrow + mlcroissant + spacy + datasets at import: distribution + cli + compliance import OK; each lazy guard raises the correctly-named extra RuntimeError; per-module AST purity guards green for all 7 modules."
+  - "Streaming/bounded-memory confirmed on all exporters (one-pass, batched ParquetWriter; cli _iter_jsonl gzip line-stream); the v1.3.0 full-materialization Parquet bug fixed."
+  - "Guardrail HELD: eval_lattice.json (730 cells) frozen at 47c3a8f (lattice --check OK); corpus .jsonl.gz + metadata.json untouched; tags v1.3.0 + pre-lattice-enrichment intact; CLI validate keeps the NFR-018 power gate ON."
+
+findings_waived_to_pass2:
+  - "All S5 work AGENT_SIMULATED — real-CI Pass-2 owed before any S5 MUST counts RELEASE-verified (no DIVERGED DC)."
+  - "mlcroissant full-spec Croissant conformance is skip-if-absent (extra not installed) -> Pass-2 CI image with [croissant]; the always-on shape check + the HF `datasets` round-trip are the executable NFR-012 evidence now."
+  - "Real-runtime throughput of the 575K-record Parquet stream + the spaCy DocBin build over the full corpus -> Stage-5 NFR-010 (real_user_needed); the spaCy DocBin serialize-at-end memory and _assign_bio_tags O(annotations*tokens) are OBSERVATION-level (empirically linear), not blocking."
+  - "The leaderboard CLI verb is a graceful 'ships in S6' stub; S6 wires it to the real leaderboard package."
+
+next: "S6 — leaderboard + governance (DC-13): append-only event-sourced held-out store + verify_chain; opt-in publish + anti-gaming policy; gov-03 CoI recusal; GOVERNANCE.md + CONTRIBUTING.md. Then S7 extension seams, then Stage 5 Testing."

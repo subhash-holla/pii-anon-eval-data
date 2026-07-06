@@ -1,0 +1,99 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S7-03-04
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  Combined STORY-gate security-sast review of S7-03 (validation/correlation) +
+  S7-04 (subsets/slices), iteration 1. Light surface: pure-stdlib statistics +
+  frozen value objects. Bounded context honored: read only
+  src/pii_anon_datasets/validation/correlation.py,
+  src/pii_anon_datasets/subsets/slices.py, tests/test_correlation.py,
+  tests/test_slices.py, and pyproject.toml (dependency-surface confirmation only).
+
+  Zero SHOWSTOPPER / CATASTROPHIC / MAJOR / MINOR findings -> APPROVE.
+  Mapped against the 15-pattern catalog; relevant patterns cleared below.
+
+  --- Egress / secrets / unsafe-deserialization (patterns 7, 8, 9) ---
+  CLEAR. Static scans return NO_DANGEROUS_IMPORTS, NO_DANGEROUS_CALLS,
+  NO_SECRET_OR_WEAKHASH_PATTERNS, NO_RUNTIME_IO. correlation.py imports only
+  {math, random, collections.abc, dataclasses}; slices.py only
+  {collections.abc, dataclasses}. No socket/urllib/http/requests/httpx, no
+  eval/exec/compile/__import__, no pickle/marshal/yaml.load deserialization sink,
+  no os.system/subprocess, no open/Path/read_text/write_text. No network egress
+  to declare; no new egress route opened. No string-interpolated SQL/NoSQL.
+  No hard-coded credential / API-key / token shape. No untrusted-input parsing:
+  inputs are numeric float sequences (correlation) and already-frozen in-memory
+  corpus Mapping records (slices); slices use defensive isinstance(...) Mapping/
+  Sequence guards and exclude str/bytes from the qid sequence check.
+
+  --- No real PII (financial-pack sensitive-data lens) ---
+  CLEAR. correlation.py operates solely on numeric detector-score vectors
+  (Sequence[float]) — no identifier surface. slices.py filters records by
+  METADATA shape only (entity_tracking.coreference_chains presence;
+  len(privacy_risk.quasi_identifiers) >= min_qids); it reads chain/qid
+  *structure*, never dereferences or emits identifier *values*. Test fixtures use
+  synthetic corpus fields only (qid TYPE LABELS like "DATE_OF_BIRTH",
+  "ORGANIZATION_NAME", "CITY"; placeholder mentions "mention_a"/"mention_b") —
+  category strings, not real PII instances. No PII at rest, no PII in logs (no
+  logging in either module). Operates over the frozen synthetic corpus only.
+
+  --- FR-027 never-fabricate sentinel as an integrity / anti-misrepresentation control ---
+  CLEAR — control is sound and non-bypassable. correlate() (correlation.py:205)
+  has a single decision branch: `if not real_scores: return RealDataAbsent()`,
+  which short-circuits and RETURNS the sentinel BEFORE any CorrelationResult is
+  constructed. There is no code path that yields a CorrelationResult when real
+  scores are absent. Both the None and empty-list ([]) absent cases are covered
+  by `not real_scores` and asserted in
+  test_fr_027_returns_sentinel_when_real_data_absent (which also asserts the
+  result is NOT a CorrelationResult). The honesty caveats are non-strippable:
+  RealDataAbsent.__post_init__ and CorrelationResult.__post_init__ raise
+  ValueError on empty/whitespace note/caveat (frozen dataclasses, so the field
+  cannot be mutated post-construction); enforced by
+  test_fr_027_caveat_non_strippable. The integrity control cannot be bypassed to
+  emit a fabricated CorrelationResult when real data is absent.
+
+  --- random use is benign, not a security RNG (pattern 15-adjacent / RNG hygiene) ---
+  CLEAR. _bootstrap_ci (correlation.py:185) instantiates a LOCAL random.Random(seed)
+  and never touches the module-global RNG — this is a reproducibility/determinism
+  RNG (NFR-004 / AX-002), correctly NOT used for any secret/token/nonce. It draws
+  only resample indices (rng.randrange(n)) for a percentile bootstrap CI; no
+  security context. The AST guard test_nfr004_correlation_purity pins that the
+  only permitted random attribute access is `random.Random` (no module-global
+  random.<fn>) and bans {time, uuid, datetime, secrets}; test_nfr004_slices_pure_stdlib
+  additionally bans `random` from slices.py. No weak hash primitive (md5/sha1)
+  anywhere. (This RNG is for statistical reproducibility, NOT cryptography — the
+  correct choice; flagging it as a "non-secure RNG" would be a false positive.)
+
+  --- Dependency / supply-chain surface (patterns 5, 10, 11) ---
+  CLEAR for this story. No new deps introduced by S7-03/S7-04. pyproject.toml has
+  NO runtime `dependencies = [...]` array under [project] — the scoring/stats core
+  is mandatory-dep-free (pure-stdlib, NFR-004). The +38-line pyproject delta vs
+  main is pre-existing branch history (version bump 1.3.0->2.0.0; optional-
+  dependency groups dev/baselines/llm/distribution/croissant/viz added in earlier
+  S-stories), not attributable to this story; no git = "..." pin, no denied-license
+  dep added here. The deferred coverage-source edit (noted by dispatch) is
+  out-of-scope for this gate and correctly not present. No `cargo audit` /
+  pnpm/pip-audit CVE surface change at story scope.
+
+  --- Out of scope (per security-sast charter) ---
+  No Rust crates, capability registry, 5-layer trust boundary, composition-root
+  ban, HSM signing port, or `unsafe` blocks exist in this Python bounded context;
+  patterns 1-4, 6, 12-14 are not applicable to this diff. Code style (code-quality),
+  statistical correctness/perf (performance-benchmark), and threat-model coverage
+  completeness (W8 SME) are out of this reviewer's scope.
+
+  Evidence: 9/9 bounded-context tests pass
+  (pytest tests/test_correlation.py tests/test_slices.py -> all green), including
+  the FR-027 contract test, the seeded-determinism property test (global-RNG-
+  state independence proven), the non-strippable-caveat tests, and both
+  pure-stdlib AST guards.
+
+review_time_seconds: 300
+
+context_bounds_respected: true

@@ -1,0 +1,88 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S3-06
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S3-06-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/scoring/reidentification.py:69
+    description: |
+      Pre-existing `[type-arg]` mypy --strict error: `RRSResult.as_dict` return annotation
+      is bare `dict` rather than `dict[str, object]`. This error fires when mypy follows
+      imports into reidentification.py from anonymization.py under --follow-imports=silent.
+      The error is not attributable to the S3-06 diff — it surfaces identically via the
+      already-merged pseudonymization.py under the same invocation, confirming it predates
+      this story.
+    suggested_resolution: |
+      Out of S3-06 scope per story constraint ("do NOT modify reidentification.py"). Fix
+      should be applied in a dedicated follow-up story targeting reidentification.py
+      (S3-04 scope owner). Annotate `def as_dict(self) -> dict[str, object]:` to satisfy
+      mypy --strict.
+
+notes: |
+  Review conducted against branch feat/v2-scoring-harness, commits 2149d54 (RED) →
+  2e5572d (GREEN) → 49d0732 (REFACTOR).
+
+  LINT/TYPE: ruff check src/.../scoring/anonymization.py → "All checks passed" (exit 0).
+  mypy --strict --follow-imports=silent on anonymization.py → 0 errors attributable to
+  anonymization.py. The lone [type-arg] error fires in reidentification.py:69 — confirmed
+  pre-existing (same error under pseudonymization.py invocation, see finding code-quality-S3-06-01).
+  anonymization.py itself is mypy-clean.
+
+  TDD RED-BEFORE-GREEN: RED commit 2149d54 contains only tests/test_anonymization.py (7
+  tests + story file). src/pii_anon_datasets/scoring/anonymization.py is absent — confirmed
+  via `git show 2149d54 --name-only`. The module-absent ImportError at collection time is
+  the required RED signal. GREEN commit 2e5572d adds anonymization.py and wires the exports
+  in scoring/__init__.py. REFACTOR commit 49d0732 modifies anonymization.py only (zip(strict=True),
+  dict[str,object] params, extracted _as_ratio). RED-before-GREEN discipline confirmed strict.
+
+  TEST EXECUTION (re-run): python3 -m pytest tests/test_anonymization.py -v → 7/7 passed
+  (0.14s). Full suite → 150 passed in 1.98s (0 regressions). All 7 test functions carry
+  canonical tokens: 6× fr_006, 1× nfr005, 1× nfr004 (shared with the fr_006 import-purity
+  test). pytest -k fr_006 → 6; -k "nfr005 or nfr004" → 2.
+
+  SCOPE DISCIPLINE: All 3 commits touch only files listed in §8 — NEW
+  src/pii_anon_datasets/scoring/anonymization.py, NEW tests/test_anonymization.py, MODIFIED
+  src/pii_anon_datasets/scoring/__init__.py, plus the story file itself. reidentification.py,
+  corpus, tags, eval_lattice.json untouched. No scope creep.
+
+  PUBLIC API DOCS: Module docstring (lines 1–32) provides load-bearing NFR-005 contract
+  prose. All public symbols have docstrings: UtilityScore, score_utility, ParetoPoint,
+  ParetoPoint.as_dict, score_anonymization. Private helpers (_content_tokens,
+  _token_preservation_jaccard, _as_ratio) also have docstrings. Full coverage.
+
+  IDIOM CHECKS (Python profile):
+  - Full type hints on all public function signatures. ✓
+  - No bare except clauses. ✓
+  - No print() in production path. ✓
+  - @dataclass(frozen=True) for UtilityScore and ParetoPoint. ✓
+  - No mutable default arguments. ✓
+  - No Any / interface{} escapes. ✓
+  - zip(strict=True) used (REFACTOR commit closed the B905 ruff finding). ✓
+  - Pure-stdlib (re, dataclasses, collections.abc). ✓ Import purity verified by AST.
+
+  DEVIATION NOTE (empty-note assertion folded into test #4): confirmed acceptable. §6
+  specifies 7 test functions; the __post_init__ empty-note rejection (§8b construction
+  invariant) is asserted as step (D) of test_nfr005_pareto_point_cannot_merge rather
+  than as a standalone 8th function. The invariant is structurally pinned and the
+  §6 count is exactly respected.
+
+  PRE-EXISTING MYPY NIT EXCLUSION: the executor's disclosure that reidentification.py:69
+  is pre-existing is verified correct. Annotating anonymization.py with
+  --follow-imports=silent surfaces the error from the imported module, not the new file.
+  The same invocation on the already-merged pseudonymization.py yields the identical
+  error — proving provenance outside S3-06 scope.
+
+  EXPORTS: All 6 required exports confirmed present in scoring/__init__.py and importable:
+  score_anonymization, ParetoPoint, UtilityScore, score_utility, UTILITY_PROBE_VERSION,
+  PARETO_SEPARATION_NOTE. Both PARETO_SEPARATION_NOTE import and __all__ listing verified.
+
+  No pack extensions active (MANIFEST: "Active domain packs: none").
+
+review_time_seconds: 312
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

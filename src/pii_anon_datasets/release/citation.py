@@ -2,8 +2,10 @@
 
 Single source of truth = :data:`CITATION_METADATA` (a plain dict). From it we EMIT a CFF 1.2.0
 file (as YAML *text* — there is no YAML library; NFR-050) and a BibTeX ``@misc`` entry. The
-canonical facts (v2.0.0 / CC0-1.0 data license / 575,604 records / author Subhash Holla) are
-confirmed against README.md + pyproject.toml.
+canonical facts (v2.2.0 / CC0-1.0 data license / 782,677 records / author Subhash Holla) are the
+published-snapshot facts that match the minted Zenodo DOI. At the v2.2.0 re-mint (2026-07-05) the
+archived version converged with the content version (pyproject) — both are 2.2.0; the prior v2.0.0
+snapshot (10.5281/zenodo.20690979 / 575,604 records) is superseded.
 
 HONESTY (the load-bearing invariant): the Zenodo DOI is minted by a HUMAN later. The doi field is
 the explicit sentinel :data:`DOI_PENDING` — NEVER a fabricated DOI. :func:`validate_no_fake_doi`
@@ -19,8 +21,9 @@ from __future__ import annotations
 # until then NO 10.x string may appear anywhere in a committed citation artifact.
 DOI_PENDING = "PENDING-ZENODO-MINT"
 
-# Canonical, version-pinned citation metadata (single source). Confirmed: README.md v2.0.0 / 575,604
-# records / data license CC0-1.0; pyproject.toml author "Subhash Holla" + repo URL.
+# Canonical, version-pinned citation metadata (single source). Pinned at the published v2.2.0 snapshot
+# (matches the minted Zenodo DOI): v2.2.0 / 782,677 records / data license CC0-1.0 / author "Subhash Holla".
+# Re-minted from v2.0.0 on 2026-07-05; the archived version now == the content version (pyproject) == 2.2.0.
 CITATION_METADATA: dict = {
     "message": "If you use this dataset, please cite it using these metadata.",
     "title": (
@@ -28,19 +31,19 @@ CITATION_METADATA: dict = {
         "with Behavioral-Signal Annotations"
     ),
     "authors": [{"family-names": "Holla", "given-names": "Subhash"}],
-    "version": "2.0.0",
+    "version": "2.2.0",  # archived/published version (matches the Zenodo DOI); == content version (pyproject) at the v2.2.0 re-mint
     "license": "CC0-1.0",  # DATA-release license (code is Apache-2.0); this packages the corpus
-    "doi": "10.5281/zenodo.20690979",  # minted on Zenodo deposit 2026-06-14 (was DOI_PENDING)
+    "doi": "10.5281/zenodo.21207288",  # v2.2.0 Zenodo re-mint reserved 2026-07-05 (v2.0.0 was 10.5281/zenodo.20690979)
     "year": 2026,
-    "date-released": "2026-05-28",
+    "date-released": "2026-07-05",
     "repo": "https://github.com/subhash-holla/pii-anon-eval-data",
     "url": "https://github.com/subhash-holla/pii-anon-eval-data",
-    "record_count": 575604,
+    "record_count": 782677,
     "keywords": [
         "PII", "de-identification", "anonymization", "synthetic-data", "benchmark", "evaluation",
     ],
     "abstract": (
-        "575,604 fully synthetic records (60 languages, 63 entity types) for evaluating PII "
+        "782,677 fully synthetic records (60 languages, 66 entity types) for evaluating PII "
         "detection, anonymization quality, and resistance to LLM-based re-identification. "
         "100% synthetic — contains NO real personal information (AX-001)."
     ),
@@ -57,15 +60,18 @@ _AX_CEILING_CAVEAT = (
 CLAIMS_POLICY = (
     "This dataset is a CC0 SYNTHETIC eval substrate. The following bounds what a published result "
     "computed on it may and may not claim.\n\n"
-    "WHAT A RESULT DOES SUPPORT: a reproducible, version-pinned (v2.0.0) measurement of a system's "
+    "WHAT A RESULT DOES SUPPORT: a reproducible, version-pinned (v2.2.0) measurement of a system's "
     "PII-detection / de-identification / re-identification-resistance behaviour on a controlled "
     "synthetic distribution, with stated confidence intervals on integer-count metrics. Cell-level "
     "power is statistical precision on THAT synthetic distribution.\n\n"
     "WHAT A RESULT DOES NOT SUPPORT: " + _AX_CEILING_CAVEAT + " A number here is therefore NOT a "
     "claim of real-world recall, NOT a claim of external validity, and NOT a compliance "
     "certification. Any real-world or regulatory claim requires the separate real-data correlation "
-    "slice (FR-027), which is out of scope for this release.\n\n"
-    "DOI / PROVENANCE HONESTY: this release is archived on Zenodo at DOI 10.5281/zenodo.20690979 "
+    "slice (FR-027), which is out of scope for this release. See "
+    "[docs/external-validity-protocol.md](docs/external-validity-protocol.md) for the pre-registered "
+    "FR-027 protocol, the `RealDataAbsent`-guarded harness, the verdict mapping, and the only path to "
+    "lifting the synthetic-only ceiling.\n\n"
+    "DOI / PROVENANCE HONESTY: this release is archived on Zenodo at DOI 10.5281/zenodo.21207288 "
     "(minted by a human on deposit); no DOI was fabricated before minting. Cite the DOI or the "
     "version-pinned repository URL."
 )

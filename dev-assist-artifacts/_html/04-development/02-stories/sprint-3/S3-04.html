@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="en" class="theme-auto-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none';">
+<meta name="generator" content="developer-assistant v0.2.0">
+<meta name="robots" content="noindex, nofollow">
+<title>S3-04 — Measured-attack RRS scorer (the headline number) — pii-anon-eval-data</title>
+<style>/* ===== base ===== */
+/* developer-assistant — base.css
+   Semantic, accessibility-first foundation. All visual tokens come from CSS
+   variables defined in :root so theme overrides can swap palettes without
+   touching layout rules.
+
+   WCAG 2.2 AA targets:
+   - 1.4.3 / 1.4.11 contrast — defaults checked at 5.16:1 for accent on bg
+   - 1.4.10 reflow — container queries + clamp() degrade to single-column ≤768px
+   - 2.5.5 target size — interactive elements ≥44×44
+   - 2.1.1 keyboard — focus visible by default; no focus suppression
+*/
+
+:root {
+  /* Color tokens (overridable per theme) */
+  --color-bg: #fafaf9;
+  --color-fg: #1c1917;
+  --color-fg-muted: #57534e;
+  --color-fg-subtle: #78716c;
+  --color-accent: #0369a1;
+  --color-accent-bg: #e0f2fe;
+  --color-border: #e7e5e4;
+  --color-border-strong: #a8a29e;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f4;
+
+  /* Status colors (WCAG-AA on bg) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-risk: #b91c1c;
+  --color-info: #0369a1;
+
+  /* Confidence chips (FR-015 / confidence-flagging axiom) */
+  --chip-high-bg: #dcfce7;
+  --chip-high-fg: #14532d;
+  --chip-medium-bg: #fef3c7;
+  --chip-medium-fg: #78350f;
+  --chip-low-bg: #fee2e2;
+  --chip-low-fg: #7f1d1d;
+
+  /* Typography (clamp for NFR-021 fluid scaling) */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+    Consolas, monospace;
+  --fs-1: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fs-2: clamp(1rem, 0.95rem + 0.2vw, 1.0625rem);
+  --fs-3: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fs-4: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+  --fs-5: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fs-kpi: clamp(2rem, 1.5rem + 2vw, 3rem);
+  --lh-tight: 1.25;
+  --lh-body: 1.55;
+
+  /* Spacing scale (rem-based) */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+
+  /* Layout */
+  --max-content: 72ch;
+  --max-page: 1200px;
+  --radius: 4px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.theme-auto-dark {
+    --color-bg: #1c1917;
+    --color-fg: #fafaf9;
+    --color-fg-muted: #d6d3d1;
+    --color-fg-subtle: #a8a29e;
+    --color-accent: #38bdf8;
+    --color-accent-bg: #075985;
+    --color-border: #44403c;
+    --color-border-strong: #78716c;
+    --color-surface: #292524;
+    --color-surface-alt: #1c1917;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-2);
+  line-height: var(--lh-body);
+  color: var(--color-fg);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main {
+  max-width: var(--max-page);
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  margin: var(--sp-6) 0 var(--sp-3);
+  color: var(--color-fg);
+}
+
+h1 { font-size: var(--fs-5); margin-top: 0; }
+h2 { font-size: var(--fs-4); border-bottom: 1px solid var(--color-border); padding-bottom: var(--sp-2); }
+h3 { font-size: var(--fs-3); }
+h4 { font-size: var(--fs-2); }
+h5, h6 { font-size: var(--fs-1); color: var(--color-fg-muted); }
+
+p { margin: 0 0 var(--sp-4); max-width: var(--max-content); }
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 2px;
+}
+
+a:hover, a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+ul, ol { padding-left: var(--sp-6); margin: 0 0 var(--sp-4); }
+li { margin-bottom: var(--sp-1); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius);
+}
+
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  overflow-x: auto;
+  margin: 0 0 var(--sp-4);
+}
+
+pre code { background: transparent; padding: 0; }
+
+blockquote {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-left: 3px solid var(--color-border-strong);
+  color: var(--color-fg-muted);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  margin: var(--sp-6) 0;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-1);
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+
+@media (min-width: 768px) {
+  table { display: table; }
+}
+
+th, td {
+  text-align: left;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: var(--color-surface-alt);
+}
+
+/* Trace-link styling — minimal underline + small ID badge */
+.trace-link {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.trace-orphan {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  padding: 0.05em 0.3em;
+  border-radius: var(--radius);
+  font-weight: 500;
+  cursor: help;
+}
+
+.trace-orphan::after {
+  content: " ⚠";
+  font-size: 0.85em;
+}
+
+/* Confidence chips (confidence-flagging axiom) */
+section[data-ai-generated="true"] {
+  position: relative;
+}
+
+section[data-ai-generated="true"]::before {
+  content: attr(data-confidence);
+  display: inline-block;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  padding: 0.125em 0.5em;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sp-2);
+  background: var(--chip-medium-bg);
+  color: var(--chip-medium-fg);
+}
+
+section[data-ai-generated="true"][data-confidence="high"]::before {
+  background: var(--chip-high-bg);
+  color: var(--chip-high-fg);
+  content: "high confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="medium"]::before {
+  content: "medium confidence";
+}
+
+section[data-ai-generated="true"][data-confidence="low"]::before {
+  background: var(--chip-low-bg);
+  color: var(--chip-low-fg);
+  content: "low confidence — review";
+}
+
+/* Footer (provenance, no individual attribution) */
+.da-footer {
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.da-footer a { color: var(--color-fg-muted); }
+
+/* A11Y-001 (Stage 6) — ensure footer <code> has ≥4.5:1 contrast on alt-surface bg
+   The footer's default color (--color-fg-subtle #78716c) on --color-surface-alt
+   (#f5f5f4) is only 4.0-4.4:1 (per Pa11y v9.1.1 audit). Override with the muted
+   token (#57534e) for ~7:1 ratio (passes AA and AAA). */
+.da-footer code { color: var(--color-fg-muted); }
+
+/* Skip-to-content link for keyboard users (2.4.1) */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: var(--sp-2);
+  background: var(--color-accent);
+  color: white;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+/* Minimum touch target for interactive elements (2.5.5) */
+a, button, summary, [role="button"] {
+  min-height: 24px;
+}
+
+button, summary, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* ============================================================== */
+/* Executive view — added in Story C2                              */
+/* Six audiences share this layout; per-audience tuning happens    */
+/* via the copy preset, not CSS overrides.                         */
+/* ============================================================== */
+
+.exec-page-host main { max-width: 1100px; padding: var(--sp-5) var(--sp-5); }
+
+.exec-page {
+  display: grid;
+  grid-template-rows: auto auto auto auto auto auto;
+  gap: var(--sp-5);
+  max-width: 100%;
+}
+
+.exec-header { margin: 0; }
+
+.exec-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.exec-title {
+  margin: 0;
+  font-size: var(--fs-5);
+  letter-spacing: -0.02em;
+}
+
+.exec-mode-chip {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}
+
+.exec-mode-chip[data-mode="external"] { background: #fef3c7; color: #92400e; }
+.exec-mode-chip[data-mode="internal"] { background: #dbeafe; color: #1e40af; }
+
+.exec-subtitle {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg-muted);
+}
+
+.exec-meta {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-meta-item { white-space: nowrap; }
+.exec-meta-sep { margin: 0 var(--sp-2); }
+
+.exec-section-h {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-3);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-2);
+}
+
+/* KPI strip */
+.exec-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-kpi-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.exec-kpi-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.exec-kpi-value {
+  margin: 0;
+  font-size: var(--fs-kpi);
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.exec-kpi-subtext {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+/* Narrative */
+.exec-narrative {
+  padding: var(--sp-4);
+  background: var(--color-surface);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.exec-narrative h2 {
+  margin: var(--sp-4) 0 var(--sp-2);
+  font-size: var(--fs-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  border-bottom: none;
+  padding: 0;
+}
+
+.exec-narrative h2:first-child { margin-top: 0; }
+
+.exec-narrative p {
+  margin: 0 0 var(--sp-3);
+  max-width: 64ch;
+}
+
+/* ROI panel */
+.exec-roi-panel {
+  padding: var(--sp-4);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.exec-roi-panel[data-roi-state="missing"] {
+  background: transparent;
+  border-style: dashed;
+}
+
+.exec-roi-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.exec-roi-header .exec-section-h { margin: 0; border: none; padding: 0; }
+
+.exec-roi-empty {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.exec-roi-dl {
+  display: grid;
+  grid-template-columns: minmax(140px, auto) 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.exec-roi-dl dt {
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
+.exec-roi-dl dd { margin: 0; }
+
+.exec-roi-na {
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Confidence chip */
+.da-confidence-chip {
+  display: inline-block;
+  padding: 0.1em 0.5em;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  border-radius: var(--radius);
+  text-transform: lowercase;
+}
+
+.da-confidence-chip[data-confidence="high"] { background: var(--chip-high-bg); color: var(--chip-high-fg); }
+.da-confidence-chip[data-confidence="medium"] { background: var(--chip-medium-bg); color: var(--chip-medium-fg); }
+.da-confidence-chip[data-confidence="low"] { background: var(--chip-low-bg); color: var(--chip-low-fg); }
+
+/* Risks */
+.exec-risks { margin: 0; }
+
+.exec-risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--sp-3);
+}
+
+.exec-risk-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+}
+
+.exec-risk-card[data-risk-confidence="low"] { border-left: 3px solid var(--color-risk); }
+.exec-risk-card[data-risk-confidence="medium"] { border-left: 3px solid var(--color-warn); }
+.exec-risk-card[data-risk-confidence="high"] { border-left: 3px solid var(--color-ok); }
+
+.exec-risk-title {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-2);
+  line-height: var(--lh-tight);
+}
+
+.exec-risk-body {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-1);
+  color: var(--color-fg-muted);
+}
+
+.exec-risk-meta {
+  margin: 0;
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.exec-no-risks {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Next-action callout */
+.exec-next-action {
+  padding: var(--sp-4);
+  background: var(--color-accent-bg);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.exec-next-action-label {
+  margin: 0;
+  font-size: var(--fs-1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.exec-next-action-body {
+  margin: 0;
+  font-size: var(--fs-3);
+  color: var(--color-fg);
+}
+
+/* Footer */
+.exec-footer {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--fs-1);
+  color: var(--color-fg-subtle);
+}
+
+.exec-footer p { margin: 0 0 var(--sp-1); max-width: none; }
+
+/* Reflow */
+@media (max-width: 760px) {
+  .exec-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .exec-risk-grid { grid-template-columns: 1fr; }
+  .exec-narrative { padding: var(--sp-3); }
+}
+
+/* ============================================================== */
+/* Detail view — added in Story C3                                 */
+/* 2-column TOC + content at ≥1024px; single-column drawer ≤767px. */
+/* Trace-popover for hover/focus link previews.                    */
+/* ============================================================== */
+
+/* Page-class host gets a wider main so the TOC sidebar has room. */
+.detail-page-host main { max-width: var(--max-page); padding: var(--sp-5) var(--sp-4); }
+
+.detail-page {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .detail-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* TOC sidebar */
+.detail-toc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-tight);
+}
+
+@media (min-width: 1024px) {
+  .detail-toc {
+    position: sticky;
+    top: var(--sp-5);
+    max-height: calc(100vh - var(--sp-7));
+    overflow-y: auto;
+    padding-right: var(--sp-3);
+    border-right: 1px solid var(--color-border);
+  }
+}
+
+.detail-toc-details {
+  margin: 0;
+}
+
+/* Mobile drawer: closed by default; native <details> behavior. */
+.detail-toc-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius);
+  list-style: none;
+}
+
+.detail-toc-details > summary::-webkit-details-marker { display: none; }
+.detail-toc-details > summary::marker { content: ''; }
+.detail-toc-details > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  width: 1em;
+  transition: transform 120ms;
+}
+.detail-toc-details[open] > summary::before { transform: rotate(90deg); }
+
+/* Desktop: force-open + hide the summary toggle entirely. */
+@media (min-width: 1024px) {
+  .detail-toc-details > summary {
+    display: none;
+  }
+  .detail-toc-details > .detail-toc-list {
+    display: block;
+  }
+}
+
+.detail-toc-list {
+  list-style: none;
+  padding: var(--sp-2) 0 0;
+  margin: 0;
+}
+
+.detail-toc-list li { margin: 0; padding: 0; }
+
+.detail-toc-list a {
+  display: block;
+  padding: var(--sp-1) var(--sp-3);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  line-height: 1.35;
+}
+
+.detail-toc-list a:hover,
+.detail-toc-list a:focus-visible {
+  color: var(--color-fg);
+  background: var(--color-surface-alt);
+}
+
+.detail-toc-list a.is-active {
+  color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  background: var(--color-accent-bg);
+  font-weight: 600;
+}
+
+/* H3 entries are indented under their H2 parent. */
+.detail-toc-list .toc-h3 a {
+  padding-left: var(--sp-5);
+  font-size: 0.95em;
+}
+
+/* Main content — narrow column for readability, max 72ch. */
+.detail-content {
+  max-width: var(--max-content);
+  min-width: 0;  /* allow grid item to shrink below content size */
+}
+
+.detail-content > *:first-child { margin-top: 0; }
+
+.detail-content h2 {
+  scroll-margin-top: var(--sp-5);  /* avoid sticky header overlap */
+}
+
+.detail-content h3 {
+  scroll-margin-top: var(--sp-5);
+}
+
+/* Cite-sidebar slot (FR-043) — hidden at v0.1.0; takes no layout space. */
+.detail-cite-sidebar { display: none; }
+
+/* Trace-popover (hover/focus preview) */
+.trace-popover {
+  position: absolute;
+  z-index: 1000;
+  max-width: 360px;
+  min-width: 200px;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  color: var(--color-fg);
+  font-size: var(--fs-1);
+  line-height: var(--lh-body);
+  pointer-events: auto;  /* allow mouse to move into popover */
+}
+
+.trace-popover[hidden] { display: none !important; }
+
+.trace-popover-label {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.trace-popover-summary {
+  margin: 0;
+  color: var(--color-fg-muted);
+}
+
+.trace-popover-empty {
+  margin: 0;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+/* Honor reduced-motion for the TOC chevron transition. */
+@media (prefers-reduced-motion: reduce) {
+  .detail-toc-details > summary::before { transition: none; }
+}
+
+/* Mobile reflow at 320px and up (NFR-021). */
+@media (max-width: 480px) {
+  .detail-page-host main { padding: var(--sp-3) var(--sp-2); }
+  .detail-toc-list a { padding: var(--sp-2) var(--sp-3); min-height: 44px; }  /* SC 2.5.5 touch target */
+  .trace-popover { max-width: calc(100vw - 16px); min-width: 0; }
+}
+
+/* ======================================================================== */
+/* Engineering view (Story C4) — detail + traceability tree pane.            */
+/* 2-column grid at ≥1024px; collapses to single column with tree-pane below */
+/* content on mobile. Honors NFR-021 (reflow at 320px) + NFR-034 (WCAG AA).  */
+/* ======================================================================== */
+
+.engineering-page-host main { padding: var(--sp-5) var(--sp-4); max-width: var(--max-page); margin: 0 auto; }
+
+.engineering-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+@media (min-width: 1024px) {
+  .engineering-page {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+}
+
+.engineering-content {
+  min-width: 0;
+  max-width: var(--max-content);
+}
+
+.engineering-tree-pane {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: var(--sp-4);
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .engineering-tree-pane {
+    position: sticky;
+    top: var(--sp-3);
+    max-height: calc(100vh - var(--sp-5));
+    overflow-y: auto;
+  }
+}
+
+.trace-pane-title {
+  margin: 0 0 var(--sp-3) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.trace-tree-group {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.trace-tree-group:first-of-type { border-top: none; padding-top: 0; }
+
+.trace-tree-id {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trace-tree-id a {
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.trace-tree-id a:hover,
+.trace-tree-id a:focus-visible {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.trace-tree-id-sep { color: var(--color-fg-subtle); font-weight: 400; }
+
+.trace-tree-id-label { color: var(--color-fg-muted); font-weight: 400; }
+
+.trace-tree-pair {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 540px) and (max-width: 1023px) {
+  .trace-tree-pair { flex-direction: row; gap: var(--sp-4); }
+  .trace-tree-direction { flex: 1; min-width: 0; }
+}
+
+.trace-tree-direction-label {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-subtle);
+  font-weight: 500;
+}
+
+ul.trace-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.engineering-page ul.trace-tree ul {
+  list-style: none;
+  margin: var(--sp-1) 0 0 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--color-border);
+}
+
+.trace-tree-leaf,
+.trace-tree-node-wrap {
+  margin: var(--sp-1) 0;
+  padding-left: 0;
+  word-break: break-word;
+}
+
+.trace-tree-leaf::before {
+  content: "·";
+  display: inline-block;
+  width: 1em;
+  margin-right: 0.25em;
+  color: var(--color-fg-subtle);
+}
+
+.trace-tree-leaf .trace-link,
+.trace-tree-node summary .trace-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.trace-tree-leaf .trace-link:hover,
+.trace-tree-leaf .trace-link:focus-visible,
+.trace-tree-node summary .trace-link:hover,
+.trace-tree-node summary .trace-link:focus-visible {
+  text-decoration: underline;
+}
+
+.trace-tree-node {
+  margin: var(--sp-1) 0;
+}
+
+.trace-tree-node > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: 3px;
+}
+
+.trace-tree-node > summary::-webkit-details-marker { display: none; }
+
+.trace-tree-node > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9em;
+  font-size: 0.7em;
+  color: var(--color-fg-subtle);
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.trace-tree-node[open] > summary::before {
+  transform: rotate(90deg) translateX(-1px);
+}
+
+.trace-tree-node > summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.trace-tree-truncated {
+  font-size: 0.75rem;
+  color: var(--color-fg-subtle);
+  font-style: italic;
+}
+
+.trace-tree-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-subtle);
+}
+
+.engineering-test-results {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.engineering-test-results h3 {
+  margin: 0 0 var(--sp-2) 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-fg-subtle);
+  font-weight: 600;
+}
+
+.engineering-test-results .muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-fg-muted);
+}
+
+/* Honor reduced-motion for the tree-node disclosure transition. */
+@media (prefers-reduced-motion: reduce) {
+  .trace-tree-node > summary::before { transition: none; }
+}
+
+/* Mobile reflow at <540px — tree-pair stacks; reduce tree-pane padding. */
+@media (max-width: 540px) {
+  .engineering-tree-pane { padding: var(--sp-3); }
+  .engineering-page ul.trace-tree ul { padding-left: var(--sp-2); }
+}
+
+/* ===== theme-default ===== */
+/* developer-assistant — theme-default.css
+   Minimalist palette chosen at D3 (Pugh +20). Stone neutrals with a single
+   restrained accent. Loaded after base.css; can be fully overridden by a
+   theme-<name>.css or by dev-assist-artifacts/_html-override/theme.css.
+
+   This file deliberately only sets values that base.css already defines —
+   it exists so other themes can be diff-readable against it.
+*/
+
+:root {
+  /* base.css defaults are the minimalist palette; nothing to override here. */
+  /* This file is kept so the cascade default → theme-default → override is
+     uniform regardless of theme choice. */
+}
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<main id="main-content" class="placeholder-page" data-view="placeholder" data-stage="04-development">
+<h1>S3-04 — Measured-attack RRS scorer (the headline number)</h1>
+<blockquote>
+<p><strong>Cold-pickup</strong>: self-contained; §8b authoritative. <strong>Test names MUST carry <code>fr_NNN</code> tokens</strong>
+(<code>def test_fr_007_*</code>, <code>test_fr_009_*</code>) so <code>pytest -k fr_007</code> selects them (S3-01 gate lesson).</p>
+</blockquote>
+<h2>1. Metadata</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Parent epic</strong></td>
+<td>S3 — Scorer trio (<a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-06" data-trace-id="DC-06" aria-label="Trace DC-06">DC-06</a>/07/08)</td>
+</tr>
+<tr>
+<td><strong>Sprint</strong></td>
+<td>S-3 (Scorers)</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>DONE</td>
+</tr>
+<tr>
+<td><strong>Estimated agent-effort</strong></td>
+<td>M (≤3d)</td>
+</tr>
+<tr>
+<td><strong>Owner agent</strong></td>
+<td>dev-assist-development-executor (claimed 2026-05-29)</td>
+</tr>
+<tr>
+<td><strong>Story gate</strong></td>
+<td>APPROVE (iter 1, 5/5 reviewers; <code>_reviews/story/S3-04/synthesis.md</code>)</td>
+</tr>
+<tr>
+<td><strong>provisional_status</strong></td>
+<td>AGENT_SIMULATED</td>
+</tr>
+</tbody></table>
+<h2>2. Goal</h2>
+<p>Turn the offline adversary&#39;s <code>Guess</code>es into the <strong>headline measured RRS</strong> (<a class="trace-link" href="S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>): run an <code>Adversary</code>
+over assembled <code>(targets, candidates, |C|)</code>, count correct re-links, compute empirical re-id <strong>recall
+and precision with Wilson CIs</strong> (on integer counts), and emit <code>RRS = 1 − recall×precision</code> wrapped in
+the existing <code>RRSResult</code> value object so the <strong>non-strippable anti-anonymity caveat (<a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a>) travels
+with the number</strong>. <code>|C|</code> is a stated parameter. This is the M6-closing headline metric for <a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a>.</p>
+<h2>3. Traced requirements</h2>
+<p><strong>Primary</strong>: <a class="trace-link" href="S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a> (measured-attack RRS: empirical recall/precision + Wilson CIs, RRS=1−r×p, |C| stated).
+<strong>Supporting</strong>: <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> (non-strippable caveat — reuse the S1 <code>RRSResult</code>/<code>ANTI_ANONYMITY_CAVEAT</code>), reidx-02 (integer-guarded CIs).</p>
+<h2>4. Source DC + provisional_status</h2>
+<p><a class="trace-link" href="../../../03-design/06-synthesis/D-implementation-ready-design.html#dc-07" data-trace-id="DC-07" aria-label="Trace DC-07">DC-07</a> · AGENT_SIMULATED · not DIVERGED.</p>
+<h2>5. Dependencies</h2>
+<p><strong>Must be DONE</strong>: S3-01 (port + assembler), S3-02 (offline adversary). ✅
+<strong>Blocks</strong>: S3-05 (exposure-index correlation needs measured RRS), S3-06 (anon residual-risk axis = a MeasuredRRS), S3-08 (ReidProvenance attaches to MeasuredRRS).</p>
+<h2>6. Test-first plan (RED→GREEN) — <code>fr_007</code>/<code>fr_009</code> tokened</h2>
+<p><code>tests/test_reidentification_measured.py</code>:</p>
+<ol>
+<li><code>test_fr_007_recall_ci_uses_integer_n_targets</code> — <code>reid_recall_ci.n == n_targets</code>, <code>method == &quot;wilson&quot;</code>, and <code>low &lt; recall &lt; high</code> (idiom from <code>tests/test_detection.py</code>) — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_007_precision_ci_uses_integer_n_guesses</code> — <code>reid_precision_ci.n == n_guesses</code> (non-abstain count) — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_007_rrs_equals_one_minus_recall_times_precision</code> — exact identity — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_007_correct_is_guesses_matching_target_id</code> — <code>correct</code> counts guesses where <code>guessed_persona_id == target_id</code> (the ground-truth link assemble_paired_set established) — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_007_abstentions_excluded_from_precision_denominator</code> — abstain guesses (<code>None</code>) reduce <code>n_guesses</code>, not counted as wrong — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_009_caveat_nonstrippable_in_measured_as_dict</code> — <code>MeasuredRRS.as_dict()</code> nests <code>rrs.as_dict()</code> and the <code>caveat</code> is ALWAYS present (idiom from <code>tests/test_rrs_caveat.py</code>) — <code>[AUDIT]</code>.</li>
+<li><code>test_fr_007_reidx02_fractional_count_raises</code> — constructing CIs from a fractional count raises <code>TypeError</code> (the integer guard) — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_007_perfect_attack_rrs_zero_and_no_commit_rrs_one</code> — perfect re-link → recall=precision=1 → RRS=0; all-abstain → n_guesses=0, recall=0 → RRS=1 (handle the n_guesses==0 precision edge gracefully) — <code>[UNIT-TEST]</code>.</li>
+<li><code>test_fr_007_candidate_set_size_recorded</code> — <code>MeasuredRRS.candidate_set_size == |C|</code> and <code>adversary_id</code>/<code>deterministic</code> propagate from the adversary (version-pinning) — <code>[UNIT-TEST]</code>.</li>
+</ol>
+<p><strong>Test-data discipline</strong>: tiny inline personas/targets + a stub <code>Adversary</code> returning scripted guesses (so recall/precision are exactly known) — don&#39;t depend on the offline adversary&#39;s internals; also one test wiring the real <code>OfflineDeterministicAdversary</code> end-to-end.</p>
+<h2>7. Acceptance criteria (G/W/T from <a class="trace-link" href="S3-02.html#fr-007" data-trace-id="FR-007" aria-label="Trace FR-007 — 7. Acceptance criteria (G/W/T from FR-007/FR-010)">FR-007</a>)</h2>
+<blockquote>
+<p><strong>Given</strong> an <code>Adversary</code>, assembled <code>targets</code>/<code>candidates</code>, and <code>|C|</code>,
+<strong>When</strong> <code>score_reidentification(...)</code> runs,
+<strong>Then</strong> empirical re-id recall and precision are measured with <strong>Wilson CIs on integer counts</strong>, and <code>RRS = 1 − recall×precision</code> is returned inside an <code>RRSResult</code> carrying the non-strippable caveat, with <code>|C|</code>, <code>adversary_id</code>, and <code>deterministic</code> recorded.
+<strong>Negative</strong>: a fractional count → <code>TypeError</code>; the caveat cannot be dropped by <code>as_dict()</code>.</p>
+</blockquote>
+<h2>8. Files this story owns</h2>
+<p><strong>MODIFIED</strong>: <code>src/pii_anon_datasets/scoring/reidentification.py</code> (ADD <code>MeasuredRRS</code> + <code>score_reidentification</code>; PRESERVE the frozen <code>RRSResult</code>/<code>ANTI_ANONYMITY_CAVEAT</code> exactly), <code>src/pii_anon_datasets/scoring/__init__.py</code> (export).
+<strong>NEW</strong>: <code>tests/test_reidentification_measured.py</code>.</p>
+<h2>8b. Implementation spec (authoritative)</h2>
+<p>Pure-stdlib. Reuse <code>stats.intervals.wilson_interval</code> (integer-guarded) + the S1 <code>RRSResult</code>.</p>
+<pre><code class="language-python">@dataclass(frozen=True)
+class MeasuredRRS:
+    rrs: RRSResult                # S1 value object — carries the non-strippable caveat (FR-009)
+    reid_recall_ci: Interval      # wilson_interval(correct, n_targets, confidence)
+    reid_precision_ci: Interval   # wilson_interval(correct, n_guesses, confidence)
+    correct: int
+    n_targets: int
+    n_guesses: int                # non-abstain guesses
+    candidate_set_size: int
+    adversary_id: str
+    deterministic: bool
+    reid_provenance: object | None = None   # ReidProvenance attaches in S3-08 (forward seam)
+    def as_dict(self) -&gt; dict:
+        # MUST nest self.rrs.as_dict() so the anti-anonymity caveat is ALWAYS serialized (gov-01)
+        ...
+
+def score_reidentification(adversary, targets, candidates, candidate_set_size,
+                           confidence: float = 0.95, reid_provenance=None) -&gt; MeasuredRRS:
+    guesses = adversary.attack(targets, candidates, candidate_set_size)
+    committed = [g for g in guesses if g.guessed_persona_id is not None]
+    n_targets = len(targets)
+    n_guesses = len(committed)
+    # ground-truth link: assemble_paired_set set target_id == true persona_id
+    correct = sum(1 for g in committed if g.guessed_persona_id == g.target_id)
+    recall = correct / n_targets if n_targets else 0.0
+    precision = correct / n_guesses if n_guesses else 0.0
+    rrs = RRSResult.from_attack(recall, precision, candidate_set_size,
+                                adversary.adversary_id, adversary.deterministic)
+    return MeasuredRRS(
+        rrs=rrs,
+        reid_recall_ci=wilson_interval(correct, n_targets, confidence),
+        reid_precision_ci=wilson_interval(correct, n_guesses, confidence),  # n=0 → intervals.py edge
+        correct=correct, n_targets=n_targets, n_guesses=n_guesses,
+        candidate_set_size=candidate_set_size,
+        adversary_id=adversary.adversary_id, deterministic=adversary.deterministic,
+        reid_provenance=reid_provenance,
+    )
+</code></pre>
+<p><strong>Edge case:</strong> <code>wilson_interval(0, 0)</code> — read <code>stats/intervals.py</code> for its n=0 behavior; if it raises, guard by returning a sentinel <code>Interval(point=0.0|nan, low=0.0, high=1.0, n=0, method=&quot;wilson&quot;, confidence=...)</code> and document it. Do NOT silently fabricate a CI.
+<strong>Do NOT</strong> alter the frozen <code>RRSResult</code> contract (S1). The caveat stays mandatory + non-defaulted.</p>
+<h2>9. Test type tags</h2>
+<p><code>[UNIT-TEST]</code> <code>[AUDIT]</code> (the <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> caveat-non-strippable test is the privacy AUDIT)</p>
+<h2>10. Definition of Done</h2>
+<ul>
+<li><input disabled="" type="checkbox"> TDD RED→GREEN→REFACTOR (9 <code>fr_NNN</code>-tokened tests; RED precedes GREEN).</li>
+<li><input disabled="" type="checkbox"> Wilson CIs on integer counts (recall_ci.n==n_targets, precision_ci.n==n_guesses); reidx-02 fractional→TypeError.</li>
+<li><input disabled="" type="checkbox"> <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> caveat non-strippable through <code>MeasuredRRS.as_dict()</code> (the <code>[AUDIT]</code> test).</li>
+<li><input disabled="" type="checkbox"> RRS = 1−recall×precision exact; |C|/adversary_id/deterministic recorded.</li>
+<li><input disabled="" type="checkbox"> <code>RRSResult</code> frozen contract untouched; <code>ruff</code>+<code>mypy --strict</code> clean on the modified file; full suite 0 regressions.</li>
+</ul>
+<h2>11. Reviewer agents at story gate</h2>
+<p>code-quality · traceability · requirements-coverage · security-sast · axiom-compliance. (The <code>[AUDIT]</code> tag also reinforces security-sast&#39;s presence for the <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> privacy-caveat check.)</p>
+<h2>12. Evidence on completion</h2>
+<p><strong>provisional_status: AGENT_SIMULATED</strong> — executed under the agent harness (pytest + ruff +
+mypy run locally; no real CI run). Pass 2 (real CI on real hardware) is scheduled at the
+sprint CI gate.</p>
+<h3>TDD SHAs (branch <code>feat/v2-scoring-harness</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>SHA</th>
+<th>Subject</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RED</td>
+<td><code>f33b3e5aa2c397f2b668593c0032237447962dae</code></td>
+<td><code>[RED] S3-04: measured RRS tests (failing)</code></td>
+</tr>
+<tr>
+<td>GREEN</td>
+<td><code>bfa5cf95a967067af5c714cb1d29e5ca7b571e91</code></td>
+<td><code>[GREEN] S3-04: measured-attack RRS scorer (MeasuredRRS + score_reidentification)</code></td>
+</tr>
+<tr>
+<td>REFACTOR</td>
+<td><code>379f086c3357b9569bf01635c3595f5ec66546e4</code></td>
+<td><code>[REFACTOR] S3-04: mypy --strict type-args on added as_dict + load-bearing test import</code></td>
+</tr>
+</tbody></table>
+<h3>pytest</h3>
+<ul>
+<li><strong>RED</strong>: <code>tests/test_reidentification_measured.py</code> → collection <code>ImportError</code> (<code>MeasuredRRS</code> /
+<code>score_reidentification</code> absent) — a true failing RED scoped to the new module; the prior 124 untouched.</li>
+<li><strong>GREEN</strong>: <code>9 passed in 0.18s</code> (new file); <code>pytest -k &quot;fr_007 or fr_009&quot;</code> selects all 9 (S3-01 gate lesson).</li>
+<li><strong>Full suite (post-REFACTOR)</strong>: <code>133 passed in 2.81s</code> (124 prior + 9 new; <strong>0 regressions</strong>).
+S1 <code>tests/test_rrs_caveat.py</code> → <code>5 passed</code> (frozen <code>RRSResult</code> contract verified intact).</li>
+</ul>
+<h3>Lint / types (the modified file + new test)</h3>
+<ul>
+<li><code>ruff check</code> → <strong>clean</strong> on <code>scoring/__init__.py</code> and <code>tests/test_reidentification_measured.py</code>;
+on <code>scoring/reidentification.py</code> the ONLY residual is line 58 <code>UP037</code> (quoted <code>&quot;RRSResult&quot;</code>) — <strong>PRE-EXISTING
+in the S1 baseline</strong> (proven against <code>f33b3e5~1</code>), inside the frozen <code>RRSResult</code>, left untouched per the
+&quot;do NOT modify the frozen <code>RRSResult</code>; only ADD&quot; directive.</li>
+<li><code>mypy --strict --follow-imports=silent scoring/reidentification.py</code> → the 2 type-args I introduced
+(<code>MeasuredRRS.as_dict</code>, <code>out</code> local) are fixed; the ONLY residual is line 69 (bare <code>dict</code> on
+<code>RRSResult.as_dict</code>) — likewise <strong>PRE-EXISTING in S1</strong> and inside the frozen contract, left untouched.
+Everything S3-04 ADDED is ruff- and mypy-strict-clean.</li>
+</ul>
+<h3>wilson_interval(0,0) edge (§8b) — how it was handled</h3>
+<p><code>stats/intervals.py::wilson_interval</code> already guards n=0 <strong>internally</strong>: it returns the documented
+sentinel <code>Interval(point=nan, low=0.0, high=1.0, n=0, method=&quot;wilson&quot;, confidence)</code> (does NOT raise).
+So <code>score_reidentification</code> simply passes the integer counts straight through — recall/precision are
+defined as <code>0.0</code> when their denominator is 0, and the CI is <code>intervals.py</code>&#39;s own n=0 sentinel. <strong>No CI is
+fabricated.</strong> Pinned by <code>test_fr_007_perfect_attack_rrs_zero_and_no_commit_rrs_one</code> (asserts
+<code>precision_ci.n == 0</code>, <code>low == 0.0</code>, <code>high == 1.0</code>, <code>method == &quot;wilson&quot;</code>). reidx-02 integer guard
+(fractional → <code>TypeError</code>) pinned by <code>test_fr_007_reidx02_fractional_count_raises</code>.</p>
+<h3>DoD checklist</h3>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> TDD RED→GREEN→REFACTOR (9 <code>fr_NNN</code>-tokened tests; RED precedes GREEN).</li>
+<li><input checked="" disabled="" type="checkbox"> Wilson CIs on integer counts (<code>recall_ci.n == n_targets</code>, <code>precision_ci.n == n_guesses</code>); reidx-02 fractional→<code>TypeError</code>.</li>
+<li><input checked="" disabled="" type="checkbox"> <a class="trace-link" href="../../../03-design/06-synthesis/sme-heuristic-findings.html#fr-009" data-trace-id="FR-009" aria-label="Trace FR-009 — caveat lives in `reporting/` → machine-readable scorer retu…">FR-009</a> caveat non-strippable through <code>MeasuredRRS.as_dict()</code> (nests <code>rrs.as_dict()</code>) — the <code>[AUDIT]</code> test.</li>
+<li><input checked="" disabled="" type="checkbox"> <code>RRS = 1 − recall×precision</code> exact; <code>|C|</code> / <code>adversary_id</code> / <code>deterministic</code> recorded.</li>
+<li><input checked="" disabled="" type="checkbox"> Frozen <code>RRSResult</code> contract untouched (only ADDed); ruff + mypy-strict clean on all S3-04 additions; full suite 0 regressions.</li>
+</ul>
+<h3>Files changed (S3-04-owned only)</h3>
+<ul>
+<li><code>src/pii_anon_datasets/scoring/reidentification.py</code> (ADD <code>MeasuredRRS</code> + <code>score_reidentification</code>; S1 <code>RRSResult</code>/<code>ANTI_ANONYMITY_CAVEAT</code> byte-preserved).</li>
+<li><code>src/pii_anon_datasets/scoring/__init__.py</code> (export <code>MeasuredRRS</code>, <code>score_reidentification</code>).</li>
+<li><code>tests/test_reidentification_measured.py</code> (NEW; 9 tests).</li>
+</ul>
+<p><em>Reviewer verdicts: pending story gate (code-quality · traceability · requirements-coverage · security-sast · axiom-compliance).</em></p>
+
+</main>
+<footer class="da-footer">
+<p>
+  pii-anon-eval-data · rendered markdown ·
+  source: <code>04-development/02-stories/sprint-3/S3-04.md</code> ·
+  content-hash <code>43aed3893280</code>
+</p>
+<p>
+  Generated by <a href="https://github.com/{{author_name}}/developer-assistant" rel="noopener">developer-assistant</a>
+  · render-html.mjs · view: placeholder · theme: default
+</p>
+</footer>
+</body>
+</html>

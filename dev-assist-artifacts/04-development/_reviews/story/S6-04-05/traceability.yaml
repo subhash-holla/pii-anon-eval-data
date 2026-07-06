@@ -1,0 +1,99 @@
+reviewer: dev-assist-development-traceability
+scope_id: S6-04-05
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: traceability-S6-04-05-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/02-requirements/traceability-matrix.md:22
+    description: |
+      The traceability-matrix.md is maintained at use-case granularity
+      (UC-15 governance lifecycle | FR-025, FR-026 | NFR-014 | MUST |
+      AGENT_SIMULATED), not story granularity, so there is no per-story
+      FR->story row to add for S6-04/S6-05 at this gate. Story<->FR ownership
+      is instead tracked in each story's §3 (Traced requirements) plus the
+      _reviews/ precedent chain. This is the established repo convention
+      (S6-01/S6-02/S6-03 followed the same pattern and were APPROVED), and it
+      is internally consistent: UC-15 already lists FR-025+FR-026+NFR-014, and
+      the S6-03 traceability review explicitly reserved the GOVERNANCE.md /
+      advisory-roster / bus-factor slice of FR-026 for S6-04 while S6-03 took
+      the CoI/recusal (gov-03) slice. Logged as OBSERVATION (convention, not a
+      defect), not the common-finding-4 MAJOR.
+    suggested_resolution: |
+      No action required for this gate. If/when a story-level forward-trace
+      table is introduced repo-wide, backfill S6-04 (FR-026/NFR-014 charter
+      half) and S6-05 (FR-025) rows for symmetry.
+    references:
+      - dev-assist-artifacts/02-requirements/traceability-matrix.md#UC-15
+      - dev-assist-artifacts/04-development/_reviews/story/S6-03/traceability.yaml
+
+notes: |
+  COMBINED story gate S6-04 (FR-026/NFR-014) + S6-05 (FR-025), iteration 1.
+  Read-only; bounded context honored (both story files, both test files,
+  requirements-document.md, traceability-matrix.md, D-implementation-ready-design.md
+  for the DC-13 definition, sibling S6-03 review for the FR-026 partition precedent).
+
+  Forward-trace chain verified end to end:
+
+  ID EXISTENCE (no SHOWSTOPPER):
+    - FR-025, FR-026 present in requirements-document.md (line 23 / line 19).
+    - NFR-014 present (line 20).
+    - DC-13 authoritatively defined in D-implementation-ready-design.md:30
+      "Leaderboard & governance ... FR-023/025/026, NFR-014, MUST" — maps to
+      exactly the IDs both stories cite. Both stories' §4 DC-13 linkage correct.
+    - AX-001 (synthetic-only provenance axiom, cited by S6-05) exists in
+      non-functional-requirements.md / design docs.
+
+  TEST-NAME->ID EMBEDDING (grep verified, thresholds met EXACTLY):
+    tests/test_governance.py:
+      test_fr_026_governance_md_has_charter_and_roster      (fr_026 #1)
+      test_fr_026_governance_md_has_coi_and_bus_factor       (fr_026 #2)  -> fr_026 = 2 (>=2 OK)
+      test_nfr_014_governance_md_present                     (nfr_014 #1) -> nfr_014 = 1 (>=1 OK)
+    tests/test_contributing.py:
+      test_fr_025_contributing_has_pr_template_and_cc0       (fr_025 #1)
+      test_fr_025_contributing_has_provenance_and_synthetic_only (fr_025 #2)
+      test_fr_025_contributing_has_deprecation_and_semver    (fr_025 #3)  -> fr_025 = 3 (>=3 OK)
+
+  SEMANTIC MATCH (finding-pattern 9 cleared): each test body asserts the
+  load-bearing strings its FR/NFR claims — governance: charter/decision +
+  advisory roster flagged aspirational/AGENT_SIMULATED + CoI naming
+  pii-anon-core + recusal + bus-factor=1; contributing: PR template + CC0 +
+  Apache split + provenance + synthetic/no-real-PII (AX-001) + deprecation/
+  erratum + semver/dated-release. No name/body divergence.
+
+  OWNERSHIP / NO DOUBLE-CLAIM (finding-pattern 3/12 cleared):
+    - FR-026 claimed only by S6-03 and S6-04. Partition is clean and matches
+      the charter: S6-03 = CoIRecord/recusal data structure (gov-03, Status
+      DONE — its FR-026 slice is closed); S6-04 = the prose charter/roster/
+      bus-factor in GOVERNANCE.md. The S6-03 traceability review (APPROVE)
+      already documented this split and named S6-04 as the holder of the
+      remaining GOVERNANCE.md/roster/bus-factor slice. No ambiguous tracing.
+    - FR-025 claimed solely by S6-05. No orphan, no contention.
+
+  DEPENDENCIES DONE (finding-pattern 6 cleared):
+    - S6-04 declares S6-01 (store) + S6-03 (CoIRecord) must be DONE — both are
+      DONE. S6-05 declares no hard dependency. OK.
+
+  provisional_status CASCADE (finding-pattern 15 cleared):
+    - Source DC-13 / UC-15 row = AGENT_SIMULATED (not DIVERGED). Both stories
+      carry provisional_status: AGENT_SIMULATED in §1 and restate "not DIVERGED"
+      in §4. No DIVERGED cascade obligation (no §10 Pass-2 commitment required).
+      Cascade is consistent.
+
+  GREEN EVIDENCE (not just names):
+    - RED/GREEN SHAs all present on feat/v2-scoring-harness with correct msgs:
+      S6-04 a48f407 [RED] / 64ae813 [GREEN]; S6-05 759f7c9 [RED] / 8c9df8f [GREEN].
+    - GREEN artifacts exist: GOVERNANCE.md (5857 B), CONTRIBUTING.md (3554 B).
+    - Target subset: 6 passed in 0.11s. Full suite: 325 passed, 1 skipped —
+      matches S6-05 DoD (~325, 1 pre-existing skip), zero regressions.
+
+  Status note: both stories are IN_PROGRESS by design (doc stories authored
+  directly; orchestrator flips to DONE at this gate close). Not a traceability
+  defect. §12 Evidence is the only DoD item pending fill-in at close, which is
+  the gate-close mechanic, not an in-scope traceability gap.
+
+  No SHOWSTOPPER / CATASTROPHIC / MAJOR. APPROVE.
+
+review_time_seconds: 320
+context_bounds_respected: true

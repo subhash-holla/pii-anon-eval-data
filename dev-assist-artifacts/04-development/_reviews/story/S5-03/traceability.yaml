@@ -1,0 +1,94 @@
+# Traceability reviewer — STORY gate
+schema_version: "1.0"
+reviewer: dev-assist-development-traceability
+scope_id: S5-03
+gate: story
+verdict: APPROVE
+
+# --- review provenance (extension metadata; canonical schema fields below) ---
+story_id: S5-03
+iteration: 1
+mode: read-only
+timestamp: "2026-05-30"
+independence_attestation: >-
+  I reviewed S5-03 forward-traceability (FR/NFR -> Story -> Test -> DC) independently
+  against the requirements document, the non-functional-requirements doc, the
+  traceability matrix, the design synthesis (D-implementation-ready-design + SME
+  heuristic findings), and the two owned test files. I did not author any artifact
+  under review and ran only read-only verification (pytest -k selection/collection,
+  grep, git cat-file/log, python import checks).
+
+scope:
+  primary_requirements: [FR-024, NFR-012]
+  supporting_requirements: [gov-02, NFR-013, NFR-004, AX-002]
+  source_dc: DC-12
+  design_revision: gov-02
+  tokened_test_thresholds: { fr_024: ">=4", nfr_012: ">=3", nfr_013: ">=1", nfr004: ">=2" }
+  owned_test_files:
+    - tests/test_croissant.py
+    - tests/test_dataset_card.py
+
+findings: []
+
+# --- verification ledger (all GREEN) -----------------------------------------
+verification:
+  requirement_ids_exist:
+    FR-024: "requirements-document.md:19 (CC0 + exports — Croissant validates+loads). PRESENT."
+    NFR-012: "requirements-document.md:20 + non-functional-requirements.md (Croissant/HF loadability). PRESENT."
+    NFR-013: "requirements-document.md:20 (no doc/data drift). PRESENT."
+    NFR-004: "non-functional-requirements.md:13 (deterministic, provenanced generation; AX-002). PRESENT."
+    AX-002: "non-functional-requirements.md:13 + traceability-matrix.md:30 (AX-pii-anon-002 determinism -> NFR-004). PRESENT."
+    gov-02: "03-design/06-synthesis/sme-heuristic-findings.md:29 + D-implementation-ready-design.md:104 (MAJOR SME: N legally-distinct typed regime columns; fixes export_parquet.py:54 flatten; -> FR-022). PRESENT as design revision."
+    DC-12: "03-design/06-synthesis/D-implementation-ready-design.md:29 (Distribution & exports -> FR-024/028, NFR-012, MUST). PRESENT."
+  tokened_tests_selectable:    # `pytest -k <token>` run-summary (selected/deselected) — the load-bearing -k claim
+    fr_024:  "4 passed, 6 deselected  (>=4 OK) — 2 in test_croissant.py + 2 in test_dataset_card.py"
+    nfr_012: "3 passed, 7 deselected  (>=3 OK) — all in test_croissant.py (shape, load round-trip, mlcroissant skip-if-absent)"
+    nfr_013: "1 passed, 9 deselected  (>=1 OK) — test_dataset_card.py counts-cannot-drift"
+    nfr004:  "2 passed, 8 deselected  (>=2 OK) — pure-stdlib AST guard in both files"
+    note: "Every token carries an underscore (fr_024 / nfr_012 / nfr_013 / nfr004) IN the function name, so `pytest -k` selects it. 10/10 collect + pass."
+  dc12_linkage_sec4: "§4 cites 'DC-12 (distribution) · AGENT_SIMULATED · not DIVERGED'; §1 Parent epic 'S5-A — Distribution (DC-12)'. Linkage PRESENT."
+  gov02_recordset_assertion: >-
+    test_nfr_012_croissant_declares_reg_columns (test_croissant.py:110) asserts each
+    reg_* field (= reg_<regime> for regime in crosswalk.REGIMES, the SSOT) is declared
+    in the Croissant recordSet with a dataType, asserts NO flattened 'regulatory_domains'
+    field, AND asserts validate_croissant RAISES ValueError matching 'reg_gdpr' when a
+    reg_* field is dropped (gov-02 ENFORCED, not incidental). The load round-trip
+    (test #4) further confirms the reg_* columns survive datasets.load_dataset. This is
+    the Croissant-recordSet slice of gov-02 (S5-02 covered the Parquet slice).
+  orphan_scan:
+    declared_without_test: "NONE — every §3 ID (FR-024, NFR-012, gov-02, NFR-013, NFR-004, AX-002) maps to >=1 tokened/asserting test (AX-002 determinism rides the nfr004 AST guards + no-clock/RNG assertion)."
+    test_claims_out_of_scope: "NONE — grep of `def test_` shows no ID token outside {fr_024,nfr_012,nfr_013,nfr004}."
+  status_and_evidence:
+    status: "REVIEW (§1 Metadata)."
+    tdd_shas_present: "§12 RED bd1de34 / GREEN 0268642 / REFACTOR c5d2234 — all three resolve on feat/v2-scoring-harness via git log; messages match [RED]/[GREEN]/[REFACTOR] S5-03."
+  provisional_status_cascade: >-
+    Source DC-12 inherits AGENT_SIMULATED (design §  'All design inherits
+    provisional_status: AGENT_SIMULATED'); story §1 + §4 declare AGENT_SIMULATED.
+    DC-12 is NOT DIVERGED, so no §10 Pass-2 DIVERGED cascade is required. Story's
+    AGENT_SIMULATED matches source. Consistent with sibling S5-02 (same source_dc
+    DC-12, same gov-02 lineage).
+
+notes: |
+  Clean forward-traceability pass. The FR/NFR -> Story -> Test -> DC chain is fully
+  intact with zero orphan claims in either direction.
+
+  Token-selection rigor: `pytest -k` run summaries are the authoritative evidence
+  (fr_024=4, nfr_012=3, nfr_013=1, nfr004=2 selected; all pass). The story's §12
+  self-reported counts match exactly. (Note: `pytest --collect-only` node-id listing
+  is suppressed in this sandbox's pytest output mode; the -k run-summary
+  selected/deselected line is the reliable discriminator and was used here.)
+
+  gov-02 is correctly partitioned across the distribution surface: S5-02 owns the
+  Parquet N-typed-column slice (its own traceability.yaml, same source_dc), and S5-03
+  owns the Croissant-recordSet slice — both trace to the same SME finding (FR-022 made
+  structural) and the same crosswalk.REGIMES SSOT. No duplicate/ambiguous MUST
+  ownership: FR-024 is partitioned by artifact (Parquet=S5-02, Croissant+card=S5-03),
+  not double-claimed.
+
+  OBSERVATION (non-blocking): gov-02 and DC-12 are design-layer IDs (SME finding /
+  design concept) and resolve outside 02-requirements/ — correct by construction, but
+  a reader grepping only requirements-document.md would not find them. The story §3/§4
+  prose is explicit about their provenance, so no action needed.
+
+review_time_seconds: 240
+context_bounds_respected: true

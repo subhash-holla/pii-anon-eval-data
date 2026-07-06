@@ -1,0 +1,83 @@
+reviewer: dev-assist-development-axiom-compliance
+scope_id: S4
+gate: sprint
+verdict: APPROVE
+findings: []
+
+notes: |
+  SPRINT-GATE axiom audit, S4 (iter 1), integration scope across the whole
+  stats/reporting layer (DC-09): stats/{intervals,paired,calibration,power}.py +
+  reporting/{power_table,language_power,viz,__init__}.py + the S3-08 reid power
+  seam. Read-only. Test suite: `python3 -m pytest -q -o addopts=""` → 211 passed,
+  1 skipped (matches stated baseline). Zero MAJOR+ findings → APPROVE.
+
+  AX-pii-anon-003 (stated-statistical-power / statistical rigor) — UPHELD across
+  the suite. Every published CI carries a NAMED method on INTEGER Bernoulli counts:
+  intervals.py exposes wilson_interval ("wilson") + clopper_pearson_interval
+  ("clopper-pearson"), both gated by the shared _require_int_counts (reidx-02:
+  bool rejected, fractional/partial counts → TypeError, 0<=k<=n enforced).
+  paired.py exposes mcnemar_exact ("mcnemar-exact", doubled binomial tail),
+  mcnemar_chi2 ("mcnemar-chi2-continuity"/"mcnemar-chi2", Edwards correction,
+  erfc closed form) and paired_bootstrap_recall_delta ("paired-bootstrap").
+  calibration.py ECE = Σ_m(|B_m|/N)·|acc−conf| and Brier = mean((conf−correct)²)
+  are textbook-correct (worked check: conf .99 vs acc 0 → ECE 0.990, Brier 0.9801);
+  binning convention is PINNED (idx = min(n_bins-1, int(conf*n_bins))) so ECE is
+  reproducible. The per-language reporter (language_power.py) REUSES
+  power_table._power_class — one lattice classifier, so a language / type /
+  language×type row carries exactly the published per-cell power_class label.
+  The S3-08 reid power seam composes WITHOUT statistical-honesty violations:
+  reid_required_n shares the SAME required_n/_z closed form (one z-table, no
+  second statistic to drift), its design-time projections are stamped
+  method="wilson-projected" so they can never be mistaken for a measured CI, and
+  every committed-cell row carries a non-strippable DesignProvenance (n + tier +
+  target + powered + external-validity caveat; cannot be constructed empty).
+
+  NFR-004 (purity boundary) — HOLDS across the sprint, verified EMPIRICALLY (not
+  just by docstring). matplotlib IS installed in this env (3.10.8), yet
+  `import pii_anon_datasets.reporting` plus import of all four stats modules
+  leaves 'matplotlib' absent from sys.modules. The ONLY heavy/optional dep is
+  matplotlib behind the [viz] extra (pyproject.toml:37 — the sole pin), imported
+  LAZILY in exactly two guarded sites: reporting.viz._require_matplotlib and
+  PowerMatrix.heatmap (pragma: no cover), each raising a clear RuntimeError naming
+  the install command on ImportError. No numpy/scipy/pandas anywhere in the core.
+
+  AX-pii-anon-004 / NFR-005 (anonymization↔pseudonymization separation; no metric-
+  family fusion) — UPHELD. No reporter imports scoring.pseudonymization at all.
+  pareto_plot takes thin (residual_risk, utility, label) tuples and plots two axes
+  (privacy on x, utility on y), NEVER a merged scalar, and never imports scoring
+  (duck-typed). calibration/power reporters are detection-quality diagnostics, not
+  de-id scores. The lone "anonymization/pseudonymization" textual match
+  (lattice.py:45 DEFAULT_EVAL_FAMILIES) is a tuple of distinct family NAMES — it
+  keeps the families separate, the opposite of a conflating "redaction score".
+
+  AX-pii-anon-002 (determinism) — UPHELD. McNemar is closed-form deterministic;
+  the paired bootstrap owns a LOCAL random.Random(seed) and never the module-global
+  RNG (test_paired.py:74 asserts same-seed byte-identical Intervals); Clopper-
+  Pearson uses FIXED-iteration Lentz CF (200) + fixed-step bisection (60) → no
+  RNG/convergence-dependent early exit; all reporters sort deterministically
+  (rows by cell_id / (language, entity_type)). viz correctly does NOT assert PNG
+  byte-equality — test_viz.py:25 documents matplotlib embeds a timestamp; the
+  contract is "PNG written, non-empty, magic header".
+
+  AX-pii-anon-001 (no real PII) — UPHELD. No real-PII heuristic matches in any
+  stats/reporting module or test fixture. The single loose-regex hit
+  (intervals.py:16) is the z-critical-value table (floating-point math constants),
+  a false positive, not PII.
+
+  Epistemic honesty — UPHELD. NFR-008 ECE 0.05 reference is REPORTED-NOT-GATED:
+  calibrate() on a wildly mis-calibrated input (ECE 0.99) returns normally with
+  meets_reference=False and never raises/blocks — no covert submitter fail; the
+  single raising path is the len-mismatch caller-bug guard. The FR-027 synthetic-
+  not-external-validity caveat is carried in power_table's RENDERED claim ladder
+  (verified in power_report markdown output, not just the docstring: it emits
+  "Power on a synthetic cell is precision on the synthetic distribution, not
+  external validity (cf. FR-027 real-data correlation slice)"). All five S4
+  stories (S4-01..05) carry the AGENT_SIMULATED flag with real-CI Pass-2 noted.
+  No banned over-claim / content-lint phrases in any stats/reporting prose.
+
+  Out of scope for this reviewer (correctly deferred): statistical-formula
+  correctness depth (code-quality/traceability own the numerics), viz styling,
+  click-to-render latency (performance-benchmark), a11y of any rendered artifact.
+
+review_time_seconds: 480
+context_bounds_respected: true

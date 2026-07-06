@@ -1,0 +1,70 @@
+reviewer: dev-assist-development-security-sast
+
+scope_id: S5-07
+
+gate: story
+
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  STORY-gate security-sast review of S5-07 (doc-drift remediation, NFR-013).
+  Bounded context only: story file, `git diff 7dd5341 HEAD` (8 files; +272/-77 —
+  7 docs/docstring + tests/test_doc_drift.py), reviewer-output template, and
+  developer-assistant.yaml (domain_packs).
+
+  Verdict: APPROVE. Zero SHOWSTOPPER / CATASTROPHIC / MAJOR. This is a DOC-only
+  change plus one read-only property-test; the security surface is minimal and
+  clean against all four mandated checks.
+
+  (1) No real PII introduced (AX-001 synthetic-only-no-real-pii). All 272 added
+  lines are aggregate counts (575,604 / 2,486,438 / 63 / 9 / 60 / 7 / 2.0.0),
+  canonical entity-TYPE *names* (PERSON_NAME, SSN, CVV, ... — labels, not values),
+  version/date strings, competitor figures, and epistemic caveats. The only
+  literal example values on added lines are documentation-reserved / non-PII:
+  IP_ADDRESS example "192.168.1.1" (RFC 1918 private) and "2001:0db8:85a3::8a2e"
+  (RFC 3849 documentation prefix 2001:0db8::/32) — and that IPv6 example was MOVED
+  from the removed IPV6_ADDRESS row into the canonical IP_ADDRESS row, not newly
+  authored — plus LOCATION_NAME examples "Berlin" / "California" (public place
+  names). No natural-person identifiable data in any added line.
+
+  (2) tests/test_doc_drift.py is inert / read-only. Imports are exactly `re`,
+  `pathlib.Path`, and the local `pii_anon_datasets.taxonomy`. Its sole I/O is
+  `(_REPO_ROOT / name).read_text(encoding="utf-8")` (read). No network
+  (requests/urllib/httpx/socket), no subprocess/os.system/popen, no
+  eval/exec/builtins.compile, no __import__, no pickle/marshal/yaml.load, no
+  write/open-for-write. (The one `compile` token is `re.compile` for the
+  UPPER_SNAKE token regex.) Path is derived from `__file__`, no traversal or
+  user-controlled input. Assertions are pure substring/regex membership checks.
+
+  (3) No secrets added. A targeted scan of the 272 added lines found zero
+  secret-shaped literals (key/token/password = value), zero known token formats
+  (AWS AKIA, GitHub ghp_, Slack xox, JWT eyJ.eyJ., OpenAI sk-, Google AIza),
+  zero PEM private-key blocks, and zero long-hex (>=32) strings. Credential
+  words (PASSWORD, API_KEY, CVV, PIN, IBAN, SSN/SOCIAL_SECURITY_NUMBER,
+  CREDIT_CARD_NUMBER, PASSPORT_NUMBER) appear ONLY as backticked / bare
+  UPPER_SNAKE taxonomy labels in category-example cells — the acceptable
+  taxonomy-label case, never an actual secret value.
+
+  (4) Domain packs: developer-assistant.yaml has `domain_packs: []` (the
+  `financial` PII pack is NOT active for this benchmark-dataset workspace; its
+  no-real-PII invariant is encoded as project axiom AX-001 instead). No pack
+  reviewer-extensions to merge; no `source_pack` tagging applies.
+
+  Out-of-scope items correctly left untouched and not flagged here: the
+  pre-existing mypy --strict [type-arg] warning at __init__.py:61 predates this
+  story and is a code-quality concern, not security; doc factual accuracy
+  (competitor deltas, count reconciliation) is requirements-coverage/traceability
+  scope. No new dependency, no capability/trust-boundary/egress/unsafe/crypto
+  surface is touched by this story, so those catalog patterns are N/A.
+
+  OBSERVATION (non-blocking): the relaxed UPPER_SNAKE token regex in the
+  taxonomy test (`\b[A-Z][A-Z0-9_]{1,}\b`, restricted to backticked spans) is a
+  deliberate, bounded matcher and carries no security risk; noted only as a
+  pattern to keep an eye on if TAXONOMY.md ever embeds backticked all-caps prose
+  that is not an entity type.
+
+review_time_seconds: 240
+
+context_bounds_respected: true

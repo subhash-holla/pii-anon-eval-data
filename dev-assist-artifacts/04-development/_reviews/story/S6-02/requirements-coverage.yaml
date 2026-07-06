@@ -1,0 +1,70 @@
+reviewer: dev-assist-development-requirements-coverage
+scope_id: S6-02
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: coverage-S6-02-01
+    severity: OBSERVATION
+    location: dev-assist-artifacts/04-development/02-stories/sprint-6/S6-03.md
+    description: |
+      FR-023 is a six-part MUST (held-out non-distribution + published submission
+      policy + anti-gaming control + opt-in publish + private dry-run pre-score +
+      config/version attestation + per-slice strengths). S6-01 (store) + S6-02
+      (policy: anti-gaming + opt-in publish) close the store/policy/anti-gaming/
+      opt-in halves; the **CoI** sub-part (NFR-014 names "CoI statement present")
+      is correctly deferred to the NAMED successor S6-03 — so FR-023 is NOT yet
+      fully closed (CoI pending), which is the expected state at this story slice.
+      However, S6-03 still exists ONLY as in-prose references (S6-01.md §5 Blocks:
+      "S6-03 (CoI records become `submitted`-event payload)"; S6-01 review YAMLs).
+      No S6-03.md story file is authored yet. This is the same deferral-target the
+      S6-01 coverage gate already flagged (OBSERVATION); it is below this story's
+      verifiable slice and remains a S6-sprint-close action, not a S6-02 blocker.
+    suggested_resolution: |
+      No action required for the S6-02 story gate. Before the S6 sprint gate,
+      author dev-assist-artifacts/04-development/02-stories/sprint-6/S6-03.md as
+      the FR-023 CoI successor and record the FR-023 deferral delta on the
+      requirements board so FR-023 is "deferred-with-successor" (not orphaned)
+      when the epic/sprint coverage snapshot runs.
+    references:
+      - dev-assist-artifacts/02-requirements/functional-requirements.md#FR-023
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-014
+      - dev-assist-artifacts/04-development/_reviews/story/S6-01/requirements-coverage.yaml
+
+notes: |
+  Story-gate coverage check for S6-02 (leaderboard policy, iteration 1). Scope is
+  the FR-023 anti-gaming + opt-in-publish slice traced by S6-02 §3 (NFR-014 /
+  NFR-004 / AX-002 supporting). One story verifies a slice; the full FR-023 / NFR
+  tier snapshot runs at the S6 epic+sprint gates, not here.
+
+  Anti-gaming sub-clause -> named passing test (1:1, all PRESENT, NONE silently missing):
+    * opt-in publish          -> test_fr_023_publish_is_opt_in             PASSED
+    * rate-limit              -> test_nfr_014_rate_limit_blocks_excess     PASSED
+    * held-out rotation epoch -> test_nfr_014_held_out_rotation_epoch      PASSED
+    * contamination / dup     -> test_nfr_014_contamination_dup_check      PASSED
+    * clean path              -> test_fr_023_clean_submission_allowed_and_published PASSED
+    * pure-stdlib guard       -> test_nfr004_policy_pure_stdlib            PASSED
+
+  `python3 -m pytest tests/test_leaderboard_policy.py -k "fr_023 or nfr_014 or
+  nfr004" -q` -> 6 passed in 0.11s (expected 6; matched). File collects exactly 6
+  tests (no orphan/uncounted test). Production module
+  src/pii_anon_datasets/leaderboard/policy.py PRESENT; PolicyConfig / Submission /
+  PolicyDecision / evaluate_submission all in leaderboard/__init__.__all__. Each
+  anti-gaming control contributes a distinct reason (rate_limit / stale_epoch /
+  duplicate), and `published = allowed and publish_opt_in` is the opt-in gate — so
+  no anti-gaming sub-clause is left without a named passing test.
+
+  FR-023 closure status: NOT fully closed. Store half = S6-01 (DONE); policy/
+  anti-gaming/opt-in half = S6-02 (this story, verified). CoI half = S6-03 (named
+  successor, not yet authored — see coverage-S6-02-01). Correct deferral-with-
+  successor; no SHOWSTOPPER (no MUST sub-clause claimed-for-this-scope lacks a
+  test or successor).
+
+  provisional_status: AGENT_SIMULATED (local pytest on Python 3.10.6; no hosted
+  CI). Pass 2 (real CI) is the story's own §12 commitment scheduled at S6 sprint
+  close; FR-023 is not release-verified until that Pass 2 lands. Not DIVERGED — no
+  provisional-threshold cross-check owed at this gate.
+
+review_time_seconds: 312
+
+context_bounds_respected: true

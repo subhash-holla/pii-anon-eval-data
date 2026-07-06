@@ -1,0 +1,74 @@
+reviewer: dev-assist-development-code-quality
+scope_id: S4-04
+gate: story
+verdict: APPROVE
+
+findings:
+  - id: code-quality-S4-04-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/reporting/language_power.py:21
+    description: |
+      `_power_class` is imported from `.power_table` which is a private symbol (underscore-prefixed).
+      This is intentional (mirroring the power_table.py discipline as specified in §8b) and there is
+      no public re-export. The reuse is correct and load-bearing, but future callers cannot rely on
+      this symbol being stable. The current story scope makes no claim of public stability for this
+      helper, so this is non-blocking.
+    suggested_resolution: |
+      No action required for this story. If `_power_class` is needed by a third module in a future
+      story, promote it to a public symbol in `power_table.py` with a docstring at that time.
+
+notes: |
+  TDD DISCIPLINE — STRICT MODE:
+  - RED commit (3893fdf): introduces `tests/test_language_power.py` (197 lines, 6 nfr_003-tokened
+    tests). `reporting/language_power.py` is absent → import fails → true RED state confirmed.
+  - GREEN commit (ae8ff0b): introduces `src/pii_anon_datasets/reporting/language_power.py` +
+    updates `reporting/__init__.py`. All 6 tests pass. RED-before-GREEN sequence confirmed.
+  - REFACTOR commit (b4e0335): annotation-only change — bare `dict` → `dict[str, Any]`/
+    `dict[str, int]` on all 5 function/variable annotations plus `from typing import Any` import
+    addition. Verified via `git show b4e0335`: no logic, control flow, or return-value changes.
+    Behavior-equivalence confirmed.
+
+  SCOPE DISCIPLINE:
+  - RED: `tests/test_language_power.py` + story MD file only. No out-of-scope files.
+  - GREEN: `reporting/language_power.py` (NEW) + `reporting/__init__.py` (MODIFIED). Both are
+    listed in story §8. No out-of-scope files.
+  - REFACTOR: `reporting/language_power.py` only. In-scope.
+  Full RED→GREEN→REFACTOR range touches exactly the 3 story §8 files.
+
+  LINT / TYPE:
+  - `ruff check src/pii_anon_datasets/reporting/language_power.py`: All checks passed.
+  - `ruff check src/pii_anon_datasets/reporting/__init__.py tests/test_language_power.py`: All
+    checks passed.
+  - `mypy --strict --follow-imports=silent src/pii_anon_datasets/reporting/language_power.py
+    src/pii_anon_datasets/reporting/__init__.py`: Success: no issues found in 2 source files.
+  - The one mypy error (`intervals.py:28 Missing type parameters for generic type "dict"`) fires
+    only when `--follow-imports` is NOT silenced; it originates in a pre-existing out-of-scope
+    file (`stats/intervals.py`) and is explicitly excluded from this story's scope per orchestrator
+    brief.
+
+  TEST RUN:
+  - `python3 -m pytest tests/test_language_power.py -v`: 6 passed in 0.13s.
+  - Full suite: 198 passed, 1 skipped — zero regressions against the 192 prior baseline.
+
+  IDIOMATIC / PUBLIC API DOCS:
+  - All 4 public functions (`per_language_table`, `language_x_type_matrix`, `render_markdown`,
+    `render_csv`) carry module-level + function-level docstrings. Module docstring explains NFR-003
+    rationale, src-purity discipline, and the no-corpus-read contract. Satisfies pattern #4 and #12.
+  - No `unwrap()` / `expect()` / bare `assert` on production paths; no `Any` without justification;
+    no non-determinism imports.
+  - `__init__.py` exports are aliased (`render_language_markdown`, `render_language_csv`) to avoid
+    shadowing `power_table`'s same-named renderers — good forward-compatibility practice.
+
+  NFR COVERAGE:
+  - AST guards (tests 5 and 6) verify no corpus loader import and no nondeterminism imports at the
+    source level — structural property tests that survive refactors.
+
+  No domain pack extensions active (no `financial` or other active packs in
+  `/Users/subhashholla/Development/Agent Plugins/developer-assistant/domain-packs/`).
+
+review_time_seconds: 187
+
+context_bounds_respected: true
+
+discipline_mode: strict
+tdd_evidence: red-before-green-confirmed

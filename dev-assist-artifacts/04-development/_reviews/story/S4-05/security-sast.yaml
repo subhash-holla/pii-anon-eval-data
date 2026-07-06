@@ -1,0 +1,232 @@
+# security-sast reviewer — STORY gate (conditional fire: a NEW optional third-party dependency
+# (matplotlib) is introduced + render fns write files to a caller-supplied path — both are
+# dependency-surface / arbitrary-write checks the dispatch contract asks this reviewer to verify).
+# S4-05 — visualization layer: reliability / Pareto / slice-heatmap / Sankey / coverage-risk PNGs (DC-09 D3; FR-005/FR-006/NFR-003/NFR-004/AX-004).
+reviewer: security-sast
+gate: story
+story_id: S4-05
+iteration: 1
+mode: read-only
+verdict: APPROVE
+timestamp: "2026-05-30"
+model: claude-opus-4-8[1m]
+
+independence:
+  context_bounds_respected: true
+  bounded_context: true
+  shared_state_used: false
+  self_attested: true
+  note: >
+    Reviewed only the S4-05 owned set + the (read-only) provenance of the dependency manifest
+    change. No cross-reviewer state consulted; verdict rests on independent AST + regex analysis
+    this reviewer reproduced.
+
+domain_pack_extensions:
+  developer_assistant_domain_packs: []          # developer-assistant.yaml -> domain_packs: [] (neither financial nor agentic-runtime active)
+  financial_pack_loaded: false                  # no reviewer-extensions PII catalog merged
+  pack_extensions_merged: 0
+  note: >
+    Project ships no domain pack; the no-real-PII invariant is a project-authored axiom (AX-001)
+    reinforced by hooks.sensitive_data_scan (advisory). This reviewer verified AX-001 directly
+    against the owned files via an independent PII/credential regex + AST literal sweep rather
+    than via a pack pattern set. No finding carries source_pack.
+
+scope_reviewed:
+  owned_files:
+    - src/pii_anon_datasets/reporting/viz.py        # NEW (208 LOC) — 5 render fns + LeakageEdge + lazy _require_matplotlib
+    - src/pii_anon_datasets/reporting/__init__.py   # MODIFIED — lazy re-export of the 5 viz fns + LeakageEdge
+    - pyproject.toml                                # MODIFIED — adds viz = ["matplotlib"] under [project.optional-dependencies]
+    - tests/test_viz.py                             # NEW — 9 fr_005/fr_006/nfr_003/nfr004-tokened tests
+  path_note: >
+    Story §8 names reporting/viz.py & reporting/__init__.py; the real source tree roots them at
+    src/pii_anon_datasets/reporting/ (pythonpath=src). Reviewed the real files.
+  diff_provenance:
+    viz_extra_added_in: 8c5c820                   # [GREEN] S4-05 — git log -S '"viz = [\"matplotlib\"]"' confirms this commit introduced the line
+    tdd_shas: { red: cf8bc50, green: 8c5c820, refactor: 344d7f1 }
+  story_signals_tripped: [new-optional-dependency, file-write-to-caller-path]
+  conditional_fire_rationale: >-
+    None of {capability-registry, trust-boundary, HSM-port, event-signing, network-egress,
+    unsafe-block} are touched. Two dispatch-named surfaces DO apply: a NEW optional third-party
+    dependency (matplotlib) and render fns that write PNGs to a caller-supplied `path`. This
+    reviewer verified the dependency surface (single optional extra, no transitive-CVE flag at
+    this gate, no git-pin) and the arbitrary-write surface (internal report-gen API, not a remote
+    boundary) per the contract.
+
+threat_surface:
+  classification: pure-stdlib-plus-optional-plotting   # builds matplotlib figures from thin in-process inputs + writes static PNGs; no trust boundary, no capability, no egress, no deserialization
+  inputs: >
+    duck-typed CalibrationResult.reliability bins (.conf_mean/.acc/.count); Sequence of thin
+    (residual_risk, utility, label) tuples; a PowerMatrix-shaped obj (delegated .heatmap(path));
+    Sequence[LeakageEdge(source,target,value)]; Sequence[float] confidences + Sequence[int]
+    correct; plus a caller-supplied output `path` str. No corpus/file READ, no network, no
+    deserialization.
+  trust_boundary_touched: false
+  capability_registry_touched: false
+  composition_root_ban_relevant: false   # Python; no production-crate -> disallowed-SDK edge. matplotlib confined to an OPTIONAL extra, lazily imported.
+  hsm_signing_path_touched: false
+  network_egress_added: false
+  unsafe_block_added: false               # Python; n/a — no ctypes/cffi/FFI either
+
+verification:
+  lazy_matplotlib_import_nfr004:          # PRIMARY dispatch concern
+    status: pass
+    method: ast.parse + walk over viz.py (independent of, and matching, test_nfr004_viz_no_toplevel_matplotlib_import)
+    toplevel_imports_viz_py: ["__future__.annotations", "collections.abc.Sequence", "dataclasses.dataclass", "typing.Any"]
+    toplevel_matplotlib_import_lines: []  # ZERO module-level matplotlib import
+    matplotlib_import_sites: ["viz.py:54 `import matplotlib`", "viz.py:57 `import matplotlib.pyplot as plt`"]
+    matplotlib_imports_all_inside_fn: "_require_matplotlib"   # AST-confirmed: the ONLY two matplotlib imports both sit in this function body
+    detail: >
+      matplotlib is imported lazily ONLY inside _require_matplotlib (which also calls
+      matplotlib.use("Agg") before importing pyplot). Defining the render fns needs no
+      matplotlib; only CALLING one does.
+  reporting_core_imports_without_matplotlib_nfr004:
+    status: pass
+    detail: >
+      reporting/__init__.py re-exports the 5 viz fns + LeakageEdge via `from .viz import ...`,
+      which is import-safe without matplotlib (viz.py top-level is stdlib-only). The in-tree
+      test_nfr004_reporting_core_imports_without_matplotlib proves it by sabotaging the
+      matplotlib import (monkeypatched builtins.__import__) and still importing the package.
+  single_new_optional_dependency:
+    status: pass
+    new_dependency: "matplotlib"
+    declared_as: 'viz = ["matplotlib"]'        # [project.optional-dependencies]
+    behind_extra: true
+    git_pinned: false                          # no `git = "..."` / VCS URL — registry-resolved (catalog #10 clean)
+    version_pinned: false                      # bare `matplotlib` (no ==/>= pin) — acceptable for an OPTIONAL viz extra at story gate; transitive-CVE scan explicitly deferred per dispatch
+    other_runtime_deps_added: none             # the [project] core declares no install_requires; viz is opt-in
+    cve_surface: >
+      Per dispatch, new transitive-CVE concern is NOT flagged at this story gate (matplotlib is a
+      mainstream, actively-maintained plotting lib behind an opt-in extra; full CVE/SBOM scan is an
+      epic/release-gate activity via pip-audit). No CVE adjudication performed or required here.
+  pyproject_change_is_only_viz_extra:
+    status: pass
+    detail: >
+      The S4-05-attributable pyproject change is the single `viz = ["matplotlib"]` line (commit
+      8c5c820). The larger optional-dependencies block + version bump + pytest/coverage config
+      visible in `git diff main -- pyproject.toml` are PRIOR-story cumulative branch state, not
+      this story's diff. No other dependency/lock manifest (requirements*/poetry.lock/Pipfile/
+      setup.py/setup.cfg/Cargo*) is touched anywhere in the branch.
+  no_dangerous_sinks:
+    status: pass
+    method: ast.walk Call/Import over viz.py + __init__.py (+ grep corroboration)
+    confirmed_absent: ["eval", "exec", "compile", "__import__", "input", "os.system", "subprocess.*", "pickle.*", "marshal.*", "yaml.load", "shelve", "socket", "requests", "urllib", "httpx", "ftplib", "smtplib", "secrets", "ctypes", "cffi", "shutil", "tempfile", "hashlib"]
+    detail: production files import only stdlib (collections.abc/dataclasses/typing/__future__) + the lazy matplotlib; no dynamic-exec, network, deserialization, or secrets surface.
+  no_secrets_or_weak_crypto:
+    status: pass
+    detail: >
+      No hardcoded credential/api-key/token/password/PEM literal (catalog #8 clean); no md5/sha1
+      or any hashlib use (catalog #15 n/a — no hashing at all). regex + AST literal sweep across
+      all owned files -> zero hits.
+  arbitrary_write_path_surface:           # dispatch ask — render fns write to caller-supplied `path`
+    status: pass
+    severity: observation                 # NOT a finding — internal API, no remote/untrusted caller
+    method: ast — every savefig()/heatmap() arg0 is the caller-supplied `path` Name (no concat/derivation)
+    write_sites: ["viz.py:100 fig.savefig(path)", "viz.py:125 fig.savefig(path)", "viz.py:162 fig.savefig(path)", "viz.py:206 fig.savefig(path)", "viz.py:136 power_matrix.heatmap(path) (delegated write)"]
+    path_validation_present: false
+    assessment: >
+      `path` is passed verbatim to matplotlib.Figure.savefig (and to PowerMatrix.heatmap) with no
+      sanitization. If a caller supplied an attacker-controlled path this would be a classic
+      path-traversal / arbitrary-write. HOWEVER this is an INTERNAL report-generation API invoked
+      in-process by trusted report-builder code with a path the builder itself constructs — it is
+      NOT a remote/network/CLI-arg surface, and the dispatch explicitly frames the path as
+      caller-supplied internal. No injection (no f-string/format into the path; the value is the
+      bare argument). Recorded as an OBSERVATION (note that if these fns are ever wired to a route
+      that accepts an externally-influenced filename, the path should be validated/anchored to an
+      allowed output dir) — no current breach, no MAJOR+.
+  no_real_pii_ax_001:                     # AX-001 + hooks.sensitive_data_scan
+    status: pass
+    test_data_shape: >
+      synthetic duck-typed CalibrationResult bins (conf_mean/acc/count floats+ints); Pareto
+      tuples (0.12,0.91,"presidio") etc. — risk/utility floats + tool LABEL strings; LeakageEdge
+      ("user_prompt","tool_call",12.0) — opaque component labels + magnitudes; confidence/correct
+      arrays of floats/ints. No corpus load, no real-PII values.
+    pii_shaped_literals: none             # regex sweep: zero email/@.com, zero SSN \d{3}-\d{2}-\d{4}, zero IBAN, zero PAN/phone, zero honorific/First-Last name, zero PEM/AKIA/sk-/ghp_/xox token
+    detail: >
+      Labels like "user_prompt"/"tool_call"/"log_sink"/"model_output"/"presidio" are pipeline/
+      detector identifiers, not PII. The lone tomllib.read_text in the test targets the project's
+      OWN pyproject.toml (for the extra-declaration assertion), not a PII corpus/fixture. The
+      no-real-PII invariant holds.
+  determinism:
+    status: pass
+    detail: >
+      Agg backend selected in the lazy guard (headless); each fn writes a PNG + closes its figure.
+      No {random, time, uuid, datetime, secrets} import in viz.py (AST-confirmed). PNG
+      byte-equality is intentionally NOT a contract (matplotlib embeds a timestamp) — out of
+      security scope.
+  no_new_capability_egress_or_unsafe:
+    status: pass
+    detail: none introduced — new pub fns only render figures/write a PNG to a passed path; no network route, no capability grant, no unsafe (Python).
+
+catalog_pattern_scan:                     # 15-pattern catalog (financial-pack PII patterns folded into no_real_pii_ax_001 above; pack inactive)
+  composition_root_ban_violation: none        # #1  — Python; matplotlib confined to an OPTIONAL extra, lazily imported; no disallowed-SDK edge in any always-on import path
+  capability_granted_outside_registry: none   # #2  — render fns grant no capability/IO beyond writing the caller's PNG
+  trust_boundary_mediator_bypass: none        # #3  — no mediator/adapter layer in scope
+  unsafe_without_safety_comment: none         # #4  — no `unsafe` (Python; no FFI)
+  high_cve_new_transitive_dep: not-assessed   # #5  — single optional dep (matplotlib); transitive-CVE scan deferred to epic/release per dispatch — no flag at this gate
+  hsm_port_signing_contract_bypass: none      # #6
+  new_egress_not_in_manifest: none            # #7  — no network egress added
+  hardcoded_credential_shape: none            # #8  — regex sweep clean
+  sql_nosql_string_interpolation: none        # #9  — no DB/query; labels/titles are static literals + str(label) into matplotlib text, not a query/shell sink
+  git_pinned_dependency: none                 # #10 — viz extra is registry-resolved, no VCS URL
+  denied_license_dependency: none             # #11 — matplotlib is PSF-based/BSD-style (permissive); no GPL introduced
+  wildcard_capability_scope: none             # #12
+  thread_spawn_crossing_boundary: none        # #13 — no tokio/thread/async-task spawn; synchronous
+  architectural_egress_forbidden_import: none # #14 — viz.py imports stdlib + (lazy) matplotlib only; no cross-subsystem reach (no scoring/llm/replay import — duck-typed inputs)
+  weak_hash_md5_sha1: none                     # #15 — no hashlib at all
+  pickle_marshal_yaml_load: none
+  dos_hang_unbounded_loop: none                # all loops finite over sized inputs (sorted/enumerate over the passed sequences); zero while-loops; only trusted in-process callers reach them
+
+tests_reviewed:
+  owned_suite: "tests/test_viz.py — 9 tokened tests (story §12: tests/test_viz.py alone 9 passed; full suite 207 passed / 1 pre-existing skip, 0 regressions; AGENT_SIMULATED)."
+  load_bearing_guards:
+    - "test_nfr004_viz_no_toplevel_matplotlib_import — AST guard pinning zero module-level matplotlib import (this reviewer reproduced it: clean)."
+    - "test_nfr004_reporting_core_imports_without_matplotlib — package imports with matplotlib import sabotaged."
+    - "test_nfr004_viz_behind_extra_import_guards — absent-matplotlib path raises RuntimeError naming `pip install pii-anon-datasets[viz]`."
+  test_file_deserialization_note: >
+    test_viz.py uses stdlib tomllib.loads on the project's own pyproject.toml (config assertion,
+    trusted local file) and monkeypatches builtins.__import__ to simulate matplotlib absence —
+    both are TEST scaffolding, not production code paths; neither is a runtime deserialization or
+    dynamic-exec sink in shipped code.
+
+findings: []                              # zero findings at any severity
+
+severity_counts:
+  showstopper: 0
+  catastrophic: 0
+  major: 0
+  minor: 0
+  observation: 1                          # arbitrary_write_path_surface — informational only; no breach (internal API), not a MAJOR+ and does not block APPROVE
+
+approve_condition:
+  rule: APPROVE iff zero MAJOR+
+  major_plus_count: 0
+  met: true
+
+summary: >
+  S4-05 ships the DC-09 D3 visualization layer: five static-PNG report renderers (reliability
+  diagram, two-axis privacy-utility Pareto, slice heatmap delegating to PowerMatrix.heatmap,
+  agent-leakage flow bars, and the FR-005 abstention coverage-risk curve) behind a NEW optional
+  [viz] extra. All dispatch-named checks pass. NFR-004 (lazy import): an independent AST sweep of
+  viz.py finds ZERO module-level matplotlib imports — the only two `import matplotlib` lines both
+  sit inside _require_matplotlib (which selects the Agg backend), so `import
+  pii_anon_datasets.reporting` (which re-exports the fns) stays stdlib-only at load; the in-tree
+  AST guard + the import-sabotage package-import test corroborate, and a missing extra raises a
+  clear RuntimeError naming the install command. DEPENDENCY SURFACE: matplotlib is the ONLY new
+  dependency, declared as `viz = ["matplotlib"]` under [project.optional-dependencies] (commit
+  8c5c820, confirmed via git -S); it is opt-in (the core declares no install_requires), NOT
+  git-pinned (registry-resolved, catalog #10 clean), permissively licensed (no GPL), and per the
+  dispatch a new transitive-CVE concern is NOT flagged at this story gate (full pip-audit/SBOM
+  scan is an epic/release activity). No other dependency/lock manifest is touched. ARBITRARY-WRITE
+  SURFACE: every savefig()/delegated heatmap() receives the caller-supplied `path` verbatim with
+  no validation — but this is an INTERNAL report-gen API invoked in-process by trusted builder
+  code, not a remote/CLI surface, and the path is not interpolated/templated; recorded as a single
+  OBSERVATION (validate/anchor the path IF ever wired to an externally-influenced filename) — no
+  current breach. No dangerous sinks (AST + grep: no eval/exec/__import__/subprocess/os.system/
+  pickle/marshal/yaml.load/socket/requests/urllib/httpx/secrets); no hardcoded credential or weak
+  hash (no hashlib at all); deterministic (Agg + figure-close; no random/time/uuid/datetime). AX-001
+  holds: test fixtures are synthetic duck-typed CalibrationResult bins, Pareto (risk,utility,label)
+  tuples, LeakageEdge tuples, and confidence/correct arrays — labels like "user_prompt"/"tool_call"
+  are pipeline identifiers, not PII; zero PII-shaped or credential literals across all owned files;
+  the lone tomllib read in the test targets the project's own pyproject. No capability, trust-boundary,
+  HSM, composition-root, egress, or unsafe edge (pure Python). Zero MAJOR+ (one informational
+  observation) -> APPROVE.

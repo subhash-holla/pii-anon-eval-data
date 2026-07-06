@@ -2,7 +2,8 @@
 
 Brownfield finding: the entity-type count drifted three ways — `validate.py` allowed
 48, README claimed 65, TAXONOMY.md listed ~80. The ACTUAL set present in the v1.3.0
-corpus is **63 types across 9 categories** (derived by scanning every annotation).
+corpus is **66 types across 9 categories** (derived by scanning every annotation; 63
+original + 3 GDPR Art-9 additions: GENETIC_DATA, SEXUAL_ORIENTATION, TRADE_UNION_MEMBERSHIP).
 This module is that authoritative set; `validate.py`, the migration, TAXONOMY.md and
 README all derive their counts from here so the drift cannot recur.
 """
@@ -46,10 +47,11 @@ ENTITY_REGISTRY: dict[str, str] = {
     "HEALTH_INSURANCE_ID": "medical_biological", "MEDICAL_RECORD_NUMBER": "medical_biological",
     "MEDICATION_NAME": "medical_biological", "NPI_NUMBER": "medical_biological",
     "PRESCRIPTION_NUMBER": "medical_biological", "PROCEDURE_NAME": "medical_biological",
-    # special_category (5)
-    "HOUSEHOLD_SIZE": "special_category", "MARITAL_STATUS": "special_category",
-    "POLITICAL_OPINION": "special_category", "RELIGIOUS_BELIEF": "special_category",
-    "VEHICLE_MODEL": "special_category",
+    # special_category (8)
+    "GENETIC_DATA": "special_category", "HOUSEHOLD_SIZE": "special_category",
+    "MARITAL_STATUS": "special_category", "POLITICAL_OPINION": "special_category",
+    "RELIGIOUS_BELIEF": "special_category", "SEXUAL_ORIENTATION": "special_category",
+    "TRADE_UNION_MEMBERSHIP": "special_category", "VEHICLE_MODEL": "special_category",
 }
 
 CANONICAL_ENTITY_TYPES: frozenset[str] = frozenset(ENTITY_REGISTRY)
@@ -58,8 +60,17 @@ SENSITIVITY_CLASSES: frozenset[str] = frozenset(
     {"direct_identifier", "quasi_identifier", "sensitive_attribute"}
 )
 
-ENTITY_TYPE_COUNT = len(CANONICAL_ENTITY_TYPES)   # 63 — cite this everywhere, not a literal
+ENTITY_TYPE_COUNT = len(CANONICAL_ENTITY_TYPES)   # 66 — cite this everywhere, not a literal
 CATEGORY_COUNT = len(CATEGORIES)                  # 9
+
+# B-7: national / jurisdiction-specific identifier types. Curated + EXPLICITLY NON-EXHAUSTIVE — the dataset
+# does NOT claim per-jurisdiction completeness; this is an illustrative coverage count for the CL-01/H-01 guard.
+JURISDICTION_IDENTIFIER_TYPES: frozenset[str] = frozenset({
+    "SOCIAL_SECURITY_NUMBER", "DRIVER_LICENSE_NUMBER", "PASSPORT_NUMBER", "NATIONAL_ID_NUMBER",
+    "TAX_ID", "BANK_ROUTING_NUMBER", "HEALTH_INSURANCE_ID", "LICENSE_PLATE",
+})
+assert JURISDICTION_IDENTIFIER_TYPES <= set(CANONICAL_ENTITY_TYPES), "jurisdiction list drifted from taxonomy"
+JURISDICTION_IDENTIFIER_COUNT: int = len(JURISDICTION_IDENTIFIER_TYPES)
 
 
 def is_known_entity_type(entity_type: str) -> bool:
@@ -91,7 +102,8 @@ _STRONG_GOVID_TYPES: frozenset[str] = frozenset(
 # Inherently rare / lower-stakes-as-a-single-span sensitive attributes + soft demographics.
 _LONG_TAIL_TYPES: frozenset[str] = frozenset(
     {"POLITICAL_OPINION", "RELIGIOUS_BELIEF", "MARITAL_STATUS", "HOUSEHOLD_SIZE",
-     "ETHNICITY", "AGE", "GENDER", "NATIONALITY", "EDUCATION_LEVEL", "VEHICLE_MODEL"}
+     "ETHNICITY", "AGE", "GENDER", "NATIONALITY", "EDUCATION_LEVEL", "VEHICLE_MODEL",
+     "SEXUAL_ORIENTATION", "TRADE_UNION_MEMBERSHIP", "GENETIC_DATA"}
 )
 
 

@@ -1,0 +1,111 @@
+reviewer: dev-assist-development-traceability
+
+scope_id: S3-03
+
+gate: story
+
+iteration: 1
+
+verdict: APPROVE
+
+context_bounds_respected: true
+
+self_attestation: >
+  Reviewed ONLY forward FR/NFR -> Story -> Test -> DC traceability for S3-03 within the
+  declared owned set (src/pii_anon_datasets/scoring/adversary/llm_adversary.py,
+  scoring/adversary/__init__.py, scoring/__init__.py, tests/test_llm_adversary.py). Did NOT
+  assess test quality, idiomatic style, semantic FR validation beyond G/W/T, NFR-009 threshold
+  attainment, or security egress posture (other reviewers' lanes -- code-quality,
+  requirements-coverage, axiom-compliance, security-sast). Token-selection and pass/skip claims
+  were DYNAMICALLY verified by running pytest, not read from the story.
+
+summary: >
+  S3-03 traces cleanly; zero MAJOR+. Note: the dispatch owned-set paths (scoring/adversary/...)
+  are package-relative; the real files live under src/pii_anon_datasets/ -- the story §8 NEW/MODIFIED
+  paths -- which IS the owned set (no scope drift). All 5 test function names embed the canonical
+  fr_010 token and `python3 -m pytest tests/test_llm_adversary.py -k fr_010 -q` selects exactly 5
+  (....s => 4 passed, 1 skipped, 0 deselected) -- dynamically confirmed, not read from the story.
+  The S3-01 MAJOR (tokens only in docstrings, not function names) does NOT recur. FR-010 exists in
+  functional-requirements.md (line 20: "Adversary pluggability ... 'vs adversary@version'"; SHOULD)
+  and the requirements chain. DC-07 (D-implementation-ready-design.md line 24) covers FR-007/008/009/010;
+  reidx-01 (same doc line 99) makes the DETERMINISTIC offline adversary (S3-02) the RRS headline and
+  this LLM variant the version-stamped SECONDARY -- so the story's PRIMARY FR-010 claim + SECONDARY
+  positioning is correctly realized, no misclaim. FR-010's version-pinning contract ("vs adversary@version")
+  is realized: make_adversary_id(model, date) -> "llm:<model>@<date>", LLMAdversary.adversary_id set from it,
+  frozen per (model,date) -- pinned by named fr_010 tests (test 3 asserts both the helper and instance id).
+  The SECONDARY positioning is explicit: LLMAdversary.deterministic = False (class attr + asserted at
+  class and instance level in test 1). Module + symbol docstrings cite FR-010 / reidx-01 / DC-07 / NFR-009.
+  §5 dependency S3-01 is DONE (verified in S3-01.md). traceability-matrix.md UC-05 row carries FR-010 +
+  AGENT_SIMULATED, matching the story's provisional_status; the matrix is UC->FR granularity (no per-story
+  row obligation -- consistent with peer S3-02 acceptance), so finding-pattern #4 does not apply. Source
+  DC-07 is AGENT_SIMULATED (NOT DIVERGED), so provisional_status cascades correctly and there is no
+  DIVERGED-cascade (§10 Pass-2) obligation. No name-says-X-asserts-Y mismatch across the 5 tests.
+
+verified:
+  - check: every test fn name carries a canonical fr_010 token
+    result: PASS
+    evidence: >
+      5/5 functions named test_fr_010_* (class_shape_without_anthropic,
+      requires_extra_when_anthropic_absent, id_version_stamped, package_imports_without_anthropic,
+      llm_attack_skips_if_absent). The fr_010 token is in the FUNCTION NAME, not only the docstring.
+
+  - check: pytest -k fr_010 selects all 5
+    result: PASS
+    evidence: >
+      `PYTHONPATH=src python3 -m pytest tests/test_llm_adversary.py -k fr_010 -q` => "....s" =
+      4 passed, 1 skipped, 0 deselected. The skip is test 5 (live path, pytest.importorskip("anthropic"),
+      anthropic absent) -- a skip is selection+pass for traceability purposes. Dynamically run, not asserted.
+
+  - check: symbol docstrings cite FR-010 / reidx-01 (+ DC-07 / NFR-009)
+    result: PASS
+    evidence: >
+      llm_adversary.py module docstring line 1 cites "FR-010 SECONDARY; DC-07; reidx-01" and lines 10/18
+      cite reidx-01 / NFR-009 / FR-010; make_adversary_id docstring cites FR-010; LLMAdversary class
+      docstring cites the Adversary port + reidx-01; test module docstring + per-test comments cite
+      fr_010 / reidx-01 / NFR-009.
+
+  - check: FR-010 contract (consumer-named, version-pinned "vs adversary@version") realized by
+      make_adversary_id / adversary_id
+    result: PASS
+    evidence: >
+      make_adversary_id(model, *, date="v1") -> f"llm:{model}@{date}"; __init__ sets
+      self.adversary_id = make_adversary_id(model, date=date) BEFORE any anthropic touch; frozen per
+      (model,date). test_fr_010_llm_adversary_id_version_stamped asserts make_adversary_id(...) values
+      AND instance adversary_id == "llm:claude-3-5-sonnet@2026-05-29" AND idempotence across two instances.
+
+  - check: SECONDARY positioning (deterministic=False) is explicit
+    result: PASS
+    evidence: >
+      LLMAdversary.deterministic = False (class attribute, commented "the SECONDARY, non-deterministic
+      figure (reidx-01)"); test 1 asserts both LLMAdversary.deterministic is False (class) and
+      adv.deterministic is False (instance), plus isinstance(adv, Adversary). attack() docstring restates
+      non-determinism is why the offline adversary, not this one, is the headline.
+
+  - check: FR-010 exists in functional-requirements.md
+    result: PASS
+    evidence: functional-requirements.md line 20 -- "FR-010 - Adversary pluggability." (UC-05, N3; SHOULD).
+
+  - check: dependency S3-01 is DONE
+    result: PASS
+    evidence: S3-01.md Status = DONE; S3-03 §5 lists S3-01 as the only must-be-DONE dep and marks it done.
+
+  - check: no name-says-X-asserts-Y mismatch
+    result: PASS
+    evidence: >
+      Each fr_010 test asserts exactly what its name/comment claims -- class_shape (Adversary surface +
+      deterministic False + len(guesses)==len(targets) + target-order), requires_extra (RuntimeError naming
+      pip install pii-anon-datasets[llm]), id_version_stamped (the "llm:<model>@<date>" id), package_imports
+      (no anthropic in sys.modules after fresh import + AST scan finds no top-level import anthropic),
+      attack_skips_if_absent (importorskip then live len/order/type contract). All on-topic for FR-010.
+
+  - check: provisional_status cascade from source DC-07
+    result: PASS
+    evidence: >
+      DC-07 is AGENT_SIMULATED (not DIVERGED); story metadata provisional_status = AGENT_SIMULATED and
+      §4 "DC-07 - AGENT_SIMULATED - not DIVERGED"; traceability-matrix.md UC-05 row = AGENT_SIMULATED.
+      Consistent; no DIVERGED-cascade / Pass-2 obligation triggered.
+
+findings: []
+
+major_plus_count: 0
+total_finding_count: 0

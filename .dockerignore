@@ -1,0 +1,27 @@
+# Keep the build context small + reproducible. The eval reads the packaged splits
+# (src/pii_anon_datasets/splits/*.jsonl.gz), NOT the 309 MB dist/ parquet, so exclude heavy outputs.
+.git
+.gitignore
+.venv
+**/__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+
+# Run outputs / logs (regenerated inside the container; mounted back via -v)
+results/
+logs/
+census.out
+*.log
+htmlcov/
+.coverage
+
+# Large distributables not needed by the eval
+dist/*.parquet
+dist/*.parquet.*
+
+# Local-only / process artifacts
+dev-assist-artifacts/
+.DS_Store
+~/.pii-anon-cloud.env

@@ -1,0 +1,97 @@
+reviewer: dev-assist-development-performance-benchmark
+
+scope_id: S6
+
+gate: sprint
+
+verdict: APPROVE
+
+findings:
+  - id: performance-S6-01
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/leaderboard/store.py:137
+    description: |
+      LeaderboardStore.append() calls self.events() to recompute seq + prev_hash, and
+      events() reads + JSON-parses the ENTIRE log on every call. So a sequence of N appends
+      costs O(N^2) cumulative work (each append re-reads all prior lines). Empirically
+      confirmed on the real store (seeded/deterministic fixture, no RNG/clock/network):
+      amortized cost per append rises 152 us (N=50) -> 236 us (N=100) -> 390 us (N=200)
+      -> 858 us (N=500) — the super-linear signature.
+
+      ADVISORY / NOT A BLOCKER. This is acceptable for the INTENDED scale. Per the module
+      docstring (store.py:31) and the leaderboard package docstring, v1 is a GOVERNANCE
+      SEAM ("No hosted service in v1") — a held-out leaderboard with tens/hundreds of
+      lifecycle events, not a hot path. At that scale a full N=500 lifecycle batch is
+      ~0.43 s total wall-clock; at tens of submissions it is single-digit ms. The only NFR
+      touching this seam — NFR-014 (governance neutrality, auditable) — is a checklist NFR
+      with NO latency/throughput threshold. NFR-010b's 5,000 rec/sec floor scopes to the
+      detection hot path, NOT this seam.
+    suggested_resolution: |
+      No change required for v1. For a future high-volume / hosted leaderboard (v1.x
+      hardening), make append O(1)-amortized by tracking the last event's seq + content_hash
+      (an in-memory cursor, or a sidecar HEAD pointer) instead of re-reading the whole log
+      to derive them — append-without-full-reread. The on-disk append-only JSONL + hash
+      chain (the load-bearing tamper-evidence + AX-002 determinism contracts) are preserved;
+      only the prev_hash/seq derivation changes. Capture the deferral in the story §12
+      / a v1.x note so the trade is explicit.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-014
+      - src/pii_anon_datasets/leaderboard/store.py#LeaderboardStore.append
+
+  - id: performance-S6-02
+    severity: OBSERVATION
+    location: src/pii_anon_datasets/leaderboard/policy.py:62
+    description: |
+      evaluate_submission() calls store.events() (full log read + parse) via
+      _prior_submitted(), then linearly scans every prior `submitted` event for the
+      rate-limit count and the duplicate-hash check — O(N) per evaluation in the log size N.
+      Empirically (real store, deterministic fixture): one evaluation = 195 us at log N=50,
+      352 us at N=100, 1.68 ms at N=500, 3.34 ms at N=1000 (~3.3 us/event — clean linear).
+
+      ADVISORY / NOT A BLOCKER. Bounded and correct for the intended seam scale (tens/
+      hundreds): a single evaluation is sub-2 ms even at N=500. No per-evaluation latency
+      NFR exists for the governance seam; the anti-gaming controls (rate_limit / stale_epoch
+      / duplicate) are correct as written — only their lookup cost is linear.
+    suggested_resolution: |
+      No change required for v1. For a hosted/high-volume leaderboard (v1.x), back the two
+      O(N) scans with indexed aggregates — a per-(submitter, epoch) submission counter and a
+      seen-submission_hash set — maintained as the log is appended (or a small derived index
+      rebuilt once per process), so each evaluation is O(1) on the lookups rather than
+      O(N). Determinism (AX-002: pure function of store+submission+config) is preserved
+      because the index is a deterministic projection of the same events.
+    references:
+      - dev-assist-artifacts/02-requirements/non-functional-requirements.md#NFR-014
+      - src/pii_anon_datasets/leaderboard/policy.py#evaluate_submission
+
+notes: |
+  ADVISORY sprint gate (S6, Leaderboard & governance, DC-13). No hard performance NFR
+  applies to the governance seam: v1 ships this append-only hash-chained JSONL store as a
+  SEAM, NOT a hosted service (store.py:31). NFR-014 — the only NFR on this surface — is a
+  governance-neutrality CHECKLIST NFR (anti-gaming control active + provenance logged),
+  measured by audit, with no latency/throughput/P95/P99 threshold. NFR-010b's 5,000 rec/sec
+  floor scopes to the lightweight DETECTION path, not this seam.
+
+  Scope confirmation:
+   - No real-PII / corpus / 575K hot path is touched. The leaderboard package imports only
+     stdlib (json + hashlib + enum/dataclasses/pathlib/collections.abc) — verified: no
+     pandas/pyarrow/numpy/corpus/dataset imports.
+   - No callers of LeaderboardStore.events() / evaluate_submission outside the leaderboard
+     package — the O(N^2)/O(N) costs cannot leak into a corpus loop.
+   - coi.py is an O(1) frozen value object (CoIRecord) — no perf surface; not flagged.
+
+  Reproducibility of the benchmark evidence: by construction. The code is deterministic with
+  NO clock and NO RNG (AX-002; verified — no import of time/datetime/random/uuid/secrets) and
+  no network. Measurements above used the REAL store over a seeded, fixture-driven event log
+  in a tmp dir; replaying the same events yields byte-identical content hashes, so the
+  numbers are reproducible across runs/hosts (modulo absolute wall-clock, which is hardware-
+  dependent — the SHAPE, super-linear append vs linear eval, is the invariant).
+
+  Both findings are OBSERVATIONs (advisory v1.x hardening for an eventual hosted leaderboard),
+  NOT v1 blockers. Algorithms are correct and bounded for the intended scale. No regression
+  comparison vs previous main is applicable — this is a net-new governance seam.
+
+  Verdict: APPROVE. No MAJOR+ performance defect for the intended scale.
+
+review_time_seconds: 612
+
+context_bounds_respected: true

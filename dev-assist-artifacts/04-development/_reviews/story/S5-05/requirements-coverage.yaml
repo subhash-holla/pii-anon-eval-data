@@ -1,0 +1,70 @@
+reviewer: dev-assist-development-requirements-coverage
+scope_id: S5-05
+gate: story
+verdict: APPROVE
+
+findings: []
+
+notes: |
+  COVERAGE QUESTION: "Are there gaps in what S5-05 claims?" — No. Every MUST sub-clause in
+  scope is verified by a named passing test, or deferred with a named successor.
+
+  TOKEN SELECTION (verified by re-run in this env — pytest 9.0.x / Python 3.10.6):
+    -k fr_024 -> 4 passed ; -k nfr_018 -> 1 ; -k dx_03 -> 1 ; -k nfr004 -> 2 ; sum = 8.
+    No double-claim; selection matches §6/§12 exactly. Full suite: 250 passed, 1 skipped
+    (= 242 prior + 8 new, 0 regressions, 1 pre-existing skip — claim confirmed).
+
+  FR-024 CLI SUB-CLAUSE (primary) + DX-03 — VERIFIED:
+    * 5 verbs exist + dispatch: test_fr_024_cli_exposes_five_verbs asserts build_parser()
+      registers EXACTLY {generate, score, export, validate, leaderboard} and main(["--help"])
+      exits 0 naming all five. export dispatch proven by
+      test_fr_024_cli_export_dispatches_to_distribution (calls distribution.export_parquet
+      with a streaming ITERATOR, asserts not list/tuple — the CLI computes nothing).
+    * DX-03 one-line CI invocation: test_dx_03_console_entry_point_declared asserts
+      pyproject [project.scripts] pii-anon = "pii_anon_datasets.cli:main" AND main is callable
+      returning int. `pii-anon validate` is the documented copy-paste invocation.
+
+  NFR-018 GUARDRAIL (the binding one) — GENUINE, NOT A STUB:
+    test_nfr_018_cli_validate_keeps_power_gate_on monkeypatches cli.subprocess.run
+    (tests/test_cli.py:93 — the REAL symbol the CLI invokes), captures the spawned argv,
+    and asserts (a) a token ending in "validate.py" is present AND (b) "--no-power-gate" is
+    absent from the dispatched argv. This tests the actual dispatched argv via a
+    monkeypatched subprocess.run — not a stub return. Cross-checked at source:
+    _cmd_validate (cli.py:70-73) forwards args.rest verbatim and appends nothing; the export
+    arg tail is "never mutated — NFR-018: no injected flags" (cli.py:153). Backstopped by
+    test_fr_024_cli_validate_forwards_user_args (forwarding --summary-only still never
+    smuggles --no-power-gate). Gate-default semantics confirmed in scripts/validate.py:198
+    (--no-power-gate is store_true default-False) -> line 253 `if not args.no_power_gate:`
+    runs the NFR-018 committed-cell power gate ON unless the USER opts out. Guardrail is real.
+
+  NFR-004 (pure-stdlib / lazy) — VERIFIED (2 tests): test_nfr004_cli_thin_pure_stdlib (import
+    succeeds with pyarrow/spacy/mlcroissant blocked via a real __import__ hook; AST guard bans
+    top-level {random,time,uuid,datetime,secrets} and {scoring,stats,baselines}) +
+    test_nfr004_cli_generate_never_targets_frozen_corpus (no-corpus-regeneration guardrail:
+    spawned argv contains neither --output nor pii_anon.jsonl.gz; generate_records.py:35
+    defaults to pii_anon_generated.jsonl — confirmed at source, never the frozen corpus).
+
+  FR-024 SPRINT-GATE ROLLUP — READY TO CLOSE FULLY: FR-024 is a single MUST spanning JSONL +
+    Parquet + Croissant + spaCy + CoNLL + dataset card + the CLI surface. The four export/CLI
+    sub-clause stories all hold APPROVE coverage verdicts — S5-02 (Parquet), S5-03
+    (Croissant+card), S5-04 (spaCy+CoNLL), S5-05 (CLI surface) — with JSONL pre-existing.
+    S5-04's coverage gate explicitly named S5-05 as the CLI-export successor; S5-05 is now
+    authored and claims that sub-clause, so FR-024 has NO silently-orphaned sub-clause. At the
+    S5 sprint gate FR-024 can be rolled up as FULLY CLOSED.
+
+  DEFERRAL (acceptable): the `leaderboard` verb's backend is the S6 governance seam. Now a
+    graceful stub — test_fr_024_cli_leaderboard_graceful_until_s6 asserts (against a genuinely
+    absent package: find_spec is None) a clean exit 2, an "S6" stderr message, and NO leaked
+    Traceback. S6 is the named successor and S5 is not the release sprint (S5-S7 open, deferral
+    target precedes release), so this is a VALID deferral-with-named-successor, not a gap.
+
+  OUT OF SCOPE for this reviewer (routed to the right gate participant, not adjudicated here):
+    test quality / mock realism (code-quality); subprocess shell-safety (security-sast);
+    whether the dispatch semantics hold as axioms / TDD RED-before-GREEN (axiom-compliance +
+    code-quality); trace-link integrity (traceability). provisional_status: AGENT_SIMULATED with
+    a scheduled Pass-2 real-CI re-run — noted; no DIVERGED MUST in scope, so no Pass-2 power
+    cross-check is owed at this gate.
+
+review_time_seconds: 412
+
+context_bounds_respected: true
